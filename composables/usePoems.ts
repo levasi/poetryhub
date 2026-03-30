@@ -1,0 +1,102 @@
+// Composable for fetching and paginating poems
+import { isReactive, reactive, type Reactive } from 'vue'
+
+export interface Poem {
+  id:          string
+  title:       string
+  slug:        string
+  content:     string
+  excerpt:     string | null
+  authorId:    string
+  language:    string
+  source:      string
+  sourceUrl:   string | null
+  readingTime: number | null
+  featured:    boolean
+  publishedAt: string
+  createdAt:   string
+  author:      { id: string; name: string; slug: string; imageUrl?: string | null }
+  poemTags:    Array<{ tag: { id: string; name: string; slug: string; category: string; color: string | null } }>
+}
+
+export interface PoemListResponse {
+  data: Poem[]
+  meta: { page: number; limit: number; total: number; totalPages: number }
+}
+
+export interface PoemFilters {
+  page?:     number
+  limit?:    number
+  author?:   string
+  tag?:      string
+  language?: string
+  source?:   string
+  featured?: boolean
+  search?:   string
+}
+
+export function usePoems(initialFilters: PoemFilters = {}) {
+  // Reuse reactive filter state from callers (e.g. useFilters) so updates stay in sync.
+  const filters = isReactive(initialFilters)
+    ? (initialFilters as Reactive<PoemFilters>)
+    : reactive<PoemFilters>({ page: 1, limit: 12, ...initialFilters })
+  if (filters.limit == null) filters.limit = 12
+  if (filters.page == null) filters.page = 1
+  const loading  = ref(false)
+  const error    = ref<string | null>(null)
+  const response = ref<PoemListResponse | null>(null)
+
+  const poems      = computed(() => response.value?.data ?? [])
+  const meta       = computed(() => response.value?.meta)
+  const totalPages = computed(() => meta.value?.totalPages ?? 1)
+
+  async function fetch(newFilters?: Partial<PoemFilters>) {
+    if (newFilters) Object.assign(filters, newFilters)
+    loading.value = true
+    error.value   = null
+
+    try {
+      // Build query string from filters, omitting empty values
+      const params = Object.fromEntries(
+        Object.entries(filters).filter(([, v]) => v !== undefined && v !== '' && v !== null),
+      ) as Record<string, string>
+
+      response.value = await $fetch<PoemListResponse>('/api/poems', { params })
+    } catch (err: unknown) {
+      error.value = (err as Error).message ?? 'Failed to load poems'
+    } finally {
+      loading.value = false
+    }
+  }
+
+  function nextPage() {
+    if (meta.value && filters.page! < totalPages.value) {
+      fetch({ page: filters.page! + 1 })
+    }
+  }
+
+  function prevPage() {
+    if (filters.page! > 1) fetch({ page: filters.page! - 1 })
+  }
+
+  function goToPage(page: number) {
+    fetch({ page })
+  }
+
+  return { filters, poems, meta, totalPages, loading, error, fetch, nextPage, prevPage, goToPage }
+}
+
+// Fetch a single poem by slug
+export function usePoem(slug: string) {
+  return useFetch<Poem>(`/api/poems/${slug}`)
+}
+
+// Fetch the daily poem
+export function useDailyPoem() {
+  return useFetch<Poem>('/api/poems/daily')
+}
+
+// Fetch a random poem
+export async function fetchRandomPoem(): Promise<Poem> {
+  return $fetch<Poem>('/api/poems/random')
+}

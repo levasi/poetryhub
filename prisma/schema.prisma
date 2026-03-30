@@ -1,0 +1,148 @@
+// Prisma schema for PoetryHub
+// Supports PostgreSQL (Neon, Supabase, or any PG provider)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Authors ────────────────────────────────────────────────────────────────
+
+model Author {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  bio         String?  @db.Text
+  birthYear   Int?
+  deathYear   Int?
+  nationality String?
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  poems Poem[]
+
+  @@index([slug])
+}
+
+// ─── Tags ────────────────────────────────────────────────────────────────────
+
+model Tag {
+  id       String  @id @default(cuid())
+  name     String  @unique
+  slug     String  @unique
+  // category: mood | theme | language | era | style
+  category String  @default("theme")
+  color    String? // hex color for UI badge
+
+  poemTags PoemTag[]
+
+  @@index([slug])
+  @@index([category])
+}
+
+// ─── Poems ───────────────────────────────────────────────────────────────────
+
+model Poem {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  content     String   @db.Text   // Full poem text, newlines preserved
+  excerpt     String?             // First 2–3 lines for cards
+  authorId    String
+  language    String   @default("en")
+  // source: "classic" | "ai-generated" | "user-submitted" | "imported"
+  source      String   @default("classic")
+  // External URL if scraped
+  sourceUrl   String?
+  // Computed reading time in seconds
+  readingTime Int?
+  featured    Boolean  @default(false)
+  publishedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  author    Author     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  poemTags  PoemTag[]
+  favorites Favorite[]
+
+  @@index([slug])
+  @@index([authorId])
+  @@index([language])
+  @@index([featured])
+  @@index([publishedAt])
+}
+
+// ─── Poem ↔ Tag (many-to-many) ───────────────────────────────────────────────
+
+model PoemTag {
+  poemId String
+  tagId  String
+
+  poem Poem @relation(fields: [poemId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([poemId, tagId])
+}
+
+// ─── Users ───────────────────────────────────────────────────────────────────
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  passwordHash String
+  name         String?
+  /// Poem reader: playfair | georgia | inter | lora
+  poemFontFamily String   @default("playfair")
+  /// Body font size in px (14–28)
+  poemFontSize   Int      @default(19)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  favorites Favorite[]
+
+  @@index([email])
+}
+
+// ─── Favorites ───────────────────────────────────────────────────────────────
+
+model Favorite {
+  userId    String
+  poemId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  poem Poem @relation(fields: [poemId], references: [id], onDelete: Cascade)
+
+  @@id([userId, poemId])
+  @@index([userId])
+}
+
+// ─── Admin Users ─────────────────────────────────────────────────────────────
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// ─── Import Log ──────────────────────────────────────────────────────────────
+// Track bulk import runs to prevent re-import and debug issues
+
+model ImportLog {
+  id         String   @id @default(cuid())
+  source     String   // e.g. "poetrydb", "csv-upload"
+  status     String   // "success" | "partial" | "failed"
+  imported   Int      @default(0)
+  skipped    Int      @default(0)
+  errors     Int      @default(0)
+  details    String?  @db.Text
+  createdAt  DateTime @default(now())
+}

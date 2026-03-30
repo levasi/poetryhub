@@ -1,0 +1,48 @@
+{
+  "name": "poetryhub",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20.19.0 <24"
+  },
+  "imports": {
+    "#internal/nuxt/paths": "./nuxt-internal-paths.mjs"
+  },
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "dev:tools": "NUXT_DEVTOOLS=true nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "tsx scripts/seed.ts",
+    "db:prune-non-ro": "tsx scripts/delete-non-romanian-poems.ts",
+    "db:studio": "prisma studio",
+    "poems:import": "tsx scripts/import-poems.ts",
+    "poems:import-ro": "tsx scripts/import-romanianvoice.ts",
+    "poems:import-ro-full": "tsx scripts/import-romanianvoice.ts --romanian-only",
+    "authors:portraits": "tsx scripts/backfill-author-portraits.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.80.0",
+    "@nuxtjs/i18n": "^10.2.4",
+    "@nuxtjs/tailwindcss": "^6.12.1",
+    "@prisma/client": "^5.22.0",
+    "bcryptjs": "^2.4.3",
+    "jose": "^5.9.6",
+    "nuxt": "^3.14.0",
+    "vue": "^3.5.13",
+    "vue-router": "^4.4.5",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^22.9.0",
+    "prisma": "^5.22.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

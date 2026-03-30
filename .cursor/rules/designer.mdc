@@ -1,0 +1,31 @@
+---
+description: UI/UX and visual design for PoetryHub (light theme, reading-first)
+globs:
+  - "**/*.vue"
+  - "tailwind.config.ts"
+  - "assets/css/main.css"
+  - "public/**"
+alwaysApply: false
+---
+
+# Designer role
+
+You are optimizing **PoetryHub** for a calm, **light, paper-like** reading experience—not a dark dashboard aesthetic.
+
+## Stack to respect
+
+- **Nuxt** + **Tailwind**; typography: **Playfair Display** (titles/poems), **Inter** (UI), **JetBrains Mono** (code/admin).
+- Use existing **ink** (warm gray) and **gold** accents from `tailwind.config.ts`; extend the palette only when necessary.
+- Global poem/body styles live in `assets/css/main.css` (e.g. `.poem-body`, `.poem-text`).
+
+## Priorities
+
+1. **Readability**: comfortable line length for verse, generous line-height, sufficient contrast on `ink-50` / white surfaces.
+2. **Consistency**: spacing scale, borders (`ink-200`), shadows kept subtle; align with patterns in `components/` and `layouts/`.
+3. **Accessibility**: visible focus rings, semantic headings, tap targets on mobile, don’t rely on color alone.
+4. **Scope**: change only what the task touches—no drive-by redesigns of unrelated pages or components.
+
+## Output
+
+- Prefer Tailwind utilities; use `@apply` or shared classes only when matching existing files.
+- When suggesting copy or layout, keep the tone literary and uncluttered.

@@ -1,0 +1,198 @@
+{
+  "version": 3,
+  "overrides": {},
+  "routes": [
+    {
+      "headers": {
+        "cache-control": "public, max-age=31536000, immutable"
+      },
+      "src": "/_nuxt/(.*)"
+    },
+    {
+      "src": "/_nuxt(.*)",
+      "headers": {
+        "cache-control": "public,max-age=31536000,immutable"
+      },
+      "continue": true
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "(?<__isr_route>/__nuxt_error)",
+      "dest": "/__fallback"
+    },
+    {
+      "src": "/signup",
+      "dest": "/signup"
+    },
+    {
+      "src": "/search",
+      "dest": "/search"
+    },
+    {
+      "src": "/poems",
+      "dest": "/poems"
+    },
+    {
+      "src": "/login",
+      "dest": "/login"
+    },
+    {
+      "src": "/favorites",
+      "dest": "/favorites"
+    },
+    {
+      "src": "/daily",
+      "dest": "/daily"
+    },
+    {
+      "src": "/authors",
+      "dest": "/authors"
+    },
+    {
+      "src": "/api/user/register",
+      "dest": "/api/user/register"
+    },
+    {
+      "src": "/api/user/me/preferences",
+      "dest": "/api/user/me/preferences"
+    },
+    {
+      "src": "/api/user/me",
+      "dest": "/api/user/me"
+    },
+    {
+      "src": "/api/user/logout",
+      "dest": "/api/user/logout"
+    },
+    {
+      "src": "/api/user/login",
+      "dest": "/api/user/login"
+    },
+    {
+      "src": "/api/user/favorites",
+      "dest": "/api/user/favorites"
+    },
+    {
+      "src": "/api/tags",
+      "dest": "/api/tags"
+    },
+    {
+      "src": "/api/poems/random",
+      "dest": "/api/poems/random"
+    },
+    {
+      "src": "/api/poems/daily",
+      "dest": "/api/poems/daily"
+    },
+    {
+      "src": "/api/poems",
+      "dest": "/api/poems"
+    },
+    {
+      "src": "/api/import/romanian",
+      "dest": "/api/import/romanian"
+    },
+    {
+      "src": "/api/import/poetrydb",
+      "dest": "/api/import/poetrydb"
+    },
+    {
+      "src": "/api/import/bulk",
+      "dest": "/api/import/bulk"
+    },
+    {
+      "src": "/api/authors",
+      "dest": "/api/authors"
+    },
+    {
+      "src": "/api/auth/me",
+      "dest": "/api/auth/me"
+    },
+    {
+      "src": "/api/auth/logout",
+      "dest": "/api/auth/logout"
+    },
+    {
+      "src": "/api/auth/login",
+      "dest": "/api/auth/login"
+    },
+    {
+      "src": "/admin/poems/new",
+      "dest": "/admin/poems/new"
+    },
+    {
+      "src": "/admin/poems",
+      "dest": "/admin/poems"
+    },
+    {
+      "src": "/admin/login",
+      "dest": "/admin/login"
+    },
+    {
+      "src": "/admin/import",
+      "dest": "/admin/import"
+    },
+    {
+      "src": "/admin/authors/new",
+      "dest": "/admin/authors/new"
+    },
+    {
+      "src": "/admin/authors",
+      "dest": "/admin/authors"
+    },
+    {
+      "src": "/admin",
+      "dest": "/admin"
+    },
+    {
+      "src": "/__nuxt_error",
+      "dest": "/__nuxt_error"
+    },
+    {
+      "src": "/",
+      "dest": "/index"
+    },
+    {
+      "src": "/poems/(?<slug>[^/]+)",
+      "dest": "/poems/[slug]"
+    },
+    {
+      "src": "/authors/(?<slug>[^/]+)",
+      "dest": "/authors/[slug]"
+    },
+    {
+      "src": "/api/user/favorites/(?<poemId>[^/]+)",
+      "dest": "/api/user/favorites/[poemId]"
+    },
+    {
+      "src": "/api/poems/(?<slug>[^/]+)",
+      "dest": "/api/poems/[slug]"
+    },
+    {
+      "src": "/api/authors/(?<slug>[^/]+)",
+      "dest": "/api/authors/[slug]"
+    },
+    {
+      "src": "/admin/poems/(?<slug>[^/]+)",
+      "dest": "/admin/poems/[slug]"
+    },
+    {
+      "src": "/admin/authors/(?<slug>[^/]+)",
+      "dest": "/admin/authors/[slug]"
+    },
+    {
+      "src": "/_i18n/(?<hash>[^/]+)/(?<locale>[^/]+)/messages.json",
+      "dest": "/_i18n/[hash]/[locale]/messages.json"
+    },
+    {
+      "src": "/__nuxt_island/(?:.*)",
+      "dest": "/__nuxt_island/[...]"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/__fallback"
+    }
+  ]
+}

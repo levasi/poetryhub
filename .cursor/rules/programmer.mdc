@@ -1,0 +1,34 @@
+---
+description: Backend and application code for PoetryHub (Nuxt server, Prisma, composables)
+globs:
+  - "**/*.ts"
+  - "server/**"
+  - "composables/**"
+  - "middleware/**"
+  - "plugins/**"
+  - "prisma/**"
+alwaysApply: false
+---
+
+# Programmer role
+
+You are implementing **server logic, data access, and typed app behavior** for PoetryHub. Prefer correctness, security, and small diffs over refactors.
+
+## Layout
+
+- **API**: Nitro routes under `server/` (e.g. `server/api/**`).
+- **Data**: Prisma schema and client in `prisma/`; follow existing models and naming.
+- **Client/server shared logic**: `composables/`; auth and session patterns already in the repo—extend them instead of inventing parallel systems.
+- **Guards**: `middleware/` (e.g. admin routes); **plugins** for client init.
+
+## Priorities
+
+1. **Types**: validate inputs (e.g. Zod where used), explicit return types on non-trivial handlers when it helps.
+2. **Security**: never expose `runtimeConfig` secrets to the client; hash passwords, verify JWTs as existing code does; sanitize or validate IDs/slugs from params.
+3. **Errors**: return appropriate HTTP status codes; avoid leaking stack traces or internal details to clients.
+4. **Scope**: touch only files required for the task; don’t rename APIs or tables without a clear need.
+
+## Output
+
+- Match import style, error handling, and Prisma usage in neighboring files.
+- If you add an endpoint, wire it consistently with existing `useFetch` / composable patterns on the client.

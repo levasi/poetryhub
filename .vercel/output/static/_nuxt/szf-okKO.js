@@ -1,0 +1,1 @@
+import{a3 as n,a4 as i,x as r}from"./oHerQI4B.js";const o=n(async a=>{let e,t;if(!(!a.path.startsWith("/admin")||a.path==="/admin/login"))try{[e,t]=i(()=>$fetch("/api/auth/me")),await e,t()}catch{return r(`/admin/login?redirect=${encodeURIComponent(a.fullPath)}`)}});export{o as default};

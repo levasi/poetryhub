@@ -1,0 +1,64 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Base — light, paper-like reading surface ───────────────────────────── */
+@layer base {
+  html {
+    @apply bg-ink-50 text-ink-900;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::-webkit-scrollbar            { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track      { @apply bg-ink-100; }
+  ::-webkit-scrollbar-thumb      { @apply rounded-full bg-ink-300; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-ink-400; }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-gold-500/50 ring-offset-2 ring-offset-ink-50;
+  }
+
+  ::selection {
+    @apply bg-gold-300/50 text-ink-900;
+  }
+
+  button { @apply cursor-pointer; }
+}
+
+/* ── Typography helpers — poem-first readability ────────────────────────── */
+@layer components {
+  .poem-text {
+    @apply font-serif text-[1.1875rem] leading-[1.9] text-ink-800;
+    letter-spacing: 0.02em;
+  }
+
+  .field-label {
+    @apply mb-1.5 block text-xs font-medium text-ink-600;
+  }
+
+  .section-title {
+    @apply font-serif text-2xl font-bold text-ink-900;
+  }
+}
+
+/* Poem body — comfortable measure, high contrast on paper */
+.poem-body p {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.2rem;
+  line-height: 1.95;
+  color: #2d2d26;
+  white-space: pre-wrap;
+}
+
+/* ── Transitions ──────────────────────────────────────────────────────────── */
+.page-enter-active,
+.page-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.page-enter-from,
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
+}

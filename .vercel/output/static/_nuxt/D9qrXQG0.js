@@ -1,0 +1,1 @@
+import{f as u}from"./oHerQI4B.js";function n(e){return`tags.${e.replace(/-/g,"_")}`}function g(){const{t:e,te:r}=u();function a(o,s){const t=n(o);return r(t)?e(t):s}return{labelForTag:a,tagMessageKey:n}}export{g as u};
