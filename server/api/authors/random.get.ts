@@ -1,6 +1,7 @@
-// GET /api/authors/random — one random author who has at least one poem
+// GET /api/authors/random — one random author who has at least one poem (+ bio + works list)
 import { prisma } from '~/server/utils/prisma'
 import { withResolvedAuthorPortrait } from '~/server/utils/authorPortrait'
+import { ensureAuthorBio } from '~/server/utils/authorBio'
 
 export default defineEventHandler(async () => {
   const rows = await prisma.$queryRaw<Array<{ id: string }>>`
@@ -21,5 +22,15 @@ export default defineEventHandler(async () => {
     throw createError({ statusCode: 404, statusMessage: 'Author not found' })
   }
 
-  return withResolvedAuthorPortrait(raw)
+  let author = await withResolvedAuthorPortrait(raw)
+  const bioText = await ensureAuthorBio(author)
+  if (bioText && bioText !== author.bio) author = { ...author, bio: bioText }
+
+  const works = await prisma.poem.findMany({
+    where: { authorId: author.id },
+    select: { title: true, slug: true },
+    orderBy: { title: 'asc' },
+  })
+
+  return { ...author, works }
 })

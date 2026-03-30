@@ -5,6 +5,8 @@ export interface AuthUser {
   name?: string
   poemFontFamily?: string
   poemFontSize?: number
+  poemLineHeight?: number
+  poemLetterSpacing?: number
 }
 
 export function useAuth() {

@@ -12,5 +12,7 @@ export default defineEventHandler(async (event) => {
     name: row.name,
     poemFontFamily: row.poemFontFamily,
     poemFontSize: row.poemFontSize,
+    poemLineHeight: row.poemLineHeight,
+    poemLetterSpacing: row.poemLetterSpacing,
   }
 })

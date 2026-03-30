@@ -17,6 +17,8 @@ export interface Poem {
   source:      string
   sourceUrl:   string | null
   readingTime: number | null
+  writtenYear: number | null
+  writtenPeriod: string | null
   featured:    boolean
   publishedAt: string
   createdAt:   string
@@ -112,11 +114,17 @@ export async function fetchRandomPoem(authorSlug?: string): Promise<Poem> {
 }
 
 export interface RandomAuthor {
-  id:       string
-  name:     string
-  slug:     string
-  imageUrl: string | null
-  _count?:  { poems: number }
+  id:           string
+  name:         string
+  slug:         string
+  imageUrl:     string | null
+  bio:          string | null
+  birthYear:    number | null
+  deathYear:    number | null
+  nationality:  string | null
+  _count?:      { poems: number }
+  /** Poem titles in this collection (same shape as GET /api/authors/:slug). */
+  works:        Array<{ title: string; slug: string }>
 }
 
 export async function fetchRandomAuthor(): Promise<RandomAuthor> {

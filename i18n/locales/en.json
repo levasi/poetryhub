@@ -164,6 +164,8 @@
     "fontPrev": "Previous font",
     "fontNext": "Next font",
     "fontSize": "Size",
+    "lineHeight": "Line height",
+    "letterSpacing": "Letter spacing",
     "fontPlayfair": "Playfair Display",
     "fontGeorgia": "Georgia",
     "fontInter": "Inter",
@@ -175,7 +177,9 @@
     "fontNotoSerif": "Noto Serif",
     "fontEBGaramond": "EB Garamond",
     "prefsSavedHint": "Signed in — your choices are saved to your account.",
-    "prefsLocalHint": "Choices are saved on this device. Sign in to sync across devices."
+    "prefsLocalHint": "Choices are saved on this device. Sign in to sync across devices.",
+    "writtenInYear": "Written in {year}",
+    "writtenYearAndPeriod": "Written in {year} · {period}"
   },
   "card": {
     "underMin": "<1 min",

@@ -73,6 +73,15 @@ const langLabel = computed(() => {
   const key = `lang.${code}`
   return te(key) ? t(key) : code.toUpperCase()
 })
+
+const writtenContextLine = computed(() => {
+  const y = props.poem.writtenYear
+  const p = props.poem.writtenPeriod?.trim()
+  if (y != null && p) return t('viewer.writtenYearAndPeriod', { year: y, period: p })
+  if (y != null) return t('viewer.writtenInYear', { year: y })
+  if (p) return p
+  return null
+})
 </script>
 
 <template>
@@ -100,7 +109,7 @@ const langLabel = computed(() => {
       </svg>
     </button>
 
-    <ReaderSettingsModal v-model:open="readerSettingsOpen" id-prefix="poem-pdp" />
+    <ReaderSettingsSidebar v-model:open="readerSettingsOpen" id-prefix="poem-pdp" />
 
     <!-- ── Standard reading view ──────────────────────────────────────────── -->
     <div v-if="!slideMode" class="animate-fade-in">
@@ -127,6 +136,10 @@ const langLabel = computed(() => {
           class="h-12 w-12 shrink-0 rounded-full object-cover ring-2 ring-ink-200/80" />
         <span>— {{ author.name }}</span>
       </NuxtLink>
+
+      <p v-if="writtenContextLine" class="mt-3 text-sm text-ink-500">
+        {{ writtenContextLine }}
+      </p>
 
       <!-- Ornament divider -->
       <div class="my-10 flex items-center gap-4">

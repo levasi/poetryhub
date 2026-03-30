@@ -12,3 +12,4 @@ prisma/migrations/
 Thumbs.db
 .vscode/
 .idea/
+.vercel

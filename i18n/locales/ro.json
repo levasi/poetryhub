@@ -164,6 +164,8 @@
     "fontPrev": "Fontul anterior",
     "fontNext": "Fontul următor",
     "fontSize": "Mărime",
+    "lineHeight": "Înălțime rând",
+    "letterSpacing": "Spațiere litere",
     "fontPlayfair": "Playfair Display",
     "fontGeorgia": "Georgia",
     "fontInter": "Inter",
@@ -175,7 +177,9 @@
     "fontNotoSerif": "Noto Serif",
     "fontEBGaramond": "EB Garamond",
     "prefsSavedHint": "Ești autentificat — preferințele se salvează în cont.",
-    "prefsLocalHint": "Preferințele se salvează pe acest dispozitiv. Autentifică-te pentru sincronizare."
+    "prefsLocalHint": "Preferințele se salvează pe acest dispozitiv. Autentifică-te pentru sincronizare.",
+    "writtenInYear": "Scrisă în {year}",
+    "writtenYearAndPeriod": "Scrisă în {year} · {period}"
   },
   "card": {
     "underMin": "<1 min",

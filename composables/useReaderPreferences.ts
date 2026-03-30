@@ -15,6 +15,30 @@ export type ReaderFontKey =
 
 const LS_FONT = 'ph_reader_font'
 const LS_SIZE = 'ph_reader_size'
+const LS_LINE = 'ph_reader_line'
+const LS_LETTER = 'ph_reader_letter'
+
+/** Line height multiplier (CSS unitless). */
+export const READER_LINE_HEIGHT_MIN = 1
+export const READER_LINE_HEIGHT_MAX = 2.5
+export const READER_LINE_HEIGHT_DEFAULT = 1.2
+export const READER_LINE_HEIGHT_STEP = 0.05
+
+/** Letter spacing in em (CSS `letter-spacing`). */
+export const READER_LETTER_SPACING_MIN = 0
+export const READER_LETTER_SPACING_MAX = 0.3
+export const READER_LETTER_SPACING_DEFAULT = 0.02
+export const READER_LETTER_SPACING_STEP = 0.005
+
+function clampLineHeight(n: number): number {
+  const t = Math.round(n * 100) / 100
+  return Math.min(READER_LINE_HEIGHT_MAX, Math.max(READER_LINE_HEIGHT_MIN, t))
+}
+
+function clampLetterSpacingEm(n: number): number {
+  const t = Math.round(n * 1000) / 1000
+  return Math.min(READER_LETTER_SPACING_MAX, Math.max(READER_LETTER_SPACING_MIN, t))
+}
 
 /** CSS font-family stacks (Google fonts loaded in nuxt.config). */
 export const READER_FONT_STACKS: Record<ReaderFontKey, string> = {
@@ -48,11 +72,23 @@ function isFontKey(v: string): v is ReaderFontKey {
   return v in READER_FONT_STACKS
 }
 
-function prefsFromUser(u: AuthUser | null): { font: ReaderFontKey; size: number } | null {
+function prefsFromUser(u: AuthUser | null): {
+  font: ReaderFontKey
+  size: number
+  lineHeight: number
+  letterSpacingEm: number
+} | null {
   if (!u || !('poemFontFamily' in u) || !u.poemFontFamily) return null
   if (!isFontKey(u.poemFontFamily)) return null
   const raw = typeof u.poemFontSize === 'number' ? u.poemFontSize : 22
-  return { font: u.poemFontFamily, size: Math.min(48, Math.max(16, raw)) }
+  const lhRaw = typeof u.poemLineHeight === 'number' ? u.poemLineHeight : READER_LINE_HEIGHT_DEFAULT
+  const lsRaw = typeof u.poemLetterSpacing === 'number' ? u.poemLetterSpacing : READER_LETTER_SPACING_DEFAULT
+  return {
+    font: u.poemFontFamily,
+    size: Math.min(48, Math.max(16, raw)),
+    lineHeight: clampLineHeight(lhRaw),
+    letterSpacingEm: clampLetterSpacingEm(lsRaw),
+  }
 }
 
 /** Order in the font dropdown (reading-friendly serifs first, then system / sans). */
@@ -75,19 +111,32 @@ export function useReaderPreferences() {
   /** Shared across PoetryViewer, poem cards, etc. so one source of truth. */
   const fontKey = useState<ReaderFontKey>('reader-pref-font', () => 'playfair')
   const fontSizePx = useState<number>('reader-pref-size', () => 22)
+  const lineHeight = useState<number>('reader-pref-line-height', () => READER_LINE_HEIGHT_DEFAULT)
+  const letterSpacingEm = useState<number>('reader-pref-letter-spacing', () => READER_LETTER_SPACING_DEFAULT)
 
   const fontFamilyCss = computed(() => READER_FONT_STACKS[fontKey.value])
 
-  function readLocal(): { font: ReaderFontKey; size: number } | null {
+  function readLocal(): {
+    font: ReaderFontKey
+    size: number
+    lineHeight: number
+    letterSpacingEm: number
+  } | null {
     if (!import.meta.client) return null
     const rf = localStorage.getItem(LS_FONT)
     const rs = localStorage.getItem(LS_SIZE)
+    const rl = localStorage.getItem(LS_LINE)
+    const rls = localStorage.getItem(LS_LETTER)
+    if (!rf && !rs && !rl && !rls) return null
     const font = rf && isFontKey(rf) ? rf : null
     const size = rs ? parseInt(rs, 10) : NaN
-    if (!font && Number.isNaN(size)) return null
+    const lh = rl ? parseFloat(rl) : NaN
+    const ls = rls ? parseFloat(rls) : NaN
     return {
       font: font ?? 'playfair',
       size: Number.isFinite(size) && size >= 16 && size <= 48 ? size : 22,
+      lineHeight: Number.isFinite(lh) ? clampLineHeight(lh) : READER_LINE_HEIGHT_DEFAULT,
+      letterSpacingEm: Number.isFinite(ls) ? clampLetterSpacingEm(ls) : READER_LETTER_SPACING_DEFAULT,
     }
   }
 
@@ -95,6 +144,8 @@ export function useReaderPreferences() {
     if (!import.meta.client) return
     localStorage.setItem(LS_FONT, fontKey.value)
     localStorage.setItem(LS_SIZE, String(fontSizePx.value))
+    localStorage.setItem(LS_LINE, String(lineHeight.value))
+    localStorage.setItem(LS_LETTER, String(letterSpacingEm.value))
   }
 
   function applyFromUserOrLocal() {
@@ -102,12 +153,16 @@ export function useReaderPreferences() {
     if (fromUser) {
       fontKey.value = fromUser.font
       fontSizePx.value = fromUser.size
+      lineHeight.value = fromUser.lineHeight
+      letterSpacingEm.value = fromUser.letterSpacingEm
       return
     }
     const loc = readLocal()
     if (loc) {
       fontKey.value = loc.font
       fontSizePx.value = loc.size
+      lineHeight.value = loc.lineHeight
+      letterSpacingEm.value = loc.letterSpacingEm
     }
   }
 
@@ -125,13 +180,20 @@ export function useReaderPreferences() {
     try {
       await $fetch('/api/user/me/preferences', {
         method: 'PATCH',
-        body: { poemFontFamily: fontKey.value, poemFontSize: fontSizePx.value },
+        body: {
+          poemFontFamily: fontKey.value,
+          poemFontSize: fontSizePx.value,
+          poemLineHeight: lineHeight.value,
+          poemLetterSpacing: letterSpacingEm.value,
+        },
       })
       if (user.value) {
         user.value = {
           ...user.value,
           poemFontFamily: fontKey.value,
           poemFontSize: fontSizePx.value,
+          poemLineHeight: lineHeight.value,
+          poemLetterSpacing: letterSpacingEm.value,
         }
       }
     } catch {
@@ -162,23 +224,25 @@ export function useReaderPreferences() {
     whiteSpace: 'pre-wrap' as const,
     fontFamily: fontFamilyCss.value,
     fontSize: `${fontSizePx.value}px`,
-    lineHeight: 1.2,
+    lineHeight: lineHeight.value,
     color: '#2d2d26',
-    letterSpacing: '0.02em',
+    letterSpacing: `${letterSpacingEm.value}em`,
   }))
 
   const stanzaSlideStyle = computed(() => ({
     whiteSpace: 'pre-wrap' as const,
     fontFamily: fontFamilyCss.value,
     fontSize: `clamp(${Math.max(16, fontSizePx.value - 2)}px, 3vw, ${Math.min(52, fontSizePx.value + 4)}px)`,
-    lineHeight: 1.2,
+    lineHeight: lineHeight.value,
     color: '#2d2d26',
-    letterSpacing: '0.02em',
+    letterSpacing: `${letterSpacingEm.value}em`,
   }))
 
   return {
     fontKey,
     fontSizePx,
+    lineHeight,
+    letterSpacingEm,
     fontFamilyCss,
     poemBodyStyle,
     stanzaSlideStyle,

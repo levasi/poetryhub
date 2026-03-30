@@ -292,7 +292,7 @@ watchEffect((onCleanup) => {
             </div>
           </header>
 
-          <ReaderSettingsModal v-model:open="readerPrefsOpen" :id-prefix="`qr-${poem.id}`" />
+          <ReaderSettingsSidebar v-model:open="readerPrefsOpen" :id-prefix="`qr-${poem.id}`" />
 
           <div class="min-h-0 flex-1 overflow-y-auto bg-white px-5 py-6">
             <p :style="poemBodyStyle">{{ poem.content }}</p>

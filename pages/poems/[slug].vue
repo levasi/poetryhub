@@ -49,13 +49,10 @@ const related = computed(() => relatedRes.value?.data ?? [])
         {{ t('poem.back') }}
       </NuxtLink>
 
-      <!-- Full poem viewer with carousel mode -->
-      <PoetryViewer :poem="poem" />
-
-      <!-- Prev / next in catalog order (same as /poems list) -->
+      <!-- Prev / next in catalog order (same as /poems list) — above the poem -->
       <nav
         v-if="poem.navigation"
-        class="mt-10 flex flex-col gap-3 border-t border-ink-200/80 pt-8 sm:flex-row sm:items-stretch sm:justify-between"
+        class="mb-10 flex flex-col gap-3 border-b border-ink-200/80 pb-8 sm:flex-row sm:items-stretch sm:justify-between"
         :aria-label="t('a11y.poemNavigation')"
       >
         <div class="min-w-0 flex-1">
@@ -117,6 +114,9 @@ const related = computed(() => relatedRes.value?.data ?? [])
           </div>
         </div>
       </nav>
+
+      <!-- Full poem viewer with carousel mode -->
+      <PoetryViewer :poem="poem" />
 
       <!-- Related poems -->
       <section v-if="related.length && poem.author" class="mt-20 border-t border-ink-200/80 pt-16">

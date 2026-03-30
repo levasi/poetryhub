@@ -1,11 +1,29 @@
 // GET /api/poems/:slug — fetch a single poem with full details
 import { prisma } from '~/server/utils/prisma'
 import { withResolvedAuthorPortrait } from '~/server/utils/authorPortrait'
+import { enrichPoemWrittenDateIfNeeded } from '~/server/utils/enrichPoemWrittenDate'
 
 export default defineEventHandler(async (event) => {
   const slug = getRouterParam(event, 'slug')
 
-  const poem = await prisma.poem.findUnique({
+  let poem = await prisma.poem.findUnique({
+    where: { slug: slug! },
+    include: {
+      author: true,
+      poemTags: {
+        include: { tag: true },
+      },
+    },
+  })
+
+  if (!poem) {
+    throw createError({ statusCode: 404, statusMessage: 'Poem not found' })
+  }
+
+  const config = useRuntimeConfig(event)
+  await enrichPoemWrittenDateIfNeeded(poem.id, { anthropicApiKey: config.anthropicApiKey })
+
+  poem = await prisma.poem.findUnique({
     where: { slug: slug! },
     include: {
       author: true,

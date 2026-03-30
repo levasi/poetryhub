@@ -1,24 +1,215 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+import { defineNuxtModule } from '@nuxt/kit'
+import { defu } from 'defu'
+import { resolve } from 'node:path'
+
+/** Nitro virtual imports are not real package exports; they must be bundled, not loaded by Node. */
+const BUNDLE_NOT_EXTERNAL = ['nitropack/runtime', 'nitro/runtime'] as const
+
+const NITRO_SHIMS_DIR = resolve(process.cwd(), 'nitropack-shims')
+
+function shouldBundleNitropackRuntimeId(id: string): boolean {
+  if (id === 'nitropack/runtime' || id.startsWith('nitropack/runtime/')) return true
+  const norm = id.replace(/\\/g, '/')
+  if (norm.includes('/node_modules/nitropack/') && norm.includes('/dist/runtime')) return true
+  return false
+}
+
+function shouldForceBundleRollupExternal(id: string): boolean {
+  if (shouldBundleNitropackRuntimeId(id)) return true
+  if (id === 'nitro/runtime' || id.startsWith('nitro/runtime/')) return true
+  return BUNDLE_NOT_EXTERNAL.includes(id as (typeof BUNDLE_NOT_EXTERNAL)[number])
+}
+
+/** Rollup `external: [...]` does not run `shouldForceBundle` on resolved file paths; wrap as a function. */
+function matchesRollupExternalArray(id: string, matchers: unknown[]): boolean {
+  for (const e of matchers) {
+    if (typeof e === 'string') {
+      if (e === id || id.startsWith(`${e}/`)) return true
+      continue
+    }
+    if (e instanceof RegExp && e.test(id)) return true
+  }
+  return false
+}
+
+function patchRollupExternals(rollupOptions: { external?: unknown } | undefined) {
+  if (!rollupOptions?.external) return
+  const ext = rollupOptions.external
+  if (Array.isArray(ext)) {
+    const matchers = [...ext]
+    rollupOptions.external = (id: string, importer?: string, isResolved?: boolean) => {
+      if (shouldForceBundleRollupExternal(id)) return false
+      return matchesRollupExternalArray(id, matchers)
+    }
+    return
+  }
+  if (typeof ext === 'function') {
+    const prev = ext as (id: string, importer?: string, isResolved?: boolean) => boolean | void
+    rollupOptions.external = (id: string, importer?: string, isResolved?: boolean) => {
+      if (shouldForceBundleRollupExternal(id)) return false
+      return Boolean(prev(id, importer, isResolved))
+    }
+  }
+}
+
+function patchServerViteConfig(config: import('vite').UserConfig) {
+  patchRollupExternals(config.build?.rollupOptions)
+  // Vite 7 environment API: SSR Rollup options live under `environments.<name>.build`.
+  const ssrRo = config.environments?.ssr?.build?.rollupOptions
+  if (ssrRo) patchRollupExternals(ssrRo)
+  if (config.environments) {
+    for (const env of Object.values(config.environments)) {
+      if (env && typeof env === 'object' && 'build' in env) {
+        patchRollupExternals(env.build?.rollupOptions)
+      }
+    }
+  }
+}
+
+/**
+ * Nitropack's config.mjs uses `process.env.RUNTIME_CONFIG`; Nitro's Rollup replaces that at Nitro build time.
+ * When Vite bundles nitropack for SSR, the placeholder is left as-is → undefined → `.nitro` throws.
+ * Inject the merged Nuxt runtimeConfig as a JSON object literal (same as Nitro replace).
+ *
+ * Populated in `hooks.modules:done` — do not call `useNuxt()` inside Vite `transform` (it runs outside
+ * Nuxt context during `nuxt dev`, which caused "Cannot read properties of undefined (reading 'nitro')").
+ */
+let nitroInlineRuntimeConfig: Record<string, unknown> | null = null
+
+function injectNitropackRuntimeConfig(): import('vite').Plugin {
+  return {
+    name: 'poetryhub:nitropack-runtime-config',
+    enforce: 'pre',
+    transform(code, id) {
+      const normalized = id.replace(/\\/g, '/')
+      if (!normalized.includes('/nitropack/dist/runtime/internal/config.mjs')) return null
+      if (!code.includes('process.env.RUNTIME_CONFIG')) return null
+      const rc = nitroInlineRuntimeConfig
+      if (!rc) return null
+      const inlined = JSON.stringify(rc)
+      return code.replace(
+        'const _inlineRuntimeConfig = process.env.RUNTIME_CONFIG',
+        `const _inlineRuntimeConfig = ${inlined}`,
+      )
+    },
+  }
+}
+
+/** Runs at `modules:done` with a real `nuxt` instance (user `hooks['modules:done']` gets no args). */
+const poetryhubNitroRuntimeCache = defineNuxtModule({
+  meta: { name: 'poetryhub-nitro-runtime-cache' },
+  setup(_options, nuxt) {
+    nuxt.hooks.hook('modules:done', () => {
+      nitroInlineRuntimeConfig = defu(nuxt.options.runtimeConfig, {
+        nitro: {
+          envPrefix: 'NITRO_',
+          envExpansion: false,
+        },
+      }) as Record<string, unknown>
+    })
+  },
+})
+
+/**
+ * Resolve Nitro virtual imports to real files so Vite can bundle them (never hit Node raw).
+ */
+function nitropackVirtualShimPlugin(): import('vite').Plugin {
+  return {
+    name: 'poetryhub:nitropack-virtual-shims',
+    enforce: 'pre',
+    resolveId(id) {
+      if (id === '#nitro-internal-virtual/error-handler') {
+        return resolve(NITRO_SHIMS_DIR, 'error-handler.mjs')
+      }
+      if (id === '#nitro-internal-virtual/plugins') {
+        return resolve(NITRO_SHIMS_DIR, 'plugins.mjs')
+      }
+      if (id === '#nitro-internal-virtual/server-handlers') {
+        return resolve(NITRO_SHIMS_DIR, 'server-handlers.mjs')
+      }
+      if (id === '#nitro-internal-virtual/app-config') {
+        return resolve(NITRO_SHIMS_DIR, 'app-config.mjs')
+      }
+    },
+  }
+}
+
+/**
+ * Vite 7 applies SSR Rollup options via `configEnvironment('ssr', …)` after root `config`.
+ * Nuxt hooks can miss the final merge; this plugin strips nitropack from `external` for SSR only.
+ */
+function nitropackSsrBundlePlugin(): import('vite').Plugin {
+  return {
+    name: 'poetryhub:bundle-nitropack-ssr',
+    enforce: 'post',
+    configEnvironment(name, config) {
+      if (name !== 'ssr') return
+      patchRollupExternals(config.build?.rollupOptions)
+    },
+    configResolved(config) {
+      const ssr = config.environments?.ssr
+      if (ssr && typeof ssr === 'object' && 'build' in ssr) {
+        patchRollupExternals(ssr.build?.rollupOptions)
+      }
+      if (config.build?.ssr) {
+        patchRollupExternals(config.build?.rollupOptions)
+      }
+    },
+  }
+}
+
 export default defineNuxtConfig({
+  build: {
+    // Ensures nitropack is inlined for SSR (same intent as vite.ssr.noExternal; helps merge order with Nuxt internals).
+    transpile: ['nitropack', '@nuxt/nitro-server'],
+  },
+
   // Keep current; bump occasionally per https://nuxt.com/docs/guide/going-further/features#compatibilitydate
   compatibilityDate: '2025-11-01',
-  // On Node 24+, DevTools workers can load nitropack before Rollup resolves #nitro-internal-virtual/*.
   // Opt in: NUXT_DEVTOOLS=true nuxt dev
   devtools: { enabled: process.env.NUXT_DEVTOOLS === 'true' },
 
-  // Bundle nitropack for SSR so Node never resolves raw #nitro-internal-virtual/* (fixes dev on Node 24+).
+  // Nuxt marks `nitropack/runtime` as Rollup external for the SSR server chunk. Node then loads
+  // nitropack/dist/runtime/internal/app.mjs directly, which imports #nitro-internal-virtual/* — those
+  // only exist after Nitro's bundler resolves them, so Node throws ERR_PACKAGE_IMPORT_NOT_DEFINED.
+  // Bundling nitropack into the server output avoids raw runtime imports (common on Node 20–24).
+  hooks: {
+    'vite:extendConfig'(config, ctx) {
+      if (!ctx.isServer) return
+      patchServerViteConfig(config)
+    },
+    'vite:configResolved'(config, ctx) {
+      if (!ctx.isServer) return
+      patchServerViteConfig(config)
+    },
+  },
+
   vite: {
+    plugins: [
+      injectNitropackRuntimeConfig(),
+      nitropackVirtualShimPlugin(),
+      nitropackSsrBundlePlugin(),
+    ],
     ssr: {
-      noExternal: ['nitropack'],
+      // Strings + regex so every subpath (e.g. nitropack/runtime/app) stays in the SSR bundle.
+      noExternal: [
+        'nitropack',
+        '@nuxt/nitro-server',
+        /^nitropack(\/|$)/,
+        /^@nuxt\/nitro-server(\/|$)/,
+      ],
     },
   },
 
   // Avoid Vite "Failed to resolve import #app-manifest" pre-transform noise (nuxt/nuxt#30461).
   experimental: {
     appManifest: false,
+    // Vite 7 defaults this on in some setups; legacy SSR bundling path can avoid nitropack being left as raw Node externals.
+    viteEnvironmentApi: false,
   },
 
-  modules: ['@nuxtjs/tailwindcss', '@nuxtjs/i18n'],
+  modules: [poetryhubNitroRuntimeCache, '@nuxtjs/tailwindcss', '@nuxtjs/i18n'],
 
   i18n: {
     locales: [
@@ -44,6 +235,8 @@ export default defineNuxtConfig({
     adminEmail: process.env.ADMIN_EMAIL || 'admin@poetryhub.com',
     adminPassword: process.env.ADMIN_PASSWORD || 'admin123',
     poetryDbUrl: process.env.POETRY_DB_URL || 'https://poetrydb.org',
+    /** Optional: improves poem date enrichment when Wikipedia has no extract */
+    anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
     // Public (client + server)
     public: {
       appName: 'PoetryHub',

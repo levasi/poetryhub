@@ -2,7 +2,9 @@
 // Supports PostgreSQL (Neon, Supabase, or any PG provider)
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  // Vercel / AWS Lambda (Amazon Linux) — required for Prisma engines in production
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
@@ -61,6 +63,12 @@ model Poem {
   sourceUrl   String?
   // Computed reading time in seconds
   readingTime Int?
+  /// Approximate year the poem was written or first published (if known)
+  writtenYear Int?
+  /// Literary period or free-text date hint (e.g. "Victorian era", "Early 20th century")
+  writtenPeriod String?
+  /// Set after an automatic enrichment attempt (success or not) to avoid repeat API calls on every page view
+  writtenDateEnrichedAt DateTime?
   featured    Boolean  @default(false)
   publishedAt DateTime @default(now())
   createdAt   DateTime @default(now())
@@ -100,6 +108,10 @@ model User {
   poemFontFamily String   @default("playfair")
   /// Body font size in px (16–48)
   poemFontSize   Int      @default(22)
+  /// Line height multiplier for poem body (e.g. 1.2–2.5)
+  poemLineHeight Float    @default(1.2)
+  /// Letter spacing in em (e.g. 0.02 = 0.02em)
+  poemLetterSpacing Float @default(0.02)
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 

@@ -48,6 +48,8 @@ export default defineEventHandler(async (event) => {
       name: user.name,
       poemFontFamily: user.poemFontFamily,
       poemFontSize: user.poemFontSize,
+      poemLineHeight: user.poemLineHeight,
+      poemLetterSpacing: user.poemLetterSpacing,
     },
   }
 })

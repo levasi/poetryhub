@@ -1,21 +1,25 @@
 // Singleton Prisma client — prevents connection exhaustion in serverless (Vercel)
 import { PrismaClient } from '@prisma/client'
 
-declare global {
-  // eslint-disable-next-line no-var
-  var __prisma: PrismaClient | undefined
+const globalForPrisma = globalThis as typeof globalThis & { __prisma?: PrismaClient }
+
+/** Prisma schema uses `env("DATABASE_URL")`. Ensure it exists (Vercel Postgres often exposes `POSTGRES_URL`). */
+function ensureDatabaseUrlEnv() {
+  if (process.env.DATABASE_URL?.trim()) return
+  const alt =
+    process.env.POSTGRES_URL?.trim()
+    || process.env.POSTGRES_PRISMA_URL?.trim()
+    || process.env.VERCEL_POSTGRES_URL?.trim()
+  if (alt) process.env.DATABASE_URL = alt
 }
 
 function createPrismaClient() {
+  ensureDatabaseUrlEnv()
   return new PrismaClient({
     log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
   })
 }
 
-// In development, hot-reloads would create a new client on every request
-// without this global singleton guard.
-export const prisma: PrismaClient = globalThis.__prisma ?? createPrismaClient()
-
-if (process.env.NODE_ENV !== 'production') {
-  globalThis.__prisma = prisma
-}
+// Reuse one client per runtime (dev HMR + warm serverless invocations).
+export const prisma: PrismaClient = globalForPrisma.__prisma ?? createPrismaClient()
+globalForPrisma.__prisma = prisma
