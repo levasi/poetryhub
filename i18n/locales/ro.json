@@ -27,6 +27,11 @@
     "subtitle": "Descoperă poezie clasică și contemporană. Răsfoiește după stare, autor sau lasă versul să te găsească.",
     "explorePoems": "Explorează poezii",
     "randomPoem": "Poezie aleatoare",
+    "heroAuthors": "Autori",
+    "heroPoems": "Poezii",
+    "rollAuthorDice": "Alege un autor la întâmplare",
+    "rollPoemDice": "Alege o poezie la întâmplare",
+    "heroPoemCount": "{n} poezii",
     "poemOfDay": "Poezia zilei",
     "readFull": "Citește întreaga poezie",
     "browseByMood": "După stare",
@@ -66,7 +71,11 @@
     "back": "Toate poeziile",
     "moreBy": "Mai multe de {name}",
     "viewAllPoems": "Vezi toate poeziile →",
-    "notFound": "Poezia nu a fost găsită"
+    "notFound": "Poezia nu a fost găsită",
+    "navNewer": "Mai nouă",
+    "navOlder": "Mai veche",
+    "navNewerAria": "Poezia mai nouă din colecție: {title}",
+    "navOlderAria": "Poezia mai veche din colecție: {title}"
   },
   "authors": {
     "title": "Autori",
@@ -133,7 +142,8 @@
     "openMenu": "Deschide meniul",
     "closeMenu": "Închide meniul",
     "closeFilters": "Închide filtrele",
-    "closeStanza": "Închide vizualizarea pe strofe"
+    "closeStanza": "Închide vizualizarea pe strofe",
+    "poemNavigation": "Poezii alăturate în colecție"
   },
   "pagination": {
     "previous": "Pagina anterioară",
@@ -147,12 +157,23 @@
     "minRead": "{n} min citire",
     "slideHint": "{current} / {total} · Folosește ← → pentru navigare · Esc pentru ieșire",
     "readingDisplay": "Citire",
+    "readingSettingsHint": "Ajustează fontul și mărimea pentru citit confortabil.",
+    "openReadingSettings": "Aspect citire",
+    "closeReadingSettings": "Închide setările de citire",
     "font": "Font",
+    "fontPrev": "Fontul anterior",
+    "fontNext": "Fontul următor",
     "fontSize": "Mărime",
     "fontPlayfair": "Playfair Display",
     "fontGeorgia": "Georgia",
     "fontInter": "Inter",
     "fontLora": "Lora",
+    "fontLiterata": "Literata",
+    "fontMerriweather": "Merriweather",
+    "fontSourceSerif4": "Source Serif 4",
+    "fontCrimsonPro": "Crimson Pro",
+    "fontNotoSerif": "Noto Serif",
+    "fontEBGaramond": "EB Garamond",
     "prefsSavedHint": "Ești autentificat — preferințele se salvează în cont.",
     "prefsLocalHint": "Preferințele se salvează pe acest dispozitiv. Autentifică-te pentru sincronizare."
   },
@@ -161,7 +182,12 @@
     "min": "{n} min",
     "favoriteAdd": "Adaugă la favorite",
     "favoriteRemove": "Elimină din favorite",
-    "aiBadge": "AI"
+    "aiBadge": "AI",
+    "quickRead": "Citire rapidă",
+    "quickReadLabel": "Citește rapid",
+    "openQuickRead": "Deschide citirea rapidă",
+    "quickReadClose": "Închide previzualizarea",
+    "readFullPoem": "Deschide poezia completă"
   },
   "lang": {
     "en": "Engleză",

@@ -1,6 +1,17 @@
 import type { AuthUser } from '~/composables/useAuth'
 
-export type ReaderFontKey = 'playfair' | 'georgia' | 'inter' | 'lora'
+/** Keys stored in `User.poemFontFamily` and localStorage. */
+export type ReaderFontKey =
+  | 'playfair'
+  | 'georgia'
+  | 'inter'
+  | 'lora'
+  | 'literata'
+  | 'merriweather'
+  | 'source-serif'
+  | 'crimson'
+  | 'noto-serif'
+  | 'eb-garamond'
 
 const LS_FONT = 'ph_reader_font'
 const LS_SIZE = 'ph_reader_size'
@@ -11,6 +22,26 @@ export const READER_FONT_STACKS: Record<ReaderFontKey, string> = {
   georgia: "Georgia, 'Times New Roman', serif",
   inter: "'Inter', system-ui, sans-serif",
   lora: "'Lora', Georgia, serif",
+  literata: "'Literata', Georgia, serif",
+  merriweather: "'Merriweather', Georgia, serif",
+  'source-serif': "'Source Serif 4', Georgia, 'Times New Roman', serif",
+  crimson: "'Crimson Pro', Georgia, serif",
+  'noto-serif': "'Noto Serif', Georgia, serif",
+  'eb-garamond': "'EB Garamond', serif",
+}
+
+/** i18n keys under `viewer.*` for each font option label. */
+export const READER_FONT_I18N_KEYS: Record<ReaderFontKey, string> = {
+  playfair: 'viewer.fontPlayfair',
+  georgia: 'viewer.fontGeorgia',
+  inter: 'viewer.fontInter',
+  lora: 'viewer.fontLora',
+  literata: 'viewer.fontLiterata',
+  merriweather: 'viewer.fontMerriweather',
+  'source-serif': 'viewer.fontSourceSerif4',
+  crimson: 'viewer.fontCrimsonPro',
+  'noto-serif': 'viewer.fontNotoSerif',
+  'eb-garamond': 'viewer.fontEBGaramond',
 }
 
 function isFontKey(v: string): v is ReaderFontKey {
@@ -24,11 +55,26 @@ function prefsFromUser(u: AuthUser | null): { font: ReaderFontKey; size: number 
   return { font: u.poemFontFamily, size: Math.min(48, Math.max(16, raw)) }
 }
 
+/** Order in the font dropdown (reading-friendly serifs first, then system / sans). */
+export const READER_FONT_OPTIONS_ORDER = [
+  'literata',
+  'source-serif',
+  'lora',
+  'merriweather',
+  'crimson',
+  'noto-serif',
+  'eb-garamond',
+  'playfair',
+  'georgia',
+  'inter',
+] as const satisfies readonly ReaderFontKey[]
+
 export function useReaderPreferences() {
   const { user, isLoggedIn } = useAuth()
 
-  const fontKey = ref<ReaderFontKey>('playfair')
-  const fontSizePx = ref(22)
+  /** Shared across PoetryViewer, poem cards, etc. so one source of truth. */
+  const fontKey = useState<ReaderFontKey>('reader-pref-font', () => 'playfair')
+  const fontSizePx = useState<number>('reader-pref-size', () => 22)
 
   const fontFamilyCss = computed(() => READER_FONT_STACKS[fontKey.value])
 
@@ -102,11 +148,21 @@ export function useReaderPreferences() {
     }, 450)
   }
 
+  /** Cycle font with ← / → (matches `READER_FONT_OPTIONS_ORDER`). */
+  function cycleFont(dir: -1 | 1) {
+    const order = READER_FONT_OPTIONS_ORDER as readonly ReaderFontKey[]
+    const i = order.indexOf(fontKey.value)
+    const idx = i >= 0 ? i : 0
+    const next = (idx + dir + order.length) % order.length
+    fontKey.value = order[next]
+    onReaderPreferenceChange()
+  }
+
   const poemBodyStyle = computed(() => ({
     whiteSpace: 'pre-wrap' as const,
     fontFamily: fontFamilyCss.value,
     fontSize: `${fontSizePx.value}px`,
-    lineHeight: 1.95,
+    lineHeight: 1.2,
     color: '#2d2d26',
     letterSpacing: '0.02em',
   }))
@@ -115,7 +171,7 @@ export function useReaderPreferences() {
     whiteSpace: 'pre-wrap' as const,
     fontFamily: fontFamilyCss.value,
     fontSize: `clamp(${Math.max(16, fontSizePx.value - 2)}px, 3vw, ${Math.min(52, fontSizePx.value + 4)}px)`,
-    lineHeight: 2.05,
+    lineHeight: 1.2,
     color: '#2d2d26',
     letterSpacing: '0.02em',
   }))
@@ -127,6 +183,7 @@ export function useReaderPreferences() {
     poemBodyStyle,
     stanzaSlideStyle,
     onReaderPreferenceChange,
-    fontOptions: ['playfair', 'georgia', 'inter', 'lora'] as const,
+    cycleFont,
+    fontOptions: READER_FONT_OPTIONS_ORDER,
   }
 }

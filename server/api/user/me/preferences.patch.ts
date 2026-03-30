@@ -4,7 +4,20 @@ import { prisma } from '~/server/utils/prisma'
 import { requireUser } from '~/server/utils/auth'
 
 const schema = z.object({
-  poemFontFamily: z.enum(['playfair', 'georgia', 'inter', 'lora']).optional(),
+  poemFontFamily: z
+    .enum([
+      'playfair',
+      'georgia',
+      'inter',
+      'lora',
+      'literata',
+      'merriweather',
+      'source-serif',
+      'crimson',
+      'noto-serif',
+      'eb-garamond',
+    ])
+    .optional(),
   poemFontSize: z.number().int().min(16).max(48).optional(),
 })
 

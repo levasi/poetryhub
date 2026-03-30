@@ -1,5 +1,10 @@
 <script setup lang="ts">
-import { fetchRandomPoem, type Poem } from '~/composables/usePoems'
+import {
+  fetchRandomAuthor,
+  fetchRandomPoem,
+  type Poem,
+  type RandomAuthor,
+} from '~/composables/usePoems'
 
 const { t } = useI18n()
 
@@ -7,9 +12,6 @@ useSeoMeta({
   title: computed(() => t('seo.homeTitle')),
   description: computed(() => t('seo.homeDesc')),
 })
-
-// Daily poem (hero)
-const { data: dailyPoem } = await useFetch<Poem>('/api/poems/daily')
 
 // Featured poems
 const { data: featuredRes } = await useFetch<{ data: Poem[] }>('/api/poems', {
@@ -28,95 +30,172 @@ const { data: themeTags } = await useFetch('/api/tags', { params: { category: 't
 const featured = computed(() => featuredRes.value?.data ?? [])
 const recent   = computed(() => recentRes.value?.data ?? [])
 
-const dailyPreview = computed(() => {
-  const p = dailyPoem.value
+// ── Hero: random author + poem (dice columns) ─────────────────────────────
+const heroAuthor = ref<RandomAuthor | null>(null)
+const heroPoem   = ref<Poem | null>(null)
+const rollingAuthor = ref(false)
+const rollingPoem   = ref(false)
+/** True after the first author-dice load (success or empty DB). */
+const heroInitialized = ref(false)
+
+const heroPoemPreview = computed(() => {
+  const p = heroPoem.value
   if (!p) return ''
   const raw = p.excerpt?.trim() || p.content
-  return raw.length > 320 ? `${raw.slice(0, 320).trim()}…` : raw
+  return raw.length > 280 ? `${raw.slice(0, 280).trim()}…` : raw
 })
 
-const dailyAuthor = computed(() => dailyPoem.value?.author)
-
-const dailyAuthorAvatar = computed(() =>
-  dailyPoem.value ? authorAvatarUrl(dailyAuthor.value) : '',
+const heroAuthorAvatar = computed(() =>
+  heroAuthor.value ? authorAvatarUrl(heroAuthor.value) : '',
 )
 
-// Random poem navigation
-const router = useRouter()
-async function goRandom() {
+const poemColumnAvatar = computed(() =>
+  heroPoem.value?.author ? authorAvatarUrl(heroPoem.value.author) : '',
+)
+
+async function rollAuthorDice() {
+  rollingAuthor.value = true
   try {
-    const poem = await fetchRandomPoem()
-    router.push(`/poems/${poem.slug}`)
+    const a = await fetchRandomAuthor()
+    heroAuthor.value = a
+    const p = await fetchRandomPoem(a.slug)
+    heroPoem.value = p
   } catch {
-    // silently ignore if db is empty
+    heroAuthor.value = null
+    heroPoem.value = null
+  } finally {
+    rollingAuthor.value = false
+    heroInitialized.value = true
   }
 }
+
+async function rollPoemDice() {
+  rollingPoem.value = true
+  try {
+    heroPoem.value = await fetchRandomPoem()
+  } catch {
+    heroPoem.value = null
+  } finally {
+    rollingPoem.value = false
+  }
+}
+
+onMounted(() => {
+  void rollAuthorDice()
+})
 </script>
 
 <template>
   <div class="animate-fade-in">
-    <!-- ── Daily poem (hero) ──────────────────────────────────────────────── -->
-    <section v-if="dailyPoem" class="mb-16 rounded-2xl border border-amber-200/80 bg-gradient-to-br from-white via-ink-50 to-amber-50/40 px-6 py-12 shadow-sm md:px-10 md:py-16">
-      <div class="mx-auto max-w-3xl text-center">
-        <div class="mb-6 flex items-center justify-center gap-2">
-          <span class="inline-block h-1.5 w-1.5 rounded-full bg-gold-500 animate-pulse-soft" />
-          <span class="text-xs font-medium uppercase tracking-widest text-gold-800">{{ t('home.poemOfDay') }}</span>
+    <!-- ── Hero: authors | poems (dice) ───────────────────────────────────── -->
+    <section class="mb-16 rounded-2xl border border-amber-200/80 bg-gradient-to-br from-white via-ink-50 to-amber-50/40 px-4 py-10 shadow-sm sm:px-6 md:py-14">
+      <div
+        v-if="!heroInitialized"
+        class="flex min-h-[12rem] items-center justify-center"
+      >
+        <span
+          class="h-9 w-9 animate-spin rounded-full border-2 border-ink-200 border-t-gold-600"
+          aria-hidden="true"
+        />
+      </div>
+
+      <div
+        v-else-if="!heroAuthor && !heroPoem"
+        class="py-12 text-center text-ink-600"
+      >
+        <p class="font-serif text-lg">{{ t('home.emptyLibrary') }}</p>
+      </div>
+
+      <div
+        v-else
+        class="mx-auto grid max-w-5xl gap-8 md:grid-cols-2 md:gap-10"
+      >
+        <!-- Authors column -->
+        <div class="flex flex-col rounded-xl border border-ink-200/90 bg-white/80 p-5 shadow-sm backdrop-blur-sm md:p-6">
+          <div class="mb-4 flex items-center justify-between gap-3 border-b border-ink-100 pb-3">
+            <h2 class="font-serif text-xl font-bold text-ink-900">{{ t('home.heroAuthors') }}</h2>
+            <button
+              type="button"
+              class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-ink-200 bg-white text-ink-600 shadow-sm transition hover:border-gold-400 hover:text-gold-800 disabled:opacity-50"
+              :disabled="rollingAuthor"
+              :aria-label="t('home.rollAuthorDice')"
+              @click="rollAuthorDice"
+            >
+              <span class="text-lg" aria-hidden="true">🎲</span>
+            </button>
+          </div>
+          <div v-if="heroAuthor" class="flex min-h-[10rem] flex-1 flex-col">
+            <NuxtLink
+              :to="`/authors/${heroAuthor.slug}`"
+              class="group flex flex-1 flex-col items-center text-center"
+            >
+              <img
+                :src="heroAuthorAvatar"
+                :alt="heroAuthor.name"
+                loading="lazy"
+                class="h-24 w-24 rounded-full object-cover ring-2 ring-ink-200/80 transition group-hover:ring-gold-400/60"
+              />
+              <p class="mt-4 font-serif text-2xl font-bold text-ink-900 transition group-hover:text-gold-800">
+                {{ heroAuthor.name }}
+              </p>
+              <p
+                v-if="heroAuthor._count"
+                class="mt-1 text-sm text-ink-500"
+              >
+                {{ t('home.heroPoemCount', { n: heroAuthor._count.poems }) }}
+              </p>
+            </NuxtLink>
+          </div>
         </div>
-        <h1 class="font-serif text-3xl font-bold leading-tight tracking-tight text-ink-900 md:text-5xl">
-          {{ dailyPoem.title }}
-        </h1>
-        <div class="mt-3 flex items-center justify-center gap-3 text-sm text-ink-600 md:text-base">
-          <img
-            :src="dailyAuthorAvatar"
-            :alt="dailyAuthor?.name ?? ''"
-            loading="lazy"
-            class="h-10 w-10 shrink-0 rounded-full object-cover ring-2 ring-ink-200/80"
-          />
-          <span v-if="dailyAuthor">— {{ dailyAuthor.name }}</span>
-        </div>
-        <p class="poem-text mx-auto mt-8 max-w-xl text-left text-[1.05rem] md:text-center">
-          {{ dailyPreview }}
-        </p>
-        <div class="mt-10 flex flex-wrap items-center justify-center gap-3">
-          <NuxtLink
-            :to="`/poems/${dailyPoem.slug}`"
-            class="rounded-full bg-gold-600 px-6 py-3 text-sm font-medium text-white shadow-md transition hover:bg-gold-700"
-          >
-            {{ t('home.readFull') }}
-          </NuxtLink>
-          <NuxtLink
-            to="/poems"
-            class="rounded-full border border-ink-200 bg-white px-6 py-3 text-sm text-ink-700 shadow-sm transition-colors hover:border-ink-300 hover:bg-ink-50"
-          >
-            {{ t('home.explorePoems') }}
-          </NuxtLink>
-          <button
-            type="button"
-            class="flex items-center gap-2 rounded-full border border-ink-200 bg-white px-6 py-3 text-sm text-ink-700 shadow-sm transition-colors hover:border-ink-300 hover:bg-ink-50"
-            @click="goRandom"
-          >
-            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            {{ t('home.randomPoem') }}
-          </button>
+
+        <!-- Poems column -->
+        <div class="flex flex-col rounded-xl border border-ink-200/90 bg-white/80 p-5 shadow-sm backdrop-blur-sm md:p-6">
+          <div class="mb-4 flex items-center justify-between gap-3 border-b border-ink-100 pb-3">
+            <h2 class="font-serif text-xl font-bold text-ink-900">{{ t('home.heroPoems') }}</h2>
+            <button
+              type="button"
+              class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-ink-200 bg-white text-ink-600 shadow-sm transition hover:border-gold-400 hover:text-gold-800 disabled:opacity-50"
+              :disabled="rollingPoem"
+              :aria-label="t('home.rollPoemDice')"
+              @click="rollPoemDice"
+            >
+              <span class="text-lg" aria-hidden="true">🎲</span>
+            </button>
+          </div>
+          <div v-if="heroPoem" class="flex min-h-[10rem] flex-1 flex-col">
+            <h3 class="font-serif text-xl font-bold leading-snug text-ink-900 md:text-2xl">
+              {{ heroPoem.title }}
+            </h3>
+            <NuxtLink
+              v-if="heroPoem.author"
+              :to="`/authors/${heroPoem.author.slug}`"
+              class="mt-2 inline-flex items-center gap-2 text-sm text-ink-600 transition hover:text-gold-800"
+            >
+              <img
+                :src="poemColumnAvatar"
+                :alt="heroPoem.author?.name ?? ''"
+                loading="lazy"
+                class="h-8 w-8 shrink-0 rounded-full object-cover ring-1 ring-ink-200"
+              />
+              <span>— {{ heroPoem.author.name }}</span>
+            </NuxtLink>
+            <p class="poem-text mt-4 flex-1 text-left text-[1.05rem] leading-relaxed text-ink-700">
+              {{ heroPoemPreview }}
+            </p>
+            <NuxtLink
+              :to="`/poems/${heroPoem.slug}`"
+              class="mt-6 inline-flex w-fit items-center rounded-full bg-gold-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-gold-700"
+            >
+              {{ t('home.readFull') }}
+            </NuxtLink>
+          </div>
         </div>
       </div>
-    </section>
 
-    <!-- ── Empty library: no daily poem ─────────────────────────────────────── -->
-    <section v-else class="mb-16 py-16 text-center md:py-20">
-      <h1 class="font-serif text-4xl font-bold leading-tight text-ink-900 md:text-6xl">
-        {{ t('home.heroLine1') }}<br />
-        <span class="text-gold-700">{{ t('home.heroLine2') }}</span>
-      </h1>
-      <p class="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-ink-600">
-        {{ t('home.subtitle') }}
-      </p>
-      <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
+      <div class="mx-auto mt-8 flex max-w-5xl flex-wrap justify-center gap-3">
         <NuxtLink
           to="/poems"
-          class="rounded-full bg-gold-600 px-6 py-3 text-sm font-medium text-white shadow-md transition hover:bg-gold-700"
+          class="rounded-full border border-ink-200 bg-white px-6 py-3 text-sm text-ink-700 shadow-sm transition-colors hover:border-ink-300 hover:bg-ink-50"
         >
           {{ t('home.explorePoems') }}
         </NuxtLink>
@@ -173,10 +252,9 @@ async function goRandom() {
       </div>
     </section>
 
-    <!-- ── Empty state ────────────────────────────────────────────────────── -->
-    <section v-if="!featured.length && !recent.length" class="py-24 text-center">
-      <p class="font-serif text-xl text-ink-600">{{ t('home.emptyLibrary') }}</p>
-      <p class="mt-2 text-sm text-ink-500">
+    <!-- ── Admin hint when library lists are empty ─────────────────────────── -->
+    <section v-if="!featured.length && !recent.length && heroInitialized" class="py-8 text-center text-sm text-ink-500">
+      <p>
         {{ t('home.emptyHintBefore') }}<NuxtLink to="/admin" class="underline hover:text-ink-800">{{ t('home.emptyHintLink') }}</NuxtLink>{{ t('home.emptyHintAfter') }}
       </p>
     </section>

@@ -52,6 +52,72 @@ const related = computed(() => relatedRes.value?.data ?? [])
       <!-- Full poem viewer with carousel mode -->
       <PoetryViewer :poem="poem" />
 
+      <!-- Prev / next in catalog order (same as /poems list) -->
+      <nav
+        v-if="poem.navigation"
+        class="mt-10 flex flex-col gap-3 border-t border-ink-200/80 pt-8 sm:flex-row sm:items-stretch sm:justify-between"
+        :aria-label="t('a11y.poemNavigation')"
+      >
+        <div class="min-w-0 flex-1">
+          <NuxtLink
+            v-if="poem.navigation.newer"
+            :to="`/poems/${poem.navigation.newer.slug}`"
+            class="group flex items-start gap-3 rounded-lg border border-ink-200/90 bg-paper-50/80 p-4 text-left transition-colors hover:border-gold-500/40 hover:bg-paper-100/80"
+            :aria-label="t('poem.navNewerAria', { title: poem.navigation.newer.title })"
+          >
+            <span class="mt-0.5 shrink-0 text-ink-400 transition-colors group-hover:text-gold-700" aria-hidden="true">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+            </span>
+            <span class="min-w-0">
+              <span class="block text-xs font-medium uppercase tracking-wide text-ink-500">{{ t('poem.navNewer') }}</span>
+              <span class="mt-0.5 line-clamp-2 font-serif text-base text-ink-900">{{ poem.navigation.newer.title }}</span>
+            </span>
+          </NuxtLink>
+          <div
+            v-else
+            class="flex items-start gap-3 rounded-lg border border-dashed border-ink-200/60 bg-paper-50/40 p-4 opacity-60"
+          >
+            <span class="mt-0.5 shrink-0 text-ink-300" aria-hidden="true">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+            </span>
+            <span class="text-sm text-ink-500">{{ t('poem.navNewer') }}</span>
+          </div>
+        </div>
+        <div class="min-w-0 flex-1 sm:text-right">
+          <NuxtLink
+            v-if="poem.navigation.older"
+            :to="`/poems/${poem.navigation.older.slug}`"
+            class="group flex items-start justify-end gap-3 rounded-lg border border-ink-200/90 bg-paper-50/80 p-4 text-right transition-colors hover:border-gold-500/40 hover:bg-paper-100/80 sm:ml-auto"
+            :aria-label="t('poem.navOlderAria', { title: poem.navigation.older.title })"
+          >
+            <span class="min-w-0 sm:order-first">
+              <span class="block text-xs font-medium uppercase tracking-wide text-ink-500">{{ t('poem.navOlder') }}</span>
+              <span class="mt-0.5 line-clamp-2 font-serif text-base text-ink-900">{{ poem.navigation.older.title }}</span>
+            </span>
+            <span class="mt-0.5 shrink-0 text-ink-400 transition-colors group-hover:text-gold-700 sm:order-last" aria-hidden="true">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </span>
+          </NuxtLink>
+          <div
+            v-else
+            class="flex items-start justify-end gap-3 rounded-lg border border-dashed border-ink-200/60 bg-paper-50/40 p-4 opacity-60 sm:ml-auto"
+          >
+            <span class="text-sm text-ink-500">{{ t('poem.navOlder') }}</span>
+            <span class="mt-0.5 shrink-0 text-ink-300" aria-hidden="true">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </span>
+          </div>
+        </div>
+      </nav>
+
       <!-- Related poems -->
       <section v-if="related.length && poem.author" class="mt-20 border-t border-ink-200/80 pt-16">
         <div class="mb-6 flex flex-wrap items-end justify-between gap-3">

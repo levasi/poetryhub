@@ -1,6 +1,11 @@
 // Composable for fetching and paginating poems
 import { isReactive, reactive, type Reactive } from 'vue'
 
+export interface PoemNavigationNeighbor {
+  slug:  string
+  title: string
+}
+
 export interface Poem {
   id:          string
   title:       string
@@ -17,6 +22,10 @@ export interface Poem {
   createdAt:   string
   author:      { id: string; name: string; slug: string; imageUrl?: string | null }
   poemTags:    Array<{ tag: { id: string; name: string; slug: string; category: string; color: string | null } }>
+  navigation?: {
+    newer: PoemNavigationNeighbor | null
+    older: PoemNavigationNeighbor | null
+  }
 }
 
 export interface PoemListResponse {
@@ -96,7 +105,20 @@ export function useDailyPoem() {
   return useFetch<Poem>('/api/poems/daily')
 }
 
-// Fetch a random poem
-export async function fetchRandomPoem(): Promise<Poem> {
-  return $fetch<Poem>('/api/poems/random')
+/** Random poem; pass `authorSlug` to restrict to that author. */
+export async function fetchRandomPoem(authorSlug?: string): Promise<Poem> {
+  const params = authorSlug ? { author: authorSlug } : {}
+  return $fetch<Poem>('/api/poems/random', { params })
+}
+
+export interface RandomAuthor {
+  id:       string
+  name:     string
+  slug:     string
+  imageUrl: string | null
+  _count?:  { poems: number }
+}
+
+export async function fetchRandomAuthor(): Promise<RandomAuthor> {
+  return $fetch<RandomAuthor>('/api/authors/random')
 }

@@ -9,14 +9,9 @@ const { isLoggedIn } = useAuth()
 
 const props = defineProps<{ poem: Poem }>()
 
-const {
-  fontKey,
-  fontSizePx,
-  poemBodyStyle,
-  stanzaSlideStyle,
-  onReaderPreferenceChange,
-  fontOptions,
-} = useReaderPreferences()
+const { poemBodyStyle, stanzaSlideStyle } = useReaderPreferences()
+
+const readerSettingsOpen = ref(false)
 
 const author = computed(() => props.poem.author)
 const authorAvatar = computed(() => authorAvatarUrl(author.value))
@@ -87,6 +82,26 @@ const langLabel = computed(() => {
       <div class="h-full bg-gold-500 transition-all duration-100" :style="{ width: `${progress}%` }" />
     </div>
 
+    <!-- Fixed cog: reading appearance (font + size) -->
+    <button
+      v-if="!slideMode"
+      type="button"
+      class="fixed right-3 top-1/2 z-[45] flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-ink-200/90 bg-white/95 text-ink-600 shadow-md backdrop-blur-sm transition hover:border-gold-400/70 hover:text-gold-800 md:right-6"
+      :aria-label="t('viewer.openReadingSettings')"
+      @click="readerSettingsOpen = true"
+    >
+      <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+        />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+    </button>
+
+    <ReaderSettingsModal v-model:open="readerSettingsOpen" id-prefix="poem-pdp" />
+
     <!-- ── Standard reading view ──────────────────────────────────────────── -->
     <div v-if="!slideMode" class="animate-fade-in">
       <!-- Tags row -->
@@ -118,37 +133,6 @@ const langLabel = computed(() => {
         <div class="h-px flex-1 bg-ink-200" />
         <span class="text-xl text-ink-400">✦</span>
         <div class="h-px flex-1 bg-ink-200" />
-      </div>
-
-      <!-- Reading display (font + size) -->
-      <div
-        class="mb-8 rounded-xl border border-ink-200/90 bg-gradient-to-br from-white to-ink-50/80 px-4 py-3 shadow-sm sm:px-5">
-        <p class="mb-3 text-xs font-semibold uppercase tracking-widest text-ink-500">
-          {{ t('viewer.readingDisplay') }}
-        </p>
-        <div class="flex flex-wrap items-end gap-4 sm:gap-6">
-          <div class="min-w-[10rem] flex-1 sm:max-w-xs">
-            <label class="mb-1 block text-xs font-medium text-ink-600" for="reader-font">{{ t('viewer.font') }}</label>
-            <select id="reader-font" v-model="fontKey"
-              class="w-full rounded-lg border border-ink-200 bg-white px-3 py-2 text-sm text-ink-800 shadow-sm focus:border-gold-400 focus:outline-none focus:ring-1 focus:ring-gold-400/40"
-              @change="onReaderPreferenceChange">
-              <option v-for="f in fontOptions" :key="f" :value="f">
-                {{ f === 'playfair' ? t('viewer.fontPlayfair') : f === 'georgia' ? t('viewer.fontGeorgia') : f ===
-                  'inter' ? t('viewer.fontInter') : t('viewer.fontLora') }}
-              </option>
-            </select>
-          </div>
-          <div class="min-w-[12rem] flex-1 sm:max-w-sm">
-            <label class="mb-1 block text-xs font-medium text-ink-600" for="reader-size">
-              {{ t('viewer.fontSize') }} <span class="tabular-nums text-ink-500">({{ fontSizePx }}px)</span>
-            </label>
-            <input id="reader-size" v-model.number="fontSizePx" type="range" min="16" max="48" step="1"
-              class="h-2 w-full cursor-pointer accent-gold-600" @input="onReaderPreferenceChange" />
-          </div>
-        </div>
-        <p class="mt-3 text-xs text-ink-500">
-          {{ isLoggedIn ? t('viewer.prefsSavedHint') : t('viewer.prefsLocalHint') }}
-        </p>
       </div>
 
       <!-- Poem body -->

@@ -19,6 +19,40 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'Poem not found' })
   }
 
+  const neighborSelect = { slug: true, title: true } as const
+
+  // Same order as GET /api/poems: publishedAt desc, then id (stable tiebreaker).
+  // "Newer" = toward the top of the catalog list; "Older" = toward the bottom.
+  const [newer, older] = await Promise.all([
+    prisma.poem.findFirst({
+      where: {
+        OR: [
+          { publishedAt: { gt: poem.publishedAt } },
+          { AND: [{ publishedAt: poem.publishedAt }, { id: { gt: poem.id } }] },
+        ],
+      },
+      orderBy: [{ publishedAt: 'asc' }, { id: 'asc' }],
+      select: neighborSelect,
+    }),
+    prisma.poem.findFirst({
+      where: {
+        OR: [
+          { publishedAt: { lt: poem.publishedAt } },
+          { AND: [{ publishedAt: poem.publishedAt }, { id: { lt: poem.id } }] },
+        ],
+      },
+      orderBy: [{ publishedAt: 'desc' }, { id: 'desc' }],
+      select: neighborSelect,
+    }),
+  ])
+
   const author = await withResolvedAuthorPortrait(poem.author)
-  return { ...poem, author }
+  return {
+    ...poem,
+    author,
+    navigation: {
+      newer: newer ? { slug: newer.slug, title: newer.title } : null,
+      older: older ? { slug: older.slug, title: older.title } : null,
+    },
+  }
 })

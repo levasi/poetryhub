@@ -96,7 +96,7 @@ model User {
   email        String     @unique
   passwordHash String
   name         String?
-  /// Poem reader: playfair | georgia | inter | lora
+  /// Poem reader font key (see READER_FONT_STACKS in composables/useReaderPreferences.ts)
   poemFontFamily String   @default("playfair")
   /// Body font size in px (16–48)
   poemFontSize   Int      @default(22)

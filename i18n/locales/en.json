@@ -27,6 +27,11 @@
     "subtitle": "Discover classic and contemporary poetry. Browse by mood, author, or let the verse find you.",
     "explorePoems": "Explore poems",
     "randomPoem": "Random poem",
+    "heroAuthors": "Authors",
+    "heroPoems": "Poems",
+    "rollAuthorDice": "Pick a random author",
+    "rollPoemDice": "Pick a random poem",
+    "heroPoemCount": "{n} poems",
     "poemOfDay": "Poem of the day",
     "readFull": "Read full poem",
     "browseByMood": "Browse by Mood",
@@ -66,7 +71,11 @@
     "back": "All poems",
     "moreBy": "More by {name}",
     "viewAllPoems": "View all poems →",
-    "notFound": "Poem not found"
+    "notFound": "Poem not found",
+    "navNewer": "Newer",
+    "navOlder": "Older",
+    "navNewerAria": "Newer poem in the collection: {title}",
+    "navOlderAria": "Older poem in the collection: {title}"
   },
   "authors": {
     "title": "Authors",
@@ -133,7 +142,8 @@
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
     "closeFilters": "Close filters",
-    "closeStanza": "Close stanza view"
+    "closeStanza": "Close stanza view",
+    "poemNavigation": "Adjacent poems in the collection"
   },
   "pagination": {
     "previous": "Previous page",
@@ -147,12 +157,23 @@
     "minRead": "{n} min read",
     "slideHint": "{current} / {total} · Use ← → to navigate · Esc to exit",
     "readingDisplay": "Reading",
+    "readingSettingsHint": "Adjust typeface and size for comfortable reading.",
+    "openReadingSettings": "Reading appearance",
+    "closeReadingSettings": "Close reading settings",
     "font": "Font",
+    "fontPrev": "Previous font",
+    "fontNext": "Next font",
     "fontSize": "Size",
     "fontPlayfair": "Playfair Display",
     "fontGeorgia": "Georgia",
     "fontInter": "Inter",
     "fontLora": "Lora",
+    "fontLiterata": "Literata",
+    "fontMerriweather": "Merriweather",
+    "fontSourceSerif4": "Source Serif 4",
+    "fontCrimsonPro": "Crimson Pro",
+    "fontNotoSerif": "Noto Serif",
+    "fontEBGaramond": "EB Garamond",
     "prefsSavedHint": "Signed in — your choices are saved to your account.",
     "prefsLocalHint": "Choices are saved on this device. Sign in to sync across devices."
   },
@@ -161,7 +182,12 @@
     "min": "{n} min",
     "favoriteAdd": "Add to favorites",
     "favoriteRemove": "Remove from favorites",
-    "aiBadge": "AI"
+    "aiBadge": "AI",
+    "quickRead": "Quick read",
+    "quickReadLabel": "Quick read",
+    "openQuickRead": "Open quick read",
+    "quickReadClose": "Close preview",
+    "readFullPoem": "Open full poem"
   },
   "lang": {
     "en": "English",

@@ -23,6 +23,7 @@
 import { readFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { PrismaClient } from '@prisma/client'
+import { officialRomanianDiacritics } from '../server/utils/romanianDiacritics'
 
 function loadEnvFromDotenv() {
   if (process.env.DATABASE_URL) return
@@ -336,7 +337,12 @@ async function main() {
         continue
       }
 
-      const { title, author, content } = parsed
+      let { title, author, content } = parsed
+      if (lang === 'ro') {
+        title = officialRomanianDiacritics(title)
+        author = officialRomanianDiacritics(author)
+        content = officialRomanianDiacritics(content)
+      }
       const authorSlug = slugify(author) || 'unknown'
       let dbAuthor = await prisma.author.findUnique({ where: { slug: authorSlug } })
       if (!dbAuthor) {
