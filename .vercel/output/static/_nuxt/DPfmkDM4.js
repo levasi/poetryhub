@@ -1,1 +1,0 @@
-function n(e,r){return`https://api.dicebear.com/7.x/notionists/svg?seed=${encodeURIComponent(e?.trim()||r?.trim()||"author")}&backgroundColor=f5f5f0`}function o(e){if(!e)return"https://api.dicebear.com/7.x/notionists/svg?seed=unknown&backgroundColor=f5f5f0";const r=e.imageUrl?.trim();return r||n(e.slug,e.name)}export{o as a};

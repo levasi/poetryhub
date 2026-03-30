@@ -20,15 +20,15 @@ function isFontKey(v: string): v is ReaderFontKey {
 function prefsFromUser(u: AuthUser | null): { font: ReaderFontKey; size: number } | null {
   if (!u || !('poemFontFamily' in u) || !u.poemFontFamily) return null
   if (!isFontKey(u.poemFontFamily)) return null
-  const size = typeof u.poemFontSize === 'number' ? u.poemFontSize : 19
-  return { font: u.poemFontFamily, size: Math.min(28, Math.max(14, size)) }
+  const raw = typeof u.poemFontSize === 'number' ? u.poemFontSize : 22
+  return { font: u.poemFontFamily, size: Math.min(48, Math.max(16, raw)) }
 }
 
 export function useReaderPreferences() {
   const { user, isLoggedIn } = useAuth()
 
   const fontKey = ref<ReaderFontKey>('playfair')
-  const fontSizePx = ref(19)
+  const fontSizePx = ref(22)
 
   const fontFamilyCss = computed(() => READER_FONT_STACKS[fontKey.value])
 
@@ -41,7 +41,7 @@ export function useReaderPreferences() {
     if (!font && Number.isNaN(size)) return null
     return {
       font: font ?? 'playfair',
-      size: Number.isFinite(size) && size >= 14 && size <= 28 ? size : 19,
+      size: Number.isFinite(size) && size >= 16 && size <= 48 ? size : 22,
     }
   }
 
@@ -114,7 +114,7 @@ export function useReaderPreferences() {
   const stanzaSlideStyle = computed(() => ({
     whiteSpace: 'pre-wrap' as const,
     fontFamily: fontFamilyCss.value,
-    fontSize: `clamp(${Math.max(14, fontSizePx.value - 2)}px, 3vw, ${fontSizePx.value + 4}px)`,
+    fontSize: `clamp(${Math.max(16, fontSizePx.value - 2)}px, 3vw, ${Math.min(52, fontSizePx.value + 4)}px)`,
     lineHeight: 2.05,
     color: '#2d2d26',
     letterSpacing: '0.02em',

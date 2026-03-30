@@ -5,7 +5,7 @@ import { requireUser } from '~/server/utils/auth'
 
 const schema = z.object({
   poemFontFamily: z.enum(['playfair', 'georgia', 'inter', 'lora']).optional(),
-  poemFontSize: z.number().int().min(14).max(28).optional(),
+  poemFontSize: z.number().int().min(16).max(48).optional(),
 })
 
 export default defineEventHandler(async (event) => {

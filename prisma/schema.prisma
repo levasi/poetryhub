@@ -98,8 +98,8 @@ model User {
   name         String?
   /// Poem reader: playfair | georgia | inter | lora
   poemFontFamily String   @default("playfair")
-  /// Body font size in px (14–28)
-  poemFontSize   Int      @default(19)
+  /// Body font size in px (16–48)
+  poemFontSize   Int      @default(22)
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
