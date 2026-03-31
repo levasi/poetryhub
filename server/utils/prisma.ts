@@ -15,8 +15,13 @@ function ensureDatabaseUrlEnv() {
 
 function createPrismaClient() {
   ensureDatabaseUrlEnv()
+  /** Query logging floods the terminal and can slow or destabilize `nuxt dev`; opt in with PRISMA_LOG_QUERIES=1 */
+  const devLogs =
+    process.env.PRISMA_LOG_QUERIES === '1' || process.env.PRISMA_LOG_QUERIES === 'true'
+      ? (['query', 'error', 'warn'] as const)
+      : (['error', 'warn'] as const)
   return new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+    log: process.env.NODE_ENV === 'development' ? [...devLogs] : ['error'],
   })
 }
 

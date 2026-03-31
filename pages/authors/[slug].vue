@@ -93,12 +93,15 @@ const avatarSrc = computed(() =>
         class="max-h-80 max-w-3xl list-inside list-disc space-y-1.5 overflow-y-auto text-sm text-ink-700 sm:columns-2 sm:gap-x-8"
       >
         <li v-for="w in works" :key="w.slug" class="break-inside-avoid">
-          <NuxtLink
-            :to="`/poems/${w.slug}`"
-            class="text-gold-800 underline-offset-2 hover:text-gold-900 hover:underline"
-          >
-            {{ w.title }}
-          </NuxtLink>
+          <span class="inline-flex flex-wrap items-baseline gap-1.5">
+            <NuxtLink
+              :to="`/poems/${w.slug}`"
+              class="text-gold-800 underline-offset-2 hover:text-gold-900 hover:underline"
+            >
+              {{ w.title }}
+            </NuxtLink>
+            <PoemCarouselIcon :slug="w.slug" size="sm" />
+          </span>
         </li>
       </ul>
     </section>

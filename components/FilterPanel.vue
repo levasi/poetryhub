@@ -4,7 +4,6 @@ const { t } = useI18n()
 defineProps<{
   moodTags:  any[] | null
   themeTags: any[] | null
-  languages: { value: string; label: string }[]
   filters:   Record<string, any>
   hasActiveFilters: boolean
 }>()
@@ -55,21 +54,6 @@ const sources = computed(() => [
           :active="filters.tag === tag.slug"
           clickable
           @click="emit('apply', { tag: filters.tag === tag.slug ? undefined : tag.slug })"
-        />
-      </div>
-    </div>
-
-    <!-- Language -->
-    <div>
-      <p class="mb-3 text-xs font-semibold uppercase tracking-widest text-ink-600">{{ t('filters.language') }}</p>
-      <div class="flex flex-wrap gap-1.5">
-        <TagBadge
-          v-for="lang in languages"
-          :key="lang.value"
-          :name="lang.label"
-          :active="filters.language === lang.value"
-          clickable
-          @click="emit('apply', { language: filters.language === lang.value ? undefined : lang.value })"
         />
       </div>
     </div>

@@ -2,6 +2,7 @@
 import { defineNuxtModule } from '@nuxt/kit'
 import { defu } from 'defu'
 import { resolve } from 'node:path'
+import { CAROUSEL_DEFAULTS_ADMIN_EMAIL } from './utils/carouselDefaultsAdmin'
 
 /** Nitro virtual imports are not real package exports; they must be bundled, not loaded by Node. */
 const BUNDLE_NOT_EXTERNAL = ['nitropack/runtime', 'nitro/runtime'] as const
@@ -72,9 +73,17 @@ function patchServerViteConfig(config: import('vite').UserConfig) {
  * When Vite bundles nitropack for SSR, the placeholder is left as-is → undefined → `.nitro` throws.
  * Inject the merged Nuxt runtimeConfig as a JSON object literal (same as Nitro replace).
  *
- * Populated in `hooks.modules:done` — do not call `useNuxt()` inside Vite `transform` (it runs outside
- * Nuxt context during `nuxt dev`, which caused "Cannot read properties of undefined (reading 'nitro')").
+ * Populated synchronously in module `setup` (before Vite SSR transforms nitropack). A late
+ * `modules:done` refresh keeps the object in sync if anything mutates runtimeConfig after modules load.
+ * Do not call `useNuxt()` inside Vite `transform` (it runs outside Nuxt context).
  */
+const minimalNitroInlineRuntimeConfig: Record<string, unknown> = {
+  nitro: {
+    envPrefix: 'NITRO_',
+    envExpansion: false,
+  },
+}
+
 let nitroInlineRuntimeConfig: Record<string, unknown> | null = null
 
 function injectNitropackRuntimeConfig(): import('vite').Plugin {
@@ -85,8 +94,7 @@ function injectNitropackRuntimeConfig(): import('vite').Plugin {
       const normalized = id.replace(/\\/g, '/')
       if (!normalized.includes('/nitropack/dist/runtime/internal/config.mjs')) return null
       if (!code.includes('process.env.RUNTIME_CONFIG')) return null
-      const rc = nitroInlineRuntimeConfig
-      if (!rc) return null
+      const rc = nitroInlineRuntimeConfig ?? minimalNitroInlineRuntimeConfig
       const inlined = JSON.stringify(rc)
       return code.replace(
         'const _inlineRuntimeConfig = process.env.RUNTIME_CONFIG',
@@ -96,17 +104,20 @@ function injectNitropackRuntimeConfig(): import('vite').Plugin {
   }
 }
 
-/** Runs at `modules:done` with a real `nuxt` instance (user `hooks['modules:done']` gets no args). */
+function cacheNitroInlineRuntimeConfig(nuxt: { options: { runtimeConfig: Record<string, unknown> } }) {
+  nitroInlineRuntimeConfig = defu(nuxt.options.runtimeConfig, minimalNitroInlineRuntimeConfig) as Record<
+    string,
+    unknown
+  >
+}
+
+/** Must run before Vite can transform nitropack SSR deps; `modules:done` refreshes late mutations. */
 const poetryhubNitroRuntimeCache = defineNuxtModule({
   meta: { name: 'poetryhub-nitro-runtime-cache' },
   setup(_options, nuxt) {
+    cacheNitroInlineRuntimeConfig(nuxt)
     nuxt.hooks.hook('modules:done', () => {
-      nitroInlineRuntimeConfig = defu(nuxt.options.runtimeConfig, {
-        nitro: {
-          envPrefix: 'NITRO_',
-          envExpansion: false,
-        },
-      }) as Record<string, unknown>
+      cacheNitroInlineRuntimeConfig(nuxt)
     })
   },
 })
@@ -160,6 +171,15 @@ function nitropackSsrBundlePlugin(): import('vite').Plugin {
 }
 
 export default defineNuxtConfig({
+  /**
+   * Default `localhost` so the URL matches typical browser bookmarks and auth cookies (host-only).
+   * If you need IPv4-only HMR, set `NUXT_DEV_SERVER_HOST=127.0.0.1` and always open that URL
+   * (localhost vs 127.0.0.1 are different origins for cookies).
+   */
+  devServer: {
+    host: process.env.NUXT_DEV_SERVER_HOST || 'localhost',
+  },
+
   build: {
     // Ensures nitropack is inlined for SSR (same intent as vite.ssr.noExternal; helps merge order with Nuxt internals).
     transpile: ['nitropack', '@nuxt/nitro-server'],
@@ -186,6 +206,12 @@ export default defineNuxtConfig({
   },
 
   vite: {
+    server: {
+      watch: {
+        // Do not ignore `.nuxt` — Nuxt watches `.nuxt/dist`; ignoring it can cause restart loops / false "dist removed" messages.
+        ignored: ['**/node_modules/**', '**/.git/**', '**/.output/**'],
+      },
+    },
     plugins: [
       injectNitropackRuntimeConfig(),
       nitropackVirtualShimPlugin(),
@@ -241,6 +267,9 @@ export default defineNuxtConfig({
     public: {
       appName: 'PoetryHub',
       appUrl: process.env.NUXT_PUBLIC_APP_URL || 'http://localhost:3000',
+      /** Email allowed to save site-wide Instagram carousel defaults (theme, font, verse layout, CTA, keywords). */
+      carouselDefaultsAdminEmail:
+        process.env.NUXT_PUBLIC_CAROUSEL_DEFAULTS_ADMIN_EMAIL || CAROUSEL_DEFAULTS_ADMIN_EMAIL,
     },
   },
 

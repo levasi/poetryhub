@@ -6,11 +6,25 @@ export interface PoemNavigationNeighbor {
   title: string
 }
 
+/** Per-poem carousel JSON from `Poem.carouselFontSettings` (see `utils/poemCarouselFontSettings.ts`). */
+export interface PoemCarouselFontSettings {
+  theme?: string
+  carouselFontKey: string
+  carouselFontFamily?: string
+  linesPerSlide: number
+  bodyFontSizeScale: number
+  bodyLineHeight: number
+  ctaText?: string
+  keywordInput?: string
+}
+
 export interface Poem {
   id:          string
   title:       string
   slug:        string
   content:     string
+  /** Instagram carousel generator typography; null/absent means use site defaults. */
+  carouselFontSettings?: PoemCarouselFontSettings | null
   excerpt:     string | null
   authorId:    string
   language:    string
@@ -22,7 +36,15 @@ export interface Poem {
   featured:    boolean
   publishedAt: string
   createdAt:   string
-  author:      { id: string; name: string; slug: string; imageUrl?: string | null }
+  author:      {
+    id: string
+    name: string
+    slug: string
+    imageUrl?: string | null
+    nationality?: string | null
+    birthYear?: number | null
+    deathYear?: number | null
+  }
   poemTags:    Array<{ tag: { id: string; name: string; slug: string; category: string; color: string | null } }>
   navigation?: {
     newer: PoemNavigationNeighbor | null
@@ -40,7 +62,6 @@ export interface PoemFilters {
   limit?:    number
   author?:   string
   tag?:      string
-  language?: string
   source?:   string
   featured?: boolean
   search?:   string

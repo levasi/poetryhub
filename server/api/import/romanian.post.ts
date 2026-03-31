@@ -6,7 +6,7 @@ import { slugify, uniqueSlug, estimateReadingTime, extractExcerpt } from '~/serv
 const POEMS = [
   // ─── Mihai Eminescu (1850–1889) ───────────────────────────────────────────
   {
-    author: 'Mihai Eminescu', nationality: 'Română',
+    author: 'Mihai Eminescu', nationality: 'Român',
     title: 'Lacul',
     content: `Lacul codrilor albastru
 Nuferi galbeni îl încarcă;
@@ -34,7 +34,7 @@ Lângă lacul cel albastru
 Încărcat cu flori de nufăr.`,
   },
   {
-    author: 'Mihai Eminescu', nationality: 'Română',
+    author: 'Mihai Eminescu', nationality: 'Român',
     title: 'Doina',
     content: `De la Nistru pân' la Tisa
 Tot românul plânsu-mi-s-a,
@@ -57,7 +57,7 @@ Mânca-i-ar casa pustia
 Și neamul nemernicia!`,
   },
   {
-    author: 'Mihai Eminescu', nationality: 'Română',
+    author: 'Mihai Eminescu', nationality: 'Român',
     title: 'Sara pe deal',
     content: `Sara pe deal buciumul sună cu jale,
 Turmele-l urc, stele le scapără-n cale,
@@ -75,7 +75,7 @@ Streșina veche a casei ridică;
 Doar greierul sfânt cântă-n aria seacă.`,
   },
   {
-    author: 'Mihai Eminescu', nationality: 'Română',
+    author: 'Mihai Eminescu', nationality: 'Român',
     title: 'Ce te legeni, codrule',
     content: `Ce te legeni, codrule,
 Fără ploaie, fără vânt,
@@ -97,7 +97,7 @@ Dacă trece vremea mea!
 Vechile-mi straie cu jeles.`,
   },
   {
-    author: 'Mihai Eminescu', nationality: 'Română',
+    author: 'Mihai Eminescu', nationality: 'Român',
     title: 'Floare albastră',
     content: `Iar te-ai cufundat în stele
 Și în nori și-n ceruri nalte?
@@ -123,7 +123,7 @@ Floare-albastră! floare-albastră!...
 Totuși este trist în lume!`,
   },
   {
-    author: 'Mihai Eminescu', nationality: 'Română',
+    author: 'Mihai Eminescu', nationality: 'Român',
     title: 'Luceafărul',
     content: `A fost odată ca-n povești,
 A fost ca niciodată,
@@ -153,7 +153,7 @@ El iar, privind de săptămâni,
 
   // ─── George Coșbuc (1866–1918) ────────────────────────────────────────────
   {
-    author: 'George Coșbuc', nationality: 'Română',
+    author: 'George Coșbuc', nationality: 'Român',
     title: 'Mama',
     content: `Atunci, când eram copil mic
 Și nu știam nimic,
@@ -176,7 +176,7 @@ Dar azi când ea e-n groapă rece
 „Fă bine și nu-ți fie frică!"`,
   },
   {
-    author: 'George Coșbuc', nationality: 'Română',
+    author: 'George Coșbuc', nationality: 'Român',
     title: 'Iarna pe uliță',
     content: `Troiene albe pe câmpii,
 Pe drumuri și pe dealuri,
@@ -199,7 +199,7 @@ Torc lâna în casă caldă
 Istorii de demult, bătrâne.`,
   },
   {
-    author: 'George Coșbuc', nationality: 'Română',
+    author: 'George Coșbuc', nationality: 'Român',
     title: 'Nunta Zamfirei',
     content: `A fost odată-un împărat
 Bogat și-mpodobit în stat,
@@ -224,7 +224,7 @@ Că fata cea de împărat
 
   // ─── Vasile Alecsandri (1821–1890) ────────────────────────────────────────
   {
-    author: 'Vasile Alecsandri', nationality: 'Română',
+    author: 'Vasile Alecsandri', nationality: 'Român',
     title: 'Hora Unirii',
     content: `Hai să dăm mână cu mână
 Cei cu inima română,
@@ -247,7 +247,7 @@ Să-nvârtim hora frăției
 Pe pământul României!`,
   },
   {
-    author: 'Vasile Alecsandri', nationality: 'Română',
+    author: 'Vasile Alecsandri', nationality: 'Român',
     title: 'Iarna',
     content: `Iarna, iarna vine iute,
 Câmpul nins în zare mută —
@@ -270,7 +270,7 @@ Iarna-și arată-a sa față
 Albă, rece, dar cu dor.`,
   },
   {
-    author: 'Vasile Alecsandri', nationality: 'Română',
+    author: 'Vasile Alecsandri', nationality: 'Român',
     title: 'Malul Siretului',
     content: `Pe malul Siretului
 La umbra salcâmului,
@@ -295,7 +295,7 @@ Unde-i pace și lumină
 
   // ─── Octavian Goga (1881–1938) ────────────────────────────────────────────
   {
-    author: 'Octavian Goga', nationality: 'Română',
+    author: 'Octavian Goga', nationality: 'Român',
     title: 'Plugarii',
     content: `Cântați, plugari, cu glas de tunet
 Al vostru imn de biruință,
@@ -318,7 +318,7 @@ Cântați, plugari, cu glas de tunet,
 România trăiește prin voi!`,
   },
   {
-    author: 'Octavian Goga', nationality: 'Română',
+    author: 'Octavian Goga', nationality: 'Român',
     title: 'Noi',
     content: `Noi suntem cei din urmă veniți
 Pe-această lume rece —
@@ -341,7 +341,7 @@ Crescute-n chin și dor —
 Spre zările de mâine în zbor.`,
   },
   {
-    author: 'Octavian Goga', nationality: 'Română',
+    author: 'Octavian Goga', nationality: 'Român',
     title: 'Rugăciune',
     content: `Doamne, Tu care ești în ceruri
 Și-asculți a noastră rugăciune,
@@ -366,7 +366,7 @@ Români cu suflet și cu nume.`,
 
   // ─── George Bacovia (1881–1957) ───────────────────────────────────────────
   {
-    author: 'George Bacovia', nationality: 'Română',
+    author: 'George Bacovia', nationality: 'Român',
     title: 'Plumb',
     content: `Dormeau adânc sicriele de plumb,
 Și flori de plumb și funerar vestmânt —
@@ -379,7 +379,7 @@ Stam singur lângă mort... și era frig...
 Și-i atârnau aripile de plumb.`,
   },
   {
-    author: 'George Bacovia', nationality: 'Română',
+    author: 'George Bacovia', nationality: 'Român',
     title: 'Lacustră',
     content: `De-atâtea nopți aud plouând,
 Aud materia plângând...

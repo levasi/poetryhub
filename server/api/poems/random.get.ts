@@ -6,8 +6,8 @@ import { withResolvedAuthorPortrait } from '~/server/utils/authorPortrait'
 export default defineEventHandler(async (event) => {
   const authorSlug = getQuery(event).author
   const whereFilter = authorSlug
-    ? { author: { slug: String(authorSlug) } }
-    : {}
+    ? { language: 'ro' as const, author: { slug: String(authorSlug) } }
+    : { language: 'ro' as const }
 
   const count = await prisma.poem.count({ where: whereFilter })
   if (count === 0) {

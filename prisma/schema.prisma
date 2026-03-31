@@ -69,6 +69,8 @@ model Poem {
   writtenPeriod String?
   /// Set after an automatic enrichment attempt (success or not) to avoid repeat API calls on every page view
   writtenDateEnrichedAt DateTime?
+  /// Instagram carousel generator settings for this poem (theme, font, layout, CTA, keywords). Optional; when set, overrides site defaults for this poem only.
+  carouselFontSettings Json?
   featured    Boolean  @default(false)
   publishedAt DateTime @default(now())
   createdAt   DateTime @default(now())
@@ -143,6 +145,16 @@ model AdminUser {
   name         String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+// ─── Site carousel defaults (Instagram generator) ───────────────────────────
+
+/// Single row: default theme & typography for `/carousel-generator` (editable only by configured admin email).
+model CarouselSiteDefaults {
+  id        String   @id @default("singleton")
+  config    Json
+  updatedAt DateTime @updatedAt
+  updatedBy String?
 }
 
 // ─── Import Log ──────────────────────────────────────────────────────────────

@@ -1,6 +1,7 @@
 // GET /api/poems
 // Query params:
-//   page, limit, author, tag, language, source, featured, search, excludeSlug
+//   page, limit, author, tag, source, featured, search, excludeSlug
+// Catalog is Romanian-only (`language` query is ignored).
 import { prisma } from '~/server/utils/prisma'
 
 export default defineEventHandler(async (event) => {
@@ -11,11 +12,12 @@ export default defineEventHandler(async (event) => {
   const skip    = (page - 1) * limit
 
   // Build dynamic Prisma filter
-  const where: Record<string, unknown> = {}
+  const where: Record<string, unknown> = {
+    language: 'ro',
+  }
 
   if (query.author)   where.author   = { slug: String(query.author) }
   if (query.excludeSlug) where.slug = { not: String(query.excludeSlug) }
-  if (query.language) where.language = String(query.language)
   if (query.source)   where.source   = String(query.source)
   if (query.featured) where.featured = query.featured === 'true'
 

@@ -19,9 +19,11 @@ export default defineEventHandler(async (event) => {
   const bioText = await ensureAuthorBio(author)
   if (bioText && bioText !== author.bio) author = { ...author, bio: bioText }
 
+  const poemWhere = { authorId: author.id, language: 'ro' as const }
+
   const [poems, total, works] = await Promise.all([
     prisma.poem.findMany({
-      where: { authorId: author.id },
+      where: poemWhere,
       skip,
       take: limit,
       orderBy: { publishedAt: 'desc' },
@@ -29,9 +31,9 @@ export default defineEventHandler(async (event) => {
         poemTags: { include: { tag: true } },
       },
     }),
-    prisma.poem.count({ where: { authorId: author.id } }),
+    prisma.poem.count({ where: poemWhere }),
     prisma.poem.findMany({
-      where: { authorId: author.id },
+      where: poemWhere,
       select: { title: true, slug: true },
       orderBy: { title: 'asc' },
     }),

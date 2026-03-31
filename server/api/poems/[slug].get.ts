@@ -44,6 +44,7 @@ export default defineEventHandler(async (event) => {
   const [newer, older] = await Promise.all([
     prisma.poem.findFirst({
       where: {
+        language: 'ro',
         OR: [
           { publishedAt: { gt: poem.publishedAt } },
           { AND: [{ publishedAt: poem.publishedAt }, { id: { gt: poem.id } }] },
@@ -54,6 +55,7 @@ export default defineEventHandler(async (event) => {
     }),
     prisma.poem.findFirst({
       where: {
+        language: 'ro',
         OR: [
           { publishedAt: { lt: poem.publishedAt } },
           { AND: [{ publishedAt: poem.publishedAt }, { id: { lt: poem.id } }] },

@@ -1,9 +1,33 @@
-// DELETE /api/poems/:slug — remove a poem (admin only)
+// DELETE /api/poems/:slug — remove a poem (admin JWT, or carousel owner user session)
+import type { H3Event } from 'h3'
+import { getCookie } from 'h3'
 import { prisma } from '~/server/utils/prisma'
-import { requireAdmin } from '~/server/utils/auth'
+import { verifyAdminToken, getUserFromEvent, TOKEN_COOKIE } from '~/server/utils/auth'
+import { resolveCarouselDefaultsAdminEmail } from '~/utils/carouselDefaultsAdmin'
+
+async function authorizeDeletePoem(event: H3Event) {
+  const adminToken =
+    getCookie(event, TOKEN_COOKIE) ??
+    event.node.req.headers.authorization?.replace('Bearer ', '')
+  if (adminToken) {
+    const payload = await verifyAdminToken(adminToken)
+    if (payload?.role === 'admin') return
+  }
+  const user = await getUserFromEvent(event)
+  if (!user) {
+    throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
+  }
+  const config = useRuntimeConfig()
+  const adminEmail = resolveCarouselDefaultsAdminEmail(
+    config.public.carouselDefaultsAdminEmail as string | undefined,
+  )
+  if (user.email.toLowerCase() !== adminEmail) {
+    throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
+  }
+}
 
 export default defineEventHandler(async (event) => {
-  await requireAdmin(event)
+  await authorizeDeletePoem(event)
 
   const slug = getRouterParam(event, 'slug')!
   const existing = await prisma.poem.findUnique({ where: { slug } })

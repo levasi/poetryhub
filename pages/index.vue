@@ -43,6 +43,14 @@ const heroInitialized = ref(false)
 
 const poemsColumnRef = ref<HTMLElement | null>(null)
 
+/** Hero dice: minimum time spent rolling; then dice idles briefly before new author/poem appears. */
+const DICE_MIN_ROLL_MS = 2800
+const DICE_SETTLE_BEFORE_REVEAL_MS = 420
+
+function sleep(ms: number) {
+  return new Promise<void>((resolve) => setTimeout(resolve, ms))
+}
+
 /** Full poem body for the hero (line breaks preserved). */
 const heroPoemBody = computed(() => {
   const p = heroPoem.value
@@ -60,28 +68,37 @@ const poemColumnAvatar = computed(() =>
 
 async function rollAuthorDice() {
   rollingAuthor.value = true
+  const t0 = performance.now()
   try {
     const a = await fetchRandomAuthor()
-    heroAuthor.value = a
     const p = await fetchRandomPoem(a.slug)
+    const elapsed = performance.now() - t0
+    await sleep(Math.max(0, DICE_MIN_ROLL_MS - elapsed))
+    rollingAuthor.value = false
+    await sleep(DICE_SETTLE_BEFORE_REVEAL_MS)
+    heroAuthor.value = a
     heroPoem.value = p
   } catch {
     heroAuthor.value = null
     heroPoem.value = null
-  } finally {
     rollingAuthor.value = false
+  } finally {
     heroInitialized.value = true
   }
 }
 
 async function rollPoemDice() {
   rollingPoem.value = true
+  const t0 = performance.now()
   try {
-    // Match the author shown in the left column (same as after author roll)
-    heroPoem.value = await fetchRandomPoem(heroAuthor.value?.slug)
+    const p = await fetchRandomPoem(heroAuthor.value?.slug)
+    const elapsed = performance.now() - t0
+    await sleep(Math.max(0, DICE_MIN_ROLL_MS - elapsed))
+    rollingPoem.value = false
+    await sleep(DICE_SETTLE_BEFORE_REVEAL_MS)
+    heroPoem.value = p
   } catch {
     heroPoem.value = null
-  } finally {
     rollingPoem.value = false
   }
 }
@@ -138,9 +155,9 @@ onMounted(() => {
           <div class="mb-4 flex flex-col items-center gap-3 border-b border-ink-100 pb-3">
             <h2 class="w-full text-center font-serif text-xl font-bold text-ink-900">{{ t('home.heroAuthors') }}</h2>
             <button type="button"
-              class="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-ink-200 bg-white text-ink-600 shadow-md transition hover:border-gold-400 hover:text-gold-800 disabled:opacity-50 md:h-16 md:w-16"
+              class="inline-flex h-14 w-14 shrink-0 items-center justify-center overflow-visible disabled:opacity-50 md:h-16 md:w-16"
               :disabled="rollingAuthor" :aria-label="t('home.rollAuthorDice')" @click="rollAuthorDice">
-              <span class="text-2xl leading-none md:text-3xl" aria-hidden="true">🎲</span>
+              <Dice3D :rolling="rollingAuthor" />
             </button>
           </div>
           <div v-if="heroAuthor" class="flex min-h-[10rem] flex-1 flex-col">
@@ -171,13 +188,16 @@ onMounted(() => {
               <p class="mb-2 text-xs text-ink-500">{{ t('authors.worksInCollection') }}</p>
               <ul class="max-w-full list-inside list-disc space-y-1.5 text-sm text-ink-700 sm:columns-2 sm:gap-x-8">
                 <li v-for="w in heroAuthor.works" :key="w.slug" class="break-inside-avoid break-words">
-                  <button type="button"
-                    class="text-left text-gold-800 underline-offset-2 transition hover:text-gold-900 hover:underline disabled:cursor-wait disabled:opacity-60"
-                    :class="heroPoem?.slug === w.slug ? 'font-semibold text-gold-900' : ''"
-                    :disabled="loadingPoemFromBib" :aria-current="heroPoem?.slug === w.slug ? 'true' : undefined"
-                    @click="showPoemInHero(w.slug)">
-                    {{ w.title }}
-                  </button>
+                  <span class="inline-flex flex-wrap items-baseline gap-1.5">
+                    <button type="button"
+                      class="text-left text-gold-800 underline-offset-2 transition hover:text-gold-900 hover:underline disabled:cursor-wait disabled:opacity-60"
+                      :class="heroPoem?.slug === w.slug ? 'font-semibold text-gold-900' : ''"
+                      :disabled="loadingPoemFromBib" :aria-current="heroPoem?.slug === w.slug ? 'true' : undefined"
+                      @click="showPoemInHero(w.slug)">
+                      {{ w.title }}
+                    </button>
+                    <PoemCarouselIcon :slug="w.slug" size="sm" />
+                  </span>
                 </li>
               </ul>
             </section>
@@ -190,15 +210,13 @@ onMounted(() => {
           <div class="mb-4 flex flex-col items-center gap-3 border-b border-ink-100 pb-3">
             <h2 class="w-full text-center font-serif text-xl font-bold text-ink-900">{{ t('home.heroPoems') }}</h2>
             <button type="button"
-              class="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-ink-200 bg-white text-ink-600 shadow-md transition hover:border-gold-400 hover:text-gold-800 disabled:opacity-50 md:h-16 md:w-16"
+              class="inline-flex h-14 w-14 shrink-0 items-center justify-center overflow-visible disabled:opacity-50 md:h-16 md:w-16"
               :disabled="rollingPoem" :aria-label="t('home.rollPoemDice')" @click="rollPoemDice">
-              <span class="text-2xl leading-none md:text-3xl" aria-hidden="true">🎲</span>
+              <Dice3D :rolling="rollingPoem" />
             </button>
           </div>
           <div v-if="heroPoem" class="flex min-h-[10rem] flex-1 flex-col">
-            <h3 class="font-serif text-xl font-bold leading-snug text-ink-900 md:text-2xl">
-              {{ heroPoem.title }}
-            </h3>
+            <PoemTitle :title="heroPoem.title" :slug="heroPoem.slug" variant="banner" />
             <NuxtLink v-if="heroPoem.author" :to="`/authors/${heroPoem.author.slug}`"
               class="mt-2 inline-flex items-center gap-2 text-sm text-ink-600 transition hover:text-gold-800">
               <img :src="poemColumnAvatar" :alt="heroPoem.author?.name ?? ''" loading="lazy"

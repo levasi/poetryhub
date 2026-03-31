@@ -69,7 +69,7 @@ const readingTimeLabel = computed(() => {
 
 const langLabel = computed(() => {
   const code = props.poem.language
-  if (code === 'en') return null
+  if (!code || code === 'en' || code === 'ro') return null
   const key = `lang.${code}`
   return te(key) ? t(key) : code.toUpperCase()
 })
@@ -125,9 +125,7 @@ const writtenContextLine = computed(() => {
       </div>
 
       <!-- Title -->
-      <h1 class="mb-3 font-serif text-4xl font-bold leading-tight tracking-tight text-ink-900 md:text-5xl lg:text-6xl">
-        {{ poem.title }}
-      </h1>
+      <PoemTitle :title="poem.title" :slug="poem.slug" variant="pdp" />
 
       <!-- Author -->
       <NuxtLink v-if="author" :to="`/authors/${author.slug}`"
@@ -191,8 +189,11 @@ const writtenContextLine = computed(() => {
           <div class="flex items-center justify-between border-b border-ink-200 bg-white/90 px-6 py-4 backdrop-blur-md">
             <div class="flex min-w-0 items-center gap-3">
               <img :src="authorAvatar" alt="" class="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-ink-200" />
-              <div class="min-w-0">
-                <p class="truncate font-serif text-sm font-bold text-ink-800">{{ poem.title }}</p>
+              <div class="min-w-0 flex-1">
+                <div class="flex items-start gap-2">
+                  <p class="min-w-0 flex-1 truncate font-serif text-sm font-bold text-ink-800">{{ poem.title }}</p>
+                  <PoemCarouselIcon :slug="poem.slug" size="sm" class="shrink-0" />
+                </div>
                 <p class="truncate text-xs text-ink-500">{{ author?.name }}</p>
               </div>
             </div>

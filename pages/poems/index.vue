@@ -18,14 +18,6 @@ watch(filters, () => fetch(), { deep: true })
 
 function onPageChange(page: number) { fetch({ page }) }
 
-const languages = computed(() => [
-  { value: 'en', label: t('lang.en') },
-  { value: 'ro', label: t('lang.ro') },
-  { value: 'fr', label: t('lang.fr') },
-  { value: 'de', label: t('lang.de') },
-  { value: 'es', label: t('lang.es') },
-])
-
 // View toggle: grid | list
 const viewMode = ref<'grid' | 'list'>('grid')
 
@@ -122,7 +114,6 @@ watch(searchQuery, (val) => {
         <FilterPanel
           :mood-tags="moodTags"
           :theme-tags="themeTags"
-          :languages="languages"
           :filters="filters"
           :has-active-filters="hasActiveFilters"
           @apply="applyFilters"
@@ -141,13 +132,6 @@ watch(searchQuery, (val) => {
             @click="applyFilters({ tag: undefined })"
           >
             {{ labelForTag(filters.tag, filters.tag) }} ✕
-          </button>
-          <button
-            v-if="filters.language"
-            class="flex items-center gap-1 rounded-full border border-ink-200 bg-white px-3 py-1 text-xs text-ink-700 shadow-sm hover:bg-ink-50"
-            @click="applyFilters({ language: undefined })"
-          >
-            {{ filters.language }} ✕
           </button>
           <button
             v-if="filters.source"
@@ -218,7 +202,6 @@ watch(searchQuery, (val) => {
             <FilterPanel
               :mood-tags="moodTags"
               :theme-tags="themeTags"
-              :languages="languages"
               :filters="filters"
               :has-active-filters="hasActiveFilters"
               @apply="(f) => { applyFilters(f); filterOpen = false }"

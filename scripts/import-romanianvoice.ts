@@ -350,7 +350,7 @@ async function main() {
           data: {
             name: author,
             slug: authorSlug,
-            nationality: lang === 'ro' ? 'Română' : undefined,
+            nationality: lang === 'ro' ? 'Român' : undefined,
           },
         })
       }

@@ -43,7 +43,10 @@ const readingTimeLabel = computed(() => {
   return mins < 1 ? t('card.underMin') : t('card.min', { n: mins })
 })
 
-const isNonEnglish = computed(() => props.poem.language && props.poem.language !== 'en')
+/** Site catalog is Romanian-only; show a flag only for unexpected non-`ro` languages. */
+const showLangFlag = computed(
+  () => props.poem.language && props.poem.language !== 'ro',
+)
 const langFlags: Record<string, string> = { ro: '🇷🇴', fr: '🇫🇷', de: '🇩🇪', es: '🇪🇸' }
 const langFlag = computed(() => langFlags[props.poem.language] ?? props.poem.language?.toUpperCase())
 
@@ -94,12 +97,13 @@ watchEffect((onCleanup) => {
 
     <div class="min-w-0 flex-1">
       <div class="mb-1 flex items-baseline gap-2">
-        <NuxtLink :to="`/poems/${poem.slug}`">
+        <NuxtLink :to="`/poems/${poem.slug}`" class="min-w-0 flex-1">
           <h2 class="font-serif text-lg font-bold text-ink-900 transition-colors group-hover:text-gold-800 leading-snug">
             {{ poem.title }}
           </h2>
         </NuxtLink>
-        <span v-if="isNonEnglish" class="text-sm">{{ langFlag }}</span>
+        <PoemCarouselIcon :slug="poem.slug" size="sm" class="shrink-0" />
+        <span v-if="showLangFlag" class="shrink-0 text-sm">{{ langFlag }}</span>
       </div>
 
       <NuxtLink
@@ -171,19 +175,22 @@ watchEffect((onCleanup) => {
         >
           {{ moodLabel }}
         </span>
-        <span v-if="isNonEnglish" class="ml-auto text-sm" :title="poem.language">{{ langFlag }}</span>
+        <span v-if="showLangFlag" class="ml-auto text-sm" :title="poem.language">{{ langFlag }}</span>
         <span v-if="poem.source === 'ai-generated'" class="ml-auto rounded-full bg-violet-100 px-2 py-0.5 text-xs text-violet-800">{{ t('card.aiBadge') }}</span>
       </div>
 
       <!-- Title -->
-      <NuxtLink :to="`/poems/${poem.slug}`" class="mb-1 block">
-        <h2
-          class="font-serif font-bold leading-snug text-ink-900 transition-colors group-hover:text-gold-800"
-          :class="featured ? 'text-2xl' : 'text-lg'"
-        >
-          {{ poem.title }}
-        </h2>
-      </NuxtLink>
+      <div class="mb-1 flex items-start gap-2">
+        <NuxtLink :to="`/poems/${poem.slug}`" class="block min-w-0 flex-1">
+          <h2
+            class="font-serif font-bold leading-snug text-ink-900 transition-colors group-hover:text-gold-800"
+            :class="featured ? 'text-2xl' : 'text-lg'"
+          >
+            {{ poem.title }}
+          </h2>
+        </NuxtLink>
+        <PoemCarouselIcon :slug="poem.slug" size="sm" class="shrink-0" />
+      </div>
 
       <!-- Author -->
       <NuxtLink
@@ -258,9 +265,12 @@ watchEffect((onCleanup) => {
           @click.stop
         >
           <header class="flex shrink-0 items-start justify-between gap-3 border-b border-ink-200/80 bg-white px-5 py-4">
-            <div class="min-w-0">
+            <div class="min-w-0 flex-1">
               <p class="text-xs font-medium uppercase tracking-wide text-ink-500">{{ t('card.quickRead') }}</p>
-              <h3 class="mt-0.5 font-serif text-xl font-bold leading-snug text-ink-900">{{ poem.title }}</h3>
+              <div class="mt-0.5 flex items-start gap-2">
+                <h3 class="min-w-0 flex-1 font-serif text-xl font-bold leading-snug text-ink-900">{{ poem.title }}</h3>
+                <PoemCarouselIcon :slug="poem.slug" size="sm" class="shrink-0" />
+              </div>
               <p v-if="author" class="mt-1 truncate text-sm text-ink-600">{{ author.name }}</p>
             </div>
             <div class="flex shrink-0 items-center gap-0.5">

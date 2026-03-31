@@ -12,6 +12,7 @@ const navLinks = computed(() => [
   { label: t('nav.authors'), to: '/authors' },
   { label: t('nav.search'), to: '/search' },
   { label: t('nav.daily'), to: '/daily' },
+  { label: t('nav.carousel'), to: '/carousel-generator' },
 ])
 
 watch(() => route.path, () => {
@@ -181,6 +182,9 @@ const initials = computed(() => {
           </NuxtLink>
           <NuxtLink to="/favorites" class="rounded-lg px-3 py-2 text-sm text-ink-600 hover:bg-white hover:text-rose-700">
             {{ t('nav.favorites') }}
+          </NuxtLink>
+          <NuxtLink to="/carousel-generator" class="rounded-lg px-3 py-2 text-sm text-ink-600 hover:bg-white hover:text-ink-900">
+            {{ t('nav.carousel') }}
           </NuxtLink>
           <hr class="border-ink-200" />
           <template v-if="!isLoggedIn">

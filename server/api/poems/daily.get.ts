@@ -4,7 +4,8 @@ import { prisma } from '~/server/utils/prisma'
 import { withResolvedAuthorPortrait } from '~/server/utils/authorPortrait'
 
 export default defineEventHandler(async () => {
-  const count = await prisma.poem.count()
+  const where = { language: 'ro' as const }
+  const count = await prisma.poem.count({ where })
   if (count === 0) throw createError({ statusCode: 404, statusMessage: 'No poems in database' })
 
   // Day-of-year: stable within a calendar day, cycles through all poems
@@ -14,6 +15,7 @@ export default defineEventHandler(async () => {
   const skip      = dayOfYear % count
 
   const poem = await prisma.poem.findFirst({
+    where,
     skip,
     orderBy: { createdAt: 'asc' },
     include: {
