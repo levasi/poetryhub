@@ -10,8 +10,10 @@ useSeoMeta({ title: computed(() => t('seo.poemsTitle')) })
 const { filters, applyFilters, clearFilters, hasActiveFilters } = useFilters()
 const { poems, meta, totalPages, loading, fetch } = usePoems(filters)
 
-const { data: moodTags  } = await useFetch('/api/tags', { params: { category: 'mood'  } })
-const { data: themeTags } = await useFetch('/api/tags', { params: { category: 'theme' } })
+const [{ data: moodTags }, { data: themeTags }] = await Promise.all([
+  useFetch('/api/tags', { params: { category: 'mood' } }),
+  useFetch('/api/tags', { params: { category: 'theme' } }),
+])
 
 await fetch()
 watch(filters, () => fetch(), { deep: true })

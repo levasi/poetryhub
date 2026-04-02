@@ -1,7 +1,9 @@
 // GET /api/authors — list all authors with poem counts
 import { prisma } from '~/server/utils/prisma'
+import { stableQueryKey } from '~/server/utils/cacheKeys'
 
-export default defineEventHandler(async (event) => {
+export default defineCachedEventHandler(
+  async (event) => {
   const query  = getQuery(event)
   const page   = Math.max(1, parseInt(String(query.page  ?? 1)))
   const limit  = Math.min(100, Math.max(1, parseInt(String(query.limit ?? 20))))
@@ -27,4 +29,11 @@ export default defineEventHandler(async (event) => {
     data: authors,
     meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
   }
-})
+  },
+  {
+    name: 'api-authors-list',
+    maxAge: 60,
+    swr: true,
+    getKey: (event) => stableQueryKey('authors', event),
+  },
+)

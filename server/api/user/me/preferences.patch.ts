@@ -16,6 +16,10 @@ const schema = z.object({
       'crimson',
       'noto-serif',
       'eb-garamond',
+      'verdana',
+      'roboto',
+      'helvetica',
+      'bookerly',
     ])
     .optional(),
   poemFontSize: z.number().int().min(16).max(48).optional(),

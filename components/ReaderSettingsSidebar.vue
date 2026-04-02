@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {
+  READER_FONT_DESC_I18N_KEYS,
   READER_FONT_I18N_KEYS,
   READER_LETTER_SPACING_MAX,
   READER_LETTER_SPACING_MIN,
@@ -129,7 +130,12 @@ watchEffect((onCleanup) => {
                   class="min-w-0 flex-1 cursor-pointer border-x border-ink-100 bg-white px-2 py-2 text-center text-sm font-medium text-ink-800 focus:border-gold-400 focus:outline-none focus:ring-0"
                   @change="onReaderPreferenceChange"
                 >
-                  <option v-for="f in fontOptions" :key="f" :value="f">
+                  <option
+                    v-for="f in fontOptions"
+                    :key="f"
+                    :value="f"
+                    :title="READER_FONT_DESC_I18N_KEYS[f] ? t(READER_FONT_DESC_I18N_KEYS[f]) : undefined"
+                  >
                     {{ t(READER_FONT_I18N_KEYS[f]) }}
                   </option>
                 </select>

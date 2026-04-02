@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import type { ReaderFontKey } from '~/composables/useReaderPreferences'
-import { READER_FONT_I18N_KEYS, READER_FONT_OPTIONS_ORDER } from '~/composables/useReaderPreferences'
+import {
+  READER_FONT_DESC_I18N_KEYS,
+  READER_FONT_I18N_KEYS,
+  READER_FONT_OPTIONS_ORDER,
+} from '~/composables/useReaderPreferences'
 
 const props = defineProps<{
   modelValue: ReaderFontKey
@@ -28,7 +32,12 @@ function onChange(e: Event) {
     :value="props.modelValue"
     @change="onChange"
   >
-    <option v-for="key in READER_FONT_OPTIONS_ORDER" :key="key" :value="key">
+    <option
+      v-for="key in READER_FONT_OPTIONS_ORDER"
+      :key="key"
+      :value="key"
+      :title="READER_FONT_DESC_I18N_KEYS[key] ? t(READER_FONT_DESC_I18N_KEYS[key]) : undefined"
+    >
       {{ t(READER_FONT_I18N_KEYS[key]) }}
     </option>
   </select>

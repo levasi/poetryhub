@@ -693,7 +693,7 @@ function onTouchEnd(e: TouchEvent) {
               <input v-model.number="bodyFontSizeScale" type="range" min="0.7" max="2" step="0.05"
                 class="h-2 flex-1 cursor-pointer accent-gold-600" />
               <span class="w-12 text-right text-sm tabular-nums text-ink-700">{{ Math.round(bodyFontSizeScale * 100)
-              }}%</span>
+                }}%</span>
             </div>
 
             <label class="field-label">{{ t('carousel.fieldLineHeight') }}</label>
@@ -818,8 +818,7 @@ function onTouchEnd(e: TouchEvent) {
 
       <!-- Right (3 columns): Preview — carousel then controls below -->
       <div class="w-full md:col-span-3 md:sticky md:top-24 md:self-start">
-        <div ref="previewFullscreenRef"
-          class="carousel-preview-shell flex flex-col rounded-2xl border border-ink-200 bg-ink-100 p-4 shadow-inner">
+        <div ref="previewFullscreenRef" class="carousel-preview-shell flex flex-col">
           <div class="carousel-preview-fs-header mb-3 flex shrink-0 items-center justify-between gap-2">
             <span class="text-xs font-medium uppercase tracking-wider text-ink-500">
               {{ t('carousel.preview') }} · {{ t('carousel.dimensions') }}
@@ -879,7 +878,7 @@ function onTouchEnd(e: TouchEvent) {
                   <input v-model.number="bodyFontSizeScale" type="range" min="0.7" max="2" step="0.05"
                     class="h-2 flex-1 cursor-pointer accent-gold-600" />
                   <span class="w-12 text-right text-sm tabular-nums text-ink-700">{{ Math.round(bodyFontSizeScale * 100)
-                    }}%</span>
+                  }}%</span>
                 </div>
 
                 <label class="field-label">{{ t('carousel.fieldLineHeight') }}</label>

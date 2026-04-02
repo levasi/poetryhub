@@ -4,15 +4,19 @@ import type { ReaderFontKey } from '~/composables/useReaderPreferences'
 
 /** Matches `READER_FONT_OPTIONS_ORDER` / `ReaderFontKey`. */
 export const CAROUSEL_SITE_FONT_KEYS = [
+  'georgia',
+  'eb-garamond',
+  'verdana',
+  'roboto',
+  'helvetica',
+  'bookerly',
+  'playfair',
   'literata',
-  'source-serif',
   'lora',
   'merriweather',
   'crimson',
   'noto-serif',
-  'eb-garamond',
-  'playfair',
-  'georgia',
+  'source-serif',
   'inter',
 ] as const
 

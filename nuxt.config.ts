@@ -278,6 +278,12 @@ export default defineNuxtConfig({
     preset: 'vercel',
   },
 
+  /** Long cache for hashed build assets; public APIs use Nitro `defineCachedEventHandler` in server routes. */
+  routeRules: {
+    '/_nuxt/**': { headers: { 'cache-control': 'public, max-age=31536000, immutable' } },
+    '/favicon.svg': { headers: { 'cache-control': 'public, max-age=86400' } },
+  },
+
   // App-level meta
   app: {
     head: {
@@ -313,6 +319,7 @@ export default defineNuxtConfig({
             + '&family=Merriweather:ital,wght@0,400;0,700;1,400'
             + '&family=Noto+Serif:ital,wght@0,400;0,600;1,400'
             + '&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400'
+            + '&family=Roboto:ital,wght@0,400;0,500;1,400'
             + '&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400'
             + '&display=swap',
         },

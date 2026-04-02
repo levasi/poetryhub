@@ -2,8 +2,10 @@
 // Uses day-of-year offset so the same poem shows all day, changes daily
 import { prisma } from '~/server/utils/prisma'
 import { withResolvedAuthorPortrait } from '~/server/utils/authorPortrait'
+import { localDayKey } from '~/server/utils/cacheKeys'
 
-export default defineEventHandler(async () => {
+export default defineCachedEventHandler(
+  async () => {
   const where = { language: 'ro' as const }
   const count = await prisma.poem.count({ where })
   if (count === 0) throw createError({ statusCode: 404, statusMessage: 'No poems in database' })
@@ -28,4 +30,11 @@ export default defineEventHandler(async () => {
 
   const author = await withResolvedAuthorPortrait(poem.author)
   return { ...poem, author }
-})
+  },
+  {
+    name: 'api-poems-daily',
+    maxAge: 3600,
+    swr: true,
+    getKey: () => `daily:${localDayKey()}`,
+  },
+)

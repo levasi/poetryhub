@@ -3,7 +3,8 @@ import { prisma } from '~/server/utils/prisma'
 import { withResolvedAuthorPortrait } from '~/server/utils/authorPortrait'
 import { enrichPoemWrittenDateIfNeeded } from '~/server/utils/enrichPoemWrittenDate'
 
-export default defineEventHandler(async (event) => {
+export default defineCachedEventHandler(
+  async (event) => {
   const slug = getRouterParam(event, 'slug')
 
   let poem = await prisma.poem.findUnique({
@@ -75,4 +76,11 @@ export default defineEventHandler(async (event) => {
       older: older ? { slug: older.slug, title: older.title } : null,
     },
   }
-})
+  },
+  {
+    name: 'api-poem-by-slug',
+    maxAge: 45,
+    swr: true,
+    getKey: (event) => `poem:${getRouterParam(event, 'slug') ?? ''}`,
+  },
+)

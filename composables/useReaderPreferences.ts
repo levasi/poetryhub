@@ -12,6 +12,11 @@ export type ReaderFontKey =
   | 'crimson'
   | 'noto-serif'
   | 'eb-garamond'
+  | 'verdana'
+  | 'roboto'
+  | 'helvetica'
+  /** Literata-led stack as a web-available substitute for Kindle Bookerly (Bookerly is not licensed for web). */
+  | 'bookerly'
 
 const LS_FONT = 'ph_reader_font'
 const LS_SIZE = 'ph_reader_size'
@@ -51,7 +56,11 @@ export const READER_FONT_STACKS: Record<ReaderFontKey, string> = {
   'source-serif': "'Source Serif 4', Georgia, 'Times New Roman', serif",
   crimson: "'Crimson Pro', Georgia, serif",
   'noto-serif': "'Noto Serif', Georgia, serif",
-  'eb-garamond': "'EB Garamond', serif",
+  'eb-garamond': "'EB Garamond', 'Times New Roman', serif",
+  verdana: "Verdana, Geneva, sans-serif",
+  roboto: "'Roboto', system-ui, sans-serif",
+  helvetica: "Helvetica, 'Helvetica Neue', Arial, ui-sans-serif, sans-serif",
+  bookerly: "'Literata', 'Merriweather', Georgia, serif",
 }
 
 /** i18n keys under `viewer.*` for each font option label. */
@@ -66,6 +75,20 @@ export const READER_FONT_I18N_KEYS: Record<ReaderFontKey, string> = {
   crimson: 'viewer.fontCrimsonPro',
   'noto-serif': 'viewer.fontNotoSerif',
   'eb-garamond': 'viewer.fontEBGaramond',
+  verdana: 'viewer.fontVerdana',
+  roboto: 'viewer.fontRoboto',
+  helvetica: 'viewer.fontHelvetica',
+  bookerly: 'viewer.fontBookerly',
+}
+
+/** Tooltip (title) copy for fonts with editorial blurbs — see i18n `viewer.fontDesc*`. */
+export const READER_FONT_DESC_I18N_KEYS: Partial<Record<ReaderFontKey, string>> = {
+  georgia: 'viewer.fontDescGeorgia',
+  'eb-garamond': 'viewer.fontDescGaramond',
+  verdana: 'viewer.fontDescVerdana',
+  roboto: 'viewer.fontDescRoboto',
+  helvetica: 'viewer.fontDescHelvetica',
+  bookerly: 'viewer.fontDescBookerly',
 }
 
 function isFontKey(v: string): v is ReaderFontKey {
@@ -91,17 +114,21 @@ function prefsFromUser(u: AuthUser | null): {
   }
 }
 
-/** Order in the font dropdown (reading-friendly serifs first, then system / sans). */
+/** Order in the font dropdown — curated serifs/sans, then remaining library faces. */
 export const READER_FONT_OPTIONS_ORDER = [
+  'georgia',
+  'eb-garamond',
+  'verdana',
+  'roboto',
+  'helvetica',
+  'bookerly',
+  'playfair',
   'literata',
-  'source-serif',
   'lora',
   'merriweather',
   'crimson',
   'noto-serif',
-  'eb-garamond',
-  'playfair',
-  'georgia',
+  'source-serif',
   'inter',
 ] as const satisfies readonly ReaderFontKey[]
 

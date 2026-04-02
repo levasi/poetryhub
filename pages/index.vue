@@ -15,35 +15,61 @@ useSeoMeta({
   description: computed(() => t('seo.homeDesc')),
 })
 
-// Featured poems
-const { data: featuredRes } = await useFetch<{ data: Poem[] }>('/api/poems', {
-  params: { featured: 'true', limit: 3 },
-})
+/** One HTTP call for the whole homepage (fast client navigations, e.g. logo → home). */
+interface HomeTagRow {
+  id: string
+  name: string
+  slug: string
+  category: string
+  color: string | null
+}
 
-// Recent poems
-const { data: recentRes } = await useFetch<{ data: Poem[] }>('/api/poems', {
-  params: { limit: 8 },
-})
+interface HomePayload {
+  featured: Poem[]
+  recent: Poem[]
+  moodTags: HomeTagRow[]
+  themeTags: HomeTagRow[]
+  hero: { a: RandomAuthor; p: Poem } | null
+}
 
-// Mood / theme tags for category browsing
-const { data: moodTags } = await useFetch('/api/tags', { params: { category: 'mood' } })
-const { data: themeTags } = await useFetch('/api/tags', { params: { category: 'theme' } })
+const { data: home, pending: homePending } = await useFetch<HomePayload>('/api/home')
 
-const featured = computed(() => featuredRes.value?.data ?? [])
-const recent = computed(() => recentRes.value?.data ?? [])
+const featured = computed(() => home.value?.featured ?? [])
+const recent = computed(() => home.value?.recent ?? [])
+const moodTags = computed(() => home.value?.moodTags ?? [])
+const themeTags = computed(() => home.value?.themeTags ?? [])
 
-// ── Hero: random author + poem (dice columns) ─────────────────────────────
+// ── Hero: random author + poem (from /api/home payload; dice re-roll still uses APIs) ──
 const heroAuthor = ref<RandomAuthor | null>(null)
 const heroPoem = ref<Poem | null>(null)
-const rollingAuthor = ref(false)
-const rollingPoem = ref(false)
+
+watch(
+  [home, homePending],
+  () => {
+    if (homePending.value) return
+    const h = home.value
+    if (!h) {
+      heroAuthor.value = null
+      heroPoem.value = null
+      return
+    }
+    if (h.hero) {
+      heroAuthor.value = h.hero.a
+      heroPoem.value = h.hero.p
+    } else {
+      heroAuthor.value = null
+      heroPoem.value = null
+    }
+  },
+  { immediate: true },
+)
+
+const rollingDice = ref(false)
 const loadingPoemFromBib = ref(false)
-/** True after the first author-dice load (success or empty DB). */
-const heroInitialized = ref(false)
 
-const poemsColumnRef = ref<HTMLElement | null>(null)
+const poemBlockRef = ref<HTMLElement | null>(null)
 
-/** Hero dice: minimum time spent rolling; then dice idles briefly before new author/poem appears. */
+/** Minimum dice roll window when re-fetching (first paint uses SSR payload). */
 const DICE_MIN_ROLL_MS = 2800
 const DICE_SETTLE_BEFORE_REVEAL_MS = 420
 
@@ -62,55 +88,34 @@ const heroAuthorAvatar = computed(() =>
   heroAuthor.value ? authorAvatarUrl(heroAuthor.value) : '',
 )
 
-const poemColumnAvatar = computed(() =>
-  heroPoem.value?.author ? authorAvatarUrl(heroPoem.value.author) : '',
-)
-
-async function rollAuthorDice() {
-  rollingAuthor.value = true
+/** Random author + random poem from that author (same as initial /api/home hero). */
+async function rollHeroDice() {
+  rollingDice.value = true
   const t0 = performance.now()
   try {
     const a = await fetchRandomAuthor()
     const p = await fetchRandomPoem(a.slug)
     const elapsed = performance.now() - t0
     await sleep(Math.max(0, DICE_MIN_ROLL_MS - elapsed))
-    rollingAuthor.value = false
+    rollingDice.value = false
     await sleep(DICE_SETTLE_BEFORE_REVEAL_MS)
     heroAuthor.value = a
     heroPoem.value = p
   } catch {
     heroAuthor.value = null
     heroPoem.value = null
-    rollingAuthor.value = false
-  } finally {
-    heroInitialized.value = true
+    rollingDice.value = false
   }
 }
 
-async function rollPoemDice() {
-  rollingPoem.value = true
-  const t0 = performance.now()
-  try {
-    const p = await fetchRandomPoem(heroAuthor.value?.slug)
-    const elapsed = performance.now() - t0
-    await sleep(Math.max(0, DICE_MIN_ROLL_MS - elapsed))
-    rollingPoem.value = false
-    await sleep(DICE_SETTLE_BEFORE_REVEAL_MS)
-    heroPoem.value = p
-  } catch {
-    heroPoem.value = null
-    rollingPoem.value = false
-  }
-}
-
-/** Load a poem from bibliography into the hero (right column). */
+/** Load a poem from bibliography into the hero. */
 async function showPoemInHero(slug: string) {
   if (heroPoem.value?.slug === slug) return
   loadingPoemFromBib.value = true
   try {
     heroPoem.value = await $fetch<Poem>(`/api/poems/${encodeURIComponent(slug)}`)
     await nextTick()
-    poemsColumnRef.value?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    poemBlockRef.value?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
   } catch {
     /* keep previous poem */
   } finally {
@@ -118,9 +123,6 @@ async function showPoemInHero(slug: string) {
   }
 }
 
-onMounted(() => {
-  void rollAuthorDice()
-})
 </script>
 
 <template>
@@ -136,24 +138,9 @@ onMounted(() => {
       </svg>
     </button>
     <ReaderSettingsSidebar v-model:open="readerSettingsOpen" id-prefix="home" />
-
-    <!-- Masthead — full-width band (breaks out of main padding) -->
-    <section
-      class="w-screen max-w-[100vw] ml-[calc(50%-50vw)] overflow-x-clip rounded-none bg-gradient-to-b from-surface-subtle/25 via-surface-page to-surface-page px-4 pb-8 pt-6 shadow-ds-nav md:px-6 md:pb-12 md:pt-10">
-      <header class="ds-masthead">
-        <h1 class="ds-masthead-title">
-          <span class="block">{{ t('home.heroLine1') }}</span>
-          <span class="block text-gold-800">{{ t('home.heroLine2') }}</span>
-        </h1>
-        <p class="ds-masthead-lead">{{ t('home.subtitle') }}</p>
-        <div class="ds-masthead-rule" aria-hidden="true" />
-      </header>
-    </section>
-
-    <!-- ── Hero: authors | poems (dice) — full-bleed width (breaks out of main padding) ── -->
-    <section
-      class="mb-24 w-screen max-w-[100vw] ml-[calc(50%-50vw)] overflow-x-clip rounded-none bg-gradient-to-b from-surface-subtle/30 via-surface-page to-brand-soft/20 px-4 pb-4 pt-10 shadow-ds-nav sm:px-6 sm:pb-6 sm:pt-12">
-      <div v-if="!heroInitialized" class="flex min-h-[12rem] items-center justify-center">
+    <!-- ── Hero: random author + poem; 3D dice in header ── -->
+    <section class="overflow-x-clip rounded-none">
+      <div v-if="homePending" class="flex min-h-[12rem] items-center justify-center">
         <span class="h-9 w-9 animate-spin rounded-full border-2 border-edge-subtle border-t-brand" aria-hidden="true" />
       </div>
 
@@ -161,22 +148,26 @@ onMounted(() => {
         <p class="font-serif text-lg text-content-secondary">{{ t('home.emptyLibrary') }}</p>
       </div>
 
-      <div v-else class="mx-auto grid gap-8 md:grid-cols-2 md:gap-10 lg:gap-12">
-        <!-- Authors column -->
-        <div
-          class="flex flex-col rounded-ds-lg border border-edge-subtle bg-surface-raised/90 p-5 shadow-ds-card backdrop-blur-sm md:p-6">
-          <div class="mb-4 flex flex-col items-center gap-3 border-b border-edge-subtle pb-4">
-            <h2 class="w-full text-center font-serif text-display-sm font-semibold tracking-tight text-content">
-              {{ t('home.heroAuthors') }}
-            </h2>
-            <button type="button"
-              class="inline-flex h-14 w-14 shrink-0 items-center justify-center overflow-visible disabled:opacity-50 md:h-16 md:w-16"
-              :disabled="rollingAuthor" :aria-label="t('home.rollAuthorDice')" @click="rollAuthorDice">
-              <Dice3D :rolling="rollingAuthor" />
-            </button>
-          </div>
-          <div v-if="heroAuthor" class="flex min-h-[10rem] flex-1 flex-col">
-            <NuxtLink :to="`/authors/${heroAuthor.slug}`" class="group flex flex-col items-center text-center">
+      <div v-else class="mx-auto">
+        <div class="flex flex-col items-center gap-3 px-5 pb-6 pt-8 text-center md:px-8">
+          <h2 class="font-serif text-display-sm font-semibold tracking-tight text-content">
+            {{ t('home.heroBannerTitle') }}
+          </h2>
+          <p class="max-w-xl text-sm leading-relaxed text-content-secondary">
+            {{ t('home.heroDiceHint') }}
+          </p>
+          <button type="button"
+            class="inline-flex h-14 w-14 shrink-0 items-center justify-center overflow-visible disabled:opacity-50 md:h-16 md:w-16"
+            :disabled="rollingDice" :aria-label="t('home.rollDice')" @click="rollHeroDice">
+            <Dice3D :rolling="rollingDice" />
+          </button>
+        </div>
+
+        <!-- Poet (left) | poem (right) -->
+        <div v-if="heroAuthor" class="grid gap-8 px-5 pb-8 pt-8 md:grid-cols-2 md:gap-10 md:px-8 lg:gap-12">
+          <div class="min-w-0 md:pr-8">
+            <NuxtLink :to="`/authors/${heroAuthor.slug}`"
+              class="group flex flex-col items-center text-center md:items-start md:text-left">
               <img :src="heroAuthorAvatar" :alt="heroAuthor.name" loading="lazy"
                 class="h-24 w-24 rounded-full object-cover ring-2 ring-edge-subtle transition group-hover:ring-brand-soft/70" />
               <p
@@ -188,7 +179,7 @@ onMounted(() => {
               </p>
             </NuxtLink>
 
-            <section v-if="heroAuthor.bio?.trim()" class="mt-5 w-full border-t border-edge-subtle pt-4 text-left">
+            <section v-if="heroAuthor.bio?.trim()" class="mt-6 text-left">
               <h3 class="mb-2 font-serif text-sm font-semibold uppercase tracking-wide text-content-secondary">
                 {{ t('authors.biography') }}
               </h3>
@@ -197,13 +188,12 @@ onMounted(() => {
               </p>
             </section>
 
-            <section v-if="heroAuthor.works?.length" class="mt-4 w-full border-t border-edge-subtle pt-4 text-left">
+            <section v-if="heroAuthor.works?.length" class="mt-6 text-left">
               <h3 class="mb-1 font-serif text-sm font-semibold uppercase tracking-wide text-content-secondary">
                 {{ t('authors.bibliography') }}
               </h3>
               <p class="mb-2 text-xs text-content-soft">{{ t('authors.worksInCollection') }}</p>
-              <ul
-                class="max-w-full list-inside list-disc space-y-1.5 text-sm text-content-secondary sm:columns-2 sm:gap-x-8">
+              <ul class="max-w-full list-inside list-disc space-y-1.5 text-sm text-content-secondary">
                 <li v-for="w in heroAuthor.works" :key="w.slug" class="break-inside-avoid break-words">
                   <span class="inline-flex flex-wrap items-baseline gap-1.5">
                     <button type="button"
@@ -219,30 +209,15 @@ onMounted(() => {
               </ul>
             </section>
           </div>
-        </div>
 
-        <!-- Poems column -->
-        <div ref="poemsColumnRef"
-          class="flex flex-col rounded-ds-lg border border-edge-subtle bg-surface-raised/90 p-5 shadow-ds-card backdrop-blur-sm md:p-6">
-          <div class="mb-4 flex flex-col items-center gap-3 border-b border-edge-subtle pb-4">
-            <h2 class="w-full text-center font-serif text-display-sm font-semibold tracking-tight text-content">
-              {{ t('home.heroPoems') }}
-            </h2>
-            <button type="button"
-              class="inline-flex h-14 w-14 shrink-0 items-center justify-center overflow-visible disabled:opacity-50 md:h-16 md:w-16"
-              :disabled="rollingPoem" :aria-label="t('home.rollPoemDice')" @click="rollPoemDice">
-              <Dice3D :rolling="rollingPoem" />
-            </button>
-          </div>
-          <div v-if="heroPoem" class="flex min-h-[10rem] flex-1 flex-col">
+          <div v-if="heroPoem" ref="poemBlockRef"
+            class="min-w-0 border-t border-edge-subtle pt-8 md:border-t-0 md:pt-0">
             <PoemTitle :title="heroPoem.title" :slug="heroPoem.slug" variant="banner" />
             <NuxtLink v-if="heroPoem.author" :to="`/authors/${heroPoem.author.slug}`"
-              class="mt-2 inline-flex items-center gap-2 text-sm text-content-muted transition hover:text-gold-800">
-              <img :src="poemColumnAvatar" :alt="heroPoem.author?.name ?? ''" loading="lazy"
-                class="h-8 w-8 shrink-0 rounded-full object-cover ring-1 ring-edge-subtle" />
-              <span>— {{ heroPoem.author.name }}</span>
+              class="mt-2 inline-block text-sm text-content-muted transition hover:text-gold-800">
+              — {{ heroPoem.author.name }}
             </NuxtLink>
-            <p class="mt-8 flex-1 text-left" :style="poemBodyStyle">
+            <p class="mt-6 text-left md:mt-8" :style="poemBodyStyle">
               {{ heroPoemBody }}
             </p>
           </div>
@@ -301,7 +276,7 @@ onMounted(() => {
     </section>
 
     <!-- ── Admin hint when library lists are empty ─────────────────────────── -->
-    <section v-if="!featured.length && !recent.length && heroInitialized"
+    <section v-if="!featured.length && !recent.length && !homePending && !heroAuthor && !heroPoem"
       class="py-8 text-center text-sm text-content-soft">
       <p>
         {{ t('home.emptyHintBefore') }}

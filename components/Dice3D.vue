@@ -100,7 +100,6 @@ function rollLoop(now: number) {
 
   const t = now * 0.001
   const slow = reduceMotion.value ? 0.32 : 1
-  // Incommensurate rates + slow modulation → non-repeating, fluid tumble (deg/s base)
   const wx = 1 + 0.11 * Math.sin(t * 1.55 + 0.3)
   const wy = 1 + 0.09 * Math.cos(t * 1.22 - 0.2)
   const wz = 1 + 0.07 * Math.sin(t * 1.8 + 1.1)
@@ -246,7 +245,6 @@ onUnmounted(() => {
   transform-style: preserve-3d;
 }
 
-/* Subtle idle only when not tumbling — adds life without fighting rAF pose */
 .dice-cube--idle {
   animation: dice-idle 30s ease-in-out infinite;
 }

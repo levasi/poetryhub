@@ -2,8 +2,10 @@
 import { prisma } from '~/server/utils/prisma'
 import { ensureAuthorPortraitUrl } from '~/server/utils/authorPortrait'
 import { ensureAuthorBio } from '~/server/utils/authorBio'
+import { stableQueryKey } from '~/server/utils/cacheKeys'
 
-export default defineEventHandler(async (event) => {
+export default defineCachedEventHandler(
+  async (event) => {
   const slug  = getRouterParam(event, 'slug')!
   const query = getQuery(event)
   const page  = Math.max(1, parseInt(String(query.page  ?? 1)))
@@ -47,4 +49,14 @@ export default defineEventHandler(async (event) => {
       meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
     },
   }
-})
+  },
+  {
+    name: 'api-author-by-slug',
+    maxAge: 45,
+    swr: true,
+    getKey: (event) => {
+      const slug = getRouterParam(event, 'slug') ?? ''
+      return `author:${slug}:${stableQueryKey('p', event)}`
+    },
+  },
+)
