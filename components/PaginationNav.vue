@@ -31,7 +31,7 @@ const visiblePages = computed(() => {
     <!-- Prev -->
     <button
       type="button"
-      class="rounded-lg border border-ink-200 bg-white px-3 py-1.5 text-sm text-ink-600 shadow-sm transition-colors hover:border-ink-300 hover:text-ink-900 disabled:opacity-30"
+      class="rounded-lg border border-edge bg-surface-raised px-3 py-1.5 text-sm text-content-secondary shadow-sm transition-colors hover:border-edge-strong hover:text-content disabled:opacity-30"
       :disabled="page === 1 || loading"
       :aria-label="t('pagination.previous')"
       @click="emit('update:page', page - 1)"
@@ -41,13 +41,13 @@ const visiblePages = computed(() => {
 
     <!-- Page numbers -->
     <template v-for="p in visiblePages" :key="String(p)">
-      <span v-if="p === '...'" class="px-2 text-ink-400">…</span>
+      <span v-if="p === '...'" class="px-2 text-content-soft">…</span>
       <button
         v-else
         class="rounded-lg border px-3 py-1.5 text-sm shadow-sm transition-colors"
         :class="p === page
-          ? 'border-amber-300 bg-amber-50 text-amber-900'
-          : 'border-ink-200 bg-white text-ink-600 hover:border-ink-300 hover:text-ink-900'"
+          ? 'border-brand/50 bg-brand-soft/25 text-content'
+          : 'border-edge bg-surface-raised text-content-secondary hover:border-edge-strong hover:text-content'"
         :disabled="loading"
         @click="emit('update:page', p as number)"
       >
@@ -58,7 +58,7 @@ const visiblePages = computed(() => {
     <!-- Next -->
     <button
       type="button"
-      class="rounded-lg border border-ink-200 bg-white px-3 py-1.5 text-sm text-ink-600 shadow-sm transition-colors hover:border-ink-300 hover:text-ink-900 disabled:opacity-30"
+      class="rounded-lg border border-edge bg-surface-raised px-3 py-1.5 text-sm text-content-secondary shadow-sm transition-colors hover:border-edge-strong hover:text-content disabled:opacity-30"
       :disabled="page === totalPages || loading"
       :aria-label="t('pagination.next')"
       @click="emit('update:page', page + 1)"

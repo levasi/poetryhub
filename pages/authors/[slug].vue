@@ -40,7 +40,7 @@ const avatarSrc = computed(() =>
 <template>
   <div v-if="author" class="animate-fade-in">
     <!-- Back -->
-    <NuxtLink to="/authors" class="mb-8 inline-flex items-center gap-1 text-sm text-ink-600 hover:text-ink-900">
+    <NuxtLink to="/authors" class="mb-8 inline-flex items-center gap-1 text-sm text-content-secondary hover:text-content">
       <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
         <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
       </svg>
@@ -61,42 +61,42 @@ const avatarSrc = computed(() =>
 
       <!-- Info -->
       <div>
-        <h1 class="font-serif text-4xl font-bold text-ink-900">{{ author.name }}</h1>
-        <p class="mt-1 text-sm text-ink-600">
+        <h1 class="font-serif text-4xl font-bold text-content">{{ author.name }}</h1>
+        <p class="mt-1 text-sm text-content-secondary">
           <span v-if="author.nationality">{{ author.nationality }}</span>
           <span v-if="author.nationality && yearsLabel()"> · </span>
           <span>{{ yearsLabel() }}</span>
         </p>
-        <p class="mt-3 text-sm text-ink-500">
+        <p class="mt-3 text-sm text-content-muted">
           {{ t('authors.poemCount', meta?.total ?? 0) }}
         </p>
       </div>
     </div>
 
     <!-- Biography -->
-    <section class="mb-10 border-t border-ink-200/80 pt-8">
-      <h2 class="mb-3 font-serif text-xl font-bold text-ink-900">{{ t('authors.biography') }}</h2>
+    <section class="mb-10 border-t border-edge/80 pt-8">
+      <h2 class="mb-3 font-serif text-xl font-bold text-content">{{ t('authors.biography') }}</h2>
       <p
         v-if="author.bio"
-        class="max-w-3xl whitespace-pre-wrap text-base leading-relaxed text-ink-700"
+        class="max-w-3xl whitespace-pre-wrap text-base leading-relaxed text-content-secondary"
       >
         {{ author.bio }}
       </p>
-      <p v-else class="max-w-3xl text-sm italic text-ink-500">{{ t('authors.bioUnavailable') }}</p>
+      <p v-else class="max-w-3xl text-sm italic text-content-muted">{{ t('authors.bioUnavailable') }}</p>
     </section>
 
     <!-- Bibliography (works in this collection) -->
-    <section v-if="works.length" class="mb-10 border-t border-ink-200/80 pt-8">
-      <h2 class="mb-1 font-serif text-xl font-bold text-ink-900">{{ t('authors.bibliography') }}</h2>
-      <p class="mb-4 text-sm text-ink-500">{{ t('authors.worksInCollection') }}</p>
+    <section v-if="works.length" class="mb-10 border-t border-edge/80 pt-8">
+      <h2 class="mb-1 font-serif text-xl font-bold text-content">{{ t('authors.bibliography') }}</h2>
+      <p class="mb-4 text-sm text-content-muted">{{ t('authors.worksInCollection') }}</p>
       <ul
-        class="max-h-80 max-w-3xl list-inside list-disc space-y-1.5 overflow-y-auto text-sm text-ink-700 sm:columns-2 sm:gap-x-8"
+        class="max-h-80 max-w-3xl list-inside list-disc space-y-1.5 overflow-y-auto text-sm text-content-secondary sm:columns-2 sm:gap-x-8"
       >
         <li v-for="w in works" :key="w.slug" class="break-inside-avoid">
           <span class="inline-flex flex-wrap items-baseline gap-1.5">
             <NuxtLink
               :to="`/poems/${w.slug}`"
-              class="text-gold-800 underline-offset-2 hover:text-gold-900 hover:underline"
+              class="font-medium text-brand underline-offset-2 hover:text-brand-hover hover:underline"
             >
               {{ w.title }}
             </NuxtLink>
@@ -111,7 +111,7 @@ const avatarSrc = computed(() =>
       <PoetryCard v-for="poem in poems" :key="poem.id" :poem="poem" />
     </div>
 
-    <div v-else class="py-12 text-center text-ink-600">
+    <div v-else class="py-12 text-center text-content-secondary">
       <p class="font-serif">{{ t('authors.noPoemsYet') }}</p>
     </div>
 

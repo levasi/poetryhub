@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { prisma } from '~/server/utils/prisma'
 import { requireUser } from '~/server/utils/auth'
 import { estimateReadingTime, extractExcerpt } from '~/server/utils/slug'
-import { resolveCarouselDefaultsAdminEmail } from '~/utils/carouselDefaultsAdmin'
+import { userCanManageCarouselDefaults } from '~/utils/carouselDefaultsAdmin'
 
 const schema = z.object({
   content: z.string().min(1),
@@ -13,10 +13,9 @@ export default defineEventHandler(async (event) => {
   setHeader(event, 'cache-control', 'no-store')
   const tokenUser = await requireUser(event)
   const config = useRuntimeConfig()
-  const adminEmail = resolveCarouselDefaultsAdminEmail(
-    config.public.carouselDefaultsAdminEmail as string | undefined,
-  )
-  if (tokenUser.email.toLowerCase() !== adminEmail) {
+  if (
+    !userCanManageCarouselDefaults(tokenUser, config.public.carouselDefaultsAdminEmail as string | undefined)
+  ) {
     throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
   }
 

@@ -12,7 +12,21 @@
     "allAuthors": "All authors",
     "language": "Language",
     "signedInAs": "Signed in as {name}",
-    "carousel": "Carousel"
+    "carousel": "Carousel",
+    "write": "Write",
+    "admin": "Admin"
+  },
+  "colorScheme": {
+    "paper": "Paper",
+    "ink": "Ink",
+    "sepia": "Sepia",
+    "qi": "Qi",
+    "hint": "Color theme",
+    "aria": "Choose color theme"
+  },
+  "write": {
+    "seoTitle": "Write — Romanian dictionary & rhymes — PoetryHub",
+    "seoDesc": "Search words, syllables, and rhymes; draft lyrics with the PoetryHub lexicon tool."
   },
   "carousel": {
     "seoTitle": "Instagram carousel generator — PoetryHub",
@@ -281,7 +295,8 @@
     "quickReadLabel": "Quick read",
     "openQuickRead": "Open quick read",
     "quickReadClose": "Close preview",
-    "readFullPoem": "Open full poem"
+    "readFullPoem": "Open full poem",
+    "readMore": "Read more"
   },
   "lang": {
     "en": "English",
@@ -339,7 +354,8 @@
     "adminNewAuthor": "New Author — Admin",
     "adminEditPoem": "Edit: {title} — Admin",
     "adminEditAuthor": "Edit: {name} — Admin",
-    "adminImport": "Import Poems — Admin"
+    "adminImport": "Import Poems — Admin",
+    "adminAspect": "Aspect — Admin"
   },
   "admin": {
     "panel": "Admin panel",
@@ -350,7 +366,14 @@
       "dashboard": "Dashboard",
       "poems": "Poems",
       "authors": "Authors",
+      "aspect": "Aspect",
       "import": "Import"
+    },
+    "aspect": {
+      "title": "Aspect",
+      "lead": "Tune layout, typography, and presentation settings for the public site. Four color schemes apply to the public site; visitors switch them from the footer.",
+      "schemesTitle": "Site color schemes",
+      "schemesBody": "Paper is the default light theme. Ink is a dark reading theme. Sepia is a warm parchment tone. Qi is a warm ivory editorial palette inspired by magazine layouts. The choice is saved in this browser only."
     },
     "stats": {
       "totalPoems": "Total poems",

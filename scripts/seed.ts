@@ -4,7 +4,7 @@
  * Run once after `prisma db push`:  npm run db:seed
  */
 
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, UserRole } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
@@ -58,8 +58,27 @@ async function main() {
     await prisma.adminUser.create({
       data: { email, passwordHash: hash, name: 'Admin' },
     })
-    console.log(`  ✓ Admin user created: ${email}`)
+    console.log(`  ✓ Legacy AdminUser created: ${email}`)
     console.log(`    Password: ${password}  ← change this in production!\n`)
+  }
+
+  // ── Promote app account to admin (same email as carousel defaults owner) ────
+  const appAdminEmail = 'vasileeduardbogdan@gmail.com'
+  const appUser = await prisma.user.findUnique({ where: { email: appAdminEmail } })
+  if (appUser) {
+    if (appUser.role !== UserRole.admin) {
+      await prisma.user.update({
+        where: { id: appUser.id },
+        data: { role: UserRole.admin },
+      })
+      console.log(`  ✓ User promoted to admin: ${appAdminEmail}`)
+    } else {
+      console.log(`  ⚠ Already admin: ${appAdminEmail}`)
+    }
+  } else {
+    console.log(
+      `  ⚠ No User with ${appAdminEmail} — register that account, then run: npm run db:seed`,
+    )
   }
 
   // ── Tags ────────────────────────────────────────────────────────────────────

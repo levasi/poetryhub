@@ -101,11 +101,17 @@ model PoemTag {
 
 // ─── Users ───────────────────────────────────────────────────────────────────
 
+enum UserRole {
+  user
+  admin
+}
+
 model User {
   id           String     @id @default(cuid())
   email        String     @unique
   passwordHash String
   name         String?
+  role         UserRole   @default(user)
   /// Poem reader font key (see READER_FONT_STACKS in composables/useReaderPreferences.ts)
   poemFontFamily String   @default("playfair")
   /// Body font size in px (16–48)
@@ -169,4 +175,34 @@ model ImportLog {
   errors     Int      @default(0)
   details    String?  @db.Text
   createdAt  DateTime @default(now())
+}
+
+// ─── Romanian lexicon (`/write` — dictionary search; import from rhymescheme) ─
+
+model WriteLexiconWord {
+  id            String   @id @default(cuid())
+  word          String   @unique
+  baseForm      String
+  type          String
+  syllables     String
+  syllableCount Int
+  endingKey     String
+  endingLast    String
+  definition    String?
+  synonymsJson  String   @default("[]")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([endingKey])
+  @@index([endingLast])
+  @@index([type])
+  @@index([syllableCount])
+}
+
+model WriteCachedLookup {
+  id        String   @id @default(cuid())
+  cacheKey  String   @unique
+  source    String
+  payload   String
+  createdAt DateTime @default(now())
 }

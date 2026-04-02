@@ -220,12 +220,13 @@ export function useReaderPreferences() {
     onReaderPreferenceChange()
   }
 
+  /** Poem color follows design tokens (`--color-poem-text`) so Cerneală / Sepia stay readable */
   const poemBodyStyle = computed(() => ({
     whiteSpace: 'pre-wrap' as const,
     fontFamily: fontFamilyCss.value,
     fontSize: `${fontSizePx.value}px`,
     lineHeight: lineHeight.value,
-    color: '#2d2d26',
+    color: 'rgb(var(--color-poem-text))',
     letterSpacing: `${letterSpacingEm.value}em`,
   }))
 
@@ -234,7 +235,7 @@ export function useReaderPreferences() {
     fontFamily: fontFamilyCss.value,
     fontSize: `clamp(${Math.max(16, fontSizePx.value - 2)}px, 3vw, ${Math.min(52, fontSizePx.value + 4)}px)`,
     lineHeight: lineHeight.value,
-    color: '#2d2d26',
+    color: 'rgb(var(--color-poem-text))',
     letterSpacing: `${letterSpacingEm.value}em`,
   }))
 

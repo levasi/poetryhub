@@ -24,7 +24,7 @@ const sources = computed(() => [
   <div class="space-y-6">
     <!-- Mood -->
     <div v-if="moodTags?.length">
-      <p class="mb-3 text-xs font-semibold uppercase tracking-widest text-ink-600">{{ t('filters.mood') }}</p>
+      <p class="mb-3 text-xs font-semibold uppercase tracking-widest text-content-secondary">{{ t('filters.mood') }}</p>
       <div class="flex flex-wrap gap-1.5">
         <TagBadge
           v-for="tag in moodTags"
@@ -42,7 +42,7 @@ const sources = computed(() => [
 
     <!-- Theme -->
     <div v-if="themeTags?.length">
-      <p class="mb-3 text-xs font-semibold uppercase tracking-widest text-ink-600">{{ t('filters.theme') }}</p>
+      <p class="mb-3 text-xs font-semibold uppercase tracking-widest text-content-secondary">{{ t('filters.theme') }}</p>
       <div class="flex flex-wrap gap-1.5">
         <TagBadge
           v-for="tag in themeTags"
@@ -60,7 +60,7 @@ const sources = computed(() => [
 
     <!-- Source -->
     <div>
-      <p class="mb-3 text-xs font-semibold uppercase tracking-widest text-ink-600">{{ t('filters.source') }}</p>
+      <p class="mb-3 text-xs font-semibold uppercase tracking-widest text-content-secondary">{{ t('filters.source') }}</p>
       <div class="flex flex-wrap gap-1.5">
         <TagBadge
           v-for="src in sources"
@@ -76,7 +76,7 @@ const sources = computed(() => [
     <!-- Clear -->
     <button
       v-if="hasActiveFilters"
-      class="w-full rounded-lg border border-ink-200 bg-white py-2 text-xs text-ink-600 shadow-sm transition-colors hover:border-ink-300 hover:text-ink-900"
+      class="w-full rounded-lg border border-edge bg-surface-raised py-2 text-xs text-content-secondary shadow-sm transition-colors hover:border-edge-strong hover:text-content"
       @click="emit('clear')"
     >
       {{ t('filters.clearAllFilters') }}

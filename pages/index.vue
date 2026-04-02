@@ -127,7 +127,7 @@ onMounted(() => {
   <div class="animate-fade-in">
     <!-- Reading appearance (matches poem page fixed cog) -->
     <button type="button"
-      class="fixed right-3 top-1/2 z-[45] flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-ink-200/90 bg-white/95 text-ink-600 shadow-md backdrop-blur-sm transition hover:border-gold-400/70 hover:text-gold-800 md:right-6"
+      class="fixed right-3 top-1/2 z-[45] flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-edge-subtle bg-surface-raised/95 text-content-muted shadow-ds-card backdrop-blur-sm transition hover:border-brand-soft hover:text-brand-hover md:right-6"
       :aria-label="t('viewer.openReadingSettings')" @click="readerSettingsOpen = true">
       <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
         <path stroke-linecap="round" stroke-linejoin="round"
@@ -137,23 +137,38 @@ onMounted(() => {
     </button>
     <ReaderSettingsSidebar v-model:open="readerSettingsOpen" id-prefix="home" />
 
+    <!-- Masthead — full-width band (breaks out of main padding) -->
+    <section
+      class="w-screen max-w-[100vw] ml-[calc(50%-50vw)] overflow-x-clip rounded-none bg-gradient-to-b from-surface-subtle/25 via-surface-page to-surface-page px-4 pb-8 pt-6 shadow-ds-nav md:px-6 md:pb-12 md:pt-10">
+      <header class="ds-masthead">
+        <h1 class="ds-masthead-title">
+          <span class="block">{{ t('home.heroLine1') }}</span>
+          <span class="block text-gold-800">{{ t('home.heroLine2') }}</span>
+        </h1>
+        <p class="ds-masthead-lead">{{ t('home.subtitle') }}</p>
+        <div class="ds-masthead-rule" aria-hidden="true" />
+      </header>
+    </section>
+
     <!-- ── Hero: authors | poems (dice) — full-bleed width (breaks out of main padding) ── -->
     <section
-      class="mb-16 w-screen max-w-[100vw] ml-[calc(50%-50vw)] overflow-x-clip rounded-none bg-gradient-to-br from-white via-ink-50 to-amber-50/40 px-4 shadow-sm sm:px-6">
+      class="mb-24 w-screen max-w-[100vw] ml-[calc(50%-50vw)] overflow-x-clip rounded-none bg-gradient-to-b from-surface-subtle/30 via-surface-page to-brand-soft/20 px-4 pb-4 pt-10 shadow-ds-nav sm:px-6 sm:pb-6 sm:pt-12">
       <div v-if="!heroInitialized" class="flex min-h-[12rem] items-center justify-center">
-        <span class="h-9 w-9 animate-spin rounded-full border-2 border-ink-200 border-t-gold-600" aria-hidden="true" />
+        <span class="h-9 w-9 animate-spin rounded-full border-2 border-edge-subtle border-t-brand" aria-hidden="true" />
       </div>
 
-      <div v-else-if="!heroAuthor && !heroPoem" class="py-12 text-center text-ink-600">
-        <p class="font-serif text-lg">{{ t('home.emptyLibrary') }}</p>
+      <div v-else-if="!heroAuthor && !heroPoem" class="py-12 text-center text-content-muted">
+        <p class="font-serif text-lg text-content-secondary">{{ t('home.emptyLibrary') }}</p>
       </div>
 
-      <div v-else class="mx-auto grid gap-8 md:grid-cols-2 md:gap-10">
+      <div v-else class="mx-auto grid gap-8 md:grid-cols-2 md:gap-10 lg:gap-12">
         <!-- Authors column -->
         <div
-          class="flex flex-col rounded-xl border border-ink-200/90 bg-white/80 p-5 shadow-sm backdrop-blur-sm md:p-6">
-          <div class="mb-4 flex flex-col items-center gap-3 border-b border-ink-100 pb-3">
-            <h2 class="w-full text-center font-serif text-xl font-bold text-ink-900">{{ t('home.heroAuthors') }}</h2>
+          class="flex flex-col rounded-ds-lg border border-edge-subtle bg-surface-raised/90 p-5 shadow-ds-card backdrop-blur-sm md:p-6">
+          <div class="mb-4 flex flex-col items-center gap-3 border-b border-edge-subtle pb-4">
+            <h2 class="w-full text-center font-serif text-display-sm font-semibold tracking-tight text-content">
+              {{ t('home.heroAuthors') }}
+            </h2>
             <button type="button"
               class="inline-flex h-14 w-14 shrink-0 items-center justify-center overflow-visible disabled:opacity-50 md:h-16 md:w-16"
               :disabled="rollingAuthor" :aria-label="t('home.rollAuthorDice')" @click="rollAuthorDice">
@@ -163,30 +178,32 @@ onMounted(() => {
           <div v-if="heroAuthor" class="flex min-h-[10rem] flex-1 flex-col">
             <NuxtLink :to="`/authors/${heroAuthor.slug}`" class="group flex flex-col items-center text-center">
               <img :src="heroAuthorAvatar" :alt="heroAuthor.name" loading="lazy"
-                class="h-24 w-24 rounded-full object-cover ring-2 ring-ink-200/80 transition group-hover:ring-gold-400/60" />
-              <p class="mt-4 font-serif text-2xl font-bold text-ink-900 transition group-hover:text-gold-800">
+                class="h-24 w-24 rounded-full object-cover ring-2 ring-edge-subtle transition group-hover:ring-brand-soft/70" />
+              <p
+                class="mt-4 font-serif text-2xl font-semibold tracking-tight text-content transition group-hover:text-gold-800">
                 {{ heroAuthor.name }}
               </p>
-              <p v-if="heroAuthor._count" class="mt-1 text-sm text-ink-500">
+              <p v-if="heroAuthor._count" class="mt-1 text-sm text-content-soft">
                 {{ t('home.heroPoemCount', { n: heroAuthor._count.poems }) }}
               </p>
             </NuxtLink>
 
-            <section v-if="heroAuthor.bio?.trim()" class="mt-5 w-full border-t border-ink-100 pt-4 text-left">
-              <h3 class="mb-2 font-serif text-sm font-bold uppercase tracking-wide text-ink-800">
+            <section v-if="heroAuthor.bio?.trim()" class="mt-5 w-full border-t border-edge-subtle pt-4 text-left">
+              <h3 class="mb-2 font-serif text-sm font-semibold uppercase tracking-wide text-content-secondary">
                 {{ t('authors.biography') }}
               </h3>
-              <p class="max-h-48 overflow-y-auto whitespace-pre-wrap text-sm leading-relaxed text-ink-700">
+              <p class="max-h-48 overflow-y-auto whitespace-pre-wrap text-sm leading-relaxed text-content-secondary">
                 {{ heroAuthor.bio }}
               </p>
             </section>
 
-            <section v-if="heroAuthor.works?.length" class="mt-4 w-full border-t border-ink-100 pt-4 text-left">
-              <h3 class="mb-1 font-serif text-sm font-bold uppercase tracking-wide text-ink-800">
+            <section v-if="heroAuthor.works?.length" class="mt-4 w-full border-t border-edge-subtle pt-4 text-left">
+              <h3 class="mb-1 font-serif text-sm font-semibold uppercase tracking-wide text-content-secondary">
                 {{ t('authors.bibliography') }}
               </h3>
-              <p class="mb-2 text-xs text-ink-500">{{ t('authors.worksInCollection') }}</p>
-              <ul class="max-w-full list-inside list-disc space-y-1.5 text-sm text-ink-700 sm:columns-2 sm:gap-x-8">
+              <p class="mb-2 text-xs text-content-soft">{{ t('authors.worksInCollection') }}</p>
+              <ul
+                class="max-w-full list-inside list-disc space-y-1.5 text-sm text-content-secondary sm:columns-2 sm:gap-x-8">
                 <li v-for="w in heroAuthor.works" :key="w.slug" class="break-inside-avoid break-words">
                   <span class="inline-flex flex-wrap items-baseline gap-1.5">
                     <button type="button"
@@ -206,9 +223,11 @@ onMounted(() => {
 
         <!-- Poems column -->
         <div ref="poemsColumnRef"
-          class="flex flex-col rounded-xl border border-ink-200/90 bg-white/80 p-5 shadow-sm backdrop-blur-sm md:p-6">
-          <div class="mb-4 flex flex-col items-center gap-3 border-b border-ink-100 pb-3">
-            <h2 class="w-full text-center font-serif text-xl font-bold text-ink-900">{{ t('home.heroPoems') }}</h2>
+          class="flex flex-col rounded-ds-lg border border-edge-subtle bg-surface-raised/90 p-5 shadow-ds-card backdrop-blur-sm md:p-6">
+          <div class="mb-4 flex flex-col items-center gap-3 border-b border-edge-subtle pb-4">
+            <h2 class="w-full text-center font-serif text-display-sm font-semibold tracking-tight text-content">
+              {{ t('home.heroPoems') }}
+            </h2>
             <button type="button"
               class="inline-flex h-14 w-14 shrink-0 items-center justify-center overflow-visible disabled:opacity-50 md:h-16 md:w-16"
               :disabled="rollingPoem" :aria-label="t('home.rollPoemDice')" @click="rollPoemDice">
@@ -218,9 +237,9 @@ onMounted(() => {
           <div v-if="heroPoem" class="flex min-h-[10rem] flex-1 flex-col">
             <PoemTitle :title="heroPoem.title" :slug="heroPoem.slug" variant="banner" />
             <NuxtLink v-if="heroPoem.author" :to="`/authors/${heroPoem.author.slug}`"
-              class="mt-2 inline-flex items-center gap-2 text-sm text-ink-600 transition hover:text-gold-800">
+              class="mt-2 inline-flex items-center gap-2 text-sm text-content-muted transition hover:text-gold-800">
               <img :src="poemColumnAvatar" :alt="heroPoem.author?.name ?? ''" loading="lazy"
-                class="h-8 w-8 shrink-0 rounded-full object-cover ring-1 ring-ink-200" />
+                class="h-8 w-8 shrink-0 rounded-full object-cover ring-1 ring-edge-subtle" />
               <span>— {{ heroPoem.author.name }}</span>
             </NuxtLink>
             <p class="mt-8 flex-1 text-left" :style="poemBodyStyle">
@@ -230,58 +249,67 @@ onMounted(() => {
         </div>
       </div>
 
-      <div class="mx-auto mt-8 flex max-w-5xl flex-wrap justify-center gap-3">
-        <NuxtLink to="/poems"
-          class="rounded-full border border-ink-200 bg-white px-6 py-3 text-sm text-ink-700 shadow-sm transition-colors hover:border-ink-300 hover:bg-ink-50">
+      <div class="mx-auto mt-10 flex max-w-content flex-wrap justify-center gap-3 pb-6">
+        <NuxtLink to="/poems" class="ds-btn-secondary rounded-full px-8 py-3 text-sm font-medium">
           {{ t('home.explorePoems') }}
         </NuxtLink>
       </div>
     </section>
 
     <!-- ── Browse by Mood ─────────────────────────────────────────────────── -->
-    <section v-if="moodTags?.length" class="mb-16">
-      <h2 class="mb-6 font-serif text-2xl font-bold text-ink-900">{{ t('home.browseByMood') }}</h2>
-      <div class="flex flex-wrap gap-2">
+    <section v-if="moodTags?.length" class="mb-24">
+      <h2 class="ds-section-heading-center mb-10">{{ t('home.browseByMood') }}</h2>
+      <div class="flex flex-wrap justify-center gap-2.5 md:justify-start">
         <TagBadge v-for="tag in moodTags" :key="tag.id" :name="tag.name" :slug="tag.slug" :color="tag.color" />
       </div>
     </section>
 
     <!-- ── Featured Poems ─────────────────────────────────────────────────── -->
-    <section v-if="featured.length" class="mb-16">
-      <div class="mb-6 flex items-center justify-between">
-        <h2 class="font-serif text-2xl font-bold text-ink-900">{{ t('home.featured') }}</h2>
-        <NuxtLink to="/poems?featured=true" class="text-sm text-ink-600 hover:text-ink-900">{{ t('home.seeAll') }}
+    <section v-if="featured.length" class="mb-24">
+      <div class="mb-10 flex items-end justify-between gap-4">
+        <h2 class="ds-section-heading mb-0">{{ t('home.featured') }}</h2>
+        <NuxtLink to="/poems?featured=true"
+          class="shrink-0 pb-3 text-sm font-medium text-content-muted transition hover:text-gold-800">
+          {{ t('home.seeAll') }}
         </NuxtLink>
       </div>
-      <div class="grid gap-4 md:grid-cols-3">
+      <div class="grid gap-6 md:grid-cols-3 md:gap-8">
         <PoetryCard v-for="poem in featured" :key="poem.id" :poem="poem" :featured="true" />
       </div>
     </section>
 
     <!-- ── Browse by Theme ────────────────────────────────────────────────── -->
-    <section v-if="themeTags?.length" class="mb-16">
-      <h2 class="mb-6 font-serif text-2xl font-bold text-ink-900">{{ t('home.themes') }}</h2>
-      <div class="flex flex-wrap gap-2">
+    <section v-if="themeTags?.length" class="mb-24">
+      <h2 class="ds-section-heading-center mb-10">{{ t('home.themes') }}</h2>
+      <div class="flex flex-wrap justify-center gap-2.5 md:justify-start">
         <TagBadge v-for="tag in themeTags" :key="tag.id" :name="tag.name" :slug="tag.slug" :color="tag.color" />
       </div>
     </section>
 
     <!-- ── Recent Poems ───────────────────────────────────────────────────── -->
-    <section v-if="recent.length" class="mb-16">
-      <div class="mb-6 flex items-center justify-between">
-        <h2 class="font-serif text-2xl font-bold text-ink-900">{{ t('home.recentPoems') }}</h2>
-        <NuxtLink to="/poems" class="text-sm text-ink-600 hover:text-ink-900">{{ t('home.allPoemsLink') }}</NuxtLink>
+    <section v-if="recent.length" class="mb-24">
+      <div class="mb-10 flex items-end justify-between gap-4">
+        <h2 class="ds-section-heading mb-0">{{ t('home.recentPoems') }}</h2>
+        <NuxtLink to="/poems"
+          class="shrink-0 pb-3 text-sm font-medium text-content-muted transition hover:text-gold-800">
+          {{ t('home.allPoemsLink') }}
+        </NuxtLink>
       </div>
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
         <PoetryCard v-for="poem in recent" :key="poem.id" :poem="poem" />
       </div>
     </section>
 
     <!-- ── Admin hint when library lists are empty ─────────────────────────── -->
-    <section v-if="!featured.length && !recent.length && heroInitialized" class="py-8 text-center text-sm text-ink-500">
+    <section v-if="!featured.length && !recent.length && heroInitialized"
+      class="py-8 text-center text-sm text-content-soft">
       <p>
-        {{ t('home.emptyHintBefore') }}<NuxtLink to="/admin" class="underline hover:text-ink-800">{{
-          t('home.emptyHintLink') }}</NuxtLink>{{ t('home.emptyHintAfter') }}
+        {{ t('home.emptyHintBefore') }}
+        <NuxtLink to="/admin"
+          class="font-medium underline decoration-edge-strong underline-offset-2 hover:text-content">
+          {{ t('home.emptyHintLink') }}
+        </NuxtLink>
+        {{ t('home.emptyHintAfter') }}
       </p>
     </section>
   </div>

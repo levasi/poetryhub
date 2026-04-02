@@ -87,15 +87,15 @@ const writtenContextLine = computed(() => {
 <template>
   <div>
     <!-- Reading progress bar -->
-    <div class="fixed left-0 top-0 z-50 h-0.5 w-full bg-ink-200/80 pointer-events-none">
-      <div class="h-full bg-gold-500 transition-all duration-100" :style="{ width: `${progress}%` }" />
+    <div class="fixed left-0 top-0 z-50 h-0.5 w-full bg-edge-subtle pointer-events-none">
+      <div class="h-full bg-brand transition-all duration-100" :style="{ width: `${progress}%` }" />
     </div>
 
     <!-- Fixed cog: reading appearance (font + size) -->
     <button
       v-if="!slideMode"
       type="button"
-      class="fixed right-3 top-1/2 z-[45] flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-ink-200/90 bg-white/95 text-ink-600 shadow-md backdrop-blur-sm transition hover:border-gold-400/70 hover:text-gold-800 md:right-6"
+      class="fixed right-3 top-1/2 z-[45] flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-edge bg-surface-raised/95 text-content-secondary shadow-md backdrop-blur-sm transition hover:border-brand/50 hover:text-brand md:right-6"
       :aria-label="t('viewer.openReadingSettings')"
       @click="readerSettingsOpen = true"
     >
@@ -116,10 +116,10 @@ const writtenContextLine = computed(() => {
       <!-- Tags row -->
       <div v-if="tags.length" class="mb-8 flex flex-wrap gap-2">
         <NuxtLink v-for="tag in tags" :key="tag.id" :to="`/poems?tag=${tag.slug}`"
-          class="rounded-full border border-ink-200 bg-white/80 px-3 py-1 text-xs text-ink-600 shadow-sm transition-colors hover:border-gold-400/60 hover:text-gold-800">
+          class="rounded-full border border-edge bg-surface-raised/90 px-3 py-1 text-xs text-content-secondary shadow-sm transition-colors hover:border-brand/50 hover:text-brand">
           {{ labelForTag(tag.slug, tag.name) }}
         </NuxtLink>
-        <span v-if="langLabel" class="rounded-full border border-ink-200 bg-white/80 px-3 py-1 text-xs text-ink-600">
+        <span v-if="langLabel" class="rounded-full border border-edge bg-surface-raised/90 px-3 py-1 text-xs text-content-secondary">
           {{ langLabel }}
         </span>
       </div>
@@ -129,21 +129,21 @@ const writtenContextLine = computed(() => {
 
       <!-- Author -->
       <NuxtLink v-if="author" :to="`/authors/${author.slug}`"
-        class="inline-flex items-center gap-3 text-base text-ink-600 transition-colors hover:text-gold-800">
+        class="inline-flex items-center gap-3 text-base text-content-secondary transition-colors hover:text-brand">
         <img :src="authorAvatar" alt="" loading="lazy"
-          class="h-12 w-12 shrink-0 rounded-full object-cover ring-2 ring-ink-200/80" />
+          class="h-12 w-12 shrink-0 rounded-full object-cover ring-2 ring-edge" />
         <span>— {{ author.name }}</span>
       </NuxtLink>
 
-      <p v-if="writtenContextLine" class="mt-3 text-sm text-ink-500">
+      <p v-if="writtenContextLine" class="mt-3 text-sm text-content-muted">
         {{ writtenContextLine }}
       </p>
 
       <!-- Ornament divider -->
       <div class="my-10 flex items-center gap-4">
-        <div class="h-px flex-1 bg-ink-200" />
-        <span class="text-xl text-ink-400">✦</span>
-        <div class="h-px flex-1 bg-ink-200" />
+        <div class="h-px flex-1 bg-edge" />
+        <span class="text-xl text-content-soft">✦</span>
+        <div class="h-px flex-1 bg-edge" />
       </div>
 
       <!-- Poem body -->
@@ -152,10 +152,10 @@ const writtenContextLine = computed(() => {
       </div>
 
       <!-- Actions bar -->
-      <div class="mt-14 flex w-full flex-wrap items-center gap-3 border-t border-ink-200 pt-8">
+      <div class="mt-14 flex w-full flex-wrap items-center gap-3 border-t border-edge pt-8">
         <button class="flex items-center gap-2 rounded-full border px-5 py-2 text-sm transition-all" :class="liked
           ? 'border-rose-300 bg-rose-50 text-rose-700'
-          : 'border-ink-200 bg-white text-ink-600 shadow-sm hover:border-rose-300 hover:text-rose-700'"
+          : 'border-edge bg-surface-raised text-content-secondary shadow-sm hover:border-rose-300 hover:text-rose-700'"
           @click="toggle(poem.id)">
           <svg class="h-4 w-4" viewBox="0 0 24 24" :fill="liked ? 'currentColor' : 'none'" stroke="currentColor"
             stroke-width="2">
@@ -166,7 +166,7 @@ const writtenContextLine = computed(() => {
         </button>
 
         <button v-if="stanzas.length > 1"
-          class="flex items-center gap-2 rounded-full border border-ink-200 bg-white px-5 py-2 text-sm text-ink-600 shadow-sm transition-all hover:border-gold-400 hover:text-gold-900"
+          class="flex items-center gap-2 rounded-full border border-edge bg-surface-raised px-5 py-2 text-sm text-content-secondary shadow-sm transition-all hover:border-brand/50 hover:text-brand"
           @click="slideMode = true; currentSlide = 0">
           <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round"
@@ -175,7 +175,7 @@ const writtenContextLine = computed(() => {
           {{ t('viewer.stanzaView') }}
         </button>
 
-        <span v-if="readingTimeLabel" class="ml-auto text-xs text-ink-500">
+        <span v-if="readingTimeLabel" class="ml-auto text-xs text-content-muted">
           {{ readingTimeLabel }}
         </span>
       </div>
@@ -184,21 +184,21 @@ const writtenContextLine = computed(() => {
     <!-- ── Carousel / Slide mode ──────────────────────────────────────────── -->
     <Teleport to="body">
       <Transition name="slide-overlay">
-        <div v-if="slideMode" class="fixed inset-0 z-50 flex flex-col bg-ink-50">
+        <div v-if="slideMode" class="fixed inset-0 z-50 flex flex-col bg-surface-page">
           <!-- Header -->
-          <div class="flex items-center justify-between border-b border-ink-200 bg-white/90 px-6 py-4 backdrop-blur-md">
+          <div class="flex items-center justify-between border-b border-edge bg-surface-raised/95 px-6 py-4 backdrop-blur-md">
             <div class="flex min-w-0 items-center gap-3">
-              <img :src="authorAvatar" alt="" class="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-ink-200" />
+              <img :src="authorAvatar" alt="" class="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-edge" />
               <div class="min-w-0 flex-1">
                 <div class="flex items-start gap-2">
-                  <p class="min-w-0 flex-1 truncate font-serif text-sm font-bold text-ink-800">{{ poem.title }}</p>
+                  <p class="min-w-0 flex-1 truncate font-serif text-sm font-bold text-content">{{ poem.title }}</p>
                   <PoemCarouselIcon :slug="poem.slug" size="sm" class="shrink-0" />
                 </div>
-                <p class="truncate text-xs text-ink-500">{{ author?.name }}</p>
+                <p class="truncate text-xs text-content-muted">{{ author?.name }}</p>
               </div>
             </div>
             <button type="button"
-              class="rounded-full border border-ink-200 bg-white p-2 text-ink-600 transition-colors hover:border-ink-300 hover:text-ink-900"
+              class="rounded-full border border-edge bg-surface-raised p-2 text-content-secondary transition-colors hover:border-edge-strong hover:text-content"
               :aria-label="t('a11y.closeStanza')" @click="slideMode = false">
               <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -215,9 +215,9 @@ const writtenContextLine = computed(() => {
           </div>
 
           <!-- Nav -->
-          <div class="flex items-center justify-center gap-6 border-t border-ink-200 bg-white/80 py-6 backdrop-blur-sm">
+          <div class="flex items-center justify-center gap-6 border-t border-edge bg-surface-raised/90 py-6 backdrop-blur-sm">
             <button
-              class="rounded-full border border-ink-200 bg-white p-3 text-ink-600 transition-colors hover:border-ink-300 hover:text-ink-900 disabled:opacity-25"
+              class="rounded-full border border-edge bg-surface-raised p-3 text-content-secondary transition-colors hover:border-edge-strong hover:text-content disabled:opacity-25"
               :disabled="currentSlide === 0" @click="prevSlide">
               <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
@@ -226,12 +226,12 @@ const writtenContextLine = computed(() => {
 
             <div class="flex items-center gap-1.5">
               <button v-for="(_, i) in stanzas" :key="i" class="h-1.5 rounded-full transition-all duration-300"
-                :class="i === currentSlide ? 'w-6 bg-gold-500' : 'w-1.5 bg-ink-300 hover:bg-ink-400'"
+                :class="i === currentSlide ? 'w-6 bg-brand' : 'w-1.5 bg-edge-strong hover:bg-content-soft'"
                 @click="currentSlide = i" />
             </div>
 
             <button
-              class="rounded-full border border-ink-200 bg-white p-3 text-ink-600 transition-colors hover:border-ink-300 hover:text-ink-900 disabled:opacity-25"
+              class="rounded-full border border-edge bg-surface-raised p-3 text-content-secondary transition-colors hover:border-edge-strong hover:text-content disabled:opacity-25"
               :disabled="currentSlide === stanzas.length - 1" @click="nextSlide">
               <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
@@ -239,7 +239,7 @@ const writtenContextLine = computed(() => {
             </button>
           </div>
 
-          <p class="pb-4 text-center text-xs text-ink-500">
+          <p class="pb-4 text-center text-xs text-content-muted">
             {{ t('viewer.slideHint', { current: currentSlide + 1, total: stanzas.length }) }}
           </p>
         </div>

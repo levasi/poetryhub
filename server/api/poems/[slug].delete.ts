@@ -3,7 +3,7 @@ import type { H3Event } from 'h3'
 import { getCookie } from 'h3'
 import { prisma } from '~/server/utils/prisma'
 import { verifyAdminToken, getUserFromEvent, TOKEN_COOKIE } from '~/server/utils/auth'
-import { resolveCarouselDefaultsAdminEmail } from '~/utils/carouselDefaultsAdmin'
+import { userCanManageCarouselDefaults } from '~/utils/carouselDefaultsAdmin'
 
 async function authorizeDeletePoem(event: H3Event) {
   const adminToken =
@@ -18,10 +18,9 @@ async function authorizeDeletePoem(event: H3Event) {
     throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
   }
   const config = useRuntimeConfig()
-  const adminEmail = resolveCarouselDefaultsAdminEmail(
-    config.public.carouselDefaultsAdminEmail as string | undefined,
-  )
-  if (user.email.toLowerCase() !== adminEmail) {
+  if (
+    !userCanManageCarouselDefaults(user, config.public.carouselDefaultsAdminEmail as string | undefined)
+  ) {
     throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
   }
 }

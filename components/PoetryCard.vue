@@ -86,49 +86,62 @@ watchEffect((onCleanup) => {
   <!-- List view -->
   <article
     v-if="view === 'list'"
-    class="group flex items-start gap-5 border-b border-ink-200/80 py-5 transition-colors last:border-0 hover:bg-white/50"
+    class="group flex items-start gap-5 border-b border-edge-subtle py-6 transition-colors last:border-0 hover:bg-surface-subtle/50"
   >
     <!-- Accent line -->
     <div
-      class="mt-1.5 h-12 w-0.5 shrink-0 rounded-full opacity-70"
+      class="mt-1.5 h-14 w-0.5 shrink-0 rounded-full opacity-80 transition-opacity group-hover:opacity-100"
       :style="accentColor ? `background-color: ${accentColor}` : ''"
-      :class="{ 'bg-ink-300': !accentColor }"
+      :class="{ 'bg-edge-strong': !accentColor }"
     />
 
     <div class="min-w-0 flex-1">
-      <div class="mb-1 flex items-baseline gap-2">
+      <div class="mb-1.5 flex items-baseline gap-2">
         <NuxtLink :to="`/poems/${poem.slug}`" class="min-w-0 flex-1">
-          <h2 class="font-serif text-lg font-bold text-ink-900 transition-colors group-hover:text-gold-800 leading-snug">
+          <h2
+            class="font-serif text-lg font-semibold leading-snug tracking-tight text-content transition-colors group-hover:text-brand"
+          >
             {{ poem.title }}
           </h2>
         </NuxtLink>
         <PoemCarouselIcon :slug="poem.slug" size="sm" class="shrink-0" />
-        <span v-if="showLangFlag" class="shrink-0 text-sm">{{ langFlag }}</span>
+        <span v-if="showLangFlag" class="shrink-0 text-sm text-content-soft">{{ langFlag }}</span>
       </div>
 
       <NuxtLink
         v-if="author"
         :to="`/authors/${author.slug}`"
-        class="mb-2 flex items-center gap-2 text-xs text-ink-500 transition-colors hover:text-ink-800"
+        class="mb-2 flex items-center gap-2 text-xs font-medium text-content-muted transition-colors hover:text-content-secondary"
       >
         <img
           :src="authorAvatar"
           alt=""
           loading="lazy"
-          class="h-7 w-7 shrink-0 rounded-full object-cover ring-1 ring-ink-200"
+          class="h-7 w-7 shrink-0 rounded-full object-cover ring-1 ring-edge-subtle"
         />
         <span>{{ author.name }}</span>
       </NuxtLink>
 
-      <p class="font-serif text-sm italic leading-relaxed text-ink-600"
-        style="white-space: pre-wrap">{{ previewLines }}</p>
+      <p class="font-serif text-sm italic leading-relaxed text-content-secondary" style="white-space: pre-wrap">
+        {{ previewLines }}
+      </p>
+      <NuxtLink
+        :to="`/poems/${poem.slug}`"
+        class="mt-2.5 inline-flex items-center gap-1 text-sm font-semibold text-brand transition-colors hover:text-brand-hover"
+        @click.stop
+      >
+        {{ t('card.readMore') }}
+        <svg class="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
+      </NuxtLink>
     </div>
 
     <div class="flex shrink-0 flex-col items-end gap-2">
-      <div class="flex items-center gap-1">
+      <div class="flex items-center gap-0.5">
         <button
           type="button"
-          class="inline-flex max-w-[11rem] items-center gap-1 rounded-full py-1 pl-1.5 pr-2 text-ink-500 transition-colors hover:text-gold-700"
+          class="inline-flex max-w-[11rem] items-center gap-1.5 rounded-ds-md py-2 pl-2 pr-2.5 text-content-muted transition-colors hover:bg-surface-subtle hover:text-brand"
           @click.stop="openQuickRead"
         >
           <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -138,8 +151,8 @@ watchEffect((onCleanup) => {
         </button>
         <button
           type="button"
-          class="rounded-full p-1.5 transition-colors"
-          :class="liked ? 'text-rose-600' : 'text-ink-400 hover:text-rose-600'"
+          class="rounded-ds-md p-2 transition-colors hover:bg-rose-50"
+          :class="liked ? 'text-rose-600' : 'text-content-hint hover:text-rose-600'"
           :aria-label="liked ? t('card.favoriteRemove') : t('card.favoriteAdd')"
           @click.prevent="toggle(poem.id)"
         >
@@ -148,79 +161,106 @@ watchEffect((onCleanup) => {
           </svg>
         </button>
       </div>
-      <span v-if="readingTimeLabel" class="text-xs text-ink-500">{{ readingTimeLabel }}</span>
+      <span v-if="readingTimeLabel" class="text-ui-xs tabular-nums text-content-soft">{{ readingTimeLabel }}</span>
     </div>
   </article>
 
   <!-- Grid view (default) -->
   <article
     v-else
-    class="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-ink-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-ink-300 hover:shadow-md"
+    class="group relative flex h-full flex-col overflow-hidden rounded-ds-lg border border-edge-subtle bg-surface-raised shadow-ds-card transition-all duration-300 ease-out hover:-translate-y-1 hover:border-edge hover:shadow-ds-card-hover"
   >
-    <!-- Mood color bar at top -->
+    <!-- Mood accent -->
     <div
-      class="h-0.5 w-full opacity-80 transition-all duration-300 group-hover:opacity-100"
+      class="h-1 w-full opacity-90 transition-opacity duration-300 group-hover:opacity-100"
       :style="accentColor ? `background-color: ${accentColor}` : ''"
-      :class="{ 'bg-ink-300': !accentColor }"
+      :class="{ 'bg-gradient-to-r from-edge-strong to-edge': !accentColor }"
     />
 
-    <div class="flex flex-1 flex-col p-5">
+    <div class="flex flex-1 flex-col" :class="featured ? 'p-6' : 'p-5'">
       <!-- Header: mood tag + language -->
-      <div class="mb-3 flex items-center gap-2">
+      <div class="mb-3 flex min-h-[1.5rem] items-center gap-2">
         <span
           v-if="moodTag"
-          class="rounded-full px-2.5 py-0.5 text-xs font-medium"
-          :style="accentColor ? `background-color: ${accentColor}22; color: ${accentColor}` : ''"
-          :class="{ 'bg-amber-50 text-amber-900': !accentColor }"
+          class="inline-flex max-w-[min(100%,12rem)] items-center truncate rounded-full border border-black/5 px-2.5 py-0.5 text-xs font-medium"
+          :style="accentColor ? `background-color: ${accentColor}18; color: ${accentColor}; border-color: ${accentColor}33` : ''"
+          :class="{ 'border-amber-200/80 bg-amber-50/90 text-amber-950': !accentColor }"
         >
           {{ moodLabel }}
         </span>
-        <span v-if="showLangFlag" class="ml-auto text-sm" :title="poem.language">{{ langFlag }}</span>
-        <span v-if="poem.source === 'ai-generated'" class="ml-auto rounded-full bg-violet-100 px-2 py-0.5 text-xs text-violet-800">{{ t('card.aiBadge') }}</span>
+        <div class="ml-auto flex shrink-0 items-center gap-2">
+          <span v-if="showLangFlag" class="text-sm text-content-soft" :title="poem.language">{{ langFlag }}</span>
+          <span
+            v-if="poem.source === 'ai-generated'"
+            class="rounded-full border border-violet-200/80 bg-violet-50 px-2 py-0.5 text-ui-xs font-medium uppercase tracking-wide text-violet-800"
+          >
+            {{ t('card.aiBadge') }}
+          </span>
+        </div>
       </div>
 
       <!-- Title -->
-      <div class="mb-1 flex items-start gap-2">
+      <div class="mb-2 flex items-start gap-2">
         <NuxtLink :to="`/poems/${poem.slug}`" class="block min-w-0 flex-1">
           <h2
-            class="font-serif font-bold leading-snug text-ink-900 transition-colors group-hover:text-gold-800"
-            :class="featured ? 'text-2xl' : 'text-lg'"
+            class="font-serif font-semibold leading-snug tracking-tight text-content transition-colors group-hover:text-brand"
+            :class="featured ? 'text-2xl md:text-[1.65rem]' : 'text-lg'"
           >
             {{ poem.title }}
           </h2>
         </NuxtLink>
-        <PoemCarouselIcon :slug="poem.slug" size="sm" class="shrink-0" />
+        <PoemCarouselIcon :slug="poem.slug" size="sm" class="shrink-0 opacity-80 transition-opacity group-hover:opacity-100" />
       </div>
 
       <!-- Author -->
       <NuxtLink
         v-if="author"
         :to="`/authors/${author.slug}`"
-        class="mb-4 flex items-center gap-2 text-xs text-ink-500 transition-colors hover:text-ink-800"
+        class="mb-4 flex items-center gap-2.5 text-xs font-medium text-content-muted transition-colors hover:text-content-secondary"
       >
         <img
           :src="authorAvatar"
           alt=""
           loading="lazy"
-          class="shrink-0 rounded-full object-cover ring-1 ring-ink-200"
+          class="shrink-0 rounded-full object-cover ring-1 ring-edge-subtle"
           :class="featured ? 'h-9 w-9' : 'h-8 w-8'"
         />
-        <span>{{ author.name }}</span>
+        <span class="truncate">{{ author.name }}</span>
       </NuxtLink>
 
-      <!-- Poem preview lines — actual poetry text -->
+      <!-- Poem preview -->
       <p
-        class="flex-1 font-serif text-sm italic leading-relaxed text-ink-600"
+        class="min-h-[4.5rem] flex-1 font-serif text-sm italic leading-relaxed text-content-secondary"
         style="white-space: pre-wrap"
-      >{{ previewLines }}</p>
+      >
+        {{ previewLines }}
+      </p>
+
+      <NuxtLink
+        :to="`/poems/${poem.slug}`"
+        class="group/readmore mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-brand transition-colors hover:text-brand-hover"
+        @click.stop
+      >
+        {{ t('card.readMore') }}
+        <svg
+          class="h-4 w-4 shrink-0 transition-transform group-hover/readmore:translate-x-0.5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="2"
+          aria-hidden="true"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
+      </NuxtLink>
 
       <!-- Footer -->
-      <div class="mt-4 flex items-center justify-between border-t border-ink-100 pt-4">
-        <span v-if="readingTimeLabel" class="text-xs text-ink-500">{{ readingTimeLabel }}</span>
-        <div class="ml-auto flex items-center gap-1">
+      <div class="mt-5 flex items-center justify-between gap-3 border-t border-edge-subtle pt-4">
+        <span v-if="readingTimeLabel" class="text-ui-xs tabular-nums text-content-soft">{{ readingTimeLabel }}</span>
+        <div class="ml-auto flex items-center gap-0.5">
           <button
             type="button"
-            class="inline-flex items-center gap-1 rounded-full py-1 pl-1.5 pr-2 text-ink-500 transition-colors hover:text-gold-700"
+            class="inline-flex items-center gap-1.5 rounded-ds-md py-2 pl-2 pr-2.5 text-content-muted transition-colors hover:bg-surface-subtle hover:text-brand"
             @click.stop="openQuickRead"
           >
             <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -230,8 +270,8 @@ watchEffect((onCleanup) => {
           </button>
           <button
             type="button"
-            class="rounded-full p-1.5 transition-colors"
-            :class="liked ? 'text-rose-600' : 'text-ink-400 hover:text-rose-600'"
+            class="rounded-ds-md p-2 transition-colors hover:bg-rose-50"
+            :class="liked ? 'text-rose-600' : 'text-content-hint hover:text-rose-600'"
             :aria-label="liked ? t('card.favoriteRemove') : t('card.favoriteAdd')"
             @click.prevent="toggle(poem.id)"
           >
@@ -261,22 +301,28 @@ watchEffect((onCleanup) => {
           role="dialog"
           aria-modal="true"
           :aria-label="t('card.quickRead')"
-          class="relative z-10 flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-ink-200 bg-white shadow-2xl ring-1 ring-ink-200/60"
+          class="relative z-10 flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-ds-xl border border-edge-subtle bg-surface-raised shadow-ds-popover"
           @click.stop
         >
-          <header class="flex shrink-0 items-start justify-between gap-3 border-b border-ink-200/80 bg-white px-5 py-4">
+          <header
+            class="flex shrink-0 items-start justify-between gap-3 border-b border-edge-subtle bg-surface-raised px-5 py-4"
+          >
             <div class="min-w-0 flex-1">
-              <p class="text-xs font-medium uppercase tracking-wide text-ink-500">{{ t('card.quickRead') }}</p>
-              <div class="mt-0.5 flex items-start gap-2">
-                <h3 class="min-w-0 flex-1 font-serif text-xl font-bold leading-snug text-ink-900">{{ poem.title }}</h3>
+              <p class="mb-0 block text-ui-xs font-semibold uppercase tracking-widest text-content-soft">
+                {{ t('card.quickRead') }}
+              </p>
+              <div class="mt-1 flex items-start gap-2">
+                <h3 class="min-w-0 flex-1 font-serif text-xl font-semibold leading-snug tracking-tight text-content">
+                  {{ poem.title }}
+                </h3>
                 <PoemCarouselIcon :slug="poem.slug" size="sm" class="shrink-0" />
               </div>
-              <p v-if="author" class="mt-1 truncate text-sm text-ink-600">{{ author.name }}</p>
+              <p v-if="author" class="mt-1 truncate text-sm text-content-secondary">{{ author.name }}</p>
             </div>
             <div class="flex shrink-0 items-center gap-0.5">
               <button
                 type="button"
-                class="rounded-lg p-2 text-ink-500 transition-colors hover:bg-ink-100 hover:text-ink-900"
+                class="rounded-ds-md p-2 text-content-muted transition-colors hover:bg-surface-subtle hover:text-content"
                 :aria-label="t('viewer.openReadingSettings')"
                 @click="readerPrefsOpen = true"
               >
@@ -291,7 +337,7 @@ watchEffect((onCleanup) => {
               </button>
               <button
                 type="button"
-                class="rounded-lg p-2 text-ink-500 transition-colors hover:bg-ink-100 hover:text-ink-900"
+                class="rounded-ds-md p-2 text-content-muted transition-colors hover:bg-surface-subtle hover:text-content"
                 :aria-label="t('card.quickReadClose')"
                 @click="closeQuickRead"
               >
@@ -304,13 +350,13 @@ watchEffect((onCleanup) => {
 
           <ReaderSettingsSidebar v-model:open="readerPrefsOpen" :id-prefix="`qr-${poem.id}`" />
 
-          <div class="min-h-0 flex-1 overflow-y-auto bg-white px-5 py-6">
+          <div class="min-h-0 flex-1 overflow-y-auto bg-surface-page/50 px-5 py-6">
             <p :style="poemBodyStyle">{{ poem.content }}</p>
           </div>
-          <footer class="shrink-0 border-t border-ink-200/80 bg-white px-5 py-4">
+          <footer class="shrink-0 border-t border-edge-subtle bg-surface-raised px-5 py-4">
             <NuxtLink
               :to="`/poems/${poem.slug}`"
-              class="inline-flex items-center gap-2 text-sm font-medium text-gold-800 transition-colors hover:text-gold-950"
+              class="inline-flex items-center gap-2 text-sm font-semibold text-brand transition-colors hover:text-brand-hover"
               @click="closeQuickRead"
             >
               {{ t('card.readFullPoem') }}

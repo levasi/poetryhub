@@ -49,8 +49,13 @@ export async function requireAdmin(event: H3Event) {
 
 // ─── User token ──────────────────────────────────────────────────────────────
 
-export async function signUserToken(payload: { id: string; email: string; name?: string | null }) {
-  return new SignJWT({ ...payload, role: 'user' })
+export async function signUserToken(payload: {
+  id: string
+  email: string
+  name?: string | null
+  role: 'user' | 'admin'
+}) {
+  return new SignJWT({ ...payload, role: payload.role })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime(TOKEN_EXPIRY)
@@ -62,7 +67,8 @@ export async function verifyUserToken(
 ): Promise<{ id: string; email: string; name?: string; role: string } | null> {
   try {
     const { payload } = await jwtVerify(token, getSecret())
-    return payload as { id: string; email: string; name?: string; role: string }
+    const p = payload as { id: string; email: string; name?: string; role?: string }
+    return { ...p, role: p.role === 'admin' ? 'admin' : 'user' }
   } catch {
     return null
   }

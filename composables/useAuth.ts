@@ -3,6 +3,8 @@ export interface AuthUser {
   id: string
   email: string
   name?: string
+  /** `user` (default) or `admin` — set in DB; JWT refreshed on login */
+  role?: 'user' | 'admin'
   poemFontFamily?: string
   poemFontSize?: number
   poemLineHeight?: number

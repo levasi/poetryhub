@@ -134,9 +134,12 @@ const adminEmailLower = computed(() =>
     runtimeConfig.public.carouselDefaultsAdminEmail as string | undefined,
   ),
 )
-const canSaveCurrentPoemCarousel = computed(
-  () => Boolean(user.value?.email && user.value.email.toLowerCase() === adminEmailLower.value),
-)
+const canSaveCurrentPoemCarousel = computed(() => {
+  const u = user.value
+  if (!u?.email) return false
+  if (u.role === 'admin') return true
+  return u.email.toLowerCase() === adminEmailLower.value
+})
 
 const savingCurrentPoemCarousel = ref(false)
 const showCurrentPoemCarouselThumbsUp = ref(false)

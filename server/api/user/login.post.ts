@@ -30,7 +30,12 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 401, statusMessage: 'Invalid credentials' })
   }
 
-  const token = await signUserToken({ id: user.id, email: user.email, name: user.name })
+  const token = await signUserToken({
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role === 'admin' ? 'admin' : 'user',
+  })
 
   setCookie(event, USER_TOKEN_COOKIE, token, {
     httpOnly: true,
@@ -46,6 +51,7 @@ export default defineEventHandler(async (event) => {
       id: user.id,
       email: user.email,
       name: user.name,
+      role: user.role,
       poemFontFamily: user.poemFontFamily,
       poemFontSize: user.poemFontSize,
       poemLineHeight: user.poemLineHeight,

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html {{ HTML_ATTRS }}>
+  <head>
+    <script>
+      (function () {
+        try {
+          var k = 'ph-color-scheme'
+          var s = localStorage.getItem(k)
+          if (s === 'paper' || s === 'ink' || s === 'sepia' || s === 'qi') {
+            document.documentElement.setAttribute('data-color-scheme', s)
+          }
+        } catch (e) {}
+      })()
+    </script>
+    {{ HEAD }}
+  </head>
+  <body {{ BODY_ATTRS }}>
+    {{ APP }}
+  </body>
+</html>

@@ -6,16 +6,15 @@ import {
   poemCarouselSettingsSchema,
   ensurePoemCarouselFontFamily,
 } from '~/utils/poemCarouselFontSettings'
-import { resolveCarouselDefaultsAdminEmail } from '~/utils/carouselDefaultsAdmin'
+import { userCanManageCarouselDefaults } from '~/utils/carouselDefaultsAdmin'
 
 export default defineEventHandler(async (event) => {
   setHeader(event, 'cache-control', 'no-store')
   const tokenUser = await requireUser(event)
   const config = useRuntimeConfig()
-  const adminEmail = resolveCarouselDefaultsAdminEmail(
-    config.public.carouselDefaultsAdminEmail as string | undefined,
-  )
-  if (tokenUser.email.toLowerCase() !== adminEmail) {
+  if (
+    !userCanManageCarouselDefaults(tokenUser, config.public.carouselDefaultsAdminEmail as string | undefined)
+  ) {
     throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
   }
 

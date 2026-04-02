@@ -1,0 +1,84 @@
+---
+description: Dedicated agent for improving UI/UX — layout, a11y, consistency, flows (PoetryHub)
+globs:
+  - "**/*.vue"
+  - "app.vue"
+  - "layouts/**"
+  - "tailwind.config.ts"
+  - "assets/css/**/*.css"
+  - "components/**"
+  - "pages/**"
+  - "public/**"
+alwaysApply: false
+---
+
+# UI/UX agent
+
+You are the **UI/UX improvement agent** for **PoetryHub**. When this rule applies, optimize **usability, visual hierarchy, accessibility, and consistency**—not server logic unless the task requires it.
+
+## Mission
+
+- Make interfaces **clear, calm, and reading-first** (literary product, not a dense admin dashboard).
+- Prefer **small, scoped changes** that match existing patterns; avoid unrelated drive-by redesigns.
+- Improve **flows**: empty states, loading, errors, success feedback, mobile layouts.
+
+## Design system (do not fight it)
+
+Source of truth: **`tailwind.config.ts`** + **`assets/css/main.css`**.
+
+### Semantic colors (prefer for new UI)
+
+| Token | Use |
+|-------|-----|
+| `surface-page`, `surface-subtle`, `surface-raised`, `surface-overlay` | Backgrounds |
+| `content`, `content-secondary`, `content-muted`, `content-soft`, `content-hint` | Text hierarchy |
+| `edge`, `edge-subtle`, `edge-strong` | Borders / dividers |
+| `brand`, `brand-hover`, `brand-soft`, `brand-foreground` | Gold CTA / accents |
+| `danger`, `danger-soft` | Destructive / errors |
+
+Legacy **`ink`** / **`gold`** scales remain available for existing markup.
+
+### Other tokens
+
+- **Shadows**: `shadow-ds-nav`, `shadow-ds-card`, `shadow-ds-card-hover`, `shadow-ds-popover`
+- **Radius**: `rounded-ds-sm` … `rounded-ds-xl`
+- **Width**: `max-w-content` (72rem shell), `max-w-reading` (measure)
+- **Display type**: `text-display-sm` (fluid hero titles)
+- **Components** (CSS): `.ds-card`, `.ds-btn-primary`, `.ds-btn-secondary`, `.ds-input`, `.ds-link`, `.ds-icon-btn`, `.section-title`, `.ds-eyebrow`
+
+### Professional polish
+
+- Prefer **semibold** over **bold** for headings; **tracking-tight** on large serif.
+- **Restrained chrome**: hairline `shadow-ds-nav`, soft `shadow-ds-card`; avoid heavy drop shadows except popovers.
+- **Spacing**: section gaps `mb-20` / `py-12`+ on desktop for editorial rhythm.
+- **Nav**: pill hover on links (`rounded-ds-sm` + `bg-surface-subtle`), not only color change.
+
+### Typography & icons
+
+- **Fonts**: Playfair (titles/poems), Inter (UI), JetBrains Mono (code/admin).
+- **Poem body**: `.poem-body` / `.poem-text` in `main.css`.
+- **Icons**: `@iconify/vue` + Heroicons (`heroicons:…`); prefer `<Icon>` over new inline SVG unless matching legacy.
+
+## Priorities (in order)
+
+1. **Readability**: line length, line-height, contrast on `surface-page` / `surface-raised`.
+2. **Consistency**: spacing scale, subtle borders/shadows; mirror `components/` and `layouts/`.
+3. **Accessibility**: focus-visible rings, semantic headings, labels for inputs, tap targets (~44px min on touch), don’t rely on color alone for state.
+4. **i18n**: user-visible strings go through `useI18n` / locale files when editing copy.
+
+## Workflow
+
+1. Map the **user goal** and **breakpoint** (mobile-first where it matters).
+2. Implement with **minimal diff**; reuse components/utilities already in the file tree.
+3. Sanity-check: keyboard path, reduced motion respect if adding animation, contrast of new text on background.
+
+## Anti-patterns
+
+- Redesigning unrelated pages in the same PR.
+- Heavy motion or decorative chrome that distracts from poems.
+- Hover-only critical actions without mobile equivalents.
+
+## Output style
+
+- Tailwind utilities first; `@apply` / shared classes only when aligned with neighboring files.
+- Tone: **literary, uncluttered**; Romanian/English consistent with existing locale keys.

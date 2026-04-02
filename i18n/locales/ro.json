@@ -12,7 +12,21 @@
     "allAuthors": "Toți autorii",
     "language": "Limbă",
     "signedInAs": "Autentificat ca {name}",
-    "carousel": "Carusel"
+    "carousel": "Carusel",
+    "write": "Scrie",
+    "admin": "Admin"
+  },
+  "colorScheme": {
+    "paper": "Hârtie",
+    "ink": "Cerneală",
+    "sepia": "Sepia",
+    "qi": "Qi",
+    "hint": "Temă de culoare",
+    "aria": "Alege tema de culoare"
+  },
+  "write": {
+    "seoTitle": "Scrie — dicționar și rime — PoetryHub",
+    "seoDesc": "Caută cuvinte, silabe și rime; scrie versuri cu instrumentul PoetryHub."
   },
   "carousel": {
     "seoTitle": "Generator carusel Instagram — PoetryHub",
@@ -281,7 +295,8 @@
     "quickReadLabel": "Citește rapid",
     "openQuickRead": "Deschide citirea rapidă",
     "quickReadClose": "Închide previzualizarea",
-    "readFullPoem": "Deschide poezia completă"
+    "readFullPoem": "Deschide poezia completă",
+    "readMore": "Citește mai mult"
   },
   "lang": {
     "en": "Engleză",
@@ -339,7 +354,8 @@
     "adminNewAuthor": "Autor nou — Admin",
     "adminEditPoem": "Editare: {title} — Admin",
     "adminEditAuthor": "Editare: {name} — Admin",
-    "adminImport": "Import poezii — Admin"
+    "adminImport": "Import poezii — Admin",
+    "adminAspect": "Aspect — Admin"
   },
   "admin": {
     "panel": "Panou admin",
@@ -350,7 +366,14 @@
       "dashboard": "Tablou de bord",
       "poems": "Poezii",
       "authors": "Autori",
+      "aspect": "Aspect",
       "import": "Import"
+    },
+    "aspect": {
+      "title": "Aspect",
+      "lead": "Ajustează layout-ul, tipografia și prezentarea pentru site-ul public. Patru scheme de culoare se aplică pe site-ul public; vizitatorii le schimbă din subsol.",
+      "schemesTitle": "Scheme de culoare pentru site",
+      "schemesBody": "Hârtie este tema light implicită. Cerneală este o temă întunecată pentru citit. Sepia este un ton cald de pergament. Qi este o paletă editorială pe fildeș cald, inspirată de layout-uri de revistă. Alegerea se salvează doar în acest browser."
     },
     "stats": {
       "totalPoems": "Total poezii",

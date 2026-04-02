@@ -1,64 +1,174 @@
+@import './color-schemes.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ── Base — light, paper-like reading surface ───────────────────────────── */
+/*
+ * PoetryHub design system — tokens live in tailwind.config.ts (surface, content, edge, brand, danger).
+ * Component classes below map common patterns; prefer Tailwind utilities with semantic colors first.
+ */
+
 @layer base {
   html {
-    @apply bg-ink-50 text-ink-900;
+    @apply bg-surface-page text-content antialiased;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
   }
 
-  ::-webkit-scrollbar            { width: 8px; height: 8px; }
-  ::-webkit-scrollbar-track      { @apply bg-ink-100; }
-  ::-webkit-scrollbar-thumb      { @apply rounded-full bg-ink-300; }
-  ::-webkit-scrollbar-thumb:hover { @apply bg-ink-400; }
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-surface-subtle;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-edge-strong;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-ink-400;
+  }
 
   :focus-visible {
-    @apply outline-none ring-2 ring-gold-500/50 ring-offset-2 ring-offset-ink-50;
+    @apply outline-none ring-2 ring-brand/40 ring-offset-2 ring-offset-surface-page;
+  }
+
+  html {
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      transition: none;
+    }
   }
 
   ::selection {
-    @apply bg-gold-300/50 text-ink-900;
+    @apply bg-brand-soft/50 text-content;
   }
 
-  button { @apply cursor-pointer; }
+  button {
+    @apply cursor-pointer;
+  }
 }
 
-/* ── Typography helpers — poem-first readability ────────────────────────── */
+/* ── Design-system component patterns (compose with @apply) ─────────────── */
 @layer components {
   .poem-text {
-    @apply font-serif text-[1.1875rem] leading-[1.9] text-ink-800;
+    @apply font-serif text-[1.1875rem] leading-[1.9] text-content;
     letter-spacing: 0.02em;
   }
 
   .field-label {
-    @apply mb-1.5 block text-xs font-medium text-ink-600;
+    @apply mb-1.5 block text-xs font-medium text-content-muted;
   }
 
   .section-title {
-    @apply font-serif text-2xl font-bold text-ink-900;
+    @apply font-serif text-2xl font-semibold tracking-tight text-content md:text-[1.75rem];
+  }
+
+  /** Eyebrow label above sections */
+  .ds-eyebrow {
+    @apply mb-2 block text-ui-xs font-semibold uppercase tracking-widest text-content-soft;
+  }
+
+  /** Raised card — lists, settings panels */
+  .ds-card {
+    @apply rounded-ds-lg border border-edge-subtle bg-surface-raised shadow-ds-card;
+  }
+
+  .ds-card-interactive {
+    @apply ds-card transition-shadow duration-200 hover:border-edge hover:shadow-ds-card-hover;
+  }
+
+  /** Primary CTA — gold */
+  .ds-btn-primary {
+    @apply inline-flex items-center justify-center rounded-ds-md bg-brand px-4 py-2.5 text-sm font-semibold text-brand-foreground shadow-sm transition hover:bg-brand-hover hover:shadow active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/45 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100;
+  }
+
+  /** Secondary — outline */
+  .ds-btn-secondary {
+    @apply inline-flex items-center justify-center rounded-ds-md border border-edge bg-surface-raised px-4 py-2.5 text-sm font-medium text-content-secondary shadow-sm transition-colors hover:border-edge-strong hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-2;
+  }
+
+  /** Nav / text link */
+  .ds-link {
+    @apply font-medium text-content-muted underline-offset-[3px] transition-colors hover:text-content;
+  }
+
+  /** Text inputs — align with field-label */
+  .ds-input {
+    @apply w-full rounded-ds-md border border-edge bg-surface-raised px-3 py-2.5 text-sm text-content shadow-inner outline-none ring-brand/20 transition placeholder:text-content-hint focus:border-brand focus:ring-2;
+  }
+
+  /** Icon-only control in chrome */
+  .ds-icon-btn {
+    @apply inline-flex min-h-[2.75rem] min-w-[2.75rem] items-center justify-center rounded-full border border-edge-subtle bg-surface-raised text-content-muted transition-colors hover:border-edge hover:text-content md:min-h-[2.25rem] md:min-w-[2.25rem];
+  }
+
+  /**
+   * Editorial / magazine layout (inspired by clean book-theme patterns — e.g. Qi-style masthead + section rules).
+   */
+  .ds-masthead {
+    @apply mx-auto w-full max-w-content text-center;
+  }
+
+  .ds-masthead-title {
+    @apply font-serif text-[clamp(2rem,5vw,3.25rem)] font-semibold leading-[1.08] tracking-tight text-content;
+  }
+
+  .ds-masthead-lead {
+    @apply mx-auto mt-8 max-w-2xl text-base font-normal leading-relaxed text-content-secondary md:text-lg md:leading-relaxed;
+  }
+
+  .ds-masthead-rule {
+    @apply mx-auto mt-10 h-px max-w-xs bg-gradient-to-r from-transparent via-brand/45 to-transparent;
+  }
+
+  /** Section H2 with gold accent bar (left-aligned; use in flex row with “See all”) */
+  .ds-section-heading {
+    @apply relative inline-block pb-3 font-serif text-2xl font-semibold tracking-tight text-content after:absolute after:bottom-0 after:left-0 after:h-[3px] after:w-12 after:rounded-full after:bg-brand/55 md:text-[1.75rem];
+  }
+
+  /** Centered section title (mood / themes blocks) */
+  .ds-section-heading-center {
+    @apply relative mx-auto inline-block pb-3 text-center font-serif text-2xl font-semibold tracking-tight text-content after:absolute after:bottom-0 after:left-1/2 after:h-[3px] after:w-12 after:-translate-x-1/2 after:rounded-full after:bg-brand/55 md:text-[1.75rem];
   }
 }
 
-/* Poem body — comfortable measure, high contrast on paper */
+/* Poem body — comfortable measure (theme-aware via --color-poem-text) */
 .poem-body p {
   font-family: 'Playfair Display', Georgia, serif;
   font-size: 1.2rem;
   line-height: 1.95;
-  color: #2d2d26;
+  color: rgb(var(--color-poem-text));
   white-space: pre-wrap;
 }
 
-/* ── Transitions ──────────────────────────────────────────────────────────── */
+/* ── Page transitions ───────────────────────────────────────────────────── */
 .page-enter-active,
 .page-leave-active {
-  transition: opacity 0.25s ease, transform 0.25s ease;
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
 }
 .page-enter-from,
 .page-leave-to {
   opacity: 0;
   transform: translateY(8px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-enter-active,
+  .page-leave-active {
+    transition: opacity 0.15s ease;
+  }
+  .page-enter-from,
+  .page-leave-to {
+    transform: none;
+  }
 }

@@ -41,7 +41,7 @@ const related = computed(() => relatedRes.value?.data ?? [])
       <!-- Back link -->
       <NuxtLink
         to="/poems"
-        class="mb-8 inline-flex items-center gap-1 text-sm text-ink-600 hover:text-ink-900"
+        class="mb-8 inline-flex items-center gap-1 text-sm text-content-secondary hover:text-content"
       >
         <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
@@ -52,50 +52,50 @@ const related = computed(() => relatedRes.value?.data ?? [])
       <!-- Prev / next in catalog order (same as /poems list) — above the poem -->
       <nav
         v-if="poem.navigation"
-        class="mb-10 flex flex-col gap-3 border-b border-ink-200/80 pb-8 sm:flex-row sm:items-stretch sm:justify-between"
+        class="mb-10 flex flex-col gap-3 border-b border-edge/80 pb-8 sm:flex-row sm:items-stretch sm:justify-between"
         :aria-label="t('a11y.poemNavigation')"
       >
         <div class="min-w-0 flex-1">
           <NuxtLink
             v-if="poem.navigation.newer"
             :to="`/poems/${poem.navigation.newer.slug}`"
-            class="group flex items-start gap-3 rounded-lg border border-ink-200/90 bg-paper-50/80 p-4 text-left transition-colors hover:border-gold-500/40 hover:bg-paper-100/80"
+            class="group flex items-start gap-3 rounded-lg border border-edge bg-surface-subtle/70 p-4 text-left transition-colors hover:border-brand/40 hover:bg-surface-subtle"
             :aria-label="t('poem.navNewerAria', { title: poem.navigation.newer.title })"
           >
-            <span class="mt-0.5 shrink-0 text-ink-400 transition-colors group-hover:text-gold-700" aria-hidden="true">
+            <span class="mt-0.5 shrink-0 text-content-soft transition-colors group-hover:text-brand" aria-hidden="true">
               <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </span>
             <span class="min-w-0">
-              <span class="block text-xs font-medium uppercase tracking-wide text-ink-500">{{ t('poem.navNewer') }}</span>
-              <span class="mt-0.5 line-clamp-2 font-serif text-base text-ink-900">{{ poem.navigation.newer.title }}</span>
+              <span class="block text-xs font-medium uppercase tracking-wide text-content-muted">{{ t('poem.navNewer') }}</span>
+              <span class="mt-0.5 line-clamp-2 font-serif text-base text-content">{{ poem.navigation.newer.title }}</span>
             </span>
           </NuxtLink>
           <div
             v-else
-            class="flex items-start gap-3 rounded-lg border border-dashed border-ink-200/60 bg-paper-50/40 p-4 opacity-60"
+            class="flex items-start gap-3 rounded-lg border border-dashed border-edge/60 bg-surface-subtle/40 p-4 opacity-60"
           >
-            <span class="mt-0.5 shrink-0 text-ink-300" aria-hidden="true">
+            <span class="mt-0.5 shrink-0 text-content-soft" aria-hidden="true">
               <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </span>
-            <span class="text-sm text-ink-500">{{ t('poem.navNewer') }}</span>
+            <span class="text-sm text-content-muted">{{ t('poem.navNewer') }}</span>
           </div>
         </div>
         <div class="min-w-0 flex-1 sm:text-right">
           <NuxtLink
             v-if="poem.navigation.older"
             :to="`/poems/${poem.navigation.older.slug}`"
-            class="group flex items-start justify-end gap-3 rounded-lg border border-ink-200/90 bg-paper-50/80 p-4 text-right transition-colors hover:border-gold-500/40 hover:bg-paper-100/80 sm:ml-auto"
+            class="group flex items-start justify-end gap-3 rounded-lg border border-edge bg-surface-subtle/70 p-4 text-right transition-colors hover:border-brand/40 hover:bg-surface-subtle sm:ml-auto"
             :aria-label="t('poem.navOlderAria', { title: poem.navigation.older.title })"
           >
             <span class="min-w-0 sm:order-first">
-              <span class="block text-xs font-medium uppercase tracking-wide text-ink-500">{{ t('poem.navOlder') }}</span>
-              <span class="mt-0.5 line-clamp-2 font-serif text-base text-ink-900">{{ poem.navigation.older.title }}</span>
+              <span class="block text-xs font-medium uppercase tracking-wide text-content-muted">{{ t('poem.navOlder') }}</span>
+              <span class="mt-0.5 line-clamp-2 font-serif text-base text-content">{{ poem.navigation.older.title }}</span>
             </span>
-            <span class="mt-0.5 shrink-0 text-ink-400 transition-colors group-hover:text-gold-700 sm:order-last" aria-hidden="true">
+            <span class="mt-0.5 shrink-0 text-content-soft transition-colors group-hover:text-brand sm:order-last" aria-hidden="true">
               <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
               </svg>
@@ -103,10 +103,10 @@ const related = computed(() => relatedRes.value?.data ?? [])
           </NuxtLink>
           <div
             v-else
-            class="flex items-start justify-end gap-3 rounded-lg border border-dashed border-ink-200/60 bg-paper-50/40 p-4 opacity-60 sm:ml-auto"
+            class="flex items-start justify-end gap-3 rounded-lg border border-dashed border-edge/60 bg-surface-subtle/40 p-4 opacity-60 sm:ml-auto"
           >
-            <span class="text-sm text-ink-500">{{ t('poem.navOlder') }}</span>
-            <span class="mt-0.5 shrink-0 text-ink-300" aria-hidden="true">
+            <span class="text-sm text-content-muted">{{ t('poem.navOlder') }}</span>
+            <span class="mt-0.5 shrink-0 text-content-soft" aria-hidden="true">
               <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
               </svg>
@@ -119,14 +119,14 @@ const related = computed(() => relatedRes.value?.data ?? [])
       <PoetryViewer :poem="poem" />
 
       <!-- Related poems -->
-      <section v-if="related.length && poem.author" class="mt-20 border-t border-ink-200/80 pt-16">
+      <section v-if="related.length && poem.author" class="mt-20 border-t border-edge/80 pt-16">
         <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
-          <h2 class="font-serif text-xl font-bold text-ink-800">
+          <h2 class="font-serif text-xl font-bold text-content">
             {{ t('poem.moreBy', { name: poem.author.name }) }}
           </h2>
           <NuxtLink
             :to="`/authors/${poem.author.slug}`"
-            class="text-sm text-ink-500 transition-colors hover:text-gold-700"
+            class="text-sm text-content-muted transition-colors hover:text-brand"
           >
             {{ t('poem.viewAllPoems') }}
           </NuxtLink>

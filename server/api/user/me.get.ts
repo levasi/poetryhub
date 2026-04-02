@@ -10,6 +10,7 @@ export default defineEventHandler(async (event) => {
     id: row.id,
     email: row.email,
     name: row.name,
+    role: row.role,
     poemFontFamily: row.poemFontFamily,
     poemFontSize: row.poemFontSize,
     poemLineHeight: row.poemLineHeight,

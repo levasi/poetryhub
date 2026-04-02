@@ -235,7 +235,7 @@ export default defineNuxtConfig({
     viteEnvironmentApi: false,
   },
 
-  modules: [poetryhubNitroRuntimeCache, '@nuxtjs/tailwindcss', '@nuxtjs/i18n'],
+  modules: [poetryhubNitroRuntimeCache, '@pinia/nuxt', '@nuxtjs/tailwindcss', '@nuxtjs/i18n'],
 
   i18n: {
     locales: [
