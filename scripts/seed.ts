@@ -6,6 +6,7 @@
 
 import { PrismaClient, UserRole } from '@prisma/client'
 import bcrypt from 'bcryptjs'
+import { SITE_OWNER_EMAIL } from '../utils/roles'
 
 const prisma = new PrismaClient()
 
@@ -62,22 +63,21 @@ async function main() {
     console.log(`    Password: ${password}  ← change this in production!\n`)
   }
 
-  // ── Promote app account to admin (same email as carousel defaults owner) ────
-  const appAdminEmail = 'vasileeduardbogdan@gmail.com'
-  const appUser = await prisma.user.findUnique({ where: { email: appAdminEmail } })
+  // ── Promote site owner account to admin (see `SITE_OWNER_EMAIL` in utils/roles.ts)
+  const appUser = await prisma.user.findUnique({ where: { email: SITE_OWNER_EMAIL } })
   if (appUser) {
     if (appUser.role !== UserRole.admin) {
       await prisma.user.update({
         where: { id: appUser.id },
         data: { role: UserRole.admin },
       })
-      console.log(`  ✓ User promoted to admin: ${appAdminEmail}`)
+      console.log(`  ✓ User promoted to admin: ${SITE_OWNER_EMAIL}`)
     } else {
-      console.log(`  ⚠ Already admin: ${appAdminEmail}`)
+      console.log(`  ⚠ Already admin: ${SITE_OWNER_EMAIL}`)
     }
   } else {
     console.log(
-      `  ⚠ No User with ${appAdminEmail} — register that account, then run: npm run db:seed`,
+      `  ⚠ No User with ${SITE_OWNER_EMAIL} — register that account, then run: npm run db:seed`,
     )
   }
 

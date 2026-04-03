@@ -1,7 +1,5 @@
 <script setup lang="ts">
 import {
-  fetchRandomAuthor,
-  fetchRandomPoem,
   type Poem,
   type RandomAuthor,
 } from '~/composables/usePoems'
@@ -65,13 +63,10 @@ watch(
 )
 
 const rollingDice = ref(false)
+const heroVisible = ref(true)
 const loadingPoemFromBib = ref(false)
 
 const poemBlockRef = ref<HTMLElement | null>(null)
-
-/** Minimum dice roll window when re-fetching (first paint uses SSR payload). */
-const DICE_MIN_ROLL_MS = 2800
-const DICE_SETTLE_BEFORE_REVEAL_MS = 420
 
 function sleep(ms: number) {
   return new Promise<void>((resolve) => setTimeout(resolve, ms))
@@ -88,22 +83,21 @@ const heroAuthorAvatar = computed(() =>
   heroAuthor.value ? authorAvatarUrl(heroAuthor.value) : '',
 )
 
-/** Random author + random poem from that author (same as initial /api/home hero). */
+/** Dice roll: content fades out, fetch, content fades in. No animation delay. */
 async function rollHeroDice() {
   rollingDice.value = true
-  const t0 = performance.now()
+  heroVisible.value = false            // fade out existing content
   try {
-    const a = await fetchRandomAuthor()
-    const p = await fetchRandomPoem(a.slug)
-    const elapsed = performance.now() - t0
-    await sleep(Math.max(0, DICE_MIN_ROLL_MS - elapsed))
-    rollingDice.value = false
-    await sleep(DICE_SETTLE_BEFORE_REVEAL_MS)
-    heroAuthor.value = a
-    heroPoem.value = p
+    const hero = await $fetch<{ a: RandomAuthor; p: Poem }>('/api/home/roll')
+    heroAuthor.value = hero.a          // swap content while invisible
+    heroPoem.value = hero.p
+    await nextTick()                   // ensure DOM updated before fading in
+    heroVisible.value = true           // fade in new content
   } catch {
+    heroVisible.value = true           // restore on error
     heroAuthor.value = null
     heroPoem.value = null
+  } finally {
     rollingDice.value = false
   }
 }
@@ -159,12 +153,12 @@ async function showPoemInHero(slug: string) {
           <button type="button"
             class="inline-flex h-14 w-14 shrink-0 items-center justify-center overflow-visible disabled:opacity-50 md:h-16 md:w-16"
             :disabled="rollingDice" :aria-label="t('home.rollDice')" @click="rollHeroDice">
-            <Dice3D :rolling="rollingDice" />
+            <DiceSvg :rolling="rollingDice" />
           </button>
         </div>
 
         <!-- Poet (left) | poem (right) -->
-        <div v-if="heroAuthor" class="grid gap-8 px-5 pb-8 pt-8 md:grid-cols-2 md:gap-10 md:px-8 lg:gap-12">
+        <div v-if="heroAuthor" class="grid gap-8 px-5 pb-8 pt-8 transition-opacity duration-500 ease-in-out md:grid-cols-2 md:gap-10 md:px-8 lg:gap-12" :class="heroVisible ? 'opacity-100' : 'opacity-0'">
           <div class="min-w-0 md:pr-8">
             <NuxtLink :to="`/authors/${heroAuthor.slug}`"
               class="group flex flex-col items-center text-center md:items-start md:text-left">

@@ -1,24 +1,31 @@
+import type { Role } from '~/utils/roles'
+
 // User auth composable
 export interface AuthUser {
   id: string
   email: string
   name?: string
-  /** `user` (default) or `admin` — set in DB; JWT refreshed on login */
-  role?: 'user' | 'admin'
+  /** Set in DB; JWT refreshed on login */
+  role?: Role
   createdAt?: string | Date
   poemFontFamily?: string
   poemFontSize?: number
   poemLineHeight?: number
   poemLetterSpacing?: number
+  /** False for Google-only accounts until they set a password */
+  hasPassword?: boolean
 }
 
 export function useAuth() {
-  const user    = useState<AuthUser | null>('auth_user', () => null)
+  const user = useState<AuthUser | null>('auth_user', () => null)
   const loading = ref(false)
+  /** SSR: forward cookies so /api/user/me matches the client; avoids AppNav hydration mismatch (fragment vs div). */
+  const requestFetch = import.meta.server ? useRequestFetch() : null
 
   async function fetchMe() {
     try {
-      user.value = await $fetch<AuthUser>('/api/user/me')
+      const fetcher = requestFetch ?? $fetch
+      user.value = await fetcher<AuthUser>('/api/user/me')
     } catch {
       user.value = null
     }
@@ -64,5 +71,13 @@ export function useAuth() {
 
   const isLoggedIn = computed(() => user.value !== null)
 
-  return { user, loading, isLoggedIn, fetchMe, register, login, logout }
+  /** Full-page navigation to Google OAuth (sets session cookie on return). */
+  function loginWithGoogle(redirectPath = '/') {
+    const path = redirectPath.startsWith('/') ? redirectPath : '/'
+    const url = `/api/auth/google?redirect=${encodeURIComponent(path)}`
+    if (import.meta.client) window.location.assign(url)
+    else return navigateTo(url, { external: true })
+  }
+
+  return { user, loading, isLoggedIn, fetchMe, register, login, logout, loginWithGoogle }
 }

@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { setCookie } from 'h3'
 import { prisma } from '~/server/utils/prisma'
 import { signUserToken, USER_TOKEN_COOKIE } from '~/server/utils/auth'
+import { normalizeRole } from '~/utils/roles'
 
 const schema = z.object({
   email: z.string().email(),
@@ -25,6 +26,13 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 401, statusMessage: 'Invalid credentials' })
   }
 
+  if (!user.passwordHash) {
+    throw createError({
+      statusCode: 401,
+      statusMessage: 'This account uses Google sign-in',
+    })
+  }
+
   const valid = await bcrypt.compare(password, user.passwordHash)
   if (!valid) {
     throw createError({ statusCode: 401, statusMessage: 'Invalid credentials' })
@@ -34,7 +42,7 @@ export default defineEventHandler(async (event) => {
     id: user.id,
     email: user.email,
     name: user.name,
-    role: user.role === 'admin' ? 'admin' : 'user',
+    role: normalizeRole(user.role),
   })
 
   setCookie(event, USER_TOKEN_COOKIE, token, {
@@ -52,6 +60,7 @@ export default defineEventHandler(async (event) => {
       email: user.email,
       name: user.name,
       role: user.role,
+      hasPassword: true,
       poemFontFamily: user.poemFontFamily,
       poemFontSize: user.poemFontSize,
       poemLineHeight: user.poemLineHeight,

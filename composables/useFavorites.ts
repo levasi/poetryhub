@@ -85,6 +85,17 @@ export function useFavorites() {
     favoriteOpError.value = null
   }
 
+  /** After account deletion: clear in-memory + localStorage favorites without server calls. */
+  function resetAfterAccountDeletion() {
+    favoriteOpError.value = null
+    favoriteIdsState.value = []
+    if (process.client) {
+      try {
+        localStorage.removeItem(STORAGE_KEY)
+      } catch { /* ignore */ }
+    }
+  }
+
   // ── Actions ─────────────────────────────────────────────────────────────
 
   async function toggle(id: string) {
@@ -144,5 +155,6 @@ export function useFavorites() {
     count,
     favoriteOpError,
     dismissFavoriteError,
+    resetAfterAccountDeletion,
   }
 }

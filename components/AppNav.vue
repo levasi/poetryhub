@@ -96,14 +96,14 @@ const isAdmin = computed(() => user.value?.role === 'admin')
           </svg>
         </NuxtLink>
 
-        <template v-if="!isLoggedIn">
+        <div v-if="!isLoggedIn" class="flex items-center gap-3">
           <NuxtLink to="/login" class="text-sm text-content-muted transition-colors hover:text-content">
             {{ t('nav.signIn') }}
           </NuxtLink>
           <NuxtLink to="/signup" class="ds-btn-primary !py-1.5 text-sm">
             {{ t('nav.signUp') }}
           </NuxtLink>
-        </template>
+        </div>
 
         <div v-else ref="userMenuRef" class="relative">
           <button
@@ -239,7 +239,7 @@ const isAdmin = computed(() => user.value?.role === 'admin')
             {{ t('nav.carousel') }}
           </NuxtLink>
           <hr class="my-2 border-edge-subtle" />
-          <template v-if="!isLoggedIn">
+          <div v-if="!isLoggedIn" class="flex flex-col gap-1">
             <NuxtLink
               to="/login"
               class="min-h-[2.75rem] rounded-ds-md px-3 py-2.5 text-sm text-content-muted hover:bg-surface-raised hover:text-content"
@@ -249,8 +249,8 @@ const isAdmin = computed(() => user.value?.role === 'admin')
             <NuxtLink to="/signup" class="ds-btn-primary justify-center text-center">
               {{ t('nav.signUp') }}
             </NuxtLink>
-          </template>
-          <template v-else>
+          </div>
+          <div v-else class="flex flex-col gap-1">
             <div class="px-3 py-2 text-ui-xs text-content-soft">{{ t('nav.signedInAs', { name: displayName }) }}</div>
             <NuxtLink
               to="/account"
@@ -265,7 +265,7 @@ const isAdmin = computed(() => user.value?.role === 'admin')
             >
               {{ t('nav.signOut') }}
             </button>
-          </template>
+          </div>
         </nav>
       </div>
     </Transition>

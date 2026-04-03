@@ -1,9 +1,9 @@
-// PUT /api/poems/:slug/content — update poem body (carousel owner email only; not admin JWT)
+// PUT /api/poems/:slug/content — update poem body (moderators and admins only)
 import { z } from 'zod'
 import { prisma } from '~/server/utils/prisma'
 import { requireUser } from '~/server/utils/auth'
 import { estimateReadingTime, extractExcerpt } from '~/server/utils/slug'
-import { userCanManageCarouselDefaults } from '~/utils/carouselDefaultsAdmin'
+import { isStaffRole } from '~/utils/roles'
 
 const schema = z.object({
   content: z.string().min(1),
@@ -12,12 +12,6 @@ const schema = z.object({
 export default defineEventHandler(async (event) => {
   setHeader(event, 'cache-control', 'no-store')
   const tokenUser = await requireUser(event)
-  const config = useRuntimeConfig()
-  if (
-    !userCanManageCarouselDefaults(tokenUser, config.public.carouselDefaultsAdminEmail as string | undefined)
-  ) {
-    throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
-  }
 
   const slug = getRouterParam(event, 'slug')
   if (!slug?.trim()) {
@@ -37,6 +31,12 @@ export default defineEventHandler(async (event) => {
   const existing = await prisma.poem.findUnique({ where: { slug } })
   if (!existing) {
     throw createError({ statusCode: 404, statusMessage: 'Poem not found' })
+  }
+  if (!isStaffRole(tokenUser.role)) {
+    throw createError({
+      statusCode: 403,
+      statusMessage: 'Only moderators and admins can edit poem text',
+    })
   }
 
   const content = parsed.data.content

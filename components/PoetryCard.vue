@@ -101,7 +101,7 @@ watchEffect((onCleanup) => {
           <h2
             class="font-serif text-lg font-semibold leading-snug tracking-tight text-content transition-colors group-hover:text-brand"
           >
-            {{ poem.title }}
+            {{ poem.title }}<span v-if="poem.writtenYear" class="ml-1.5 font-sans text-xs font-normal tabular-nums text-content-muted">{{ poem.writtenYear }}</span>
           </h2>
         </NuxtLink>
         <PoemCarouselIcon :slug="poem.slug" size="sm" class="shrink-0" />
@@ -200,7 +200,7 @@ watchEffect((onCleanup) => {
             class="font-serif font-semibold leading-snug tracking-tight text-content transition-colors group-hover:text-brand"
             :class="featured ? 'text-2xl md:text-[1.65rem]' : 'text-lg'"
           >
-            {{ poem.title }}
+            {{ poem.title }}<span v-if="poem.writtenYear" class="ml-1.5 font-sans text-xs font-normal tabular-nums text-content-muted">{{ poem.writtenYear }}</span>
           </h2>
         </NuxtLink>
         <PoemCarouselIcon :slug="poem.slug" size="sm" class="shrink-0 opacity-80 transition-opacity group-hover:opacity-100" />

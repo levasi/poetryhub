@@ -1,6 +1,8 @@
 // JWT auth utilities for admin panel and user accounts
 import { SignJWT, jwtVerify } from 'jose'
 import { H3Event, getCookie } from 'h3'
+import type { Role } from '~/utils/roles'
+import { normalizeRole } from '~/utils/roles'
 
 const TOKEN_COOKIE = 'ph_admin_token'
 const USER_TOKEN_COOKIE = 'ph_user_token'
@@ -53,7 +55,7 @@ export async function signUserToken(payload: {
   id: string
   email: string
   name?: string | null
-  role: 'user' | 'admin'
+  role: Role
 }) {
   return new SignJWT({ ...payload, role: payload.role })
     .setProtectedHeader({ alg: 'HS256' })
@@ -68,7 +70,7 @@ export async function verifyUserToken(
   try {
     const { payload } = await jwtVerify(token, getSecret())
     const p = payload as { id: string; email: string; name?: string; role?: string }
-    return { ...p, role: p.role === 'admin' ? 'admin' : 'user' }
+    return { ...p, role: normalizeRole(p.role) }
   } catch {
     return null
   }

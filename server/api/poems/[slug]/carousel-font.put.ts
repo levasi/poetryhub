@@ -1,22 +1,18 @@
-// PUT /api/poems/:slug/carousel-font — per-poem carousel settings (same auth as site carousel defaults)
+// PUT /api/poems/:slug/carousel-font — per-poem carousel settings (admin or poem submitter)
 import { Prisma } from '@prisma/client'
 import { prisma } from '~/server/utils/prisma'
 import { requireUser } from '~/server/utils/auth'
 import {
   poemCarouselSettingsSchema,
   ensurePoemCarouselFontFamily,
+  parsePoemCarouselSettings,
 } from '~/utils/poemCarouselFontSettings'
-import { userCanManageCarouselDefaults } from '~/utils/carouselDefaultsAdmin'
+import { userCanEditPoem } from '~/server/utils/poemEditAuth'
+import { isStaffRole } from '~/utils/roles'
 
 export default defineEventHandler(async (event) => {
   setHeader(event, 'cache-control', 'no-store')
   const tokenUser = await requireUser(event)
-  const config = useRuntimeConfig()
-  if (
-    !userCanManageCarouselDefaults(tokenUser, config.public.carouselDefaultsAdminEmail as string | undefined)
-  ) {
-    throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
-  }
 
   const slug = getRouterParam(event, 'slug')
   if (!slug?.trim()) {
@@ -33,13 +29,22 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const toStore = ensurePoemCarouselFontFamily(parsed.data)
-  const json = JSON.parse(JSON.stringify(toStore)) as Prisma.InputJsonValue
-
   const existing = await prisma.poem.findUnique({ where: { slug } })
   if (!existing) {
     throw createError({ statusCode: 404, statusMessage: 'Poem not found' })
   }
+  if (!userCanEditPoem(tokenUser, existing)) {
+    throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
+  }
+
+  let payload = parsed.data
+  if (!isStaffRole(tokenUser.role)) {
+    const prev = parsePoemCarouselSettings(existing.carouselFontSettings)
+    payload = { ...payload, ctaText: prev?.ctaText }
+  }
+
+  const toStore = ensurePoemCarouselFontFamily(payload)
+  const json = JSON.parse(JSON.stringify(toStore)) as Prisma.InputJsonValue
 
   await prisma.poem.update({
     where: { slug },

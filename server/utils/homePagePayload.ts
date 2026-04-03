@@ -1,9 +1,8 @@
 /**
- * Single server-side payload for the homepage — one DB/API round-trip from the client.
+ * Single server-side payload for the homepage — one DB round-trip from the client.
+ * No external API calls; all data served straight from the database.
  */
 import { prisma } from '~/server/utils/prisma'
-import { withResolvedAuthorPortrait } from '~/server/utils/authorPortrait'
-import { ensureAuthorBio } from '~/server/utils/authorBio'
 
 const poemListInclude = {
   author: { select: { id: true, name: true, slug: true, imageUrl: true } },
@@ -12,8 +11,9 @@ const poemListInclude = {
   },
 } as const
 
-async function buildHomeHero() {
+export async function buildHomeHero() {
   try {
+    // Pick a random author who has at least one Romanian poem
     const rows = await prisma.$queryRaw<Array<{ id: string }>>`
       SELECT a.id FROM "Author" a
       WHERE EXISTS (SELECT 1 FROM "Poem" p WHERE p."authorId" = a.id AND p.language = 'ro')
@@ -22,33 +22,26 @@ async function buildHomeHero() {
     `
     if (!rows.length) return null
 
-    const raw = await prisma.author.findUnique({
-      where: { id: rows[0].id },
-      include: { _count: { select: { poems: true } } },
-    })
-    if (!raw) return null
+    // Fetch author + their works in parallel (no Wikipedia calls)
+    const [raw, works] = await Promise.all([
+      prisma.author.findUnique({
+        where: { id: rows[0]!.id },
+        include: { _count: { select: { poems: true } } },
+      }),
+      prisma.poem.findMany({
+        where: { authorId: rows[0]!.id, language: 'ro' },
+        select: { title: true, slug: true },
+        orderBy: { title: 'asc' },
+      }),
+    ])
+    if (!raw || works.length === 0) return null
 
-    let author = await withResolvedAuthorPortrait(raw)
-    const bioText = await ensureAuthorBio(author)
-    if (bioText && bioText !== author.bio) author = { ...author, bio: bioText }
+    const author = { ...raw, works }
 
-    const works = await prisma.poem.findMany({
-      where: { authorId: author.id, language: 'ro' },
-      select: { title: true, slug: true },
-      orderBy: { title: 'asc' },
-    })
-
-    const a = { ...author, works }
-
-    const whereFilter = { language: 'ro' as const, author: { slug: author.slug } }
-    const count = await prisma.poem.count({ where: whereFilter })
-    if (count === 0) return null
-
-    const skip = Math.floor(Math.random() * count)
+    // Pick a random poem from the already-fetched works list (no extra count query)
+    const randomWork = works[Math.floor(Math.random() * works.length)]!
     const poem = await prisma.poem.findFirst({
-      where: whereFilter,
-      skip,
-      orderBy: { id: 'asc' },
+      where: { slug: randomWork.slug },
       include: {
         author: { select: { id: true, name: true, slug: true, imageUrl: true } },
         poemTags: { include: { tag: true } },
@@ -56,10 +49,7 @@ async function buildHomeHero() {
     })
     if (!poem) return null
 
-    const resolvedAuthor = await withResolvedAuthorPortrait(poem.author)
-    const p = { ...poem, author: resolvedAuthor }
-
-    return { a, p }
+    return { a: author, p: poem }
   } catch {
     return null
   }

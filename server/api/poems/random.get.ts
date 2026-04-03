@@ -1,7 +1,6 @@
-// GET /api/poems/random — returns one random poem
+// GET /api/poems/random — returns one random poem (DB only, no external API calls)
 // Query: ?author=slug — random poem by that author only
 import { prisma } from '~/server/utils/prisma'
-import { withResolvedAuthorPortrait } from '~/server/utils/authorPortrait'
 
 export default defineEventHandler(async (event) => {
   const authorSlug = getQuery(event).author
@@ -33,6 +32,5 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'No poems in database' })
   }
 
-  const author = await withResolvedAuthorPortrait(poem.author)
-  return { ...poem, author }
+  return poem
 })

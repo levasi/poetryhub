@@ -36,6 +36,8 @@ export interface Poem {
   featured:    boolean
   publishedAt: string
   createdAt:   string
+  /** Set when a registered user submitted the poem; used for edit permissions. */
+  submittedByUserId?: string | null
   author:      {
     id: string
     name: string

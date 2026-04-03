@@ -1,5 +1,5 @@
 <script setup lang="ts">
-definePageMeta({ layout: false })
+definePageMeta({ layout: 'auth' })
 
 const { t } = useI18n()
 useSeoMeta({ title: computed(() => t('seo.adminLogin')) })

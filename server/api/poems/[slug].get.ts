@@ -1,81 +1,58 @@
 // GET /api/poems/:slug — fetch a single poem with full details
 import { prisma } from '~/server/utils/prisma'
-import { withResolvedAuthorPortrait } from '~/server/utils/authorPortrait'
-import { enrichPoemWrittenDateIfNeeded } from '~/server/utils/enrichPoemWrittenDate'
 
 export default defineCachedEventHandler(
   async (event) => {
-  const slug = getRouterParam(event, 'slug')
+    const slug = getRouterParam(event, 'slug')
 
-  let poem = await prisma.poem.findUnique({
-    where: { slug: slug! },
-    include: {
-      author: true,
-      poemTags: {
-        include: { tag: true },
+    const poem = await prisma.poem.findUnique({
+      where: { slug: slug! },
+      include: {
+        author: true,
+        poemTags: { include: { tag: true } },
       },
-    },
-  })
+    })
 
-  if (!poem) {
-    throw createError({ statusCode: 404, statusMessage: 'Poem not found' })
-  }
+    if (!poem) {
+      throw createError({ statusCode: 404, statusMessage: 'Poem not found' })
+    }
 
-  const config = useRuntimeConfig(event)
-  await enrichPoemWrittenDateIfNeeded(poem.id, { anthropicApiKey: config.anthropicApiKey })
+    const neighborSelect = { slug: true, title: true } as const
 
-  poem = await prisma.poem.findUnique({
-    where: { slug: slug! },
-    include: {
-      author: true,
-      poemTags: {
-        include: { tag: true },
+    // Same order as GET /api/poems: publishedAt desc, then id (stable tiebreaker).
+    // "Newer" = toward the top of the catalog list; "Older" = toward the bottom.
+    const [newer, older] = await Promise.all([
+      prisma.poem.findFirst({
+        where: {
+          language: 'ro',
+          OR: [
+            { publishedAt: { gt: poem.publishedAt } },
+            { AND: [{ publishedAt: poem.publishedAt }, { id: { gt: poem.id } }] },
+          ],
+        },
+        orderBy: [{ publishedAt: 'asc' }, { id: 'asc' }],
+        select: neighborSelect,
+      }),
+      prisma.poem.findFirst({
+        where: {
+          language: 'ro',
+          OR: [
+            { publishedAt: { lt: poem.publishedAt } },
+            { AND: [{ publishedAt: poem.publishedAt }, { id: { lt: poem.id } }] },
+          ],
+        },
+        orderBy: [{ publishedAt: 'desc' }, { id: 'desc' }],
+        select: neighborSelect,
+      }),
+    ])
+
+    return {
+      ...poem,
+      navigation: {
+        newer: newer ? { slug: newer.slug, title: newer.title } : null,
+        older: older ? { slug: older.slug, title: older.title } : null,
       },
-    },
-  })
-
-  if (!poem) {
-    throw createError({ statusCode: 404, statusMessage: 'Poem not found' })
-  }
-
-  const neighborSelect = { slug: true, title: true } as const
-
-  // Same order as GET /api/poems: publishedAt desc, then id (stable tiebreaker).
-  // "Newer" = toward the top of the catalog list; "Older" = toward the bottom.
-  const [newer, older] = await Promise.all([
-    prisma.poem.findFirst({
-      where: {
-        language: 'ro',
-        OR: [
-          { publishedAt: { gt: poem.publishedAt } },
-          { AND: [{ publishedAt: poem.publishedAt }, { id: { gt: poem.id } }] },
-        ],
-      },
-      orderBy: [{ publishedAt: 'asc' }, { id: 'asc' }],
-      select: neighborSelect,
-    }),
-    prisma.poem.findFirst({
-      where: {
-        language: 'ro',
-        OR: [
-          { publishedAt: { lt: poem.publishedAt } },
-          { AND: [{ publishedAt: poem.publishedAt }, { id: { lt: poem.id } }] },
-        ],
-      },
-      orderBy: [{ publishedAt: 'desc' }, { id: 'desc' }],
-      select: neighborSelect,
-    }),
-  ])
-
-  const author = await withResolvedAuthorPortrait(poem.author)
-  return {
-    ...poem,
-    author,
-    navigation: {
-      newer: newer ? { slug: newer.slug, title: newer.title } : null,
-      older: older ? { slug: older.slug, title: older.title } : null,
-    },
-  }
+    }
   },
   {
     name: 'api-poem-by-slug',

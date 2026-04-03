@@ -267,6 +267,81 @@ onUnmounted(() => {
   if (defEscHandler) document.removeEventListener('keydown', defEscHandler)
 })
 
+// ── Publish panel ──────────────────────────────────────────────────────────
+const { user, isLoggedIn } = useAuth()
+
+const publishOpen = ref(false)
+const publishForm = reactive({
+  title: '',
+  authorName: '',
+  language: 'ro',
+  tagIds: [] as string[],
+})
+const publishLoading = ref(false)
+const publishMsg = ref<{ ok: boolean; text: string; slug?: string } | null>(null)
+
+interface Tag { id: string; slug: string; name: string; category: string }
+const allTags = ref<Tag[]>([])
+const tagsLoaded = ref(false)
+
+async function openPublish() {
+  if (!isLoggedIn.value) {
+    publishMsg.value = { ok: false, text: t('write.loginRequired') }
+    publishOpen.value = true
+    return
+  }
+  publishMsg.value = null
+  publishForm.title = ''
+  publishForm.authorName = user.value?.name ?? user.value?.email?.split('@')[0] ?? ''
+  publishForm.tagIds = []
+  publishOpen.value = true
+  if (!tagsLoaded.value) {
+    try {
+      allTags.value = await $fetch<Tag[]>('/api/tags')
+    } catch {
+      // tags are optional, ignore
+    } finally {
+      tagsLoaded.value = true
+    }
+  }
+}
+
+function closePublish() {
+  publishOpen.value = false
+}
+
+function togglePublishTag(id: string) {
+  const idx = publishForm.tagIds.indexOf(id)
+  if (idx >= 0) publishForm.tagIds.splice(idx, 1)
+  else publishForm.tagIds.push(id)
+}
+
+async function submitPublish() {
+  const content = lyrics.text.trim()
+  if (!content) {
+    publishMsg.value = { ok: false, text: t('write.contentEmpty') }
+    return
+  }
+  publishMsg.value = null
+  publishLoading.value = true
+  try {
+    const poem = await $fetch<{ slug: string }>('/api/user/poems', {
+      method: 'POST',
+      body: {
+        title: publishForm.title.trim(),
+        content,
+        authorName: publishForm.authorName.trim(),
+        language: publishForm.language,
+        tagIds: publishForm.tagIds,
+      },
+    })
+    publishMsg.value = { ok: true, text: t('write.published'), slug: poem.slug }
+  } catch {
+    publishMsg.value = { ok: false, text: t('write.publishError') }
+  } finally {
+    publishLoading.value = false
+  }
+}
 </script>
 
 <template>
@@ -420,8 +495,165 @@ onUnmounted(() => {
             <div class="h-48 animate-pulse rounded-2xl bg-slate-100" aria-hidden="true" />
           </template>
         </ClientOnly>
+        <!-- Publish button -->
+        <div class="mt-3 shrink-0">
+          <button
+            type="button"
+            class="flex w-full items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-medium text-blue-700 transition hover:bg-blue-100 hover:text-blue-800"
+            @click="openPublish"
+          >
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            {{ t('write.publishBtn') }}
+          </button>
+        </div>
       </section>
     </div>
+
+    <!-- Publish panel -->
+    <Teleport to="body">
+      <Transition name="publish-panel">
+        <div v-if="publishOpen" class="fixed inset-0 z-[100] flex items-end justify-center sm:items-center sm:p-4">
+          <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="closePublish" />
+          <div class="relative z-10 w-full max-w-lg rounded-t-2xl bg-white shadow-2xl sm:rounded-2xl">
+            <!-- Header -->
+            <div class="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+              <h2 class="text-base font-semibold text-slate-900">{{ t('write.publishTitle') }}</h2>
+              <button type="button" class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700" @click="closePublish">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div class="max-h-[80vh] overflow-y-auto px-6 py-5">
+              <!-- Not logged in state -->
+              <div v-if="!isLoggedIn" class="py-4 text-center">
+                <p class="mb-4 text-sm text-slate-600">{{ t('write.loginRequired') }}</p>
+                <NuxtLink to="/login?redirect=/write" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700" @click="closePublish">
+                  {{ t('auth.signIn') }}
+                </NuxtLink>
+              </div>
+
+              <!-- Success state -->
+              <div v-else-if="publishMsg?.ok" class="py-4 text-center">
+                <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+                  <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <p class="mb-4 font-medium text-slate-900">{{ publishMsg.text }}</p>
+                <div class="flex justify-center gap-3">
+                  <NuxtLink
+                    v-if="publishMsg.slug"
+                    :to="`/poems/${publishMsg.slug}`"
+                    class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                    @click="closePublish"
+                  >
+                    {{ t('write.viewPoem') }}
+                  </NuxtLink>
+                  <button type="button" class="rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50" @click="closePublish">
+                    {{ t('write.cancel') }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- Form -->
+              <form v-else class="space-y-4" @submit.prevent="submitPublish">
+                <p class="text-sm text-slate-500">{{ t('write.publishDesc') }}</p>
+
+                <!-- Title -->
+                <div>
+                  <label class="mb-1.5 block text-xs font-medium uppercase tracking-widest text-slate-500">
+                    {{ t('write.fieldTitle') }} *
+                  </label>
+                  <input
+                    v-model="publishForm.title"
+                    type="text"
+                    :placeholder="t('write.fieldTitlePlaceholder')"
+                    required
+                    maxlength="500"
+                    class="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                  />
+                </div>
+
+                <!-- Author name -->
+                <div>
+                  <label class="mb-1.5 block text-xs font-medium uppercase tracking-widest text-slate-500">
+                    {{ t('write.fieldAuthorName') }} *
+                  </label>
+                  <input
+                    v-model="publishForm.authorName"
+                    type="text"
+                    required
+                    maxlength="80"
+                    class="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                  />
+                  <p class="mt-1 text-xs text-slate-400">{{ t('write.fieldAuthorNameHint') }}</p>
+                </div>
+
+                <!-- Language -->
+                <div>
+                  <label class="mb-1.5 block text-xs font-medium uppercase tracking-widest text-slate-500">
+                    {{ t('write.fieldLanguage') }}
+                  </label>
+                  <select
+                    v-model="publishForm.language"
+                    class="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                  >
+                    <option value="ro">Română</option>
+                    <option value="en">English</option>
+                    <option value="fr">Français</option>
+                    <option value="de">Deutsch</option>
+                    <option value="es">Español</option>
+                  </select>
+                </div>
+
+                <!-- Tags -->
+                <div v-if="allTags.length">
+                  <label class="mb-2 block text-xs font-medium uppercase tracking-widest text-slate-500">
+                    {{ t('write.fieldTags') }}
+                  </label>
+                  <div class="flex flex-wrap gap-1.5">
+                    <button
+                      v-for="tag in allTags"
+                      :key="tag.id"
+                      type="button"
+                      :class="publishForm.tagIds.includes(tag.id)
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300'"
+                      class="rounded-full border px-3 py-1 text-xs font-medium transition"
+                      @click="togglePublishTag(tag.id)"
+                    >
+                      {{ tag.name }}
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Error -->
+                <p v-if="publishMsg && !publishMsg.ok" class="rounded-lg bg-red-50 px-4 py-2.5 text-sm text-red-700">
+                  {{ publishMsg.text }}
+                </p>
+
+                <div class="flex gap-3 pt-1">
+                  <button
+                    type="submit"
+                    :disabled="publishLoading"
+                    class="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {{ publishLoading ? t('write.publishing') : t('write.publishBtn') }}
+                  </button>
+                  <button type="button" class="rounded-xl border border-slate-200 px-5 py-2.5 text-sm text-slate-700 hover:bg-slate-50" @click="closePublish">
+                    {{ t('write.cancel') }}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
 
     <Teleport to="body">
       <div v-if="defPop" class="fixed inset-0 z-[90]">
@@ -469,3 +701,23 @@ onUnmounted(() => {
     </Teleport>
   </main>
 </template>
+
+<style scoped>
+.publish-panel-enter-active,
+.publish-panel-leave-active {
+  transition: opacity 0.2s ease;
+}
+.publish-panel-enter-active .relative.z-10,
+.publish-panel-leave-active .relative.z-10 {
+  transition: transform 0.25s ease, opacity 0.2s ease;
+}
+.publish-panel-enter-from,
+.publish-panel-leave-to {
+  opacity: 0;
+}
+.publish-panel-enter-from .relative.z-10,
+.publish-panel-leave-to .relative.z-10 {
+  transform: translateY(1.5rem);
+  opacity: 0;
+}
+</style>

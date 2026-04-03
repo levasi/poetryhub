@@ -1,7 +1,6 @@
-// GET /api/authors/random — one random author who has at least one poem (+ bio + works list)
+// GET /api/authors/random — one random author who has at least one poem + works list
+// Served straight from the database — no external Wikipedia calls.
 import { prisma } from '~/server/utils/prisma'
-import { withResolvedAuthorPortrait } from '~/server/utils/authorPortrait'
-import { ensureAuthorBio } from '~/server/utils/authorBio'
 
 export default defineEventHandler(async () => {
   const rows = await prisma.$queryRaw<Array<{ id: string }>>`
@@ -14,23 +13,22 @@ export default defineEventHandler(async () => {
     throw createError({ statusCode: 404, statusMessage: 'No authors with poems' })
   }
 
-  const raw = await prisma.author.findUnique({
-    where: { id: rows[0].id },
-    include: { _count: { select: { poems: true } } },
-  })
+  // Fetch author details + works in parallel
+  const [raw, works] = await Promise.all([
+    prisma.author.findUnique({
+      where: { id: rows[0]!.id },
+      include: { _count: { select: { poems: true } } },
+    }),
+    prisma.poem.findMany({
+      where: { authorId: rows[0]!.id, language: 'ro' },
+      select: { title: true, slug: true },
+      orderBy: { title: 'asc' },
+    }),
+  ])
+
   if (!raw) {
     throw createError({ statusCode: 404, statusMessage: 'Author not found' })
   }
 
-  let author = await withResolvedAuthorPortrait(raw)
-  const bioText = await ensureAuthorBio(author)
-  if (bioText && bioText !== author.bio) author = { ...author, bio: bioText }
-
-  const works = await prisma.poem.findMany({
-    where: { authorId: author.id, language: 'ro' },
-    select: { title: true, slug: true },
-    orderBy: { title: 'asc' },
-  })
-
-  return { ...author, works }
+  return { ...raw, works }
 })

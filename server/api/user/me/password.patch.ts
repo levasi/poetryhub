@@ -5,7 +5,7 @@ import { prisma } from '~/server/utils/prisma'
 import { requireUser } from '~/server/utils/auth'
 
 const schema = z.object({
-  currentPassword: z.string().min(1),
+  currentPassword: z.string().optional(),
   newPassword: z.string().min(6),
 })
 
@@ -19,9 +19,12 @@ export default defineEventHandler(async (event) => {
 
   const user = await prisma.user.findUniqueOrThrow({ where: { id: tokenUser.id } })
 
-  const valid = await bcrypt.compare(parsed.data.currentPassword, user.passwordHash)
-  if (!valid) {
-    throw createError({ statusCode: 401, statusMessage: 'Current password is incorrect' })
+  if (user.passwordHash) {
+    const cur = parsed.data.currentPassword ?? ''
+    const valid = await bcrypt.compare(cur, user.passwordHash)
+    if (!valid) {
+      throw createError({ statusCode: 401, statusMessage: 'Current password is incorrect' })
+    }
   }
 
   const passwordHash = await bcrypt.hash(parsed.data.newPassword, 10)

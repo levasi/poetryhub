@@ -76,15 +76,24 @@ model Poem {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  author    Author     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  poemTags  PoemTag[]
-  favorites Favorite[]
+  /// ID of the registered user who submitted this poem (null for classic/imported poems)
+  submittedByUserId String?
+
+  author      Author     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  submittedBy User?      @relation(fields: [submittedByUserId], references: [id], onDelete: SetNull)
+  poemTags    PoemTag[]
+  favorites   Favorite[]
 
   @@index([slug])
   @@index([authorId])
+  @@index([submittedByUserId])
   @@index([language])
   @@index([featured])
   @@index([publishedAt])
+  // Composite indexes for common homepage/listing query patterns
+  @@index([language, publishedAt(sort: Desc)])
+  @@index([language, featured, publishedAt(sort: Desc)])
+  @@index([authorId, language])
 }
 
 // ─── Poem ↔ Tag (many-to-many) ───────────────────────────────────────────────
@@ -103,13 +112,17 @@ model PoemTag {
 
 enum UserRole {
   user
+  moderator
   admin
 }
 
 model User {
   id           String     @id @default(cuid())
   email        String     @unique
-  passwordHash String
+  /// Null for Google-only accounts; bcrypt hash otherwise
+  passwordHash String?
+  /// Google `sub` claim — stable per Google account
+  googleId     String?    @unique
   name         String?
   role         UserRole   @default(user)
   /// Poem reader font key (see READER_FONT_STACKS in composables/useReaderPreferences.ts)
@@ -123,7 +136,8 @@ model User {
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
-  favorites Favorite[]
+  favorites        Favorite[]
+  submittedPoems   Poem[]
 
   @@index([email])
 }
