@@ -212,7 +212,7 @@ async function showPoemInHero(slug: string) {
 
           <div v-if="heroPoem" ref="poemBlockRef"
             class="min-w-0 border-t border-edge-subtle pt-8 md:border-t-0 md:pt-0">
-            <PoemTitle :title="heroPoem.title" :slug="heroPoem.slug" variant="banner" />
+            <PoemTitle :title="heroPoem.title" :slug="heroPoem.slug" variant="banner" :poem-id="heroPoem.id" />
             <NuxtLink v-if="heroPoem.author" :to="`/authors/${heroPoem.author.slug}`"
               class="mt-2 inline-block text-sm text-content-muted transition hover:text-gold-800">
               — {{ heroPoem.author.name }}
@@ -228,36 +228,6 @@ async function showPoemInHero(slug: string) {
         <NuxtLink to="/poems" class="ds-btn-secondary rounded-full px-8 py-3 text-sm font-medium">
           {{ t('home.explorePoems') }}
         </NuxtLink>
-      </div>
-    </section>
-
-    <!-- ── Browse by Mood ─────────────────────────────────────────────────── -->
-    <section v-if="moodTags?.length" class="mb-24">
-      <h2 class="ds-section-heading-center mb-10">{{ t('home.browseByMood') }}</h2>
-      <div class="flex flex-wrap justify-center gap-2.5 md:justify-start">
-        <TagBadge v-for="tag in moodTags" :key="tag.id" :name="tag.name" :slug="tag.slug" :color="tag.color" />
-      </div>
-    </section>
-
-    <!-- ── Featured Poems ─────────────────────────────────────────────────── -->
-    <section v-if="featured.length" class="mb-24">
-      <div class="mb-10 flex items-end justify-between gap-4">
-        <h2 class="ds-section-heading mb-0">{{ t('home.featured') }}</h2>
-        <NuxtLink to="/poems?featured=true"
-          class="shrink-0 pb-3 text-sm font-medium text-content-muted transition hover:text-gold-800">
-          {{ t('home.seeAll') }}
-        </NuxtLink>
-      </div>
-      <div class="grid gap-6 md:grid-cols-3 md:gap-8">
-        <PoetryCard v-for="poem in featured" :key="poem.id" :poem="poem" :featured="true" />
-      </div>
-    </section>
-
-    <!-- ── Browse by Theme ────────────────────────────────────────────────── -->
-    <section v-if="themeTags?.length" class="mb-24">
-      <h2 class="ds-section-heading-center mb-10">{{ t('home.themes') }}</h2>
-      <div class="flex flex-wrap justify-center gap-2.5 md:justify-start">
-        <TagBadge v-for="tag in themeTags" :key="tag.id" :name="tag.name" :slug="tag.slug" :color="tag.color" />
       </div>
     </section>
 

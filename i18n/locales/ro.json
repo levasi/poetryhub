@@ -167,7 +167,6 @@
     "source": "Sursă",
     "classic": "Clasică",
     "imported": "Importată",
-    "ai": "AI",
     "clearAllFilters": "Șterge toate filtrele"
   },
   "poem": {
@@ -216,7 +215,13 @@
     "count": "{n} poezie salvată | {n} poezii salvate",
     "clearAll": "Șterge tot",
     "empty": "Nicio poezie salvată încă.",
-    "hint": "Răsfoiește poezii și apasă ♡ pentru a salva"
+    "hint": "Răsfoiește poezii și apasă ♡ pentru a salva",
+    "toggleError": "Nu s-au putut actualiza favoritele. Verifică conexiunea și încearcă din nou.",
+    "clearError": "Nu s-au putut șterge toate favoritele. Încearcă din nou.",
+    "dismissError": "Închide",
+    "localOnlyHint": "Favoritele sunt salvate doar pe acest dispozitiv.",
+    "signInToSync": "Autentifică-te pentru sincronizare între dispozitive",
+    "missingFromCatalog": "Unele poezii salvate nu mai sunt în colecție. Poți curăța lista din „Șterge tot” sau anulând favoritele de pe pagina poeziei."
   },
   "auth": {
     "signInSubtitle": "Intră în cont",
@@ -292,14 +297,24 @@
     "prefsSavedHint": "Ești autentificat — preferințele se salvează în cont.",
     "prefsLocalHint": "Preferințele se salvează pe acest dispozitiv. Autentifică-te pentru sincronizare.",
     "writtenInYear": "Scrisă în {year}",
-    "writtenYearAndPeriod": "Scrisă în {year} · {period}"
+    "writtenYearAndPeriod": "Scrisă în {year} · {period}",
+    "sharePoem": "Distribuie",
+    "copyLink": "Copiază link-ul",
+    "linkCopied": "Copiat!"
+  },
+  "insight": {
+    "title": "Interpretare",
+    "poweredBy": "Powered by Claude AI",
+    "loading": "Se analizează poezia…",
+    "error": "Interpretarea nu a putut fi încărcată.",
+    "show": "Arată interpretarea",
+    "hide": "Ascunde interpretarea"
   },
   "card": {
     "underMin": "<1 min",
     "min": "{n} min",
     "favoriteAdd": "Adaugă la favorite",
     "favoriteRemove": "Elimină din favorite",
-    "aiBadge": "AI",
     "quickRead": "Citire rapidă",
     "quickReadLabel": "Citește rapid",
     "openQuickRead": "Deschide citirea rapidă",
@@ -344,7 +359,7 @@
   },
   "seo": {
     "homeTitle": "PoetryHub — Citește, descoperă și împărtășește poezie",
-    "homeDesc": "O platformă modernă pentru a citi, descoperi și împărtăși poezie. Răsfoiește poezii clasice și generate de AI după stare, autor și temă.",
+    "homeDesc": "O platformă modernă pentru a citi, descoperi și împărtăși poezie. Răsfoiește poezii clasice după stare, autor și temă.",
     "poemsTitle": "Poezii — PoetryHub",
     "authorsTitle": "Autori — PoetryHub",
     "searchTitle": "Căutare — PoetryHub",
@@ -457,7 +472,6 @@
       "placeholderContent": "Două drumuri despărțeau în codrul cu alai…",
       "sources": {
         "classic": "Clasică",
-        "ai": "Generată AI",
         "user": "Trimisă de utilizator",
         "imported": "Importată"
       }

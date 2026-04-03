@@ -167,7 +167,6 @@
     "source": "Source",
     "classic": "Classic",
     "imported": "Imported",
-    "ai": "AI",
     "clearAllFilters": "Clear all filters"
   },
   "poem": {
@@ -216,7 +215,13 @@
     "count": "{n} saved poem | {n} saved poems",
     "clearAll": "Clear all",
     "empty": "No saved poems yet.",
-    "hint": "Browse poems and tap ♡ to save"
+    "hint": "Browse poems and tap ♡ to save",
+    "toggleError": "Could not update favorites. Check your connection and try again.",
+    "clearError": "Could not clear all favorites. Try again.",
+    "dismissError": "Dismiss",
+    "localOnlyHint": "Favorites are saved on this device only.",
+    "signInToSync": "Sign in to sync across devices",
+    "missingFromCatalog": "Some saved poems are no longer in the collection. Remove them from your list by clearing favorites or unfavoriting on a poem page."
   },
   "auth": {
     "signInSubtitle": "Sign in to your account",
@@ -292,14 +297,24 @@
     "prefsSavedHint": "Signed in — your choices are saved to your account.",
     "prefsLocalHint": "Choices are saved on this device. Sign in to sync across devices.",
     "writtenInYear": "Written in {year}",
-    "writtenYearAndPeriod": "Written in {year} · {period}"
+    "writtenYearAndPeriod": "Written in {year} · {period}",
+    "sharePoem": "Share",
+    "copyLink": "Copy link",
+    "linkCopied": "Copied!"
+  },
+  "insight": {
+    "title": "Poem Insight",
+    "poweredBy": "Powered by Claude AI",
+    "loading": "Analyzing poem…",
+    "error": "Could not load insight.",
+    "show": "Show insight",
+    "hide": "Hide insight"
   },
   "card": {
     "underMin": "<1 min",
     "min": "{n} min",
     "favoriteAdd": "Add to favorites",
     "favoriteRemove": "Remove from favorites",
-    "aiBadge": "AI",
     "quickRead": "Quick read",
     "quickReadLabel": "Quick read",
     "openQuickRead": "Open quick read",
@@ -344,7 +359,7 @@
   },
   "seo": {
     "homeTitle": "PoetryHub — Read, Discover & Share Poetry",
-    "homeDesc": "A modern platform to read, discover, and share poetry. Browse classic and AI-generated poems by mood, author, and theme.",
+    "homeDesc": "A modern platform to read, discover, and share poetry. Browse classic poems by mood, author, and theme.",
     "poemsTitle": "Poems — PoetryHub",
     "authorsTitle": "Authors — PoetryHub",
     "searchTitle": "Search — PoetryHub",
@@ -457,7 +472,6 @@
       "placeholderContent": "Two roads diverged in a yellow wood,\nAnd sorry I could not travel both…",
       "sources": {
         "classic": "Classic",
-        "ai": "AI generated",
         "user": "User submitted",
         "imported": "Imported"
       }

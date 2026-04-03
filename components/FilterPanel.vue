@@ -16,7 +16,6 @@ const emit = defineEmits<{
 const sources = computed(() => [
   { value: 'classic', label: t('filters.classic') },
   { value: 'imported', label: t('filters.imported') },
-  { value: 'ai-generated', label: t('filters.ai') },
 ])
 </script>
 

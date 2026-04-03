@@ -1,6 +1,8 @@
 // Favorites composable
 // - When user is logged in: syncs with server (GET/POST /api/user/favorites)
 // - When logged out: falls back to localStorage
+// - On login: merges local favorites into the server account
+// - On logout: persists current favorites to localStorage so they stay on the device
 // - Shared state + single in-flight GET so each PoetryCard does not refetch.
 
 const STORAGE_KEY = 'ph_favorites'
@@ -10,8 +12,13 @@ let serverLoadInFlight: Promise<void> | null = null
 
 export function useFavorites() {
   const { isLoggedIn } = useAuth()
+  const { t } = useI18n()
   const favoriteIdsState = useState<string[]>('ph-favorite-ids', () => [])
   const favoriteIds = computed(() => new Set(favoriteIdsState.value))
+  /** Same IDs as `favoriteIds`, in display order (server: newest first; local: order saved). */
+  const favoriteIdOrder = computed(() => favoriteIdsState.value)
+  /** Last server/local favorite action error (shown in layout; cleared on success or dismiss). */
+  const favoriteOpError = useState<string | null>('ph-favorite-op-error', () => null)
 
   // ── localStorage helpers ────────────────────────────────────────────────
 
@@ -53,26 +60,47 @@ export function useFavorites() {
       loadLocal()
     }
 
-    watch(isLoggedIn, async (loggedIn) => {
-      if (loggedIn) {
+    watch(isLoggedIn, async (loggedIn, wasLoggedIn) => {
+      if (!process.client) return
+      if (loggedIn && wasLoggedIn === false) {
+        const localIds = [...favoriteIdsState.value]
         await loadFromServer()
-      } else {
-        loadLocal()
+        const serverSet = new Set(favoriteIdsState.value)
+        for (const id of localIds) {
+          if (!serverSet.has(id)) {
+            try {
+              const res = await $fetch<{ favorited: boolean }>(`/api/user/favorites/${id}`, { method: 'POST' })
+              if (res.favorited) serverSet.add(id)
+            } catch { /* poem missing or network */ }
+          }
+        }
+        await loadFromServer()
+      } else if (!loggedIn && wasLoggedIn === true) {
+        persistLocal()
       }
     })
+  }
+
+  function dismissFavoriteError() {
+    favoriteOpError.value = null
   }
 
   // ── Actions ─────────────────────────────────────────────────────────────
 
   async function toggle(id: string) {
+    favoriteOpError.value = null
     if (isLoggedIn.value) {
-      const res = await $fetch<{ favorited: boolean }>(`/api/user/favorites/${id}`, { method: 'POST' })
-      if (res.favorited) {
-        if (!favoriteIdsState.value.includes(id)) {
-          favoriteIdsState.value = [...favoriteIdsState.value, id]
+      try {
+        const res = await $fetch<{ favorited: boolean }>(`/api/user/favorites/${id}`, { method: 'POST' })
+        if (res.favorited) {
+          if (!favoriteIdsState.value.includes(id)) {
+            favoriteIdsState.value = [...favoriteIdsState.value, id]
+          }
+        } else {
+          favoriteIdsState.value = favoriteIdsState.value.filter((x) => x !== id)
         }
-      } else {
-        favoriteIdsState.value = favoriteIdsState.value.filter((x) => x !== id)
+      } catch {
+        favoriteOpError.value = t('favorites.toggleError')
       }
     } else {
       const next = new Set(favoriteIdsState.value)
@@ -87,9 +115,17 @@ export function useFavorites() {
   }
 
   async function clearAll() {
+    favoriteOpError.value = null
     if (isLoggedIn.value) {
-      for (const id of favoriteIdsState.value) {
-        await $fetch(`/api/user/favorites/${id}`, { method: 'POST' }).catch(() => {})
+      const ids = [...favoriteIdsState.value]
+      for (const id of ids) {
+        try {
+          await $fetch(`/api/user/favorites/${id}`, { method: 'POST' })
+        } catch {
+          favoriteOpError.value = t('favorites.clearError')
+          await loadFromServer()
+          return
+        }
       }
     } else if (process.client) {
       localStorage.removeItem(STORAGE_KEY)
@@ -99,5 +135,14 @@ export function useFavorites() {
 
   const count = computed(() => favoriteIdsState.value.length)
 
-  return { favoriteIds, toggle, isFavorite, clearAll, count }
+  return {
+    favoriteIds,
+    favoriteIdOrder,
+    toggle,
+    isFavorite,
+    clearAll,
+    count,
+    favoriteOpError,
+    dismissFavoriteError,
+  }
 }

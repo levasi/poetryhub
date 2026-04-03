@@ -58,6 +58,24 @@ onMounted(() => {
   onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 })
 
+// ── Share ─────────────────────────────────────────────────────────────────────
+const copied = ref(false)
+
+async function sharePoem() {
+  const url = window.location.href
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: props.poem.title, url })
+    } catch {
+      // User cancelled or share failed — fall through to copy
+    }
+    return
+  }
+  await navigator.clipboard.writeText(url)
+  copied.value = true
+  setTimeout(() => { copied.value = false }, 2000)
+}
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const tags = computed(() => props.poem.poemTags?.map((pt) => pt.tag) ?? [])
 
@@ -173,6 +191,16 @@ const writtenContextLine = computed(() => {
               d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4" />
           </svg>
           {{ t('viewer.stanzaView') }}
+        </button>
+
+        <button
+          class="flex items-center gap-2 rounded-full border border-edge bg-surface-raised px-5 py-2 text-sm text-content-secondary shadow-sm transition-all hover:border-brand/50 hover:text-brand"
+          @click="sharePoem"
+        >
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+          </svg>
+          {{ copied ? t('viewer.linkCopied') : t('viewer.sharePoem') }}
         </button>
 
         <span v-if="readingTimeLabel" class="ml-auto text-xs text-content-muted">

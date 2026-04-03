@@ -295,7 +295,7 @@ export default defineNuxtConfig({
         {
           name: 'description',
           content:
-            'O platformă modernă pentru a citi, descoperi și împărtăși poezie. Răsfoiește poezii clasice și generate de AI după stare, autor și temă.',
+            'O platformă modernă pentru a citi, descoperi și împărtăși poezie. Răsfoiește poezii clasice după stare, autor și temă.',
         },
         { name: 'theme-color', content: '#f5f5f0' },
       ],

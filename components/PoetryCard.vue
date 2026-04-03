@@ -190,12 +190,6 @@ watchEffect((onCleanup) => {
         </span>
         <div class="ml-auto flex shrink-0 items-center gap-2">
           <span v-if="showLangFlag" class="text-sm text-content-soft" :title="poem.language">{{ langFlag }}</span>
-          <span
-            v-if="poem.source === 'ai-generated'"
-            class="rounded-full border border-violet-200/80 bg-violet-50 px-2 py-0.5 text-ui-xs font-medium uppercase tracking-wide text-violet-800"
-          >
-            {{ t('card.aiBadge') }}
-          </span>
         </div>
       </div>
 

@@ -107,7 +107,6 @@ async function submit() {
           <label class="mb-1.5 block text-xs font-medium text-ink-600">{{ t('admin.poemForm.source') }}</label>
           <select v-model="form.source" class="admin-input">
             <option value="classic">{{ t('admin.poemForm.sources.classic') }}</option>
-            <option value="ai-generated">{{ t('admin.poemForm.sources.ai') }}</option>
             <option value="user-submitted">{{ t('admin.poemForm.sources.user') }}</option>
             <option value="imported">{{ t('admin.poemForm.sources.imported') }}</option>
           </select>

@@ -57,7 +57,7 @@ model Poem {
   excerpt     String?             // First 2–3 lines for cards
   authorId    String
   language    String   @default("en")
-  // source: "classic" | "ai-generated" | "user-submitted" | "imported"
+  // source: "classic" | "user-submitted" | "imported"
   source      String   @default("classic")
   // External URL if scraped
   sourceUrl   String?

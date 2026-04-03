@@ -19,9 +19,15 @@ const works  = computed(() => data.value?.works ?? [])
 const poems  = computed(() => data.value?.poems.data ?? [])
 const meta   = computed(() => data.value?.poems.meta)
 
+const config = useRuntimeConfig()
+const ogImage = computed(() => author.value?.imageUrl || `${config.public.appUrl}/favicon.svg`)
+
 useSeoMeta({
-  title:       computed(() => t('seo.authorTitle', { name: author.value?.name ?? '' })),
-  description: computed(() => author.value?.bio ?? t('seo.authorDesc', { name: author.value?.name ?? '' })),
+  title:        computed(() => t('seo.authorTitle', { name: author.value?.name ?? '' })),
+  description:  computed(() => author.value?.bio ?? t('seo.authorDesc', { name: author.value?.name ?? '' })),
+  ogImage,
+  twitterCard:  'summary_large_image',
+  twitterImage: ogImage,
 })
 
 function yearsLabel() {

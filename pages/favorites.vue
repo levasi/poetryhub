@@ -3,40 +3,60 @@ import { useFavorites } from '~/composables/useFavorites'
 import type { Poem } from '~/composables/usePoems'
 
 const { t } = useI18n()
+const { isLoggedIn } = useAuth()
 
 useSeoMeta({ title: computed(() => t('seo.favoritesTitle')) })
 
-const { favoriteIds, count, clearAll } = useFavorites()
+const { favoriteIdOrder, count, clearAll } = useFavorites()
 
-// Fetch all favorite poems in one batch using search by IDs
-// (We fetch each individually only if count is reasonable; for MVP, fetch all and filter client-side)
-const { data: allPoems } = await useFetch<{ data: Poem[] }>('/api/poems', {
-  params: { limit: 200 },
+const idsParam = computed(() => favoriteIdOrder.value.join(','))
+
+const { data: payload, pending } = useFetch<{ data: Poem[] }>('/api/poems/by-ids', {
+  query: computed(() => ({ ids: idsParam.value })),
+  watch: [idsParam],
 })
 
-const favorites = computed(() =>
-  (allPoems.value?.data ?? []).filter((p) => favoriteIds.value.has(p.id)),
-)
+/** Preserve favorite order; drop missing poems (removed from catalog). */
+const favorites = computed(() => {
+  const list = payload.value?.data ?? []
+  const byId = new Map(list.map((p) => [p.id, p]))
+  return favoriteIdOrder.value.map((id) => byId.get(id)).filter((p): p is Poem => p != null)
+})
 </script>
 
 <template>
   <div class="animate-fade-in">
-    <div class="mb-8 flex items-center justify-between">
+    <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div>
         <h1 class="font-serif text-3xl font-bold text-ink-900">{{ t('favorites.title') }}</h1>
-        <p class="mt-1 text-sm text-ink-600">{{ t('favorites.count', count) }}</p>
+        <p class="mt-1 text-sm text-ink-600">{{ t('favorites.count', { n: count }) }}</p>
+        <p v-if="!isLoggedIn" class="mt-3 max-w-xl text-sm text-ink-600">
+          {{ t('favorites.localOnlyHint') }}
+          <NuxtLink to="/login" class="font-medium text-gold-800 underline decoration-gold-300 underline-offset-2 hover:text-gold-900">
+            {{ t('favorites.signInToSync') }}
+          </NuxtLink>
+        </p>
       </div>
       <button
         v-if="count > 0"
-        class="text-xs text-ink-600 underline hover:text-red-600"
+        type="button"
+        class="shrink-0 self-start text-xs text-ink-600 underline hover:text-red-600"
         @click="clearAll"
       >
         {{ t('favorites.clearAll') }}
       </button>
     </div>
 
-    <div v-if="favorites.length" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div v-if="pending && count > 0" class="flex min-h-[8rem] items-center justify-center">
+      <span class="h-9 w-9 animate-spin rounded-full border-2 border-edge-subtle border-t-brand" aria-hidden="true" />
+    </div>
+
+    <div v-else-if="count > 0 && favorites.length" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       <PoetryCard v-for="poem in favorites" :key="poem.id" :poem="poem" />
+    </div>
+
+    <div v-else-if="count > 0 && !favorites.length" class="py-16 text-center">
+      <p class="text-sm text-ink-600">{{ t('favorites.missingFromCatalog') }}</p>
     </div>
 
     <div v-else class="py-24 text-center">
