@@ -11,6 +11,7 @@ export default defineEventHandler(async (event) => {
     email: row.email,
     name: row.name,
     role: row.role,
+    createdAt: row.createdAt,
     poemFontFamily: row.poemFontFamily,
     poemFontSize: row.poemFontSize,
     poemLineHeight: row.poemLineHeight,

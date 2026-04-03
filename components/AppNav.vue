@@ -144,8 +144,19 @@ const isAdmin = computed(() => user.value?.role === 'admin')
                 {{ t('nav.admin') }}
               </NuxtLink>
               <NuxtLink
+                to="/account"
+                class="flex items-center gap-2 px-4 py-2.5 text-sm text-content-muted transition hover:bg-surface-subtle hover:text-content"
+                @click="userMenuOpen = false"
+              >
+                <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                {{ t('nav.account') }}
+              </NuxtLink>
+              <NuxtLink
                 to="/favorites"
                 class="flex items-center gap-2 px-4 py-2.5 text-sm text-content-muted transition hover:bg-surface-subtle hover:text-content"
+                @click="userMenuOpen = false"
               >
                 <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                   <path
@@ -241,6 +252,12 @@ const isAdmin = computed(() => user.value?.role === 'admin')
           </template>
           <template v-else>
             <div class="px-3 py-2 text-ui-xs text-content-soft">{{ t('nav.signedInAs', { name: displayName }) }}</div>
+            <NuxtLink
+              to="/account"
+              class="min-h-[2.75rem] rounded-ds-md px-3 py-2.5 text-sm text-content-muted hover:bg-surface-raised hover:text-content"
+            >
+              {{ t('nav.account') }}
+            </NuxtLink>
             <button
               type="button"
               class="min-h-[2.75rem] rounded-ds-md px-3 py-2.5 text-left text-sm text-content-muted hover:bg-surface-raised hover:text-danger"
