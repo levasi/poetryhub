@@ -1,0 +1,36 @@
+// PATCH /api/admin/users/[id]/role — update a user's role (admin only)
+import { z } from 'zod'
+import { prisma } from '~/server/utils/prisma'
+import { requireAdmin } from '~/server/utils/auth'
+
+const schema = z.object({
+  role: z.enum(['user', 'admin']),
+})
+
+export default defineEventHandler(async (event) => {
+  const adminUser = await requireAdmin(event)
+  const userId = getRouterParam(event, 'id')
+
+  if (!userId) {
+    throw createError({ statusCode: 400, statusMessage: 'Missing user id' })
+  }
+
+  // Prevent self-demotion
+  if (userId === adminUser.id) {
+    throw createError({ statusCode: 400, statusMessage: 'Cannot change your own role' })
+  }
+
+  const body = await readBody(event)
+  const parsed = schema.safeParse(body)
+  if (!parsed.success) {
+    throw createError({ statusCode: 400, statusMessage: 'Invalid body' })
+  }
+
+  const updated = await prisma.user.update({
+    where: { id: userId },
+    data: { role: parsed.data.role },
+    select: { id: true, email: true, name: true, role: true },
+  })
+
+  return updated
+})
