@@ -30,7 +30,8 @@
     "poems:import-ro-full": "tsx scripts/import-romanianvoice.ts --romanian-only",
     "poems:import-alecsandri-ws": "tsx scripts/import-alecsandri-wikisource.ts",
     "authors:portraits": "tsx scripts/backfill-author-portraits.ts",
-    "db:fix-nationality-roman": "tsx scripts/fix-authors-nationality-roman.ts"
+    "db:fix-nationality-roman": "tsx scripts/fix-authors-nationality-roman.ts",
+    "authors:life-years": "tsx scripts/fetch-author-life-years-wikidata.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",

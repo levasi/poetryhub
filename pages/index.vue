@@ -8,6 +8,16 @@ const { t } = useI18n()
 const { poemBodyStyle } = useReaderPreferences()
 const readerSettingsOpen = ref(false)
 
+/** Hero banner poem: same reader font/size, looser line-height for the excerpt. */
+const heroPoemBodyStyle = computed(() => {
+  const s = poemBodyStyle.value
+  const lh = s.lineHeight
+  if (typeof lh === 'number') {
+    return { ...s, lineHeight: lh }
+  }
+  return s
+})
+
 useSeoMeta({
   title: computed(() => t('seo.homeTitle')),
   description: computed(() => t('seo.homeDesc')),
@@ -30,7 +40,19 @@ interface HomePayload {
   hero: { a: RandomAuthor; p: Poem } | null
 }
 
+/** Deterministic die face 1–6 from the bundled hero (same on SSR and client; no Math.random). */
+function diceFaceFromHeroBundle(hero: { a: { id: string }; p: { id: string } } | null): number {
+  if (!hero) return 5
+  let h = 0
+  const s = `${hero.a.id}:${hero.p.id}`
+  for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0
+  return (Math.abs(h) % 6) + 1
+}
+
 const { data: home, pending: homePending } = await useFetch<HomePayload>('/api/home')
+
+/** Die face for the SVG; tied to `home.hero` only so it does not reset when the user re-rolls (local hero refs). */
+const heroDiceFace = computed(() => diceFaceFromHeroBundle(home.value?.hero ?? null))
 
 const featured = computed(() => home.value?.featured ?? [])
 const recent = computed(() => home.value?.recent ?? [])
@@ -102,6 +124,25 @@ async function rollHeroDice() {
   }
 }
 
+const heroAuthorYearsLabel = computed(() => {
+  const a = heroAuthor.value
+  if (!a) return null
+  if (a.birthYear != null && a.deathYear != null) return t('authors.lifeSpan', { birth: a.birthYear, death: a.deathYear })
+  if (a.birthYear != null) return t('authors.born', { year: a.birthYear })
+  return null
+})
+
+const heroWrittenContext = computed(() => {
+  const p = heroPoem.value
+  if (!p) return null
+  const y = p.writtenYear
+  const period = p.writtenPeriod?.trim()
+  if (y != null && period) return t('viewer.writtenYearAndPeriod', { year: y, period })
+  if (y != null) return t('viewer.writtenInYear', { year: y })
+  if (period) return period
+  return null
+})
+
 /** Load a poem from bibliography into the hero. */
 async function showPoemInHero(slug: string) {
   if (heroPoem.value?.slug === slug) return
@@ -153,25 +194,36 @@ async function showPoemInHero(slug: string) {
           <button type="button"
             class="inline-flex h-14 w-14 shrink-0 items-center justify-center overflow-visible disabled:opacity-50 md:h-16 md:w-16"
             :disabled="rollingDice" :aria-label="t('home.rollDice')" @click="rollHeroDice">
-            <DiceSvg :rolling="rollingDice" />
+            <DiceSvg :rolling="rollingDice" :initial-face="heroDiceFace" />
           </button>
+          <p v-if="heroPoem && heroWrittenContext"
+            class="max-w-2xl text-center text-sm tabular-nums leading-relaxed text-content-muted">
+            {{ heroWrittenContext }}
+          </p>
         </div>
 
         <!-- Poet (left) | poem (right) -->
-        <div v-if="heroAuthor" class="grid gap-8 px-5 pb-8 pt-8 transition-opacity duration-500 ease-in-out md:grid-cols-2 md:gap-10 md:px-8 lg:gap-12" :class="heroVisible ? 'opacity-100' : 'opacity-0'">
+        <div v-if="heroAuthor"
+          class="grid gap-8 px-5 pb-8 pt-8 transition-opacity duration-500 ease-in-out md:grid-cols-2 md:gap-10 md:px-8 lg:gap-12"
+          :class="heroVisible ? 'opacity-100' : 'opacity-0'">
           <div class="min-w-0 md:pr-8">
-            <NuxtLink :to="`/authors/${heroAuthor.slug}`"
-              class="group flex flex-col items-center text-center md:items-start md:text-left">
-              <img :src="heroAuthorAvatar" :alt="heroAuthor.name" loading="lazy"
-                class="h-24 w-24 rounded-full object-cover ring-2 ring-edge-subtle transition group-hover:ring-brand-soft/70" />
-              <p
-                class="mt-4 font-serif text-2xl font-semibold tracking-tight text-content transition group-hover:text-gold-800">
+            <div class="flex flex-col items-center text-center md:items-start md:text-left">
+              <NuxtLink :to="`/authors/${heroAuthor.slug}`"
+                class="group flex flex-col items-center md:items-start">
+                <img :src="heroAuthorAvatar" :alt="heroAuthor.name" loading="lazy"
+                  class="h-24 w-24 rounded-full object-cover ring-2 ring-edge-subtle transition group-hover:ring-brand-soft/70" />
+              </NuxtLink>
+              <NuxtLink :to="`/authors/${heroAuthor.slug}`"
+                class="mt-4 font-serif text-2xl font-semibold tracking-tight text-content transition hover:text-gold-800">
                 {{ heroAuthor.name }}
+              </NuxtLink>
+              <p v-if="heroAuthorYearsLabel" class="mt-1.5 text-sm tabular-nums text-content-muted">
+                {{ heroAuthorYearsLabel }}
               </p>
               <p v-if="heroAuthor._count" class="mt-1 text-sm text-content-soft">
                 {{ t('home.heroPoemCount', { n: heroAuthor._count.poems }) }}
               </p>
-            </NuxtLink>
+            </div>
 
             <section v-if="heroAuthor.bio?.trim()" class="mt-6 text-left">
               <h3 class="mb-2 font-serif text-sm font-semibold uppercase tracking-wide text-content-secondary">
@@ -211,7 +263,7 @@ async function showPoemInHero(slug: string) {
               class="mt-2 inline-block text-sm text-content-muted transition hover:text-gold-800">
               — {{ heroPoem.author.name }}
             </NuxtLink>
-            <p class="mt-6 text-left md:mt-8" :style="poemBodyStyle">
+            <p class="mt-6 text-left md:mt-8" :style="heroPoemBodyStyle">
               {{ heroPoemBody }}
             </p>
           </div>

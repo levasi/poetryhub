@@ -4,6 +4,8 @@ import { ref, computed, watch } from 'vue'
 const props = defineProps<{
   /** Set true while the fetch is in-flight; face changes when it flips back to false. */
   rolling?: boolean
+  /** 1–6 deterministic from the hero bundle so SSR and hydration match. */
+  initialFace?: number
 }>()
 
 type Pip = { x: number; y: number }
@@ -18,7 +20,13 @@ const FACES: Record<number, Pip[]> = {
   6: [{ x: 15, y: 13 }, { x: 33, y: 13 }, { x: 15, y: 24 }, { x: 33, y: 24 }, { x: 15, y: 35 }, { x: 33, y: 35 }],
 }
 
-const face = ref(Math.floor(Math.random() * 6) + 1)
+function clampFace(n: number | undefined): number {
+  if (n == null || !Number.isFinite(n)) return 5
+  return Math.min(6, Math.max(1, Math.round(n))) as 1 | 2 | 3 | 4 | 5 | 6
+}
+
+/** Set once from props at mount; rolls use `nextFace()` only (do not sync prop after roll). */
+const face = ref(clampFace(props.initialFace))
 const phase = ref<'idle' | 'squish' | 'expand'>('idle')
 const pipKey = ref(0)
 

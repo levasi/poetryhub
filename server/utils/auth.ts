@@ -2,7 +2,7 @@
 import { SignJWT, jwtVerify } from 'jose'
 import { H3Event, getCookie } from 'h3'
 import type { Role } from '~/utils/roles'
-import { normalizeRole } from '~/utils/roles'
+import { normalizeRole, SITE_OWNER_EMAIL } from '~/utils/roles'
 
 const TOKEN_COOKIE = 'ph_admin_token'
 const USER_TOKEN_COOKIE = 'ph_user_token'
@@ -47,6 +47,21 @@ export async function requireAdmin(event: H3Event) {
   }
 
   return payload
+}
+
+/** Admin cookie session, or logged-in app user with the site owner email (e.g. Google login). */
+export async function requireAdminOrSiteOwnerUser(event: H3Event) {
+  const adminToken =
+    getCookie(event, TOKEN_COOKIE) ??
+    event.node.req.headers.authorization?.replace('Bearer ', '')
+  if (adminToken) {
+    const payload = await verifyAdminToken(adminToken)
+    if (payload?.role === 'admin') return
+  }
+  const user = await getUserFromEvent(event)
+  if (!user) throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
+  if (user.email.toLowerCase() === SITE_OWNER_EMAIL.toLowerCase()) return
+  throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
 }
 
 // ─── User token ──────────────────────────────────────────────────────────────

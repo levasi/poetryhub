@@ -6,11 +6,16 @@ const STATE_COOKIE = 'oauth_google_state'
 const REDIRECT_COOKIE = 'oauth_google_redirect'
 const COOKIE_MAX_AGE = 60 * 10
 
+function appBaseUrl(): string {
+  const config = useRuntimeConfig()
+  return String(config.public.appUrl || 'http://localhost:3000').replace(/\/$/, '')
+}
+
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const clientId = config.oauthGoogleClientId
   if (!clientId || !config.oauthGoogleClientSecret) {
-    throw createError({ statusCode: 501, statusMessage: 'Google sign-in is not configured' })
+    return sendRedirect(event, `${appBaseUrl()}/login?error=google_config`, 302)
   }
 
   const q = getQuery(event)

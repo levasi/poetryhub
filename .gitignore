@@ -6,6 +6,9 @@ dist/
 .env
 .env.local
 .env.*.local
+# Google OAuth client downloads (contain client_secret — never commit)
+client_secret*.json
+*googleusercontent*.json
 prisma/migrations/
 *.log
 .DS_Store

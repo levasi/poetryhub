@@ -1,9 +1,37 @@
 <script setup lang="ts">
+import { $fetch as rawFetch } from 'ofetch'
+import { SITE_OWNER_EMAIL } from '~/utils/roles'
+
 const { t } = useI18n()
+const { user } = useAuth()
 
 const route = useRoute()
 const slug  = route.params.slug as string
 const page  = ref(1)
+
+const isSiteOwner = computed(
+  () => user.value?.email?.toLowerCase() === SITE_OWNER_EMAIL.toLowerCase(),
+)
+
+const deletingAuthor = ref(false)
+
+async function deleteAuthor() {
+  if (deletingAuthor.value) return
+  if (!confirm(t('admin.authors.confirmDelete'))) return
+  deletingAuthor.value = true
+  try {
+    await rawFetch(`/api/authors/${encodeURIComponent(slug)}`, { method: 'DELETE' })
+    await navigateTo('/authors')
+  } catch (err: unknown) {
+    const msg =
+      err && typeof err === 'object' && 'data' in err
+        ? String((err as { data?: { statusMessage?: string } }).data?.statusMessage ?? '')
+        : ''
+    alert(msg || t('admin.authors.updateFailed'))
+  } finally {
+    deletingAuthor.value = false
+  }
+}
 
 const { data, error, refresh } = await useFetch(`/api/authors/${slug}`, {
   params: computed(() => ({ page: page.value, limit: 10 })),
@@ -67,7 +95,18 @@ const avatarSrc = computed(() =>
 
       <!-- Info -->
       <div>
-        <h1 class="font-serif text-4xl font-bold text-content">{{ author.name }}</h1>
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h1 class="font-serif text-4xl font-bold text-content">{{ author.name }}</h1>
+          <button
+            v-if="isSiteOwner"
+            type="button"
+            class="shrink-0 rounded-md border border-danger/40 px-2 py-0.5 text-xs font-medium text-danger transition hover:bg-danger/10 disabled:opacity-50"
+            :disabled="deletingAuthor"
+            @click="deleteAuthor"
+          >
+            {{ deletingAuthor ? t('admin.poems.deleting') : t('admin.authors.delete') }}
+          </button>
+        </div>
         <p class="mt-1 text-sm text-content-secondary">
           <span v-if="author.nationality">{{ author.nationality }}</span>
           <span v-if="author.nationality && yearsLabel()"> · </span>

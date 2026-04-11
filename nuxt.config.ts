@@ -263,15 +263,22 @@ export default defineNuxtConfig({
     poetryDbUrl: process.env.POETRY_DB_URL || 'https://poetrydb.org',
     /** Optional: improves poem date enrichment when Wikipedia has no extract */
     anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
-    /** Google OAuth (server-only); set NUXT_OAUTH_GOOGLE_CLIENT_ID + NUXT_OAUTH_GOOGLE_CLIENT_SECRET */
-    oauthGoogleClientId: process.env.NUXT_OAUTH_GOOGLE_CLIENT_ID || '',
+    /**
+     * Google OAuth client ID (server). Same value may be duplicated in
+     * NUXT_PUBLIC_OAUTH_GOOGLE_CLIENT_ID so the login button is visible when
+     * the ID is only injected at deploy time (e.g. Vercel) without a rebuild.
+     */
+    oauthGoogleClientId:
+      process.env.NUXT_OAUTH_GOOGLE_CLIENT_ID || process.env.NUXT_PUBLIC_OAUTH_GOOGLE_CLIENT_ID || '',
     oauthGoogleClientSecret: process.env.NUXT_OAUTH_GOOGLE_CLIENT_SECRET || '',
     // Public (client + server)
     public: {
       appName: 'PoetryHub',
       appUrl: process.env.NUXT_PUBLIC_APP_URL || 'http://localhost:3000',
-      /** Shown when NUXT_OAUTH_GOOGLE_CLIENT_ID is set at build/runtime */
-      googleSignInEnabled: Boolean(process.env.NUXT_OAUTH_GOOGLE_CLIENT_ID),
+      /** “Continue with Google” when a client ID is configured (see oauthGoogleClientId). */
+      googleSignInEnabled: Boolean(
+        process.env.NUXT_OAUTH_GOOGLE_CLIENT_ID || process.env.NUXT_PUBLIC_OAUTH_GOOGLE_CLIENT_ID,
+      ),
       /** Email allowed to save site-wide Instagram carousel defaults (theme, font, verse layout, CTA, keywords). */
       carouselDefaultsAdminEmail:
         process.env.NUXT_PUBLIC_CAROUSEL_DEFAULTS_ADMIN_EMAIL || CAROUSEL_DEFAULTS_ADMIN_EMAIL,
