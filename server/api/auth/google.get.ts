@@ -1,21 +1,17 @@
 // GET /api/auth/google — start Google OAuth (redirect)
 import { randomBytes } from 'node:crypto'
 import { getQuery, sendRedirect, setCookie } from 'h3'
+import { getAppBaseUrl } from '~/server/utils/appBaseUrl'
 
 const STATE_COOKIE = 'oauth_google_state'
 const REDIRECT_COOKIE = 'oauth_google_redirect'
 const COOKIE_MAX_AGE = 60 * 10
 
-function appBaseUrl(): string {
-  const config = useRuntimeConfig()
-  return String(config.public.appUrl || 'http://localhost:3000').replace(/\/$/, '')
-}
-
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const clientId = config.oauthGoogleClientId
   if (!clientId || !config.oauthGoogleClientSecret) {
-    return sendRedirect(event, `${appBaseUrl()}/login?error=google_config`, 302)
+    return sendRedirect(event, `${getAppBaseUrl(event)}/login?error=google_config`, 302)
   }
 
   const q = getQuery(event)
@@ -32,8 +28,8 @@ export default defineEventHandler(async (event) => {
   setCookie(event, STATE_COOKIE, state, cookieOpts)
   setCookie(event, REDIRECT_COOKIE, encodeURIComponent(redirectAfter), cookieOpts)
 
-  const appUrl = String(config.public.appUrl || '').replace(/\/$/, '')
-  const redirectUri = `${appUrl}/api/auth/google/callback`
+  const base = getAppBaseUrl(event)
+  const redirectUri = `${base}/api/auth/google/callback`
 
   const url = new URL('https://accounts.google.com/o/oauth2/v2/auth')
   url.searchParams.set('client_id', clientId)
