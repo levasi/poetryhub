@@ -7,7 +7,11 @@ useSeoMeta({ title: computed(() => t('seo.signupTitle')) })
 
 const { register, loading, isLoggedIn, loginWithGoogle } = useAuth()
 const route = useRoute()
-const config = useRuntimeConfig()
+
+const { data: googleConfig } = await useFetch<{ enabled: boolean }>('/api/auth/google-config', {
+  key: 'auth-google-config',
+})
+const googleEnabled = computed(() => googleConfig.value?.enabled ?? false)
 
 if (isLoggedIn.value) await navigateTo('/')
 
@@ -15,8 +19,6 @@ const form = reactive({ name: '', email: '', password: '', confirm: '' })
 const error = ref('')
 const showPassword = ref(false)
 const showConfirm = ref(false)
-
-const googleEnabled = computed(() => Boolean(config.public.googleSignInEnabled))
 
 const GOOGLE_ERROR_KEYS: Record<string, string> = {
   google_denied: 'auth.googleErrorDenied',

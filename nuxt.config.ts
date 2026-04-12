@@ -275,7 +275,7 @@ export default defineNuxtConfig({
     public: {
       appName: 'PoetryHub',
       appUrl: process.env.NUXT_PUBLIC_APP_URL || 'http://localhost:3000',
-      /** “Continue with Google” when a client ID is configured (see oauthGoogleClientId). */
+      /** @deprecated Login/signup use GET /api/auth/google-config (runtime) so the button works when env is only set on the server at deploy time. */
       googleSignInEnabled: Boolean(
         process.env.NUXT_OAUTH_GOOGLE_CLIENT_ID || process.env.NUXT_PUBLIC_OAUTH_GOOGLE_CLIENT_ID,
       ),
