@@ -11,7 +11,6 @@ export const poemCarouselSettingsSchema = z.object({
   linesPerSlide: z.number().int().min(4).max(16),
   bodyFontSizeScale: z.number().min(0.7).max(2),
   bodyLineHeight: z.number().min(1.15).max(2.25),
-  ctaText: z.string().max(500).optional(),
   keywordInput: z.string().max(2000).optional(),
 })
 

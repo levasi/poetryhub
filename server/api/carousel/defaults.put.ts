@@ -1,23 +1,35 @@
-// PUT /api/carousel/defaults — only the configured admin email may persist site defaults
+// PUT /api/carousel/defaults — staff or site owner (user JWT); last-slide CTA only editable by site owner
 import { Prisma } from '@prisma/client'
 import { prisma } from '~/server/utils/prisma'
-import { requireUser } from '~/server/utils/auth'
+import { getUserOrAdminFromEvent } from '~/server/utils/auth'
 import {
   carouselSiteDefaultsSchema,
   ensureCarouselFontFamily,
+  getDefaultCarouselSiteDefaults,
+  parseCarouselSiteDefaults,
   type CarouselSiteDefaultsPayload,
 } from '~/utils/carouselSiteDefaults'
-import { userCanManageCarouselDefaults } from '~/utils/carouselDefaultsAdmin'
+import {
+  isCarouselSiteOwnerEmail,
+  userCanManageCarouselDefaults,
+} from '~/utils/carouselDefaultsAdmin'
 
 export default defineEventHandler(async (event) => {
   setHeader(event, 'cache-control', 'no-store')
-  const tokenUser = await requireUser(event)
+  const tokenUser = await getUserOrAdminFromEvent(event)
+  if (!tokenUser) {
+    throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
+  }
   const config = useRuntimeConfig()
-  if (
-    !userCanManageCarouselDefaults(tokenUser, config.public.carouselDefaultsAdminEmail as string | undefined)
-  ) {
+  const runtimeEmail = config.public.carouselDefaultsAdminEmail as string | undefined
+  if (!userCanManageCarouselDefaults(tokenUser, runtimeEmail)) {
     throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
   }
+
+  const existingRow = await prisma.carouselSiteDefaults.findUnique({ where: { id: 'singleton' } })
+  const prev: CarouselSiteDefaultsPayload = existingRow?.config
+    ? parseCarouselSiteDefaults(existingRow.config)
+    : getDefaultCarouselSiteDefaults()
 
   const body = await readBody(event)
   const parsed = carouselSiteDefaultsSchema.safeParse(body)
@@ -29,7 +41,12 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const toStore = ensureCarouselFontFamily(parsed.data as CarouselSiteDefaultsPayload)
+  let merged: CarouselSiteDefaultsPayload = { ...(parsed.data as CarouselSiteDefaultsPayload) }
+  if (!isCarouselSiteOwnerEmail(tokenUser.email, runtimeEmail)) {
+    merged = { ...merged, ctaText: prev.ctaText }
+  }
+
+  const toStore = ensureCarouselFontFamily(merged)
   const configJson = JSON.parse(JSON.stringify(toStore)) as Prisma.InputJsonValue
 
   await prisma.carouselSiteDefaults.upsert({

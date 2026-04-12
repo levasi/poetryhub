@@ -40,13 +40,13 @@ const props = withDefaults(
 )
 
 /** Cover: larger type + golden-ratio spacing and title/author scale. */
-const coverTitlePx = computed(() => Math.round(58 * props.titleScale))
+const coverTitlePx = computed(() => Math.round(68 * props.titleScale))
 const coverAuthorPx = computed(() => goldenSecondaryPxFromTitle(coverTitlePx.value))
 const coverAvatarPx = computed(() => coverAvatarDiameterPxFromTitle(coverTitlePx.value))
 const coverGap1 = computed(() => coverGoldenSpacingPx(props.titleScale, 1))
 const coverGap2 = computed(() => coverGoldenSpacingPx(props.titleScale, 2))
 const coverDividerW = computed(() => Math.round(132 * PHI))
-const coverTagPx = computed(() => Math.round(15 * props.titleScale))
+const coverTagPx = computed(() => Math.round(17 * props.titleScale))
 const coverMetaPx = computed(() => Math.max(13, goldenSecondaryPxFromTitle(coverAuthorPx.value)))
 const coverMetaGap = computed(() => coverGoldenSpacingPx(props.titleScale, 0))
 const coverMetaBetween = computed(() => Math.round(coverMetaGap.value * 0.45))
@@ -87,6 +87,17 @@ const hasAuthorMeta = computed(
         >
           {{ title }}
         </p>
+        <p
+          v-if="writtenYearLine?.trim()"
+          class="tabular-nums text-ink-500"
+          :style="{
+            fontSize: `${coverMetaPx}px`,
+            marginTop: `${coverMetaGap}px`,
+            letterSpacing: '0.02em',
+          }"
+        >
+          {{ writtenYearLine.trim() }}
+        </p>
         <div
           class="h-px bg-ink-300"
           :style="{ marginTop: `${coverGap1}px`, width: `${coverDividerW}px` }"
@@ -121,17 +132,6 @@ const hasAuthorMeta = computed(
           </p>
         </template>
         <p
-          v-if="writtenYearLine?.trim()"
-          class="tabular-nums text-ink-500"
-          :style="{
-            fontSize: `${coverMetaPx}px`,
-            marginTop: hasAuthorMeta ? `${coverMetaBetween}px` : `${coverMetaGap}px`,
-            letterSpacing: '0.02em',
-          }"
-        >
-          {{ writtenYearLine.trim() }}
-        </p>
-        <p
           class="uppercase tracking-[0.35em] text-ink-400"
           :style="{ fontSize: `${coverTagPx}px`, marginTop: `${coverGap2}px` }"
         >
@@ -157,12 +157,7 @@ const hasAuthorMeta = computed(
 
     <template v-else>
       <div class="flex h-full flex-col items-center justify-center px-8 text-center">
-        <p
-          class="text-4xl font-semibold leading-snug text-ink-900"
-          style="max-width: 880px;"
-        >
-          {{ ctaText }}
-        </p>
+        <CarouselSlideCta :cta-text="ctaText" theme="minimal" />
       </div>
     </template>
 

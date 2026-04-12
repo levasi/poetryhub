@@ -110,7 +110,6 @@ function applyPoemCarouselSettings(p: PoemCarouselSettingsPayload) {
   linesPerSlide.value = p.linesPerSlide
   bodyFontSizeScale.value = p.bodyFontSizeScale
   bodyLineHeight.value = p.bodyLineHeight
-  if (p.ctaText !== undefined) ctaText.value = p.ctaText
   if (p.keywordInput !== undefined) keywordInput.value = p.keywordInput
 }
 
@@ -212,7 +211,6 @@ async function saveCurrentPoemCarousel() {
         linesPerSlide: linesPerSlide.value,
         bodyFontSizeScale: bodyFontSizeScale.value,
         bodyLineHeight: bodyLineHeight.value,
-        ctaText: ctaText.value,
         keywordInput: keywordInput.value,
       },
     })
@@ -470,7 +468,7 @@ async function exportZip() {
       const blob = await elementToPngBlob(el, { scale: 2 })
       files.push({ name: slideFilename(title.value, i), blob })
     }
-    const zipName = `${title.value.replace(/\s+/g, '-').slice(0, 40) || 'poem'}-carousel.zip`
+    const zipName = `${title.value.replace(/\s+/g, '-').slice(0, 40) || 'poem'}-insta-post.zip`
     await blobsToZipDownload(files, zipName)
   } catch (e) {
     console.error(e)
@@ -622,10 +620,6 @@ function onTouchEnd(e: TouchEvent) {
       <!-- Left (4 columns): Controls -->
       <div class="min-w-0 space-y-6 md:col-span-4">
         <section class="rounded-2xl border border-ink-200 bg-white p-6 shadow-sm">
-          <h2 class="mb-4 font-serif text-lg font-semibold text-ink-900">
-            {{ canEditPoemData ? t('carousel.sectionInput') : t('carousel.sectionCarouselOnly') }}
-          </h2>
-
           <template v-if="canEditPoemData">
             <label class="field-label">{{ t('carousel.fieldTitle') }}</label>
             <input v-model="title" type="text"
@@ -666,14 +660,7 @@ function onTouchEnd(e: TouchEvent) {
             <textarea v-model="poemText" rows="10"
               class="mb-4 w-full rounded-xl border border-ink-200 px-4 py-3 font-serif leading-relaxed text-ink-800 outline-none focus:border-gold-500"
               :placeholder="t('carousel.phPoem')" />
-
-            <label class="field-label">{{ t('carousel.fieldCta') }}</label>
-            <input v-model="ctaText" type="text"
-              class="mb-4 w-full rounded-xl border border-ink-200 px-4 py-2.5 outline-none focus:border-gold-500" />
           </template>
-          <p v-else class="mb-4 rounded-xl border border-ink-100 bg-ink-50/80 px-4 py-3 text-sm leading-relaxed text-ink-600">
-            {{ t('carousel.poemDataStaffOnly') }}
-          </p>
 
           <h3 class="mb-3 font-serif text-base font-semibold text-ink-900">
             {{ t('carousel.sectionInstagramPostSettings') }}
@@ -698,44 +685,30 @@ function onTouchEnd(e: TouchEvent) {
 
           <div ref="keywordsHelpWrapRef" class="relative mb-1">
             <div class="flex items-baseline gap-1.5">
-              <label class="field-label mb-0 flex-1" for="carousel-keyword-input">{{ t('carousel.fieldKeywords') }}</label>
-              <button
-                id="carousel-keywords-help-trigger"
-                type="button"
+              <label class="field-label mb-0 flex-1" for="carousel-keyword-input">{{ t('carousel.fieldKeywords')
+                }}</label>
+              <button id="carousel-keywords-help-trigger" type="button"
                 class="inline-flex shrink-0 rounded-full p-0.5 text-ink-400 transition hover:bg-ink-100 hover:text-ink-700"
-                :aria-expanded="keywordsHelpOpen"
-                aria-controls="carousel-keywords-help-panel"
-                :aria-label="t('carousel.keywordsHelpAriaLabel')"
-                @click.stop="keywordsHelpOpen = !keywordsHelpOpen"
-              >
-                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"
-                  />
+                :aria-expanded="keywordsHelpOpen" aria-controls="carousel-keywords-help-panel"
+                :aria-label="t('carousel.keywordsHelpAriaLabel')" @click.stop="keywordsHelpOpen = !keywordsHelpOpen">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"
+                  aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
                 </svg>
               </button>
             </div>
             <Transition name="carousel-kw-help">
-              <div
-                v-show="keywordsHelpOpen"
-                id="carousel-keywords-help-panel"
+              <div v-show="keywordsHelpOpen" id="carousel-keywords-help-panel"
                 class="absolute left-0 right-0 top-full z-30 mt-1.5 rounded-xl border border-ink-200 bg-white p-3 text-xs leading-relaxed text-ink-600 shadow-lg"
-                role="region"
-                @click.stop
-              >
+                role="region" @click.stop>
                 {{ t('carousel.keywordsHelp') }}
               </div>
             </Transition>
           </div>
-          <input
-            id="carousel-keyword-input"
-            v-model="keywordInput"
-            type="text"
+          <input id="carousel-keyword-input" v-model="keywordInput" type="text"
             class="mb-4 w-full rounded-xl border border-ink-200 px-4 py-2.5 text-sm outline-none focus:border-gold-500"
-            :placeholder="t('carousel.phKeywords')"
-          />
+            :placeholder="t('carousel.phKeywords')" />
 
           <div class="border-t border-ink-100 pt-4">
             <h3 class="mb-3 font-serif text-base font-semibold text-ink-900">
@@ -754,7 +727,7 @@ function onTouchEnd(e: TouchEvent) {
               <input v-model.number="bodyFontSizeScale" type="range" min="0.7" max="2" step="0.05"
                 class="h-2 flex-1 cursor-pointer accent-gold-600" />
               <span class="w-12 text-right text-sm tabular-nums text-ink-700">{{ Math.round(bodyFontSizeScale * 100)
-                }}%</span>
+              }}%</span>
             </div>
 
             <label class="field-label">{{ t('carousel.fieldLineHeight') }}</label>
@@ -766,7 +739,8 @@ function onTouchEnd(e: TouchEvent) {
 
             <div v-if="canSaveCurrentPoemCarousel && loadedPoemSlug" class="mb-4 border-t border-ink-100 pt-4">
               <p class="mb-2 text-xs text-ink-500">
-                {{ canEditPoemData ? t('carousel.poemCarouselSaveHintStaff') : t('carousel.poemCarouselSaveHintCarouselOnly') }}
+                {{ canEditPoemData ? t('carousel.poemCarouselSaveHintStaff') :
+                  t('carousel.poemCarouselSaveHintCarouselOnly') }}
               </p>
               <button type="button"
                 class="w-full rounded-xl border border-gold-500 bg-gold-500/10 px-4 py-2.5 text-sm font-semibold text-ink-900 hover:bg-gold-500/20 disabled:opacity-50"
@@ -790,7 +764,8 @@ function onTouchEnd(e: TouchEvent) {
               </Transition>
             </div>
 
-            <div v-if="canEditPoemData && canSaveCurrentPoemCarousel && loadedPoemSlug" class="border-t border-ink-100 pt-4">
+            <div v-if="canEditPoemData && canSaveCurrentPoemCarousel && loadedPoemSlug"
+              class="border-t border-ink-100 pt-4">
               <button type="button"
                 class="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-800 hover:bg-red-100 disabled:opacity-50"
                 :disabled="deletingPoem || savingCurrentPoemCarousel" @click="deleteLoadedPoem">
@@ -801,10 +776,8 @@ function onTouchEnd(e: TouchEvent) {
             <p v-if="!isLoggedIn" class="mt-4 border-t border-ink-100 pt-4 text-xs text-ink-500">
               {{ t('carousel.poemSaveLoginHint') }}
             </p>
-            <p
-              v-else-if="isLoggedIn && loadedPoemSlug && !canSaveCurrentPoemCarousel"
-              class="mt-4 border-t border-ink-100 pt-4 text-xs text-ink-500"
-            >
+            <p v-else-if="isLoggedIn && loadedPoemSlug && !canSaveCurrentPoemCarousel"
+              class="mt-4 border-t border-ink-100 pt-4 text-xs text-ink-500">
               {{ t('carousel.poemSaveOwnerOnlyHint') }}
             </p>
             <p v-else-if="canSaveCurrentPoemCarousel && !loadedPoemSlug"
@@ -945,7 +918,7 @@ function onTouchEnd(e: TouchEvent) {
                   <input v-model.number="bodyFontSizeScale" type="range" min="0.7" max="2" step="0.05"
                     class="h-2 flex-1 cursor-pointer accent-gold-600" />
                   <span class="w-12 text-right text-sm tabular-nums text-ink-700">{{ Math.round(bodyFontSizeScale * 100)
-                  }}%</span>
+                    }}%</span>
                 </div>
 
                 <label class="field-label">{{ t('carousel.fieldLineHeight') }}</label>
@@ -1150,6 +1123,7 @@ function onTouchEnd(e: TouchEvent) {
 .carousel-kw-help-leave-active {
   transition: opacity 0.15s ease;
 }
+
 .carousel-kw-help-enter-from,
 .carousel-kw-help-leave-to {
   opacity: 0;

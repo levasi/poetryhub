@@ -53,6 +53,24 @@ export function getDefaultCarouselSiteDefaults(): CarouselSiteDefaultsPayload {
   }
 }
 
+/** Old Romanian CTAs; DB may still store them — clear so clients use `carousel.defaultCta` from i18n. */
+const LEGACY_CTA_RO = [
+  'Urmărește pentru mai multă poezie',
+  'Urmărește poetryhub.ro pentru mai multă poezie',
+  'Urmărește\npoetryhub.ro\npentru mai multe detalii',
+]
+
+function migrateLegacyCarouselCta(cta: string): string {
+  const t = cta.trim()
+  if (LEGACY_CTA_RO.includes(t)) return ''
+  return cta
+}
+
+function finalizeCarouselSiteDefaults(p: CarouselSiteDefaultsPayload): CarouselSiteDefaultsPayload {
+  const withFont = ensureCarouselFontFamily(p)
+  return { ...withFont, ctaText: migrateLegacyCarouselCta(withFont.ctaText) }
+}
+
 /**
  * Merge stored JSON with defaults so older rows (e.g. missing `carouselFontKey`) keep other fields.
  * Accepts legacy key `font` as an alias for `carouselFontKey`.
@@ -68,7 +86,7 @@ export function parseCarouselSiteDefaults(raw: unknown): CarouselSiteDefaultsPay
 
   const merged = { ...base, ...o }
   const full = carouselSiteDefaultsSchema.safeParse(merged)
-  if (full.success) return ensureCarouselFontFamily(full.data)
+  if (full.success) return finalizeCarouselSiteDefaults(full.data)
 
   const shape = carouselSiteDefaultsSchema.shape
   const out: Record<string, unknown> = { ...base }
@@ -80,7 +98,7 @@ export function parseCarouselSiteDefaults(raw: unknown): CarouselSiteDefaultsPay
       out[key as string] = r.data
     }
   }
-  return ensureCarouselFontFamily(out as CarouselSiteDefaultsPayload)
+  return finalizeCarouselSiteDefaults(out as CarouselSiteDefaultsPayload)
 }
 
 /** Ensures `carouselFontFamily` CSS stack matches `carouselFontKey` (single source of truth for DB JSON). */

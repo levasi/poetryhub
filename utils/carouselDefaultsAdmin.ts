@@ -11,6 +11,11 @@ export function resolveCarouselDefaultsAdminEmail(fromRuntime?: string | null): 
   return s || CAROUSEL_DEFAULTS_ADMIN_EMAIL
 }
 
+/** Only this account may change the site-wide last-slide (CTA) message. */
+export function isCarouselSiteOwnerEmail(email: string, fromRuntime?: string | null): boolean {
+  return email.trim().toLowerCase() === resolveCarouselDefaultsAdminEmail(fromRuntime).toLowerCase()
+}
+
 /** Carousel poem tools + site defaults: staff (`admin`/`moderator`), or the configured owner email. */
 export function userCanManageCarouselDefaults(
   user: { email: string; role?: string },

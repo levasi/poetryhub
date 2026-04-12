@@ -5,10 +5,8 @@ import { requireUser } from '~/server/utils/auth'
 import {
   poemCarouselSettingsSchema,
   ensurePoemCarouselFontFamily,
-  parsePoemCarouselSettings,
 } from '~/utils/poemCarouselFontSettings'
 import { userCanEditPoem } from '~/server/utils/poemEditAuth'
-import { isStaffRole } from '~/utils/roles'
 
 export default defineEventHandler(async (event) => {
   setHeader(event, 'cache-control', 'no-store')
@@ -37,11 +35,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
   }
 
-  let payload = parsed.data
-  if (!isStaffRole(tokenUser.role)) {
-    const prev = parsePoemCarouselSettings(existing.carouselFontSettings)
-    payload = { ...payload, ctaText: prev?.ctaText }
-  }
+  const payload = { ...parsed.data }
+  delete (payload as { ctaText?: string }).ctaText
 
   const toStore = ensurePoemCarouselFontFamily(payload)
   const json = JSON.parse(JSON.stringify(toStore)) as Prisma.InputJsonValue

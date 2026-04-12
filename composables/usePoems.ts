@@ -14,7 +14,6 @@ export interface PoemCarouselFontSettings {
   linesPerSlide: number
   bodyFontSizeScale: number
   bodyLineHeight: number
-  ctaText?: string
   keywordInput?: string
 }
 
