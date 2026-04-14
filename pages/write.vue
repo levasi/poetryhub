@@ -348,16 +348,16 @@ async function submitPublish() {
   <main class="flex min-w-0 flex-1 flex-col" aria-label="Lucru: dicționar, versuri">
     <WriteToolsBar />
     <div
-      class="grid min-h-0 min-w-0 flex-1 grid-cols-1 divide-y divide-slate-200 lg:grid-cols-[minmax(0,1fr)_minmax(0,17.5rem)] lg:divide-y-0">
+      class="grid min-h-0 min-w-0 flex-1 grid-cols-1 divide-y divide-edge-subtle lg:grid-cols-[minmax(0,1fr)_minmax(0,17.5rem)] lg:divide-y-0">
       <!-- Stânga: căutare și rezultate -->
       <section class="flex min-w-0 flex-col gap-4 p-3 sm:p-4 lg:pr-5" aria-label="Căutare dicționar">
         <!-- Bară căutare -->
-        <div class="shrink-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <div class="shrink-0 rounded-2xl border border-edge-subtle bg-surface-raised p-4 shadow-sm sm:p-5">
           <div class="mt-4 flex flex-wrap gap-2">
             <button v-for="m in modes" :key="m.id" type="button" :title="m.hint"
               class="rounded-lg border px-3 py-1.5 text-xs font-medium transition" :class="mode === m.id
                 ? 'border-blue-600 bg-blue-50 text-blue-900'
-                : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300'
+                : 'border-edge-subtle bg-surface-subtle text-content-secondary hover:border-edge'
                 " @click="mode = m.id">
               {{ m.label }}
             </button>
@@ -365,16 +365,16 @@ async function submitPublish() {
 
           <div class="mt-4">
             <label class="sr-only">Căutare</label>
-            <p class="mb-1.5 text-xs text-slate-500">Apasă Enter pentru a căuta.</p>
+            <p class="mb-1.5 text-xs text-content-muted">Apasă Enter pentru a căuta.</p>
             <input v-model="q" type="search" autocomplete="off" enterkeyhint="search" :placeholder="placeholder"
-              class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-900 shadow-inner outline-none ring-blue-500/20 transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2"
+              class="w-full rounded-xl border border-edge bg-surface-raised px-4 py-3 text-base text-content shadow-inner outline-none ring-blue-500/20 transition placeholder:text-content-soft focus:border-blue-500 focus:ring-2"
               @keydown.enter.prevent="runSearch" />
-            <label class="mt-3 flex cursor-pointer items-start gap-2.5 text-sm text-slate-800">
+            <label class="mt-3 flex cursor-pointer items-start gap-2.5 text-sm text-content-secondary">
               <input v-model="strictDiacritics" type="checkbox"
-                class="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                class="mt-0.5 h-4 w-4 shrink-0 rounded border-edge text-blue-600 focus:ring-blue-500" />
               <span>
                 <span class="font-medium">Diacritice fixe</span>
-                <span class="mt-0.5 block text-xs font-normal text-slate-600">
+                <span class="mt-0.5 block text-xs font-normal text-content-muted">
                   Dacă e bifat, literele cu diacritice sunt distincte (ex. „mar” nu potrivește „măr”). Debifat =
                   potrivire largă (a ≈ ă, î ≈ i etc.).
                 </span>
@@ -383,43 +383,43 @@ async function submitPublish() {
           </div>
 
           <div v-if="querySyllables.length || (mode === 'contains' && q.trim())"
-            class="mt-3 space-y-3 rounded-lg border border-slate-100 bg-slate-50/90 px-3 py-2">
+            class="mt-3 space-y-3 rounded-lg border border-edge-subtle bg-surface-subtle/90 px-3 py-2">
             <template v-if="mode === 'contains' && q.trim()">
-              <label class="flex cursor-pointer items-start gap-2.5 text-sm text-slate-800">
+              <label class="flex cursor-pointer items-start gap-2.5 text-sm text-content-secondary">
                 <input v-model="useSyllablesInSearch" type="checkbox"
-                  class="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                  class="mt-0.5 h-4 w-4 shrink-0 rounded border-edge text-blue-600 focus:ring-blue-500" />
                 <span>
                   <span class="font-medium">Folosește silabele în căutare</span>
-                  <span class="mt-0.5 block text-xs font-normal text-slate-600">
+                  <span class="mt-0.5 block text-xs font-normal text-content-muted">
                     Dacă e bifat, „Conține” caută OR pe părți (silabe ≥2 caractere) și pe întregul text pliat;
                     dacă nu, doar subșir pe cuvântul normalizat.
                   </span>
                 </span>
               </label>
               <div v-if="useSyllablesInSearch" class="space-y-2">
-                <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Silabe</p>
-                <p class="text-[11px] text-slate-600">
+                <p class="text-[10px] font-semibold uppercase tracking-wide text-content-muted">Silabe</p>
+                <p class="text-[11px] text-content-muted">
                   Câte un câmp; poți corecta împărțirea sau adăuga silabe care nu apar în cuvânt. La schimbarea
-                  textului căutat, silabele se resincronizează. <span class="font-medium text-slate-700">Enter</span>
+                  textului căutat, silabele se resincronizează. <span class="font-medium text-content-secondary">Enter</span>
                   în orice câmp pornește căutarea.
                 </p>
                 <div class="flex flex-wrap items-end gap-2">
                   <div v-for="(slot, i) in syllableSlots" :key="slot.id"
                     class="flex min-w-[5.5rem] max-w-[min(100%,11rem)] flex-1 flex-col gap-0.5">
-                    <span class="text-[10px] text-slate-500">Silabă {{ i + 1 }}</span>
+                    <span class="text-[10px] text-content-muted">Silabă {{ i + 1 }}</span>
                     <div class="flex gap-1">
                       <input v-model="slot.text" type="text" spellcheck="false" autocomplete="off" enterkeyhint="search"
-                        class="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 font-mono text-sm text-slate-900 outline-none ring-blue-500/20 focus:border-blue-500 focus:ring-2"
+                        class="min-w-0 flex-1 rounded-lg border border-edge-subtle bg-surface-raised px-2 py-1.5 font-mono text-sm text-content outline-none ring-blue-500/20 focus:border-blue-500 focus:ring-2"
                         @keydown.enter.prevent="runSearch" />
                       <button v-if="syllableSlots.length > 1" type="button"
-                        class="shrink-0 rounded border border-slate-200 px-2 py-1 text-sm leading-none text-slate-600 hover:bg-slate-100"
+                        class="shrink-0 rounded border border-edge-subtle px-2 py-1 text-sm leading-none text-content-muted hover:bg-surface-subtle"
                         :title="'Elimină silaba ' + (i + 1)" @click="removeSyllableSlot(i)">
                         ×
                       </button>
                     </div>
                   </div>
                   <button type="button"
-                    class="shrink-0 rounded-lg border border-dashed border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:border-blue-400 hover:text-blue-800"
+                    class="shrink-0 rounded-lg border border-dashed border-edge bg-surface-raised px-3 py-2 text-xs font-medium text-content-secondary hover:border-blue-400 hover:text-blue-800"
                     @click="addSyllableSlot">
                     + Adaugă silabă
                   </button>
@@ -430,46 +430,46 @@ async function submitPublish() {
                   Caută
                 </button>
               </div>
-              <p v-else class="text-xs text-slate-600">
+              <p v-else class="text-xs text-content-muted">
                 Căutare doar ca subșir pe textul pliat (fără împărțire pe silabe).
               </p>
             </template>
 
             <div v-if="querySyllables.length && !(mode === 'contains' && useSyllablesInSearch)">
-              <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Silabe (euristică)</p>
-              <p class="mt-1 font-mono text-sm leading-relaxed text-slate-900">
+              <p class="text-[10px] font-semibold uppercase tracking-wide text-content-muted">Silabe (euristică)</p>
+              <p class="mt-1 font-mono text-sm leading-relaxed text-content">
                 <span v-for="(syl, idx) in querySyllables" :key="idx" class="inline-flex items-center">
-                  <span v-if="idx > 0" class="mx-1.5 text-slate-300" aria-hidden="true">·</span>
+                  <span v-if="idx > 0" class="mx-1.5 text-content-hint" aria-hidden="true">·</span>
                   <span>{{ syl }}</span>
                 </span>
               </p>
             </div>
 
             <p v-if="mode === 'contains' && q.trim() && containsMatchers.length"
-              class="border-t border-slate-200/80 pt-2 text-[11px] text-slate-600">
-              <span class="font-medium text-slate-700">Șiruri căutate (forma pliată):</span>
+              class="border-t border-edge-subtle/80 pt-2 text-[11px] text-content-muted">
+              <span class="font-medium text-content-secondary">Șiruri căutate (forma pliată):</span>
               {{ containsMatchers.join(', ') }}
             </p>
           </div>
         </div>
 
         <!-- Rezultate dicționar -->
-        <div class="flex min-w-0 flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-          <p class="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">
+        <div class="flex min-w-0 flex-col rounded-2xl border border-edge-subtle bg-surface-raised p-4 shadow-sm sm:p-5">
+          <p class="mb-2 text-xs font-medium uppercase tracking-wide text-content-muted">
             Rezultate
-            <span v-if="loading" class="font-normal text-slate-400">— se încarcă…</span>
+            <span v-if="loading" class="font-normal text-content-soft">— se încarcă…</span>
           </p>
           <ul v-if="results.length"
-            class="grid auto-rows-min grid-cols-2 gap-2 rounded-xl border border-slate-200 p-2 content-start sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
+            class="grid auto-rows-min grid-cols-2 gap-2 rounded-xl border border-edge-subtle p-2 content-start sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
             <li v-for="r in results" :key="r.id" class="min-w-0">
               <div
-                class="group relative flex h-full gap-0.5 rounded-lg border border-slate-100 bg-slate-50/50 p-1 transition hover:border-blue-200 hover:bg-blue-50/80">
+                class="group relative flex h-full gap-0.5 rounded-lg border border-edge-subtle bg-surface-subtle/50 p-1 transition hover:border-blue-200 hover:bg-blue-50/80">
                 <button type="button" class="flex min-w-0 flex-1 flex-col items-center gap-1 rounded-md text-center"
                   :title="'Definiție: ' + r.word" @click="openWordDefinition(r, $event)">
-                  <span class="w-full truncate text-sm font-semibold leading-tight text-slate-900">{{ r.word }}</span>
+                  <span class="w-full truncate text-sm font-semibold leading-tight text-content">{{ r.word }}</span>
                 </button>
                 <button type="button"
-                  class="shrink-0 self-start rounded-md border border-slate-200 bg-white px-1.5 py-0.5 text-sm font-semibold leading-none text-blue-700 shadow-sm hover:border-blue-400 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  class="shrink-0 self-start rounded-md border border-edge-subtle bg-surface-raised px-1.5 py-0.5 text-sm font-semibold leading-none text-blue-700 shadow-sm hover:border-blue-400 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-40"
                   :title="projects.isWordSaved(r.word)
                     ? 'Deja în cuvinte salvate'
                     : 'Salvează cuvântul în proiect'
@@ -481,7 +481,7 @@ async function submitPublish() {
             </li>
           </ul>
           <p v-else-if="!loading"
-            class="rounded-xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
+            class="rounded-xl border border-dashed border-edge-subtle px-4 py-8 text-center text-sm text-content-muted">
             Niciun rezultat. Schimbă modul sau textul căutat.
           </p>
         </div>
@@ -492,7 +492,7 @@ async function submitPublish() {
         <ClientOnly>
           <WriteLyricsEditor />
           <template #fallback>
-            <div class="h-48 animate-pulse rounded-2xl bg-slate-100" aria-hidden="true" />
+            <div class="h-48 animate-pulse rounded-2xl bg-surface-subtle" aria-hidden="true" />
           </template>
         </ClientOnly>
         <!-- Publish button -->
@@ -515,12 +515,12 @@ async function submitPublish() {
     <Teleport to="body">
       <Transition name="publish-panel">
         <div v-if="publishOpen" class="fixed inset-0 z-[100] flex items-end justify-center sm:items-center sm:p-4">
-          <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="closePublish" />
-          <div class="relative z-10 w-full max-w-lg rounded-t-2xl bg-white shadow-2xl sm:rounded-2xl">
+          <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closePublish" />
+          <div class="relative z-10 w-full max-w-lg rounded-t-2xl bg-surface-raised shadow-2xl sm:rounded-2xl">
             <!-- Header -->
-            <div class="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-              <h2 class="text-base font-semibold text-slate-900">{{ t('write.publishTitle') }}</h2>
-              <button type="button" class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700" @click="closePublish">
+            <div class="flex items-center justify-between border-b border-edge-subtle px-6 py-4">
+              <h2 class="text-base font-semibold text-content">{{ t('write.publishTitle') }}</h2>
+              <button type="button" class="rounded-lg p-1.5 text-content-soft hover:bg-surface-subtle hover:text-content-secondary" @click="closePublish">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -530,7 +530,7 @@ async function submitPublish() {
             <div class="max-h-[80vh] overflow-y-auto px-6 py-5">
               <!-- Not logged in state -->
               <div v-if="!isLoggedIn" class="py-4 text-center">
-                <p class="mb-4 text-sm text-slate-600">{{ t('write.loginRequired') }}</p>
+                <p class="mb-4 text-sm text-content-muted">{{ t('write.loginRequired') }}</p>
                 <NuxtLink to="/login?redirect=/write" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700" @click="closePublish">
                   {{ t('auth.signIn') }}
                 </NuxtLink>
@@ -543,7 +543,7 @@ async function submitPublish() {
                     <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <p class="mb-4 font-medium text-slate-900">{{ publishMsg.text }}</p>
+                <p class="mb-4 font-medium text-content">{{ publishMsg.text }}</p>
                 <div class="flex justify-center gap-3">
                   <NuxtLink
                     v-if="publishMsg.slug"
@@ -553,7 +553,7 @@ async function submitPublish() {
                   >
                     {{ t('write.viewPoem') }}
                   </NuxtLink>
-                  <button type="button" class="rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50" @click="closePublish">
+                  <button type="button" class="rounded-lg border border-edge-subtle px-4 py-2 text-sm text-content-secondary hover:bg-surface-subtle" @click="closePublish">
                     {{ t('write.cancel') }}
                   </button>
                 </div>
@@ -561,11 +561,11 @@ async function submitPublish() {
 
               <!-- Form -->
               <form v-else class="space-y-4" @submit.prevent="submitPublish">
-                <p class="text-sm text-slate-500">{{ t('write.publishDesc') }}</p>
+                <p class="text-sm text-content-muted">{{ t('write.publishDesc') }}</p>
 
                 <!-- Title -->
                 <div>
-                  <label class="mb-1.5 block text-xs font-medium uppercase tracking-widest text-slate-500">
+                  <label class="mb-1.5 block text-xs font-medium uppercase tracking-widest text-content-muted">
                     {{ t('write.fieldTitle') }} *
                   </label>
                   <input
@@ -574,13 +574,13 @@ async function submitPublish() {
                     :placeholder="t('write.fieldTitlePlaceholder')"
                     required
                     maxlength="500"
-                    class="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                    class="w-full rounded-xl border border-edge bg-surface-raised px-4 py-2.5 text-sm text-content outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                   />
                 </div>
 
                 <!-- Author name -->
                 <div>
-                  <label class="mb-1.5 block text-xs font-medium uppercase tracking-widest text-slate-500">
+                  <label class="mb-1.5 block text-xs font-medium uppercase tracking-widest text-content-muted">
                     {{ t('write.fieldAuthorName') }} *
                   </label>
                   <input
@@ -588,19 +588,19 @@ async function submitPublish() {
                     type="text"
                     required
                     maxlength="80"
-                    class="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                    class="w-full rounded-xl border border-edge bg-surface-raised px-4 py-2.5 text-sm text-content outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                   />
-                  <p class="mt-1 text-xs text-slate-400">{{ t('write.fieldAuthorNameHint') }}</p>
+                  <p class="mt-1 text-xs text-content-soft">{{ t('write.fieldAuthorNameHint') }}</p>
                 </div>
 
                 <!-- Language -->
                 <div>
-                  <label class="mb-1.5 block text-xs font-medium uppercase tracking-widest text-slate-500">
+                  <label class="mb-1.5 block text-xs font-medium uppercase tracking-widest text-content-muted">
                     {{ t('write.fieldLanguage') }}
                   </label>
                   <select
                     v-model="publishForm.language"
-                    class="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                    class="w-full rounded-xl border border-edge bg-surface-raised px-4 py-2.5 text-sm text-content outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                   >
                     <option value="ro">Română</option>
                     <option value="en">English</option>
@@ -612,7 +612,7 @@ async function submitPublish() {
 
                 <!-- Tags -->
                 <div v-if="allTags.length">
-                  <label class="mb-2 block text-xs font-medium uppercase tracking-widest text-slate-500">
+                  <label class="mb-2 block text-xs font-medium uppercase tracking-widest text-content-muted">
                     {{ t('write.fieldTags') }}
                   </label>
                   <div class="flex flex-wrap gap-1.5">
@@ -622,7 +622,7 @@ async function submitPublish() {
                       type="button"
                       :class="publishForm.tagIds.includes(tag.id)
                         ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300'"
+                        : 'border-edge-subtle bg-surface-subtle text-content-muted hover:border-edge'"
                       class="rounded-full border px-3 py-1 text-xs font-medium transition"
                       @click="togglePublishTag(tag.id)"
                     >
@@ -644,7 +644,7 @@ async function submitPublish() {
                   >
                     {{ publishLoading ? t('write.publishing') : t('write.publishBtn') }}
                   </button>
-                  <button type="button" class="rounded-xl border border-slate-200 px-5 py-2.5 text-sm text-slate-700 hover:bg-slate-50" @click="closePublish">
+                  <button type="button" class="rounded-xl border border-edge-subtle px-5 py-2.5 text-sm text-content-secondary hover:bg-surface-subtle" @click="closePublish">
                     {{ t('write.cancel') }}
                   </button>
                 </div>
@@ -657,31 +657,31 @@ async function submitPublish() {
 
     <Teleport to="body">
       <div v-if="defPop" class="fixed inset-0 z-[90]">
-        <div class="absolute inset-0 bg-slate-900/25 backdrop-blur-[1px]" aria-hidden="true"
+        <div class="absolute inset-0 bg-black/30 backdrop-blur-[1px]" aria-hidden="true"
           @click="closeWordDefinition" />
         <div
-          class="absolute z-[91] max-h-[min(22rem,70vh)] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl ring-1 ring-slate-950/5"
+          class="absolute z-[91] max-h-[min(22rem,70vh)] overflow-y-auto rounded-2xl border border-edge-subtle bg-surface-raised p-4 shadow-2xl ring-1 ring-black/10"
           :style="{
             top: defPop.top + 'px',
             left: defPop.left + 'px',
             width: defPop.maxW + 'px',
           }" role="dialog" aria-modal="true" aria-labelledby="word-def-popover-title" @click.stop>
-          <h2 id="word-def-popover-title" class="font-display text-base font-semibold text-slate-900">
+          <h2 id="word-def-popover-title" class="font-display text-base font-semibold text-content">
             {{ defPop.hit.word }}
           </h2>
-          <div class="mt-3 text-sm leading-relaxed text-slate-700">
-            <p v-if="defLoading" class="text-slate-500">Se încarcă definiția…</p>
+          <div class="mt-3 text-sm leading-relaxed text-content-secondary">
+            <p v-if="defLoading" class="text-content-muted">Se încarcă definiția…</p>
             <template v-else>
               <p v-if="defText" class="whitespace-pre-wrap">{{ defText }}</p>
-              <p v-else class="text-slate-500">
+              <p v-else class="text-content-muted">
                 Nu există definiție în dicționar și nu s-a găsit nici pe Wikipedia (RO), nici pe Wiktionary (RO).
               </p>
             </template>
           </div>
-          <p v-if="!defLoading && defSource === 'wikipedia'" class="mt-2 text-[11px] text-slate-400">
+          <p v-if="!defLoading && defSource === 'wikipedia'" class="mt-2 text-[11px] text-content-soft">
             Sursă: Wikipedia (limba română) — salvată în baza de date.
           </p>
-          <p v-if="!defLoading && defSource === 'wiktionary'" class="mt-2 text-[11px] text-slate-400">
+          <p v-if="!defLoading && defSource === 'wiktionary'" class="mt-2 text-[11px] text-content-soft">
             Sursă: Wiktionary (limba română) — salvată în baza de date.
           </p>
           <div class="mt-4 flex flex-wrap gap-2">
@@ -691,7 +691,7 @@ async function submitPublish() {
               Adaugă la versuri
             </button>
             <button type="button"
-              class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              class="rounded-lg border border-edge-subtle bg-surface-raised px-3 py-2 text-sm font-medium text-content-secondary hover:bg-surface-subtle"
               @click="closeWordDefinition">
               Închide
             </button>

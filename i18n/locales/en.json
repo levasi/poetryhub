@@ -21,6 +21,8 @@
     "ink": "Ink",
     "sepia": "Sepia",
     "qi": "Qi",
+    "historic": "Historic",
+    "parchment": "Parchment",
     "hint": "Color theme",
     "aria": "Choose color theme"
   },
@@ -153,8 +155,6 @@
     "explorePoems": "Explore poems",
     "randomPoem": "Random poem",
     "heroBannerTitle": "Chance & verse",
-    "heroDiceHint": "Roll the dice for a random author and a poem from their work.",
-    "rollDice": "Roll — random author and poem",
     "heroPoemCount": "{n} poems",
     "poemOfDay": "Poem of the day",
     "readFull": "Read full poem",
@@ -163,11 +163,31 @@
     "seeAll": "See all →",
     "themes": "Themes",
     "recentPoems": "Recent Poems",
+    "tabForYou": "For you",
+    "tabFeatured": "Featured",
+    "feedTabsAria": "Home feed",
+    "sidebarNavAria": "Site navigation",
+    "leftRailAria": "Navigation and authors",
+    "navHome": "Home",
+    "sidebarLikedHeading": "Liked poems",
+    "sidebarLikedEmpty": "Save poems with the heart on any card.",
+    "sidebarLikedAll": "All favorites →",
+    "sidebarLikedMissing": "Some favorites are no longer in the library.",
+    "sidebarAuthorsHeading": "Authors",
+    "staffPicksTitle": "Latest",
+    "topicsTitle": "Recommended topics",
+    "featuredEmpty": "No featured poems yet. Mark poems as featured in the admin panel.",
+    "loadingMore": "Loading more poems",
+    "continueReading": "Read on",
+    "openSidebar": "Open navigation and authors",
+    "closeSidebar": "Close sidebar",
     "allPoemsLink": "All poems →",
     "emptyLibrary": "The library is empty.",
     "emptyHintBefore": "Add poems via the ",
     "emptyHintLink": "admin panel",
-    "emptyHintAfter": " or run the importer."
+    "emptyHintAfter": " or run the importer.",
+    "backToFeed": "Back to home feed",
+    "viewFullProfile": "Full author page →"
   },
   "poems": {
     "title": "Poems",
@@ -421,6 +441,10 @@
     "openQuickRead": "Open quick read",
     "quickReadClose": "Close preview",
     "readFullPoem": "Open full poem",
+    "quickReadPrev": "Previous",
+    "quickReadNext": "Next",
+    "quickReadPrevAria": "Previous poem in list",
+    "quickReadNextAria": "Next poem in list",
     "readMore": "Read more"
   },
   "lang": {
@@ -513,7 +537,7 @@
       "title": "Aspect",
       "lead": "Tune layout, typography, and presentation settings for the public site. Four color schemes apply to the public site; visitors switch them from the footer.",
       "schemesTitle": "Site color schemes",
-      "schemesBody": "Paper is the default light theme. Ink is a dark reading theme. Sepia is a warm parchment tone. Qi is a warm ivory editorial palette inspired by magazine layouts. The choice is saved in this browser only."
+      "schemesBody": "Parchment is the default theme. Paper is a clean light theme. Ink is a dark reading theme. Sepia is warm. Qi is a warm ivory editorial palette inspired by magazine layouts. The choice is saved in this browser only."
     },
     "stats": {
       "totalPoems": "Total poems",

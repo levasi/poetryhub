@@ -167,12 +167,12 @@ watch(searchQuery, (val) => {
 
         <!-- Grid view -->
         <div v-else-if="viewMode === 'grid'" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <PoetryCard v-for="poem in poems" :key="poem.id" :poem="poem" view="grid" />
+          <PoetryCard v-for="poem in poems" :key="poem.id" :poem="poem" view="grid" :quick-read-list="poems" />
         </div>
 
         <!-- List view -->
         <div v-else class="divide-y divide-edge/80">
-          <PoetryCard v-for="poem in poems" :key="poem.id" :poem="poem" view="list" />
+          <PoetryCard v-for="poem in poems" :key="poem.id" :poem="poem" view="list" :quick-read-list="poems" />
         </div>
 
         <!-- Pagination -->

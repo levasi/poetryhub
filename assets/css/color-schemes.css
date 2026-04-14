@@ -128,3 +128,68 @@
   --shadow-ds-popover:
     0 12px 40px -8px rgb(70 55 40 / 0.12), 0 4px 18px -6px rgb(70 55 40 / 0.07);
 }
+
+/**
+ * Parchment / “Hartă” mockup — aged cream paper, coffee & sepia type, bronze accents.
+ * Light variant inspired by the vintage map UI (PoetryHub.ro historic map concept).
+ */
+[data-color-scheme='parchment'] {
+  color-scheme: light;
+  --color-surface-page: 244 238 224;
+  --color-surface-subtle: 236 228 208;
+  --color-surface-raised: 252 248 238;
+  --color-surface-overlay: 250 244 228;
+  --color-content: 55 42 34;
+  --color-content-secondary: 92 74 58;
+  --color-content-muted: 125 102 82;
+  --color-content-soft: 156 132 108;
+  --color-content-hint: 184 164 138;
+  --color-edge: 188 168 142;
+  --color-edge-subtle: 218 202 175;
+  --color-edge-strong: 138 118 95;
+  /* Bronze / antique gold (#A67C52 family) */
+  --color-brand: 166 124 82;
+  --color-brand-hover: 138 100 64;
+  --color-brand-soft: 228 208 180;
+  --color-brand-foreground: 255 252 246;
+  --color-danger: 175 48 42;
+  --color-danger-soft: 240 210 205;
+  --color-danger-muted: 215 95 88;
+  --color-poem-text: 58 44 34;
+  --shadow-ds-nav: 0 1px 0 0 rgb(100 80 55 / 0.22);
+  --shadow-ds-card:
+    0 1px 2px rgb(60 45 32 / 0.06), 0 3px 12px -2px rgb(80 60 40 / 0.1);
+  --shadow-ds-card-hover:
+    0 4px 18px -4px rgb(60 45 32 / 0.12), 0 2px 8px -2px rgb(80 60 40 / 0.08);
+  --shadow-ds-popover:
+    0 14px 44px -8px rgb(50 38 28 / 0.18), 0 4px 20px -6px rgb(60 45 32 / 0.1);
+}
+
+/** Historic map variant — deep navy paper, antique gold accents (PoetryHub.ro “Hartă istorică”) */
+[data-color-scheme='historic'] {
+  color-scheme: dark;
+  --color-surface-page: 10 14 20;
+  --color-surface-subtle: 16 22 34;
+  --color-surface-raised: 20 28 42;
+  --color-surface-overlay: 26 34 52;
+  --color-content: 245 242 232;
+  --color-content-secondary: 200 190 168;
+  --color-content-muted: 160 150 130;
+  --color-content-soft: 130 122 108;
+  --color-content-hint: 100 94 84;
+  --color-edge: 80 72 58;
+  --color-edge-subtle: 50 58 72;
+  --color-edge-strong: 120 108 88;
+  --color-brand: 197 160 89;
+  --color-brand-hover: 220 190 120;
+  --color-brand-soft: 60 48 28;
+  --color-brand-foreground: 10 14 20;
+  --color-danger: 240 100 100;
+  --color-danger-soft: 90 40 40;
+  --color-danger-muted: 250 160 160;
+  --color-poem-text: 235 230 218;
+  --shadow-ds-nav: 0 1px 0 0 rgb(0 0 0 / 0.5);
+  --shadow-ds-card: 0 2px 12px rgb(0 0 0 / 0.45), inset 0 1px 0 rgb(197 160 89 / 0.12);
+  --shadow-ds-card-hover: 0 8px 28px rgb(0 0 0 / 0.5), 0 0 0 1px rgb(197 160 89 / 0.25);
+  --shadow-ds-popover: 0 20px 50px rgb(0 0 0 / 0.55);
+}

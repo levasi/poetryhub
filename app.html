@@ -5,11 +5,16 @@
       (function () {
         try {
           var k = 'ph-color-scheme'
+          var valid = ['paper', 'ink', 'sepia', 'qi', 'historic', 'parchment']
           var s = localStorage.getItem(k)
-          if (s === 'paper' || s === 'ink' || s === 'sepia' || s === 'qi') {
+          if (s && valid.indexOf(s) !== -1) {
             document.documentElement.setAttribute('data-color-scheme', s)
+          } else {
+            document.documentElement.setAttribute('data-color-scheme', 'parchment')
           }
-        } catch (e) {}
+        } catch (e) {
+          document.documentElement.setAttribute('data-color-scheme', 'parchment')
+        }
       })()
     </script>
     {{ HEAD }}

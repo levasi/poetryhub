@@ -22,7 +22,7 @@ const badgeText = computed(() => t('daily.badge', { date: dateLabel.value }))
   <div class="animate-fade-in">
     <div class="mb-4 flex items-center gap-2">
       <span class="inline-block h-2 w-2 rounded-full bg-gold-500 animate-pulse-soft" />
-      <span class="text-xs font-semibold uppercase tracking-widest text-gold-800">
+      <span class="text-xs font-semibold uppercase tracking-widest text-brand">
         {{ badgeText }}
       </span>
     </div>
@@ -31,9 +31,9 @@ const badgeText = computed(() => t('daily.badge', { date: dateLabel.value }))
       <PoetryViewer :poem="poem" />
     </div>
 
-    <div v-else class="py-24 text-center text-ink-600">
+    <div v-else class="py-24 text-center text-content-muted">
       <p class="font-serif text-xl">{{ t('daily.empty') }}</p>
-      <NuxtLink to="/poems" class="mt-4 inline-block text-sm underline hover:text-ink-900">
+      <NuxtLink to="/poems" class="mt-4 inline-block text-sm underline hover:text-content">
         {{ t('daily.browse') }}
       </NuxtLink>
     </div>

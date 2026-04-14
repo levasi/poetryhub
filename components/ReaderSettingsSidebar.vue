@@ -80,22 +80,22 @@ watchEffect((onCleanup) => {
       <aside
         v-if="open"
         ref="panelEl"
-        class="fixed inset-y-0 right-0 z-[210] flex w-full max-w-md flex-col border-l border-ink-200 bg-white shadow-2xl ring-1 ring-ink-200/40"
+        class="fixed inset-y-0 right-0 z-[210] flex w-full max-w-md flex-col border-l border-edge-subtle bg-surface-overlay shadow-2xl ring-1 ring-edge-subtle/60"
         role="dialog"
         aria-modal="false"
         :aria-labelledby="id('title')"
         @click.stop
       >
-        <div class="flex shrink-0 items-start justify-between gap-3 border-b border-ink-100 px-5 py-4">
+        <div class="flex shrink-0 items-start justify-between gap-3 border-b border-edge-subtle px-5 py-4">
           <div>
-            <p :id="id('title')" class="text-xs font-semibold uppercase tracking-widest text-ink-500">
+            <p :id="id('title')" class="text-xs font-semibold uppercase tracking-widest text-content-muted">
               {{ t('viewer.readingDisplay') }}
             </p>
-            <p class="mt-1 text-sm text-ink-600">{{ t('viewer.readingSettingsHint') }}</p>
+            <p class="mt-1 text-sm text-content-secondary">{{ t('viewer.readingSettingsHint') }}</p>
           </div>
           <button
             type="button"
-            class="shrink-0 rounded-lg p-2 text-ink-500 transition-colors hover:bg-ink-100 hover:text-ink-900"
+            class="shrink-0 rounded-lg p-2 text-content-muted transition-colors hover:bg-surface-subtle hover:text-content"
             :aria-label="t('viewer.closeReadingSettings')"
             @click="open = false"
           >
@@ -108,15 +108,15 @@ watchEffect((onCleanup) => {
         <div class="min-h-0 flex-1 overflow-y-auto px-5 py-5">
           <div class="space-y-5">
             <div>
-              <label class="mb-1 block text-xs font-medium text-ink-600" :for="id('font')">{{ t('viewer.font') }}</label>
+              <label class="mb-1 block text-xs font-medium text-content-secondary" :for="id('font')">{{ t('viewer.font') }}</label>
               <div
-                class="flex w-full items-stretch gap-0 overflow-hidden rounded-lg border border-ink-200 bg-white shadow-sm focus-within:ring-1 focus-within:ring-gold-400/40"
+                class="flex w-full items-stretch gap-0 overflow-hidden rounded-lg border border-edge-subtle bg-surface-raised shadow-ds-card focus-within:ring-1 focus-within:ring-brand/30"
                 role="group"
                 :aria-label="t('viewer.font')"
               >
                 <button
                   type="button"
-                  class="flex shrink-0 items-center justify-center px-2.5 py-2 text-ink-600 transition hover:bg-ink-50 hover:text-ink-900"
+                  class="flex shrink-0 items-center justify-center px-2.5 py-2 text-content-secondary transition hover:bg-surface-subtle hover:text-content"
                   :aria-label="t('viewer.fontPrev')"
                   @click="cycleFont(-1)"
                 >
@@ -127,7 +127,7 @@ watchEffect((onCleanup) => {
                 <select
                   :id="id('font')"
                   v-model="fontKey"
-                  class="min-w-0 flex-1 cursor-pointer border-x border-ink-100 bg-white px-2 py-2 text-center text-sm font-medium text-ink-800 focus:border-gold-400 focus:outline-none focus:ring-0"
+                  class="min-w-0 flex-1 cursor-pointer border-x border-edge-subtle bg-surface-raised px-2 py-2 text-center text-sm font-medium text-content-secondary focus:border-brand focus:outline-none focus:ring-0"
                   @change="onReaderPreferenceChange"
                 >
                   <option
@@ -141,7 +141,7 @@ watchEffect((onCleanup) => {
                 </select>
                 <button
                   type="button"
-                  class="flex shrink-0 items-center justify-center px-2.5 py-2 text-ink-600 transition hover:bg-ink-50 hover:text-ink-900"
+                  class="flex shrink-0 items-center justify-center px-2.5 py-2 text-content-secondary transition hover:bg-surface-subtle hover:text-content"
                   :aria-label="t('viewer.fontNext')"
                   @click="cycleFont(1)"
                 >
@@ -153,9 +153,9 @@ watchEffect((onCleanup) => {
             </div>
 
             <div>
-              <label class="mb-1 block text-xs font-medium text-ink-600" :for="id('size')">
+              <label class="mb-1 block text-xs font-medium text-content-secondary" :for="id('size')">
                 {{ t('viewer.fontSize') }}
-                <span class="tabular-nums text-ink-500">({{ fontSizePx }}px)</span>
+                <span class="tabular-nums text-content-muted">({{ fontSizePx }}px)</span>
               </label>
               <input
                 :id="id('size')"
@@ -170,9 +170,9 @@ watchEffect((onCleanup) => {
             </div>
 
             <div>
-              <label class="mb-1 block text-xs font-medium text-ink-600" :for="id('lineheight')">
+              <label class="mb-1 block text-xs font-medium text-content-secondary" :for="id('lineheight')">
                 {{ t('viewer.lineHeight') }}
-                <span class="tabular-nums text-ink-500">({{ lineHeight.toFixed(2) }})</span>
+                <span class="tabular-nums text-content-muted">({{ lineHeight.toFixed(2) }})</span>
               </label>
               <input
                 :id="id('lineheight')"
@@ -187,9 +187,9 @@ watchEffect((onCleanup) => {
             </div>
 
             <div>
-              <label class="mb-1 block text-xs font-medium text-ink-600" :for="id('letterspacing')">
+              <label class="mb-1 block text-xs font-medium text-content-secondary" :for="id('letterspacing')">
                 {{ t('viewer.letterSpacing') }}
-                <span class="tabular-nums text-ink-500">({{ letterSpacingEm.toFixed(3) }}em)</span>
+                <span class="tabular-nums text-content-muted">({{ letterSpacingEm.toFixed(3) }}em)</span>
               </label>
               <input
                 :id="id('letterspacing')"
@@ -204,7 +204,7 @@ watchEffect((onCleanup) => {
             </div>
           </div>
 
-          <p class="mt-6 text-xs text-ink-500">
+          <p class="mt-6 text-xs text-content-muted">
             {{ isLoggedIn ? t('viewer.prefsSavedHint') : t('viewer.prefsLocalHint') }}
           </p>
         </div>

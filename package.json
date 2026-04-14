@@ -55,6 +55,7 @@
   "devDependencies": {
     "@iconify-json/heroicons": "^1.2.3",
     "@types/bcryptjs": "^2.4.6",
+    "@types/google.maps": "^3.58.1",
     "@types/jszip": "^3.4.0",
     "@types/node": "^22.9.0",
     "better-sqlite3": "^11.7.0",

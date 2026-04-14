@@ -57,7 +57,7 @@ const wrapperClass = computed(() => (props.variant === 'pdp' ? 'mb-3' : ''))
     <button
       v-if="poemId"
       type="button"
-      class="rounded-ds-md p-2 transition-colors hover:bg-rose-50"
+      class="rounded-ds-md p-2 transition-colors hover:bg-rose-500/15"
       :class="liked ? 'text-rose-600' : 'text-content-hint hover:text-rose-600'"
       :aria-label="liked ? t('card.favoriteRemove') : t('card.favoriteAdd')"
       @click.prevent="poemId && toggle(poemId)"

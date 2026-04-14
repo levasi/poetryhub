@@ -1,4 +1,4 @@
-export const COLOR_SCHEMES = ['paper', 'ink', 'sepia', 'qi'] as const
+export const COLOR_SCHEMES = ['paper', 'ink', 'sepia', 'qi', 'historic', 'parchment'] as const
 export type ColorSchemeId = (typeof COLOR_SCHEMES)[number]
 
 const STORAGE_KEY = 'ph-color-scheme'
@@ -8,7 +8,7 @@ export function isColorSchemeId(v: string): v is ColorSchemeId {
 }
 
 export function useColorScheme() {
-  const scheme = useState<ColorSchemeId>('color_scheme', () => 'paper')
+  const scheme = useState<ColorSchemeId>('color_scheme', () => 'parchment')
 
   function applyScheme(id: ColorSchemeId) {
     scheme.value = id

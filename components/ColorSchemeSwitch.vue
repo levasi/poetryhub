@@ -13,6 +13,8 @@ const labels: Record<ColorSchemeId, string> = {
   ink: 'colorScheme.ink',
   sepia: 'colorScheme.sepia',
   qi: 'colorScheme.qi',
+  historic: 'colorScheme.historic',
+  parchment: 'colorScheme.parchment',
 }
 </script>
 

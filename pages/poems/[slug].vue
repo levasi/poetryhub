@@ -208,7 +208,7 @@ const related = computed(() => relatedRes.value?.data ?? [])
           </NuxtLink>
         </div>
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <PoetryCard v-for="p in related" :key="p.id" :poem="p" view="grid" />
+          <PoetryCard v-for="p in related" :key="p.id" :poem="p" view="grid" :quick-read-list="related" />
         </div>
       </section>
     </div>

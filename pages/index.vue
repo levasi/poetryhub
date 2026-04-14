@@ -1,29 +1,84 @@
 <script setup lang="ts">
-import {
-  type Poem,
-  type RandomAuthor,
-} from '~/composables/usePoems'
+import type { Poem } from '~/composables/usePoems'
+import { authorAvatarUrl } from '~/utils/authorAvatar'
 
-const { t } = useI18n()
-const { poemBodyStyle } = useReaderPreferences()
+definePageMeta({
+  layout: 'fullwidth',
+})
+
+const { t, locale } = useI18n()
 const readerSettingsOpen = ref(false)
 
-/** Hero banner poem: same reader font/size, looser line-height for the excerpt. */
-const heroPoemBodyStyle = computed(() => {
-  const s = poemBodyStyle.value
-  const lh = s.lineHeight
-  if (typeof lh === 'number') {
-    return { ...s, lineHeight: lh }
-  }
-  return s
+const route = useRoute()
+const router = useRouter()
+
+/** Home center column: show this author's poems when set (?author=slug). */
+const authorSlug = computed(() => {
+  const a = route.query.author
+  if (typeof a === 'string' && a.trim()) return a.trim()
+  if (Array.isArray(a) && a[0]) return String(a[0]).trim()
+  return null
 })
+
+const authorFeedPage = ref(1)
+watch(authorSlug, () => {
+  authorFeedPage.value = 1
+})
+
+interface AuthorPagePayload {
+  author: {
+    id: string
+    name: string
+    slug: string
+    imageUrl: string | null
+    bio: string | null
+    nationality: string | null
+    birthYear: number | null
+    deathYear: number | null
+  }
+  poems: {
+    data: Poem[]
+    meta: { page: number; limit: number; total: number; totalPages: number }
+  }
+}
+
+const { data: authorPage, pending: authorPending, error: authorError } = await useAsyncData(
+  'home-author-feed',
+  async () => {
+    const slug = authorSlug.value
+    if (!slug) return null
+    return $fetch<AuthorPagePayload>(`/api/authors/${encodeURIComponent(slug)}`, {
+      query: { limit: 12, page: authorFeedPage.value },
+    })
+  },
+  { watch: [authorSlug, authorFeedPage] },
+)
+
+const authorPoemsForCards = computed((): Poem[] => {
+  const page = authorPage.value
+  if (!page?.author) return []
+  const a = page.author
+  const authorMini = {
+    id: a.id,
+    name: a.name,
+    slug: a.slug,
+    imageUrl: a.imageUrl,
+    nationality: a.nationality ?? undefined,
+    birthYear: a.birthYear ?? undefined,
+    deathYear: a.deathYear ?? undefined,
+  }
+  return page.poems.data.map((p) => ({ ...p, author: authorMini }))
+})
+
+function clearHomeAuthor() {
+  router.push({ path: '/', query: {} })
+}
 
 useSeoMeta({
   title: computed(() => t('seo.homeTitle')),
   description: computed(() => t('seo.homeDesc')),
 })
 
-/** One HTTP call for the whole homepage (fast client navigations, e.g. logo → home). */
 interface HomeTagRow {
   id: string
   name: string
@@ -37,132 +92,147 @@ interface HomePayload {
   recent: Poem[]
   moodTags: HomeTagRow[]
   themeTags: HomeTagRow[]
-  hero: { a: RandomAuthor; p: Poem } | null
-}
-
-/** Deterministic die face 1–6 from the bundled hero (same on SSR and client; no Math.random). */
-function diceFaceFromHeroBundle(hero: { a: { id: string }; p: { id: string } } | null): number {
-  if (!hero) return 5
-  let h = 0
-  const s = `${hero.a.id}:${hero.p.id}`
-  for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0
-  return (Math.abs(h) % 6) + 1
 }
 
 const { data: home, pending: homePending } = await useFetch<HomePayload>('/api/home')
 
-/** Die face for the SVG; tied to `home.hero` only so it does not reset when the user re-rolls (local hero refs). */
-const heroDiceFace = computed(() => diceFaceFromHeroBundle(home.value?.hero ?? null))
+const { data: forYouRes, pending: forYouPending } = await useAsyncData(
+  'home-for-you',
+  () =>
+    $fetch<{ data: Poem[]; meta: { page: number; limit: number; total: number; totalPages: number } }>(
+      '/api/home/for-you',
+      { query: { page: 1, limit: 5 } },
+    ),
+)
 
-const featured = computed(() => home.value?.featured ?? [])
-const recent = computed(() => home.value?.recent ?? [])
-const moodTags = computed(() => home.value?.moodTags ?? [])
-const themeTags = computed(() => home.value?.themeTags ?? [])
-
-// ── Hero: random author + poem (from /api/home payload; dice re-roll still uses APIs) ──
-const heroAuthor = ref<RandomAuthor | null>(null)
-const heroPoem = ref<Poem | null>(null)
+const forYouPoems = ref<Poem[]>([])
+const forYouPage = ref(1)
+const forYouMeta = ref({ total: 0, totalPages: 1, limit: 5 })
+const forYouLoadingMore = ref(false)
 
 watch(
-  [home, homePending],
-  () => {
-    if (homePending.value) return
-    const h = home.value
-    if (!h) {
-      heroAuthor.value = null
-      heroPoem.value = null
-      return
-    }
-    if (h.hero) {
-      heroAuthor.value = h.hero.a
-      heroPoem.value = h.hero.p
-    } else {
-      heroAuthor.value = null
-      heroPoem.value = null
-    }
+  forYouRes,
+  (v) => {
+    if (!v?.data) return
+    forYouPoems.value = v.data
+    forYouMeta.value = v.meta
+    forYouPage.value = v.meta.page
   },
   { immediate: true },
 )
 
-const rollingDice = ref(false)
-const heroVisible = ref(true)
-const loadingPoemFromBib = ref(false)
+/** Matches IntersectionObserver rootMargin below — if sentinel still lies in this band after a load, IO may not fire again. */
+const FOR_YOU_IO_MARGIN_PX = 280
 
-const poemBlockRef = ref<HTMLElement | null>(null)
-
-function sleep(ms: number) {
-  return new Promise<void>((resolve) => setTimeout(resolve, ms))
+async function loadMoreForYou() {
+  if (forYouLoadingMore.value) return
+  if (forYouPage.value >= forYouMeta.value.totalPages) return
+  forYouLoadingMore.value = true
+  const next = forYouPage.value + 1
+  try {
+    const res = await $fetch<{ data: Poem[]; meta: { page: number; limit: number; total: number; totalPages: number } }>(
+      '/api/home/for-you',
+      { query: { page: next, limit: 5 } },
+    )
+    const seen = new Set(forYouPoems.value.map((p) => p.id))
+    for (const p of res.data) {
+      if (!seen.has(p.id)) {
+        seen.add(p.id)
+        forYouPoems.value.push(p)
+      }
+    }
+    forYouMeta.value = res.meta
+    forYouPage.value = res.meta.page
+  } finally {
+    forYouLoadingMore.value = false
+  }
+  // If the sentinel stayed in view, IntersectionObserver often does not fire again (no threshold “crossing”).
+  await nextTick()
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => maybeLoadMoreIfSentinelStillVisible())
+  })
 }
 
-/** Full poem body for the hero (line breaks preserved). */
-const heroPoemBody = computed(() => {
-  const p = heroPoem.value
-  if (!p) return ''
-  return (p.content?.trim() || p.excerpt?.trim() || '')
+function maybeLoadMoreIfSentinelStillVisible() {
+  if (forYouLoadingMore.value) return
+  if (forYouPage.value >= forYouMeta.value.totalPages) return
+  if (feedTab.value !== 'foryou') return
+  if (authorSlug.value) return
+  const el = forYouSentinel.value
+  if (!el) return
+  const vh = typeof window !== 'undefined' ? window.innerHeight : 0
+  const rect = el.getBoundingClientRect()
+  // v-show hides the For you panel — rect is all zeros; do not treat as “in view”.
+  if (rect.width === 0 && rect.height === 0) return
+  const extendedBottom = vh + FOR_YOU_IO_MARGIN_PX
+  if (rect.top < extendedBottom && rect.bottom > -FOR_YOU_IO_MARGIN_PX) {
+    void loadMoreForYou()
+  }
+}
+
+const feedTab = ref<'foryou' | 'featured'>('foryou')
+
+const forYouSentinel = ref<HTMLElement | null>(null)
+let forYouIo: IntersectionObserver | null = null
+
+function setupForYouObserver() {
+  forYouIo?.disconnect()
+  forYouIo = null
+  const el = forYouSentinel.value
+  if (!el) return
+  forYouIo = new IntersectionObserver(
+    (entries) => {
+      if (!entries[0]?.isIntersecting) return
+      if (feedTab.value !== 'foryou') return
+      if (authorSlug.value) return
+      if (forYouLoadingMore.value) return
+      void loadMoreForYou()
+    },
+    { root: null, rootMargin: `${FOR_YOU_IO_MARGIN_PX}px`, threshold: 0 },
+  )
+  forYouIo.observe(el)
+}
+
+watch([forYouSentinel, feedTab, authorSlug], () => {
+  nextTick(() => setupForYouObserver())
 })
 
-const heroAuthorAvatar = computed(() =>
-  heroAuthor.value ? authorAvatarUrl(heroAuthor.value) : '',
+/** First batch: ensure observer attaches if ref/watch ordering misses a frame. */
+watch(
+  () => forYouPoems.value.length,
+  (n, prev) => {
+    if (n > 0 && prev === 0) nextTick(() => setupForYouObserver())
+  },
 )
 
-/** Dice roll: content fades out, fetch, content fades in. No animation delay. */
-async function rollHeroDice() {
-  rollingDice.value = true
-  heroVisible.value = false            // fade out existing content
-  try {
-    const hero = await $fetch<{ a: RandomAuthor; p: Poem }>('/api/home/roll')
-    heroAuthor.value = hero.a          // swap content while invisible
-    heroPoem.value = hero.p
-    await nextTick()                   // ensure DOM updated before fading in
-    heroVisible.value = true           // fade in new content
-  } catch {
-    heroVisible.value = true           // restore on error
-    heroAuthor.value = null
-    heroPoem.value = null
-  } finally {
-    rollingDice.value = false
-  }
-}
-
-const heroAuthorYearsLabel = computed(() => {
-  const a = heroAuthor.value
-  if (!a) return null
-  if (a.birthYear != null && a.deathYear != null) return t('authors.lifeSpan', { birth: a.birthYear, death: a.deathYear })
-  if (a.birthYear != null) return t('authors.born', { year: a.birthYear })
-  return null
+onMounted(() => {
+  nextTick(() => setupForYouObserver())
 })
 
-const heroWrittenContext = computed(() => {
-  const p = heroPoem.value
-  if (!p) return null
-  const y = p.writtenYear
-  const period = p.writtenPeriod?.trim()
-  if (y != null && period) return t('viewer.writtenYearAndPeriod', { year: y, period })
-  if (y != null) return t('viewer.writtenInYear', { year: y })
-  if (period) return period
-  return null
+onUnmounted(() => {
+  forYouIo?.disconnect()
+  forYouIo = null
 })
 
-/** Load a poem from bibliography into the hero. */
-async function showPoemInHero(slug: string) {
-  if (heroPoem.value?.slug === slug) return
-  loadingPoemFromBib.value = true
+const featured = computed(() => home.value?.featured ?? [])
+const recent = computed(() => home.value?.recent ?? [])
+const themeTags = computed(() => home.value?.themeTags ?? [])
+
+function formatDate(iso: string) {
   try {
-    heroPoem.value = await $fetch<Poem>(`/api/poems/${encodeURIComponent(slug)}`)
-    await nextTick()
-    poemBlockRef.value?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    return new Intl.DateTimeFormat(locale.value === 'ro' ? 'ro' : 'en', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    }).format(new Date(iso))
   } catch {
-    /* keep previous poem */
-  } finally {
-    loadingPoemFromBib.value = false
+    return ''
   }
 }
-
 </script>
 
 <template>
   <div class="animate-fade-in">
-    <!-- Reading appearance (matches poem page fixed cog) -->
     <button type="button"
       class="fixed right-3 top-1/2 z-[45] flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-edge-subtle bg-surface-raised/95 text-content-muted shadow-ds-card backdrop-blur-sm transition hover:border-brand-soft hover:text-brand-hover md:right-6"
       :aria-label="t('viewer.openReadingSettings')" @click="readerSettingsOpen = true">
@@ -173,135 +243,213 @@ async function showPoemInHero(slug: string) {
       </svg>
     </button>
     <ReaderSettingsSidebar v-model:open="readerSettingsOpen" id-prefix="home" />
-    <!-- ── Hero: random author + poem; 3D dice in header ── -->
-    <section class="overflow-x-clip rounded-none">
-      <div v-if="homePending" class="flex min-h-[12rem] items-center justify-center">
-        <span class="h-9 w-9 animate-spin rounded-full border-2 border-edge-subtle border-t-brand" aria-hidden="true" />
-      </div>
 
-      <div v-else-if="!heroAuthor && !heroPoem" class="py-12 text-center text-content-muted">
-        <p class="font-serif text-lg text-content-secondary">{{ t('home.emptyLibrary') }}</p>
-      </div>
+    <div class="w-full min-w-0 px-4 pb-20 pt-2 md:px-8 md:pt-4 lg:px-10 xl:px-12">
+      <div
+        class="grid grid-cols-1 gap-12 lg:gap-10 xl:grid-cols-[minmax(200px,260px)_minmax(0,1fr)_minmax(280px,380px)] xl:gap-12 2xl:gap-16">
+        <!-- Left: authors -->
+        <aside class="order-2 min-w-0 xl:order-1 xl:max-w-[320px]">
+          <div class="sticky top-28 flex flex-col gap-10" :aria-label="t('home.leftRailAria')">
+            <HomeAuthorsColumn />
+          </div>
+        </aside>
+        <!-- Center feed -->
+        <main class="order-1 min-w-0 xl:order-2 xl:min-w-0">
+          <div class="mx-auto w-full max-w-none">
+            <!-- Author poems (from left column selection) -->
+            <template v-if="authorSlug">
+              <div
+                class="sticky z-10 -mx-1 mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-edge-subtle bg-surface-page/90 px-1 pb-3 pt-1 backdrop-blur-md top-[3.25rem] md:top-16">
+                <button type="button"
+                  class="inline-flex items-center gap-1.5 text-sm font-medium text-content-secondary transition hover:text-content"
+                  @click="clearHomeAuthor">
+                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
+                    aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
+                  {{ t('home.backToFeed') }}
+                </button>
+              </div>
 
-      <div v-else class="mx-auto">
-        <div class="flex flex-col items-center gap-3 px-5 pb-6 pt-8 text-center md:px-8">
-          <h2 class="font-serif text-display-sm font-semibold tracking-tight text-content">
-            {{ t('home.heroBannerTitle') }}
-          </h2>
-          <p class="max-w-xl text-sm leading-relaxed text-content-secondary">
-            {{ t('home.heroDiceHint') }}
-          </p>
-          <button type="button"
-            class="inline-flex h-14 w-14 shrink-0 items-center justify-center overflow-visible disabled:opacity-50 md:h-16 md:w-16"
-            :disabled="rollingDice" :aria-label="t('home.rollDice')" @click="rollHeroDice">
-            <DiceSvg :rolling="rollingDice" :initial-face="heroDiceFace" />
-          </button>
-          <p v-if="heroPoem && heroWrittenContext"
-            class="max-w-2xl text-center text-sm tabular-nums leading-relaxed text-content-muted">
-            {{ heroWrittenContext }}
-          </p>
-        </div>
+              <div v-if="authorPending" class="flex min-h-[16rem] items-center justify-center py-16">
+                <span class="h-9 w-9 animate-spin rounded-full border-2 border-edge-subtle border-t-brand"
+                  aria-hidden="true" />
+              </div>
 
-        <!-- Poet (left) | poem (right) -->
-        <div v-if="heroAuthor"
-          class="grid gap-8 px-5 pb-8 pt-8 transition-opacity duration-500 ease-in-out md:grid-cols-2 md:gap-10 md:px-8 lg:gap-12"
-          :class="heroVisible ? 'opacity-100' : 'opacity-0'">
-          <div class="min-w-0 md:pr-8">
-            <div class="flex flex-col items-center text-center md:items-start md:text-left">
-              <NuxtLink :to="`/authors/${heroAuthor.slug}`"
-                class="group flex flex-col items-center md:items-start">
-                <img :src="heroAuthorAvatar" :alt="heroAuthor.name" loading="lazy"
-                  class="h-24 w-24 rounded-full object-cover ring-2 ring-edge-subtle transition group-hover:ring-brand-soft/70" />
+              <div v-else-if="authorError" class="py-16 text-center">
+                <p class="text-content-muted">{{ t('authors.notFound') }}</p>
+                <button type="button" class="mt-4 text-sm font-medium text-brand underline-offset-2 hover:underline"
+                  @click="clearHomeAuthor">
+                  {{ t('home.backToFeed') }}
+                </button>
+              </div>
+
+              <template v-else-if="authorPage">
+                <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
+                  <img :src="authorAvatarUrl(authorPage.author)" :alt="authorPage.author.name" width="80" height="80"
+                    loading="lazy" class="h-20 w-20 shrink-0 rounded-full object-cover ring-2 ring-gold-300/60">
+                  <div class="min-w-0">
+                    <h2 class="font-serif text-2xl font-bold text-content sm:text-3xl">
+                      {{ authorPage.author.name }}
+                    </h2>
+                    <p class="mt-1 text-sm text-content-muted">
+                      {{ t('authors.poemCount', authorPage.poems.meta.total) }}
+                    </p>
+                    <NuxtLink :to="`/authors/${authorPage.author.slug}`"
+                      class="mt-2 inline-block text-sm font-medium text-brand transition hover:text-brand-hover">
+                      {{ t('home.viewFullProfile') }}
+                    </NuxtLink>
+                  </div>
+                </div>
+
+                <div v-if="authorPoemsForCards.length" class="home-poem-masonry" role="list">
+                  <div v-for="poem in authorPoemsForCards" :key="poem.id" class="home-poem-masonry-wrap"
+                    role="listitem">
+                    <PoetryCard :poem="poem" layout="masonry" :quick-read-list="authorPoemsForCards" />
+                  </div>
+                </div>
+                <p v-else class="py-12 text-center text-content-muted">
+                  {{ t('authors.noPoemsYet') }}
+                </p>
+
+                <div v-if="(authorPage.poems.meta.totalPages ?? 1) > 1" class="mt-10">
+                  <PaginationNav :page="authorFeedPage" :total-pages="authorPage.poems.meta.totalPages"
+                    @update:page="(p) => { authorFeedPage = p }" />
+                </div>
+              </template>
+            </template>
+
+            <!-- Default feed: For you / Featured -->
+            <template v-else>
+              <!-- Tabs (Medium-style) -->
+              <div
+                class="sticky z-10 -mx-1 mb-8 flex flex-wrap items-end gap-4 border-b border-edge-subtle bg-surface-page/90 px-1 pb-0 pt-1 backdrop-blur-md top-[3.25rem] md:top-16">
+                <div class="flex gap-8" role="tablist" :aria-label="t('home.feedTabsAria')">
+                  <button type="button" role="tab" :aria-selected="feedTab === 'foryou'"
+                    class="relative pb-3 text-sm transition-colors" :class="feedTab === 'foryou'
+                      ? 'font-medium text-content after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-content'
+                      : 'text-content-muted hover:text-content-secondary'
+                      " @click="feedTab = 'foryou'">
+                    {{ t('home.tabForYou') }}
+                  </button>
+                  <button type="button" role="tab" :aria-selected="feedTab === 'featured'"
+                    class="relative pb-3 text-sm transition-colors" :class="feedTab === 'featured'
+                      ? 'font-medium text-content after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-content'
+                      : 'text-content-muted hover:text-content-secondary'
+                      " @click="feedTab = 'featured'">
+                    {{ t('home.tabFeatured') }}
+                  </button>
+                </div>
+              </div>
+
+              <div v-if="homePending" class="flex min-h-[16rem] items-center justify-center py-16">
+                <span class="h-9 w-9 animate-spin rounded-full border-2 border-edge-subtle border-t-brand"
+                  aria-hidden="true" />
+              </div>
+
+              <template v-else>
+                <!-- For you -->
+                <div v-show="feedTab === 'foryou'">
+                  <div v-if="forYouPending && !forYouPoems.length"
+                    class="flex min-h-[16rem] items-center justify-center py-16">
+                    <span class="h-9 w-9 animate-spin rounded-full border-2 border-edge-subtle border-t-brand"
+                      aria-hidden="true" />
+                  </div>
+
+                  <template v-else-if="!forYouPoems.length">
+                    <p class="py-16 text-center font-serif text-lg text-content-muted">
+                      {{ t('home.emptyLibrary') }}
+                    </p>
+                  </template>
+
+                  <template v-else>
+                    <div class="home-poem-masonry" role="list">
+                      <div v-for="poem in forYouPoems" :key="poem.id" class="home-poem-masonry-wrap" role="listitem">
+                        <PoetryCard :poem="poem" layout="masonry" :quick-read-list="forYouPoems" />
+                      </div>
+                    </div>
+                    <div ref="forYouSentinel" class="pointer-events-none h-px w-full shrink-0" aria-hidden="true" />
+                    <div v-if="forYouLoadingMore" class="flex justify-center py-8" role="status" aria-live="polite">
+                      <span class="h-8 w-8 animate-spin rounded-full border-2 border-edge-subtle border-t-brand"
+                        aria-hidden="true" />
+                      <span class="sr-only">{{ t('home.loadingMore') }}</span>
+                    </div>
+                  </template>
+                </div>
+
+                <!-- Featured -->
+                <div v-show="feedTab === 'featured'" role="tabpanel">
+                  <p v-if="!featured.length" class="py-12 text-center text-content-muted">
+                    {{ t('home.featuredEmpty') }}
+                  </p>
+                  <div v-else class="home-poem-masonry" role="list">
+                    <div v-for="poem in featured" :key="poem.id" class="home-poem-masonry-wrap" role="listitem">
+                      <PoetryCard :poem="poem" featured layout="masonry" :quick-read-list="featured" />
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </template>
+          </div>
+        </main>
+
+        <!-- Right rail: staff picks + topics -->
+        <aside class="order-3 min-w-0 xl:max-w-[320px]">
+          <div class="sticky top-28 flex flex-col gap-10">
+            <div>
+              <h2 class="mb-4 text-sm font-semibold uppercase tracking-wider text-content">
+                {{ t('home.staffPicksTitle') }}
+              </h2>
+              <div class="flex flex-col border-t border-edge-subtle">
+                <template v-if="recent.length">
+                  <NuxtLink v-for="poem in recent.slice(0, 6)" :key="poem.id" :to="`/poems/${poem.slug}`"
+                    class="group border-b border-edge-subtle py-4 first:pt-3">
+                    <p
+                      class="font-serif text-[15px] font-semibold leading-snug text-content group-hover:text-brand line-clamp-2">
+                      {{ poem.title }}
+                    </p>
+                    <p class="mt-1.5 text-[13px] text-content-muted">
+                      {{ poem.author.name }}
+                    </p>
+                  </NuxtLink>
+                </template>
+                <p v-else class="py-6 text-sm text-content-muted">
+                  {{ t('home.emptyLibrary') }}
+                </p>
+              </div>
+              <NuxtLink v-if="recent.length" to="/poems"
+                class="mt-3 inline-block text-sm font-medium text-content-muted hover:text-brand">
+                {{ t('home.allPoemsLink') }}
               </NuxtLink>
-              <NuxtLink :to="`/authors/${heroAuthor.slug}`"
-                class="mt-4 font-serif text-2xl font-semibold tracking-tight text-content transition hover:text-gold-800">
-                {{ heroAuthor.name }}
-              </NuxtLink>
-              <p v-if="heroAuthorYearsLabel" class="mt-1.5 text-sm tabular-nums text-content-muted">
-                {{ heroAuthorYearsLabel }}
-              </p>
-              <p v-if="heroAuthor._count" class="mt-1 text-sm text-content-soft">
-                {{ t('home.heroPoemCount', { n: heroAuthor._count.poems }) }}
-              </p>
             </div>
 
-            <section v-if="heroAuthor.bio?.trim()" class="mt-6 text-left">
-              <h3 class="mb-2 font-serif text-sm font-semibold uppercase tracking-wide text-content-secondary">
-                {{ t('authors.biography') }}
-              </h3>
-              <p class="max-h-48 overflow-y-auto whitespace-pre-wrap text-sm leading-relaxed text-content-secondary">
-                {{ heroAuthor.bio }}
-              </p>
-            </section>
-
-            <section v-if="heroAuthor.works?.length" class="mt-6 text-left">
-              <h3 class="mb-1 font-serif text-sm font-semibold uppercase tracking-wide text-content-secondary">
-                {{ t('authors.bibliography') }}
-              </h3>
-              <p class="mb-2 text-xs text-content-soft">{{ t('authors.worksInCollection') }}</p>
-              <ul class="max-w-full list-inside list-disc space-y-1.5 text-sm text-content-secondary">
-                <li v-for="w in heroAuthor.works" :key="w.slug" class="break-inside-avoid break-words">
-                  <span class="inline-flex flex-wrap items-baseline gap-1.5">
-                    <button type="button"
-                      class="text-left text-gold-800 underline-offset-2 transition hover:text-gold-900 hover:underline disabled:cursor-wait disabled:opacity-60"
-                      :class="heroPoem?.slug === w.slug ? 'font-semibold text-gold-900' : ''"
-                      :disabled="loadingPoemFromBib" :aria-current="heroPoem?.slug === w.slug ? 'true' : undefined"
-                      @click="showPoemInHero(w.slug)">
-                      {{ w.title }}
-                    </button>
-                    <PoemCarouselIcon :slug="w.slug" size="sm" />
-                  </span>
-                </li>
-              </ul>
-            </section>
+            <div v-if="themeTags.length">
+              <h2 class="mb-4 text-sm font-semibold uppercase tracking-wider text-content">
+                {{ t('home.topicsTitle') }}
+              </h2>
+              <div class="flex flex-wrap gap-2">
+                <NuxtLink v-for="tag in themeTags.slice(0, 14)" :key="tag.id"
+                  :to="`/poems?tag=${encodeURIComponent(tag.slug)}`"
+                  class="rounded-full border border-edge-subtle bg-surface-subtle/80 px-3 py-1.5 text-[13px] text-content-secondary transition hover:border-edge hover:bg-surface-raised hover:text-content">
+                  {{ tag.name }}
+                </NuxtLink>
+              </div>
+            </div>
           </div>
-
-          <div v-if="heroPoem" ref="poemBlockRef"
-            class="min-w-0 border-t border-edge-subtle pt-8 md:border-t-0 md:pt-0">
-            <PoemTitle :title="heroPoem.title" :slug="heroPoem.slug" variant="banner" :poem-id="heroPoem.id" />
-            <NuxtLink v-if="heroPoem.author" :to="`/authors/${heroPoem.author.slug}`"
-              class="mt-2 inline-block text-sm text-content-muted transition hover:text-gold-800">
-              — {{ heroPoem.author.name }}
-            </NuxtLink>
-            <p class="mt-6 text-left md:mt-8" :style="heroPoemBodyStyle">
-              {{ heroPoemBody }}
-            </p>
-          </div>
-        </div>
+        </aside>
       </div>
 
-      <div class="mx-auto mt-10 flex max-w-content flex-wrap justify-center gap-3 pb-6">
-        <NuxtLink to="/poems" class="ds-btn-secondary rounded-full px-8 py-3 text-sm font-medium">
-          {{ t('home.explorePoems') }}
-        </NuxtLink>
-      </div>
-    </section>
-
-    <!-- ── Recent Poems ───────────────────────────────────────────────────── -->
-    <section v-if="recent.length" class="mb-24">
-      <div class="mb-10 flex items-end justify-between gap-4">
-        <h2 class="ds-section-heading mb-0">{{ t('home.recentPoems') }}</h2>
-        <NuxtLink to="/poems"
-          class="shrink-0 pb-3 text-sm font-medium text-content-muted transition hover:text-gold-800">
-          {{ t('home.allPoemsLink') }}
-        </NuxtLink>
-      </div>
-      <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
-        <PoetryCard v-for="poem in recent" :key="poem.id" :poem="poem" />
-      </div>
-    </section>
-
-    <!-- ── Admin hint when library lists are empty ─────────────────────────── -->
-    <section v-if="!featured.length && !recent.length && !homePending && !heroAuthor && !heroPoem"
-      class="py-8 text-center text-sm text-content-soft">
-      <p>
-        {{ t('home.emptyHintBefore') }}
-        <NuxtLink to="/admin"
-          class="font-medium underline decoration-edge-strong underline-offset-2 hover:text-content">
-          {{ t('home.emptyHintLink') }}
-        </NuxtLink>
-        {{ t('home.emptyHintAfter') }}
-      </p>
-    </section>
+      <section v-if="!authorSlug && !featured.length && !recent.length && !homePending && !forYouPoems.length"
+        class="mx-auto max-w-content py-10 text-center text-sm text-content-soft">
+        <p>
+          {{ t('home.emptyHintBefore') }}
+          <NuxtLink to="/admin"
+            class="font-medium underline decoration-edge-strong underline-offset-2 hover:text-content">
+            {{ t('home.emptyHintLink') }}
+          </NuxtLink>
+          {{ t('home.emptyHintAfter') }}
+        </p>
+      </section>
+    </div>
   </div>
 </template>

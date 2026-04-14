@@ -619,56 +619,56 @@ function onTouchEnd(e: TouchEvent) {
     <div class="grid grid-cols-1 gap-10 md:grid-cols-7 md:items-start md:gap-8 lg:gap-10">
       <!-- Left (4 columns): Controls -->
       <div class="min-w-0 space-y-6 md:col-span-4">
-        <section class="rounded-2xl border border-ink-200 bg-white p-6 shadow-sm">
+        <section class="rounded-2xl border border-edge-subtle bg-surface-raised p-6 shadow-ds-card">
           <template v-if="canEditPoemData">
             <label class="field-label">{{ t('carousel.fieldTitle') }}</label>
             <input v-model="title" type="text"
-              class="mb-4 w-full rounded-xl border border-ink-200 px-4 py-2.5 font-serif text-ink-900 outline-none focus:border-gold-500"
+              class="mb-4 w-full rounded-xl border border-edge-subtle px-4 py-2.5 font-serif text-content outline-none focus:border-gold-500"
               :placeholder="t('carousel.phTitle')" />
 
             <label class="field-label">{{ t('carousel.fieldAuthor') }}</label>
             <input v-model="author" type="text"
-              class="mb-4 w-full rounded-xl border border-ink-200 px-4 py-2.5 outline-none focus:border-gold-500"
+              class="mb-4 w-full rounded-xl border border-edge-subtle px-4 py-2.5 outline-none focus:border-gold-500"
               :placeholder="t('carousel.phAuthor')" />
 
             <label class="field-label">{{ t('carousel.fieldNationality') }}</label>
             <input v-model="authorNationality" type="text"
-              class="mb-4 w-full rounded-xl border border-ink-200 px-4 py-2.5 outline-none focus:border-gold-500"
+              class="mb-4 w-full rounded-xl border border-edge-subtle px-4 py-2.5 outline-none focus:border-gold-500"
               :placeholder="t('carousel.phNationality')" />
 
             <div class="mb-4 grid grid-cols-2 gap-4">
               <div>
                 <label class="field-label">{{ t('carousel.fieldBirthYear') }}</label>
                 <input v-model="authorBirthYear" type="text" inputmode="numeric"
-                  class="w-full rounded-xl border border-ink-200 px-4 py-2.5 outline-none focus:border-gold-500"
+                  class="w-full rounded-xl border border-edge-subtle px-4 py-2.5 outline-none focus:border-gold-500"
                   :placeholder="t('carousel.phBirthYear')" />
               </div>
               <div>
                 <label class="field-label">{{ t('carousel.fieldDeathYear') }}</label>
                 <input v-model="authorDeathYear" type="text" inputmode="numeric"
-                  class="w-full rounded-xl border border-ink-200 px-4 py-2.5 outline-none focus:border-gold-500"
+                  class="w-full rounded-xl border border-edge-subtle px-4 py-2.5 outline-none focus:border-gold-500"
                   :placeholder="t('carousel.phDeathYear')" />
               </div>
             </div>
 
             <label class="field-label">{{ t('carousel.fieldPoemWrittenYear') }}</label>
             <input v-model="poemWrittenYear" type="text" inputmode="numeric"
-              class="mb-4 w-full rounded-xl border border-ink-200 px-4 py-2.5 outline-none focus:border-gold-500"
+              class="mb-4 w-full rounded-xl border border-edge-subtle px-4 py-2.5 outline-none focus:border-gold-500"
               :placeholder="t('carousel.phPoemWrittenYear')" />
 
             <label class="field-label">{{ t('carousel.fieldPoem') }}</label>
             <textarea v-model="poemText" rows="10"
-              class="mb-4 w-full rounded-xl border border-ink-200 px-4 py-3 font-serif leading-relaxed text-ink-800 outline-none focus:border-gold-500"
+              class="mb-4 w-full rounded-xl border border-edge-subtle px-4 py-3 font-serif leading-relaxed text-content-secondary outline-none focus:border-gold-500"
               :placeholder="t('carousel.phPoem')" />
           </template>
 
-          <h3 class="mb-3 font-serif text-base font-semibold text-ink-900">
+          <h3 class="mb-3 font-serif text-base font-semibold text-content">
             {{ t('carousel.sectionInstagramPostSettings') }}
           </h3>
 
           <label class="field-label">{{ t('carousel.fieldFont') }}</label>
           <CarouselFontSelect v-model="carouselFontKey" class="mb-2" />
-          <p class="mb-4 text-xs leading-relaxed text-ink-500">
+          <p class="mb-4 text-xs leading-relaxed text-content-muted">
             {{ t('carousel.fontCarouselHint') }}
           </p>
 
@@ -677,7 +677,7 @@ function onTouchEnd(e: TouchEvent) {
             <button v-for="th in (['minimal', 'dark', 'gradient', 'neon'] as CarouselTheme[])" :key="th" type="button"
               class="rounded-full border px-4 py-1.5 text-sm transition" :class="theme === th
                 ? 'border-gold-500 bg-gold-500 text-white'
-                : 'border-ink-200 bg-ink-50 text-ink-700 hover:border-ink-300'
+                : 'border-edge-subtle bg-surface-subtle text-content-secondary hover:border-edge'
                 " @click="theme = th">
               {{ t(`carousel.theme.${th}`) }}
             </button>
@@ -688,7 +688,7 @@ function onTouchEnd(e: TouchEvent) {
               <label class="field-label mb-0 flex-1" for="carousel-keyword-input">{{ t('carousel.fieldKeywords')
                 }}</label>
               <button id="carousel-keywords-help-trigger" type="button"
-                class="inline-flex shrink-0 rounded-full p-0.5 text-ink-400 transition hover:bg-ink-100 hover:text-ink-700"
+                class="inline-flex shrink-0 rounded-full p-0.5 text-content-soft transition hover:bg-surface-subtle hover:text-content-secondary"
                 :aria-expanded="keywordsHelpOpen" aria-controls="carousel-keywords-help-panel"
                 :aria-label="t('carousel.keywordsHelpAriaLabel')" @click.stop="keywordsHelpOpen = !keywordsHelpOpen">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"
@@ -700,18 +700,18 @@ function onTouchEnd(e: TouchEvent) {
             </div>
             <Transition name="carousel-kw-help">
               <div v-show="keywordsHelpOpen" id="carousel-keywords-help-panel"
-                class="absolute left-0 right-0 top-full z-30 mt-1.5 rounded-xl border border-ink-200 bg-white p-3 text-xs leading-relaxed text-ink-600 shadow-lg"
+                class="absolute left-0 right-0 top-full z-30 mt-1.5 rounded-xl border border-edge-subtle bg-surface-raised p-3 text-xs leading-relaxed text-content-muted shadow-lg"
                 role="region" @click.stop>
                 {{ t('carousel.keywordsHelp') }}
               </div>
             </Transition>
           </div>
           <input id="carousel-keyword-input" v-model="keywordInput" type="text"
-            class="mb-4 w-full rounded-xl border border-ink-200 px-4 py-2.5 text-sm outline-none focus:border-gold-500"
+            class="mb-4 w-full rounded-xl border border-edge-subtle px-4 py-2.5 text-sm outline-none focus:border-gold-500"
             :placeholder="t('carousel.phKeywords')" />
 
-          <div class="border-t border-ink-100 pt-4">
-            <h3 class="mb-3 font-serif text-base font-semibold text-ink-900">
+          <div class="border-t border-edge-subtle pt-4">
+            <h3 class="mb-3 font-serif text-base font-semibold text-content">
               {{ t('carousel.sectionTypography') }}
             </h3>
 
@@ -719,14 +719,14 @@ function onTouchEnd(e: TouchEvent) {
             <div class="mb-4 flex items-center gap-3">
               <input v-model.number="linesPerSlide" type="range" min="4" max="16" step="1"
                 class="h-2 flex-1 cursor-pointer accent-gold-600" />
-              <span class="w-10 text-right text-sm tabular-nums text-ink-700">{{ linesPerSlide }}</span>
+              <span class="w-10 text-right text-sm tabular-nums text-content-secondary">{{ linesPerSlide }}</span>
             </div>
 
             <label class="field-label">{{ t('carousel.fieldBodyFontSize') }}</label>
             <div class="mb-4 flex items-center gap-3">
               <input v-model.number="bodyFontSizeScale" type="range" min="0.7" max="2" step="0.05"
                 class="h-2 flex-1 cursor-pointer accent-gold-600" />
-              <span class="w-12 text-right text-sm tabular-nums text-ink-700">{{ Math.round(bodyFontSizeScale * 100)
+              <span class="w-12 text-right text-sm tabular-nums text-content-secondary">{{ Math.round(bodyFontSizeScale * 100)
               }}%</span>
             </div>
 
@@ -734,16 +734,16 @@ function onTouchEnd(e: TouchEvent) {
             <div class="mb-4 flex items-center gap-3">
               <input v-model.number="bodyLineHeight" type="range" min="1.15" max="2.25" step="0.05"
                 class="h-2 flex-1 cursor-pointer accent-gold-600" />
-              <span class="w-12 text-right text-sm tabular-nums text-ink-700">{{ bodyLineHeight.toFixed(2) }}</span>
+              <span class="w-12 text-right text-sm tabular-nums text-content-secondary">{{ bodyLineHeight.toFixed(2) }}</span>
             </div>
 
-            <div v-if="canSaveCurrentPoemCarousel && loadedPoemSlug" class="mb-4 border-t border-ink-100 pt-4">
-              <p class="mb-2 text-xs text-ink-500">
+            <div v-if="canSaveCurrentPoemCarousel && loadedPoemSlug" class="mb-4 border-t border-edge-subtle pt-4">
+              <p class="mb-2 text-xs text-content-muted">
                 {{ canEditPoemData ? t('carousel.poemCarouselSaveHintStaff') :
                   t('carousel.poemCarouselSaveHintCarouselOnly') }}
               </p>
               <button type="button"
-                class="w-full rounded-xl border border-gold-500 bg-gold-500/10 px-4 py-2.5 text-sm font-semibold text-ink-900 hover:bg-gold-500/20 disabled:opacity-50"
+                class="w-full rounded-xl border border-gold-500 bg-gold-500/10 px-4 py-2.5 text-sm font-semibold text-content hover:bg-gold-500/20 disabled:opacity-50"
                 :disabled="savingCurrentPoemCarousel" @click="saveCurrentPoemCarousel">
                 {{ savingCurrentPoemCarousel ? t('carousel.savingCurrentPoemCarousel') :
                   t('carousel.saveCurrentPoemCarousel') }}
@@ -765,7 +765,7 @@ function onTouchEnd(e: TouchEvent) {
             </div>
 
             <div v-if="canEditPoemData && canSaveCurrentPoemCarousel && loadedPoemSlug"
-              class="border-t border-ink-100 pt-4">
+              class="border-t border-edge-subtle pt-4">
               <button type="button"
                 class="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-800 hover:bg-red-100 disabled:opacity-50"
                 :disabled="deletingPoem || savingCurrentPoemCarousel" @click="deleteLoadedPoem">
@@ -773,85 +773,85 @@ function onTouchEnd(e: TouchEvent) {
               </button>
             </div>
 
-            <p v-if="!isLoggedIn" class="mt-4 border-t border-ink-100 pt-4 text-xs text-ink-500">
+            <p v-if="!isLoggedIn" class="mt-4 border-t border-edge-subtle pt-4 text-xs text-content-muted">
               {{ t('carousel.poemSaveLoginHint') }}
             </p>
             <p v-else-if="isLoggedIn && loadedPoemSlug && !canSaveCurrentPoemCarousel"
-              class="mt-4 border-t border-ink-100 pt-4 text-xs text-ink-500">
+              class="mt-4 border-t border-edge-subtle pt-4 text-xs text-content-muted">
               {{ t('carousel.poemSaveOwnerOnlyHint') }}
             </p>
             <p v-else-if="canSaveCurrentPoemCarousel && !loadedPoemSlug"
-              class="mt-4 border-t border-ink-100 pt-4 text-xs text-ink-500">
+              class="mt-4 border-t border-edge-subtle pt-4 text-xs text-content-muted">
               {{ t('carousel.poemSaveNeedPoemHint') }}
             </p>
           </div>
         </section>
 
-        <section v-if="canEditPoemData" class="rounded-2xl border border-ink-200 bg-white p-6 shadow-sm">
-          <h2 class="mb-4 font-serif text-lg font-semibold text-ink-900">
+        <section v-if="canEditPoemData" class="rounded-2xl border border-edge-subtle bg-surface-raised p-6 shadow-ds-card">
+          <h2 class="mb-4 font-serif text-lg font-semibold text-content">
             {{ t('carousel.sectionLibrary') }}
           </h2>
           <label class="field-label">{{ t('carousel.searchPoems') }}</label>
           <input v-model="libraryQuery" type="search"
-            class="mb-3 w-full rounded-xl border border-ink-200 px-4 py-2.5 outline-none focus:border-gold-500"
+            class="mb-3 w-full rounded-xl border border-edge-subtle px-4 py-2.5 outline-none focus:border-gold-500"
             :placeholder="t('carousel.searchPlaceholder')" @keyup.enter="runSearch(libraryQuery)" />
-          <p v-if="searchLoading" class="text-sm text-ink-500">
+          <p v-if="searchLoading" class="text-sm text-content-muted">
             {{ t('carousel.searching') }}
           </p>
           <template v-else>
             <ul v-if="searchResults.length"
-              class="max-h-48 space-y-1 overflow-y-auto rounded-lg border border-ink-100 bg-ink-50/80 p-2">
+              class="max-h-48 space-y-1 overflow-y-auto rounded-lg border border-edge-subtle bg-surface-subtle/80 p-2">
               <li v-for="p in searchResults" :key="p.id">
-                <button type="button" class="w-full rounded-lg px-3 py-2 text-left text-sm text-ink-800 hover:bg-white"
+                <button type="button" class="w-full rounded-lg px-3 py-2 text-left text-sm text-content-secondary hover:bg-surface-raised"
                   @click="applyPoem(p)">
                   <span class="font-medium">{{ p.title }}</span>
-                  <span class="text-ink-500"> — {{ p.author.name }}</span>
+                  <span class="text-content-muted"> — {{ p.author.name }}</span>
                 </button>
               </li>
             </ul>
             <p v-else-if="libraryQuery.trim() && !searchResults.length"
-              class="rounded-lg border border-ink-100 bg-ink-50/80 px-3 py-2 text-sm text-ink-500">
+              class="rounded-lg border border-edge-subtle bg-surface-subtle/80 px-3 py-2 text-sm text-content-muted">
               {{ t('carousel.noResults') }}
             </p>
           </template>
-          <button type="button" class="mt-3 text-sm text-gold-700 underline-offset-2 hover:underline"
+          <button type="button" class="mt-3 text-sm text-brand underline-offset-2 hover:underline"
             @click="loadSample">
             {{ t('carousel.loadSample') }}
           </button>
         </section>
 
-        <section class="rounded-2xl border border-ink-200 bg-ink-900 p-6 text-ink-50 shadow-sm">
+        <section class="rounded-2xl border border-edge-subtle bg-surface-overlay p-6 text-content shadow-ds-card">
           <h2 class="mb-3 font-serif text-lg font-semibold">
             {{ t('carousel.sectionExport') }}
           </h2>
-          <p class="mb-4 text-sm text-ink-300">
+          <p class="mb-4 text-sm text-content-muted">
             {{ t('carousel.exportHint') }}
           </p>
           <div class="flex flex-wrap gap-3">
             <button type="button"
-              class="rounded-xl bg-gold-500 px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-gold-600 disabled:opacity-50"
+              class="rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-brand-foreground shadow hover:bg-brand-hover disabled:opacity-50"
               :disabled="exporting" @click="exportZip">
               {{ exporting ? t('carousel.exporting') : t('carousel.downloadZip') }}
             </button>
             <button type="button"
-              class="rounded-xl border border-ink-500 px-5 py-2.5 text-sm font-medium hover:bg-ink-800"
+              class="rounded-xl border border-edge px-5 py-2.5 text-sm font-medium text-content-secondary hover:bg-surface-subtle"
               @click="exportCurrentPng">
               {{ t('carousel.downloadCurrent') }}
             </button>
           </div>
         </section>
 
-        <section class="rounded-2xl border border-ink-200 bg-white p-6 shadow-sm">
+        <section class="rounded-2xl border border-edge-subtle bg-surface-raised p-6 shadow-ds-card">
           <div class="flex items-center justify-between gap-2">
-            <h2 class="font-serif text-lg font-semibold text-ink-900">
+            <h2 class="font-serif text-lg font-semibold text-content">
               {{ t('carousel.sectionCaption') }}
             </h2>
-            <button type="button" class="text-sm font-medium text-gold-700 hover:underline" @click="copyCaption">
+            <button type="button" class="text-sm font-medium text-brand hover:underline" @click="copyCaption">
               {{ t('carousel.copyCaption') }}
             </button>
           </div>
           <pre
-            class="mt-3 max-h-40 overflow-y-auto whitespace-pre-wrap rounded-lg bg-ink-50 p-4 font-sans text-xs text-ink-700">{{
+            class="mt-3 max-h-40 overflow-y-auto whitespace-pre-wrap rounded-lg bg-surface-subtle p-4 font-sans text-xs text-content-secondary">{{
               captionText }}</pre>
         </section>
       </div>
@@ -860,15 +860,15 @@ function onTouchEnd(e: TouchEvent) {
       <div class="w-full md:col-span-3 md:sticky md:top-24 md:self-start">
         <div ref="previewFullscreenRef" class="carousel-preview-shell flex flex-col">
           <div class="carousel-preview-fs-header mb-3 flex shrink-0 items-center justify-between gap-2">
-            <span class="text-xs font-medium uppercase tracking-wider text-ink-500">
+            <span class="text-xs font-medium uppercase tracking-wider text-content-muted">
               {{ t('carousel.preview') }} · {{ t('carousel.dimensions') }}
             </span>
             <div class="flex items-center gap-2">
-              <span class="text-sm text-ink-600 tabular-nums">
+              <span class="text-sm text-content-muted tabular-nums">
                 {{ currentIndex + 1 }} / {{ slideModels.length }}
               </span>
               <button type="button"
-                class="rounded-lg border border-ink-200 bg-white p-1.5 text-ink-600 shadow-sm transition hover:border-gold-400 hover:text-ink-900"
+                class="rounded-lg border border-edge-subtle bg-surface-raised p-1.5 text-content-muted shadow-ds-card transition hover:border-brand hover:text-content"
                 :aria-pressed="isPreviewFullscreen"
                 :aria-label="isPreviewFullscreen ? t('carousel.exitFullScreen') : t('carousel.enterFullScreen')"
                 :title="isPreviewFullscreen ? t('carousel.exitFullScreen') : t('carousel.enterFullScreen')"
@@ -899,8 +899,8 @@ function onTouchEnd(e: TouchEvent) {
               : 'flex flex-col gap-4'">
               <!-- Fullscreen: settings column (left on sm+); hidden when not fullscreen -->
               <div v-if="isPreviewFullscreen"
-                class="carousel-fullscreen-fonts order-2 min-h-0 max-h-full overflow-y-auto rounded-xl border border-ink-200/80 bg-white/95 p-4 shadow-sm backdrop-blur-sm sm:order-none sm:max-h-none">
-                <p class="mb-3 text-xs font-semibold uppercase tracking-wider text-ink-500">
+                class="carousel-fullscreen-fonts order-2 min-h-0 max-h-full overflow-y-auto rounded-xl border border-edge-subtle/80 bg-surface-raised/95 p-4 shadow-ds-card backdrop-blur-sm sm:order-none sm:max-h-none">
+                <p class="mb-3 text-xs font-semibold uppercase tracking-wider text-content-muted">
                   {{ t('carousel.fullscreenFontSettings') }}
                 </p>
                 <label class="field-label">{{ t('carousel.fieldFont') }}</label>
@@ -910,14 +910,14 @@ function onTouchEnd(e: TouchEvent) {
                 <div class="mb-3 flex items-center gap-3">
                   <input v-model.number="linesPerSlide" type="range" min="4" max="16" step="1"
                     class="h-2 flex-1 cursor-pointer accent-gold-600" />
-                  <span class="w-10 text-right text-sm tabular-nums text-ink-700">{{ linesPerSlide }}</span>
+                  <span class="w-10 text-right text-sm tabular-nums text-content-secondary">{{ linesPerSlide }}</span>
                 </div>
 
                 <label class="field-label">{{ t('carousel.fieldBodyFontSize') }}</label>
                 <div class="mb-3 flex items-center gap-3">
                   <input v-model.number="bodyFontSizeScale" type="range" min="0.7" max="2" step="0.05"
                     class="h-2 flex-1 cursor-pointer accent-gold-600" />
-                  <span class="w-12 text-right text-sm tabular-nums text-ink-700">{{ Math.round(bodyFontSizeScale * 100)
+                  <span class="w-12 text-right text-sm tabular-nums text-content-secondary">{{ Math.round(bodyFontSizeScale * 100)
                     }}%</span>
                 </div>
 
@@ -925,7 +925,7 @@ function onTouchEnd(e: TouchEvent) {
                 <div class="flex items-center gap-3">
                   <input v-model.number="bodyLineHeight" type="range" min="1.15" max="2.25" step="0.05"
                     class="h-2 flex-1 cursor-pointer accent-gold-600" />
-                  <span class="w-12 text-right text-sm tabular-nums text-ink-700">{{ bodyLineHeight.toFixed(2) }}</span>
+                  <span class="w-12 text-right text-sm tabular-nums text-content-secondary">{{ bodyLineHeight.toFixed(2) }}</span>
                 </div>
               </div>
 
@@ -935,7 +935,7 @@ function onTouchEnd(e: TouchEvent) {
                 <div class="flex justify-center"
                   :class="isPreviewFullscreen ? 'carousel-fs-preview-stage min-h-0 w-full flex-1 items-center' : ''">
                   <div ref="previewFrameRef"
-                    class="carousel-preview-inner relative mx-auto overflow-hidden rounded-xl border border-ink-200 bg-ink-900 shadow-lg"
+                    class="carousel-preview-inner relative mx-auto overflow-hidden rounded-xl border border-edge-subtle bg-black shadow-lg"
                     @touchstart.passive="onTouchStart" @touchend.passive="onTouchEnd">
                     <div v-if="currentSlideProps" class="absolute left-1/2 top-1/2" :style="{
                       width: `${CAROUSEL_WIDTH}px`,
@@ -954,7 +954,7 @@ function onTouchEnd(e: TouchEvent) {
                 <div class="flex flex-col items-center gap-3" :class="isPreviewFullscreen ? 'shrink-0' : ''">
                   <div class="flex items-center justify-center gap-3">
                     <button type="button"
-                      class="rounded-full border border-ink-200 bg-white p-2 text-ink-700 hover:bg-ink-50"
+                      class="rounded-full border border-edge-subtle bg-surface-raised p-2 text-content-secondary hover:bg-surface-subtle"
                       :disabled="currentIndex <= 0" :aria-label="t('carousel.prev')" @click="currentIndex--">
                       <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
@@ -963,11 +963,11 @@ function onTouchEnd(e: TouchEvent) {
                     <div class="flex gap-1.5">
                       <button v-for="(_, i) in slideModels" :key="i" type="button"
                         class="h-2 w-2 rounded-full transition"
-                        :class="i === currentIndex ? 'bg-gold-500 w-5' : 'bg-ink-300'"
+                        :class="i === currentIndex ? 'bg-gold-500 w-5' : 'bg-content-muted/40'"
                         :aria-label="t('carousel.goSlide', { n: i + 1 })" @click="currentIndex = i" />
                     </div>
                     <button type="button"
-                      class="rounded-full border border-ink-200 bg-white p-2 text-ink-700 hover:bg-ink-50"
+                      class="rounded-full border border-edge-subtle bg-surface-raised p-2 text-content-secondary hover:bg-surface-subtle"
                       :disabled="currentIndex >= maxIndex" :aria-label="t('carousel.next')" @click="currentIndex++">
                       <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
@@ -975,7 +975,7 @@ function onTouchEnd(e: TouchEvent) {
                     </button>
                   </div>
 
-                  <p class="text-center text-xs text-ink-500">
+                  <p class="text-center text-xs text-content-muted">
                     {{ t('carousel.splitInfo', { n: bodySlideCount }) }}
                   </p>
                 </div>

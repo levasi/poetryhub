@@ -4,7 +4,7 @@ const { locale, locales, setLocale } = useI18n()
 
 <template>
   <div
-    class="flex items-center gap-0.5 rounded-lg border border-ink-200 bg-white p-0.5 text-xs shadow-sm"
+    class="flex items-center gap-0.5 rounded-lg border border-edge-subtle bg-surface-raised p-0.5 text-xs shadow-ds-card"
     role="group"
     :aria-label="$t('nav.language')"
   >
@@ -14,7 +14,7 @@ const { locale, locales, setLocale } = useI18n()
       type="button"
       :class="[
         'rounded-md px-2 py-1 font-medium transition-colors',
-        locale === l.code ? 'bg-gold-500 text-white' : 'text-ink-600 hover:text-ink-900',
+        locale === l.code ? 'bg-brand text-brand-foreground' : 'text-content-muted hover:text-content',
       ]"
       :aria-pressed="locale === l.code"
       @click="setLocale(l.code)"

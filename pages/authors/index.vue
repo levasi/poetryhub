@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const { t } = useI18n()
+const route = useRoute()
 
 useSeoMeta({ title: computed(() => t('seo.authorsTitle')) })
 
@@ -22,12 +23,17 @@ watch(search, (val) => {
 const authors    = computed(() => data.value?.data   ?? [])
 const meta       = computed(() => data.value?.meta)
 const totalPages = computed(() => meta.value?.totalPages ?? 1)
+
+onMounted(() => {
+  const q = route.query.q
+  if (typeof q === 'string' && q.trim()) search.value = q.trim()
+})
 </script>
 
 <template>
   <div class="animate-fade-in">
     <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <h1 class="font-serif text-3xl font-bold text-ink-900">{{ t('authors.title') }}</h1>
+      <h1 class="font-serif text-3xl font-bold text-content">{{ t('authors.title') }}</h1>
       <div class="w-full">
         <SearchBar v-model="search" :placeholder="t('authors.searchPlaceholder')" />
       </div>
@@ -38,7 +44,7 @@ const totalPages = computed(() => meta.value?.totalPages ?? 1)
       <AuthorCard v-for="author in authors" :key="author.id" :author="author" />
     </div>
 
-    <div v-else class="py-16 text-center text-ink-600">
+    <div v-else class="py-16 text-center text-content-muted">
       <p class="font-serif text-lg">{{ t('authors.none') }}</p>
     </div>
 

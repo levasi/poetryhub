@@ -47,15 +47,16 @@ const isAdmin = computed(() => user.value?.role === 'admin')
   <header
     class="sticky top-0 z-40 w-full border-b border-edge-subtle bg-surface-raised/95 shadow-ds-nav backdrop-blur-md supports-[backdrop-filter]:bg-surface-raised/85"
   >
-    <div class="mx-auto flex h-[3.25rem] max-w-content items-center justify-between px-4 md:h-16 md:px-6">
-      <!-- Logo -->
-      <NuxtLink to="/" class="group flex min-h-[2.75rem] items-center md:min-h-0">
+    <div class="mx-auto flex h-[3.25rem] w-full max-w-none items-center justify-between gap-3 px-4 md:h-16 md:px-8 lg:px-10">
+      <div class="flex min-w-0 items-center gap-2 md:gap-3">
+        <NuxtLink to="/" class="group flex min-h-[2.75rem] min-w-0 items-center md:min-h-0">
         <span
           class="font-serif text-lg font-semibold tracking-tight text-brand transition-opacity group-hover:opacity-80 md:text-xl"
         >
           Poetry<span class="text-content">Hub</span>
         </span>
-      </NuxtLink>
+        </NuxtLink>
+      </div>
 
       <!-- Desktop nav -->
       <nav class="hidden items-center gap-1 md:flex lg:gap-2" aria-label="Principal">

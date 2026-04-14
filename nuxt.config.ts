@@ -300,7 +300,7 @@ export default defineNuxtConfig({
   app: {
     head: {
       title: 'PoetryHub — Citește, descoperă și împărtășește poezie',
-      htmlAttrs: { lang: 'ro' },
+      htmlAttrs: { lang: 'ro', 'data-color-scheme': 'parchment' },
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
@@ -309,7 +309,7 @@ export default defineNuxtConfig({
           content:
             'O platformă modernă pentru a citi, descoperi și împărtăși poezie. Răsfoiește poezii clasice după stare, autor și temă.',
         },
-        { name: 'theme-color', content: '#f5f5f0' },
+        { name: 'theme-color', content: '#f4eee0' },
       ],
       link: [
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },

@@ -34,7 +34,7 @@ const avatarSrc = computed(() => authorAvatarUrl(props.author))
 <template>
   <NuxtLink
     :to="`/authors/${author.slug}`"
-    class="group flex items-start gap-4 rounded-2xl border border-ink-200 bg-white p-5 shadow-sm transition-all hover:border-gold-300 hover:shadow-md"
+    class="group flex items-start gap-4 rounded-2xl border border-edge-subtle bg-surface-raised p-5 shadow-ds-card transition-all hover:border-brand/40 hover:shadow-ds-card-hover"
   >
     <!-- Avatar -->
     <div class="shrink-0">
@@ -42,27 +42,27 @@ const avatarSrc = computed(() => authorAvatarUrl(props.author))
         :src="avatarSrc"
         :alt="author.name"
         loading="lazy"
-        class="h-14 w-14 rounded-full object-cover ring-2 ring-ink-100 group-hover:ring-gold-300/60"
+        class="h-14 w-14 rounded-full object-cover ring-2 ring-edge-subtle group-hover:ring-brand/40"
       />
     </div>
 
     <!-- Info -->
     <div class="min-w-0 flex-1">
-      <h3 class="font-serif text-base font-bold text-ink-900 group-hover:text-gold-800 transition-colors truncate">
+      <h3 class="font-serif text-base font-bold text-content transition-colors group-hover:text-brand truncate">
         {{ author.name }}
       </h3>
 
-      <div class="mt-0.5 flex items-center gap-2 text-xs text-ink-500">
+      <div class="mt-0.5 flex items-center gap-2 text-xs text-content-muted">
         <span v-if="author.nationality">{{ author.nationality }}</span>
         <span v-if="author.nationality && yearsLabel(author.birthYear, author.deathYear)">·</span>
         <span>{{ yearsLabel(author.birthYear, author.deathYear) }}</span>
       </div>
 
-      <p v-if="author.bio" class="mt-2 line-clamp-2 text-xs leading-relaxed text-ink-600">
+      <p v-if="author.bio" class="mt-2 line-clamp-2 text-xs leading-relaxed text-content-secondary">
         {{ author.bio }}
       </p>
 
-      <p v-if="poemCountLabel" class="mt-2 text-xs text-ink-500">
+      <p v-if="poemCountLabel" class="mt-2 text-xs text-content-muted">
         {{ poemCountLabel }}
       </p>
     </div>

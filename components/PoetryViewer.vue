@@ -3,13 +3,12 @@ import type { Poem } from '~/composables/usePoems'
 import { useFavorites } from '~/composables/useFavorites'
 import { useAuth } from '~/composables/useAuth'
 
-const { t, te } = useI18n()
-const { labelForTag } = useTagLabel()
+const { t } = useI18n()
 const { isLoggedIn } = useAuth()
 
 const props = defineProps<{ poem: Poem }>()
 
-const { poemBodyStyle, stanzaSlideStyle } = useReaderPreferences()
+const { stanzaSlideStyle } = useReaderPreferences()
 
 const readerSettingsOpen = ref(false)
 
@@ -77,29 +76,12 @@ async function sharePoem() {
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-const tags = computed(() => props.poem.poemTags?.map((pt) => pt.tag) ?? [])
-
 const readingTimeLabel = computed(() => {
   if (!props.poem.readingTime) return null
   const mins = Math.ceil(props.poem.readingTime / 60)
   return mins < 1 ? t('viewer.underMin') : t('viewer.minRead', { n: mins })
 })
 
-const langLabel = computed(() => {
-  const code = props.poem.language
-  if (!code || code === 'en' || code === 'ro') return null
-  const key = `lang.${code}`
-  return te(key) ? t(key) : code.toUpperCase()
-})
-
-const writtenContextLine = computed(() => {
-  const y = props.poem.writtenYear
-  const p = props.poem.writtenPeriod?.trim()
-  if (y != null && p) return t('viewer.writtenYearAndPeriod', { year: y, period: p })
-  if (y != null) return t('viewer.writtenInYear', { year: y })
-  if (p) return p
-  return null
-})
 </script>
 
 <template>
@@ -131,43 +113,7 @@ const writtenContextLine = computed(() => {
 
     <!-- ── Standard reading view ──────────────────────────────────────────── -->
     <div v-if="!slideMode" class="animate-fade-in">
-      <!-- Tags row -->
-      <div v-if="tags.length" class="mb-8 flex flex-wrap gap-2">
-        <NuxtLink v-for="tag in tags" :key="tag.id" :to="`/poems?tag=${tag.slug}`"
-          class="rounded-full border border-edge bg-surface-raised/90 px-3 py-1 text-xs text-content-secondary shadow-sm transition-colors hover:border-brand/50 hover:text-brand">
-          {{ labelForTag(tag.slug, tag.name) }}
-        </NuxtLink>
-        <span v-if="langLabel" class="rounded-full border border-edge bg-surface-raised/90 px-3 py-1 text-xs text-content-secondary">
-          {{ langLabel }}
-        </span>
-      </div>
-
-      <!-- Title -->
-      <PoemTitle :title="poem.title" :slug="poem.slug" variant="pdp" />
-
-      <!-- Author -->
-      <NuxtLink v-if="author" :to="`/authors/${author.slug}`"
-        class="inline-flex items-center gap-3 text-base text-content-secondary transition-colors hover:text-brand">
-        <img :src="authorAvatar" alt="" loading="lazy"
-          class="h-12 w-12 shrink-0 rounded-full object-cover ring-2 ring-edge" />
-        <span>— {{ author.name }}</span>
-      </NuxtLink>
-
-      <p v-if="writtenContextLine" class="mt-3 text-sm text-content-muted">
-        {{ writtenContextLine }}
-      </p>
-
-      <!-- Ornament divider -->
-      <div class="my-10 flex items-center gap-4">
-        <div class="h-px flex-1 bg-edge" />
-        <span class="text-xl text-content-soft">✦</span>
-        <div class="h-px flex-1 bg-edge" />
-      </div>
-
-      <!-- Poem body -->
-      <div class="poem-body w-full">
-        <p v-for="(stanza, i) in stanzas" :key="i" :style="poemBodyStyle">{{ stanza }}</p>
-      </div>
+      <PoemReader :poem="poem" variant="pdp" :show-tags="true" />
 
       <!-- Actions bar -->
       <div class="mt-14 flex w-full flex-wrap items-center gap-3 border-t border-edge pt-8">

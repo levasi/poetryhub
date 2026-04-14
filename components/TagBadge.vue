@@ -38,7 +38,7 @@ const useRouterLink = computed(() => {
         : 'cursor-default',
       active
         ? 'bg-amber-100 text-amber-900 ring-1 ring-amber-400/60'
-        : 'border border-ink-200 bg-white text-ink-700 shadow-sm',
+        : 'border border-edge-subtle bg-surface-raised text-content-secondary shadow-ds-card',
     ]"
     :style="color && !active ? `background-color:${color}22;color:${color};border-color:${color}55` : ''"
     @click="$emit('click')"

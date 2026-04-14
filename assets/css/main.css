@@ -125,6 +125,36 @@
     @apply mx-auto mt-8 max-w-2xl text-base font-normal leading-relaxed text-content-secondary md:text-lg md:leading-relaxed;
   }
 
+  /**
+   * Home poem lists — CSS multi-column “masonry”.
+   * Cards must not use `height: 100%` / `flex-1` (see PoetryCard `layout="masonry"`).
+   * Child wrappers use `inline-block` + `width:100%` so WebKit fragments columns reliably.
+   */
+  .home-poem-masonry {
+    width: 100%;
+    column-count: 1;
+    column-gap: 1rem;
+    column-fill: balance;
+  }
+  @media (min-width: 640px) {
+    .home-poem-masonry {
+      column-count: 2;
+    }
+  }
+  @media (min-width: 1024px) {
+    .home-poem-masonry {
+      column-count: 3;
+    }
+  }
+  .home-poem-masonry-wrap {
+    display: inline-block;
+    width: 100%;
+    margin-bottom: 1rem;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    -webkit-column-break-inside: avoid;
+  }
+
   .ds-masthead-rule {
     @apply mx-auto mt-10 h-px max-w-xs bg-gradient-to-r from-transparent via-brand/45 to-transparent;
   }

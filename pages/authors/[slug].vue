@@ -153,7 +153,7 @@ const avatarSrc = computed(() =>
 
     <!-- Poems -->
     <div v-if="poems.length" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      <PoetryCard v-for="poem in poems" :key="poem.id" :poem="poem" />
+      <PoetryCard v-for="poem in poems" :key="poem.id" :poem="poem" :quick-read-list="poems" />
     </div>
 
     <div v-else class="py-12 text-center text-content-secondary">

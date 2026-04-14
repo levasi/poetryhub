@@ -21,6 +21,8 @@
     "ink": "Cerneală",
     "sepia": "Sepia",
     "qi": "Qi",
+    "historic": "Istoric",
+    "parchment": "Pergament",
     "hint": "Temă de culoare",
     "aria": "Alege tema de culoare"
   },
@@ -153,8 +155,6 @@
     "explorePoems": "Explorează poezii",
     "randomPoem": "Poezie aleatoare",
     "heroBannerTitle": "Întâmplare și vers",
-    "heroDiceHint": "Dă zarul pentru un autor și o poezie din opera sa.",
-    "rollDice": "Dă zarul — autor și poezie aleatoare",
     "heroPoemCount": "{n} poezii",
     "poemOfDay": "Poezia zilei",
     "readFull": "Citește întreaga poezie",
@@ -163,11 +163,31 @@
     "seeAll": "Vezi tot →",
     "themes": "Teme",
     "recentPoems": "Poezii recente",
+    "tabForYou": "Pentru tine",
+    "tabFeatured": "Recomandate",
+    "feedTabsAria": "Flux acasă",
+    "sidebarNavAria": "Navigare site",
+    "leftRailAria": "Navigare și autori",
+    "navHome": "Acasă",
+    "sidebarLikedHeading": "Poezii apreciate",
+    "sidebarLikedEmpty": "Salvează poezii cu inima de pe carduri.",
+    "sidebarLikedAll": "Toate favoritele →",
+    "sidebarLikedMissing": "Unele favorite nu mai sunt în bibliotecă.",
+    "sidebarAuthorsHeading": "Autori",
+    "staffPicksTitle": "Recente",
+    "topicsTitle": "Teme recomandate",
+    "featuredEmpty": "Încă nu există poezii recomandate. Marchează poezii ca recomandate în panoul admin.",
+    "loadingMore": "Se încarcă mai multe poezii",
+    "continueReading": "Citește",
+    "openSidebar": "Deschide navigarea și autorii",
+    "closeSidebar": "Închide panoul lateral",
     "allPoemsLink": "Toate poeziile →",
     "emptyLibrary": "Biblioteca este goală.",
     "emptyHintBefore": "Adaugă poezii din ",
     "emptyHintLink": "panoul admin",
-    "emptyHintAfter": " sau rulează importul."
+    "emptyHintAfter": " sau rulează importul.",
+    "backToFeed": "Înapoi la fluxul principal",
+    "viewFullProfile": "Pagina completă a autorului →"
   },
   "poems": {
     "title": "Poezii",
@@ -421,6 +441,10 @@
     "openQuickRead": "Deschide citirea rapidă",
     "quickReadClose": "Închide previzualizarea",
     "readFullPoem": "Deschide poezia completă",
+    "quickReadPrev": "Anterior",
+    "quickReadNext": "Următor",
+    "quickReadPrevAria": "Poezia anterioară din listă",
+    "quickReadNextAria": "Poezia următoare din listă",
     "readMore": "Citește mai mult"
   },
   "lang": {
@@ -513,7 +537,7 @@
       "title": "Aspect",
       "lead": "Ajustează layout-ul, tipografia și prezentarea pentru site-ul public. Patru scheme de culoare se aplică pe site-ul public; vizitatorii le schimbă din subsol.",
       "schemesTitle": "Scheme de culoare pentru site",
-      "schemesBody": "Hârtie este tema light implicită. Cerneală este o temă întunecată pentru citit. Sepia este un ton cald de pergament. Qi este o paletă editorială pe fildeș cald, inspirată de layout-uri de revistă. Alegerea se salvează doar în acest browser."
+      "schemesBody": "Pergament este tema implicită. Hârtie este o temă light curată. Cerneală este o temă întunecată pentru citit. Sepia este un ton cald. Qi este o paletă editorială pe fildeș cald, inspirată de layout-uri de revistă. Alegerea se salvează doar în acest browser."
     },
     "stats": {
       "totalPoems": "Total poezii",
