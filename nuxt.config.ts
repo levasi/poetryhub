@@ -294,6 +294,7 @@ export default defineNuxtConfig({
   routeRules: {
     '/_nuxt/**': { headers: { 'cache-control': 'public, max-age=31536000, immutable' } },
     '/favicon.svg': { headers: { 'cache-control': 'public, max-age=86400' } },
+    '/admin/aspect': { redirect: { to: '/admin/setari', statusCode: 301 } },
   },
 
   // App-level meta

@@ -39,6 +39,8 @@ const initials = computed(() => {
 })
 
 const isAdmin = computed(() => user.value?.role === 'admin')
+
+const { showLanguageSwitch } = useSiteSettings()
 </script>
 
 <template>
@@ -79,7 +81,7 @@ const isAdmin = computed(() => user.value?.role === 'admin')
 
       <!-- Desktop actions -->
       <div class="hidden items-center gap-3 md:flex">
-        <LanguageSwitch />
+        <LanguageSwitch v-if="showLanguageSwitch" />
 
         <NuxtLink
           to="/favorites"
@@ -188,7 +190,7 @@ const isAdmin = computed(() => user.value?.role === 'admin')
 
       <!-- Mobile: language + menu -->
       <div class="flex items-center gap-2 md:hidden">
-        <LanguageSwitch />
+        <LanguageSwitch v-if="showLanguageSwitch" />
         <button
           type="button"
           class="min-h-[2.75rem] min-w-[2.75rem] rounded-ds-md border border-edge-subtle bg-surface-raised p-2 text-content-muted"

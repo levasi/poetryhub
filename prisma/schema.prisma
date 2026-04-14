@@ -167,6 +167,15 @@ model AdminUser {
   updatedAt    DateTime @updatedAt
 }
 
+// ─── Public site settings (singleton) ─────────────────────────────────────────
+
+model SiteSettings {
+  id                 String   @id @default("singleton")
+  /// When true, the header language switch (RO/EN) is shown on the public site.
+  showLanguageSwitch Boolean  @default(false)
+  updatedAt          DateTime @updatedAt
+}
+
 // ─── Site carousel defaults (Instagram generator) ───────────────────────────
 
 /// Single row: default theme & typography for `/carousel-generator` (editable only by configured admin email).

@@ -80,7 +80,7 @@ poetryhub/
 | `/admin/authors/new` | `pages/admin/authors/new.vue` | Create author |
 | `/admin/authors/[slug]` | `pages/admin/authors/[slug].vue` | Edit author |
 | `/admin/import` | `pages/admin/import.vue` | Bulk import (PoetryDB, JSON, presets) |
-| `/admin/aspect` | `pages/admin/aspect.vue` | Theme/appearance settings |
+| `/admin/setari` | `pages/admin/setari.vue` | Theme/appearance settings |
 
 ---
 

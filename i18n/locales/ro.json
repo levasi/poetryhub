@@ -174,6 +174,7 @@
     "topicsTitle": "Teme recomandate",
     "featuredEmpty": "Încă nu există poezii cu aprecieri. Apasă inima pe carduri pentru favorite — apar aici în ordinea popularității.",
     "loadingMore": "Se încarcă mai multe poezii",
+    "loadMoreForYou": "Încarcă mai multe",
     "continueReading": "Citește",
     "openSidebar": "Deschide navigarea și autorii",
     "closeSidebar": "Închide panoul lateral",
@@ -495,7 +496,7 @@
     "adminEditPoem": "Editare: {title} — Admin",
     "adminEditAuthor": "Editare: {name} — Admin",
     "adminImport": "Import poezii — Admin",
-    "adminAspect": "Aspect — Admin",
+    "adminSettings": "Setări — Admin",
     "adminInstaPost": "Post Insta — Admin"
   },
   "admin": {
@@ -507,7 +508,7 @@
       "dashboard": "Tablou de bord",
       "poems": "Poezii",
       "authors": "Autori",
-      "aspect": "Aspect",
+      "settings": "Setări",
       "instaPost": "Post Insta",
       "users": "Utilizatori",
       "import": "Import"
@@ -523,9 +524,14 @@
       "saveError": "Nu s-a putut salva. Încearcă din nou.",
       "ownerOnly": "Doar proprietarul site-ului poate schimba mesajul de pe ultimul slide. Celelalte setări vizuale pot fi modificate în continuare pe pagina publică Post Insta."
     },
-    "aspect": {
-      "title": "Aspect",
+    "settings": {
+      "title": "Setări",
       "lead": "Ajustează layout-ul, tipografia și prezentarea pentru site-ul public. Patru scheme de culoare se aplică pe site-ul public; vizitatorii le schimbă din subsol.",
+      "languageSwitchTitle": "Comutator limbă (RO / EN)",
+      "languageSwitchBody": "Când este activat, vizitatorii văd controlul de limbă în antet și pe paginile de autentificare / înregistrare. Când este dezactivat, interfața rămâne pe limba implicită, fără comutator.",
+      "languageSwitchLabel": "Afișează comutatorul de limbă pe site-ul public",
+      "languageSwitchSaving": "Se salvează…",
+      "languageSwitchSaveError": "Nu s-a putut salva. Încearcă din nou.",
       "schemesTitle": "Scheme de culoare pentru site",
       "schemesBody": "Pergament este tema implicită. Hârtie este o temă light curată. Cerneală este o temă întunecată pentru citit. Sepia este un ton cald. Qi este o paletă editorială pe fildeș cald, inspirată de layout-uri de revistă. Alegerea se salvează doar în acest browser."
     },

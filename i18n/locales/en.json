@@ -174,6 +174,7 @@
     "topicsTitle": "Recommended topics",
     "featuredEmpty": "No liked poems yet. Tap the heart on poem cards to save favorites — they count here.",
     "loadingMore": "Loading more poems",
+    "loadMoreForYou": "Load more",
     "continueReading": "Read on",
     "openSidebar": "Open navigation and authors",
     "closeSidebar": "Close sidebar",
@@ -495,7 +496,7 @@
     "adminEditPoem": "Edit: {title} — Admin",
     "adminEditAuthor": "Edit: {name} — Admin",
     "adminImport": "Import Poems — Admin",
-    "adminAspect": "Aspect — Admin",
+    "adminSettings": "Settings — Admin",
     "adminInstaPost": "Insta post — Admin"
   },
   "admin": {
@@ -507,7 +508,7 @@
       "dashboard": "Dashboard",
       "poems": "Poems",
       "authors": "Authors",
-      "aspect": "Aspect",
+      "settings": "Settings",
       "instaPost": "Insta post",
       "users": "Users",
       "import": "Import"
@@ -523,9 +524,14 @@
       "saveError": "Could not save. Try again.",
       "ownerOnly": "Only the site owner can change the last slide message. Other carousel style defaults can still be changed on the public Insta post page."
     },
-    "aspect": {
-      "title": "Aspect",
+    "settings": {
+      "title": "Settings",
       "lead": "Tune layout, typography, and presentation settings for the public site. Four color schemes apply to the public site; visitors switch them from the footer.",
+      "languageSwitchTitle": "Language switch (RO / EN)",
+      "languageSwitchBody": "When enabled, visitors see the language control in the site header and on login/sign-up. When disabled, the UI stays on the default locale with no switch.",
+      "languageSwitchLabel": "Show language switch on the public site",
+      "languageSwitchSaving": "Saving…",
+      "languageSwitchSaveError": "Could not save. Try again.",
       "schemesTitle": "Site color schemes",
       "schemesBody": "Parchment is the default theme. Paper is a clean light theme. Ink is a dark reading theme. Sepia is warm. Qi is a warm ivory editorial palette inspired by magazine layouts. The choice is saved in this browser only."
     },

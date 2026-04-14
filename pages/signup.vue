@@ -7,6 +7,7 @@ useSeoMeta({ title: computed(() => t('seo.signupTitle')) })
 
 const { register, loading, isLoggedIn, loginWithGoogle } = useAuth()
 const route = useRoute()
+const { showLanguageSwitch } = useSiteSettings()
 
 const { data: googleConfig } = await useFetch<{ enabled: boolean }>('/api/auth/google-config', {
   key: 'auth-google-config',
@@ -62,7 +63,7 @@ async function submit() {
 <template>
   <div class="relative flex min-h-screen items-center justify-center bg-surface-base px-4">
     <div class="absolute right-4 top-4 z-10">
-      <LanguageSwitch />
+      <LanguageSwitch v-if="showLanguageSwitch" />
     </div>
 
     <div class="w-full max-w-md">

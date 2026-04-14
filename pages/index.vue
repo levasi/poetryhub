@@ -132,9 +132,6 @@ watch(
   { immediate: true },
 )
 
-/** Matches IntersectionObserver rootMargin below — if sentinel still lies in this band after a load, IO may not fire again. */
-const FOR_YOU_IO_MARGIN_PX = 280
-
 async function loadMoreForYou() {
   if (forYouLoadingMore.value) return
   if (forYouPage.value >= forYouMeta.value.totalPages) return
@@ -157,73 +154,13 @@ async function loadMoreForYou() {
   } finally {
     forYouLoadingMore.value = false
   }
-  // If the sentinel stayed in view, IntersectionObserver often does not fire again (no threshold “crossing”).
-  await nextTick()
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => maybeLoadMoreIfSentinelStillVisible())
-  })
-}
-
-function maybeLoadMoreIfSentinelStillVisible() {
-  if (forYouLoadingMore.value) return
-  if (forYouPage.value >= forYouMeta.value.totalPages) return
-  if (feedTab.value !== 'foryou') return
-  if (authorSlug.value) return
-  const el = forYouSentinel.value
-  if (!el) return
-  const vh = typeof window !== 'undefined' ? window.innerHeight : 0
-  const rect = el.getBoundingClientRect()
-  // v-show hides the For you panel — rect is all zeros; do not treat as “in view”.
-  if (rect.width === 0 && rect.height === 0) return
-  const extendedBottom = vh + FOR_YOU_IO_MARGIN_PX
-  if (rect.top < extendedBottom && rect.bottom > -FOR_YOU_IO_MARGIN_PX) {
-    void loadMoreForYou()
-  }
 }
 
 const feedTab = ref<'foryou' | 'featured'>('foryou')
 
-const forYouSentinel = ref<HTMLElement | null>(null)
-let forYouIo: IntersectionObserver | null = null
-
-function setupForYouObserver() {
-  forYouIo?.disconnect()
-  forYouIo = null
-  const el = forYouSentinel.value
-  if (!el) return
-  forYouIo = new IntersectionObserver(
-    (entries) => {
-      if (!entries[0]?.isIntersecting) return
-      if (feedTab.value !== 'foryou') return
-      if (authorSlug.value) return
-      if (forYouLoadingMore.value) return
-      void loadMoreForYou()
-    },
-    { root: null, rootMargin: `${FOR_YOU_IO_MARGIN_PX}px`, threshold: 0 },
-  )
-  forYouIo.observe(el)
-}
-
-watch([forYouSentinel, feedTab, authorSlug], () => {
-  nextTick(() => setupForYouObserver())
-})
-
-/** First batch: ensure observer attaches if ref/watch ordering misses a frame. */
-watch(
-  () => forYouPoems.value.length,
-  (n, prev) => {
-    if (n > 0 && prev === 0) nextTick(() => setupForYouObserver())
-  },
+const canLoadMoreForYou = computed(
+  () => forYouPage.value < forYouMeta.value.totalPages && !authorSlug.value,
 )
-
-onMounted(() => {
-  nextTick(() => setupForYouObserver())
-})
-
-onUnmounted(() => {
-  forYouIo?.disconnect()
-  forYouIo = null
-})
 
 const featured = computed(() => home.value?.featured ?? [])
 const recent = computed(() => home.value?.recent ?? [])
@@ -415,11 +352,16 @@ function formatDate(iso: string) {
                         <PoetryCard :poem="poem" layout="masonry" :quick-read-list="forYouPoems" />
                       </div>
                     </div>
-                    <div ref="forYouSentinel" class="pointer-events-none h-px w-full shrink-0" aria-hidden="true" />
-                    <div v-if="forYouLoadingMore" class="flex justify-center py-8" role="status" aria-live="polite">
-                      <span class="h-8 w-8 animate-spin rounded-full border-2 border-edge-subtle border-t-brand"
-                        aria-hidden="true" />
-                      <span class="sr-only">{{ t('home.loadingMore') }}</span>
+                    <div v-if="canLoadMoreForYou" class="mt-10 flex justify-center">
+                      <button type="button"
+                        class="inline-flex min-w-[12rem] items-center justify-center gap-2 rounded-full border border-edge bg-surface-raised px-6 py-2.5 text-sm font-medium text-content-secondary transition hover:border-edge-strong hover:text-content disabled:cursor-not-allowed disabled:opacity-60"
+                        :disabled="forYouLoadingMore" :aria-busy="forYouLoadingMore"
+                        @click="loadMoreForYou">
+                        <span v-if="forYouLoadingMore"
+                          class="h-4 w-4 animate-spin rounded-full border-2 border-edge-subtle border-t-brand"
+                          aria-hidden="true" />
+                        {{ forYouLoadingMore ? t('home.loadingMore') : t('home.loadMoreForYou') }}
+                      </button>
                     </div>
                   </template>
                 </div>
