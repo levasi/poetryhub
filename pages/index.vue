@@ -21,8 +21,11 @@ const authorSlug = computed(() => {
 })
 
 const authorFeedPage = ref(1)
+/** When viewing ?author= — "works" (Lucrări) vs biography tab. */
+const authorTab = ref<'works' | 'bio'>('works')
 watch(authorSlug, () => {
   authorFeedPage.value = 1
+  authorTab.value = 'works'
 })
 
 interface AuthorPagePayload {
@@ -36,6 +39,7 @@ interface AuthorPagePayload {
     birthYear: number | null
     deathYear: number | null
   }
+  works: { title: string; slug: string }[]
   poems: {
     data: Poem[]
     meta: { page: number; limit: number; total: number; totalPages: number }
@@ -72,6 +76,13 @@ const authorPoemsForCards = computed((): Poem[] => {
 
 function clearHomeAuthor() {
   router.push({ path: '/', query: {} })
+}
+
+function authorYearsLabel(a: AuthorPagePayload['author'] | null | undefined) {
+  if (!a) return ''
+  if (a.birthYear && a.deathYear) return t('authors.lifeSpan', { birth: a.birthYear, death: a.deathYear })
+  if (a.birthYear) return t('authors.born', { year: a.birthYear })
+  return ''
 }
 
 useSeoMeta({
@@ -256,21 +267,8 @@ function formatDate(iso: string) {
         <!-- Center feed -->
         <main class="order-1 min-w-0 xl:order-2 xl:min-w-0">
           <div class="mx-auto w-full max-w-none">
-            <!-- Author poems (from left column selection) -->
+            <!-- Author poems (from left column selection) — profile above tabs; sticky Lucrări | Biografie -->
             <template v-if="authorSlug">
-              <div
-                class="sticky z-10 -mx-1 mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-edge-subtle bg-surface-page/90 px-1 pb-3 pt-1 backdrop-blur-md top-[3.25rem] md:top-16">
-                <button type="button"
-                  class="inline-flex items-center gap-1.5 text-sm font-medium text-content-secondary transition hover:text-content"
-                  @click="clearHomeAuthor">
-                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
-                    aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-                  </svg>
-                  {{ t('home.backToFeed') }}
-                </button>
-              </div>
-
               <div v-if="authorPending" class="flex min-h-[16rem] items-center justify-center py-16">
                 <span class="h-9 w-9 animate-spin rounded-full border-2 border-edge-subtle border-t-brand"
                   aria-hidden="true" />
@@ -285,6 +283,16 @@ function formatDate(iso: string) {
               </div>
 
               <template v-else-if="authorPage">
+                <button type="button"
+                  class="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-content-secondary transition hover:text-content"
+                  @click="clearHomeAuthor">
+                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
+                    aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
+                  {{ t('home.backToFeed') }}
+                </button>
+
                 <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
                   <img :src="authorAvatarUrl(authorPage.author)" :alt="authorPage.author.name" width="80" height="80"
                     loading="lazy" class="h-20 w-20 shrink-0 rounded-full object-cover ring-2 ring-gold-300/60">
@@ -292,7 +300,12 @@ function formatDate(iso: string) {
                     <h2 class="font-serif text-2xl font-bold text-content sm:text-3xl">
                       {{ authorPage.author.name }}
                     </h2>
-                    <p class="mt-1 text-sm text-content-muted">
+                    <p class="mt-1 text-sm text-content-secondary">
+                      <span v-if="authorPage.author.nationality">{{ authorPage.author.nationality }}</span>
+                      <span v-if="authorPage.author.nationality && authorYearsLabel(authorPage.author)"> · </span>
+                      <span>{{ authorYearsLabel(authorPage.author) }}</span>
+                    </p>
+                    <p class="mt-2 text-sm text-content-muted">
                       {{ t('authors.poemCount', authorPage.poems.meta.total) }}
                     </p>
                     <NuxtLink :to="`/authors/${authorPage.author.slug}`"
@@ -302,19 +315,53 @@ function formatDate(iso: string) {
                   </div>
                 </div>
 
-                <div v-if="authorPoemsForCards.length" class="home-poem-masonry" role="list">
-                  <div v-for="poem in authorPoemsForCards" :key="poem.id" class="home-poem-masonry-wrap"
-                    role="listitem">
-                    <PoetryCard :poem="poem" layout="masonry" :quick-read-list="authorPoemsForCards" />
+                <div
+                  class="sticky z-10 -mx-1 mb-8 flex flex-wrap items-end gap-4 border-b border-edge-subtle bg-surface-page/90 px-1 pb-0 pt-1 backdrop-blur-md top-[3.25rem] md:top-16">
+                  <div class="flex gap-8" role="tablist" :aria-label="t('home.authorTabsAria')">
+                    <button type="button" role="tab" :aria-selected="authorTab === 'works'"
+                      class="relative pb-3 text-sm transition-colors" :class="authorTab === 'works'
+                        ? 'font-medium text-content after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-content'
+                        : 'text-content-muted hover:text-content-secondary'
+                        " @click="authorTab = 'works'">
+                      {{ t('home.authorTabWorks') }}
+                    </button>
+                    <button type="button" role="tab" :aria-selected="authorTab === 'bio'"
+                      class="relative pb-3 text-sm transition-colors" :class="authorTab === 'bio'
+                        ? 'font-medium text-content after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-content'
+                        : 'text-content-muted hover:text-content-secondary'
+                        " @click="authorTab = 'bio'">
+                      {{ t('authors.biography') }}
+                    </button>
                   </div>
                 </div>
-                <p v-else class="py-12 text-center text-content-muted">
-                  {{ t('authors.noPoemsYet') }}
-                </p>
 
-                <div v-if="(authorPage.poems.meta.totalPages ?? 1) > 1" class="mt-10">
-                  <PaginationNav :page="authorFeedPage" :total-pages="authorPage.poems.meta.totalPages"
-                    @update:page="(p) => { authorFeedPage = p }" />
+                <!-- Lucrări / Works: poem grid -->
+                <div v-show="authorTab === 'works'" role="tabpanel">
+                  <div v-if="authorPoemsForCards.length" class="home-poem-masonry" role="list">
+                    <div v-for="poem in authorPoemsForCards" :key="poem.id" class="home-poem-masonry-wrap"
+                      role="listitem">
+                      <PoetryCard :poem="poem" layout="masonry" :quick-read-list="authorPoemsForCards" />
+                    </div>
+                  </div>
+                  <p v-else class="py-12 text-center text-content-muted">
+                    {{ t('authors.noPoemsYet') }}
+                  </p>
+
+                  <div v-if="(authorPage.poems.meta.totalPages ?? 1) > 1" class="mt-10">
+                    <PaginationNav :page="authorFeedPage" :total-pages="authorPage.poems.meta.totalPages"
+                      @update:page="(p) => { authorFeedPage = p }" />
+                  </div>
+                </div>
+
+                <!-- Biography -->
+                <div v-show="authorTab === 'bio'" role="tabpanel">
+                  <section class="pt-2">
+                    <p v-if="authorPage.author.bio"
+                      class="max-w-3xl whitespace-pre-wrap text-base leading-relaxed text-content-secondary">
+                      {{ authorPage.author.bio }}
+                    </p>
+                    <p v-else class="max-w-3xl text-sm italic text-content-muted">{{ t('authors.bioUnavailable') }}</p>
+                  </section>
                 </div>
               </template>
             </template>
@@ -417,7 +464,7 @@ function formatDate(iso: string) {
                   {{ t('home.emptyLibrary') }}
                 </p>
               </div>
-              <NuxtLink v-if="recent.length" to="/poems"
+              <NuxtLink v-if="recent.length" to="/"
                 class="mt-3 inline-block text-sm font-medium text-content-muted hover:text-brand">
                 {{ t('home.allPoemsLink') }}
               </NuxtLink>
@@ -429,7 +476,7 @@ function formatDate(iso: string) {
               </h2>
               <div class="flex flex-wrap gap-2">
                 <NuxtLink v-for="tag in themeTags.slice(0, 14)" :key="tag.id"
-                  :to="`/poems?tag=${encodeURIComponent(tag.slug)}`"
+                  :to="`/?tag=${encodeURIComponent(tag.slug)}`"
                   class="rounded-full border border-edge-subtle bg-surface-subtle/80 px-3 py-1.5 text-[13px] text-content-secondary transition hover:border-edge hover:bg-surface-raised hover:text-content">
                   {{ tag.name }}
                 </NuxtLink>

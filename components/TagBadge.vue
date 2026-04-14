@@ -30,7 +30,7 @@ const useRouterLink = computed(() => {
 <template>
   <component
     :is="useRouterLink ? 'NuxtLink' : 'span'"
-    :to="useRouterLink ? `/poems?tag=${slug}` : undefined"
+    :to="useRouterLink ? `/?tag=${slug}` : undefined"
     class="inline-flex items-center rounded-full px-3 py-0.5 text-xs font-medium tracking-wide transition-colors"
     :class="[
       clickable || useRouterLink

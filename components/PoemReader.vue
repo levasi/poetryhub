@@ -94,7 +94,7 @@ const poemIdForTitle = computed(() =>
 <template>
   <div class="poem-reader" :class="wrapperClass">
     <div v-if="showTagsResolved && tags.length" class="mb-8 flex flex-wrap gap-2">
-      <NuxtLink v-for="tag in tags" :key="tag.id" :to="`/poems?tag=${tag.slug}`"
+      <NuxtLink v-for="tag in tags" :key="tag.id" :to="`/?tag=${tag.slug}`"
         class="rounded-full border border-edge bg-surface-raised/90 px-3 py-1 text-xs text-content-secondary shadow-sm transition-colors hover:border-brand/50 hover:text-brand">
         {{ labelForTag(tag.slug, tag.name) }}
       </NuxtLink>

@@ -14,10 +14,11 @@ export const poemListInclude = {
 
 export async function getHomePagePayload() {
   const [featured, recent, moodTags, themeTags] = await Promise.all([
+    /** “Cele mai apreciate”: poems with at least one favorite (♡), most liked first. */
     prisma.poem.findMany({
-      where: { language: 'ro', featured: true },
-      take: 3,
-      orderBy: { publishedAt: 'desc' },
+      where: { language: 'ro', favorites: { some: {} } },
+      take: 36,
+      orderBy: [{ favorites: { _count: 'desc' } }, { publishedAt: 'desc' }],
       include: poemListInclude,
     }),
     prisma.poem.findMany({

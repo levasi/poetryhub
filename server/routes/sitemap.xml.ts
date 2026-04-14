@@ -26,10 +26,7 @@ export default defineEventHandler(async (event) => {
 
   const staticRoutes: UrlEntry[] = [
     { loc: '/', priority: '1.0', changefreq: 'daily' },
-    { loc: '/poems', priority: '0.9', changefreq: 'daily' },
-    { loc: '/authors', priority: '0.8', changefreq: 'weekly' },
     { loc: '/search', priority: '0.6', changefreq: 'weekly' },
-    { loc: '/daily', priority: '0.7', changefreq: 'daily' },
   ]
 
   const poemUrls: UrlEntry[] = poems.map((p) => ({

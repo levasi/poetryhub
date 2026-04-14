@@ -1,9 +1,6 @@
 {
   "nav": {
-    "poems": "Poems",
-    "authors": "Authors",
     "search": "Search",
-    "daily": "Daily",
     "favorites": "Favorites",
     "signIn": "Sign in",
     "signUp": "Sign up",
@@ -142,9 +139,6 @@
   },
   "footer": {
     "quote": "\"Poetry is the spontaneous overflow of powerful feelings\" — Wordsworth",
-    "poems": "Poems",
-    "authors": "Authors",
-    "dailyPoem": "Daily Poem",
     "admin": "Admin",
     "copyright": "© {year} PoetryHub"
   },
@@ -166,6 +160,8 @@
     "tabForYou": "For you",
     "tabFeatured": "Featured",
     "feedTabsAria": "Home feed",
+    "authorTabsAria": "Author",
+    "authorTabWorks": "Works",
     "sidebarNavAria": "Site navigation",
     "leftRailAria": "Navigation and authors",
     "navHome": "Home",
@@ -176,7 +172,7 @@
     "sidebarAuthorsHeading": "Authors",
     "staffPicksTitle": "Latest",
     "topicsTitle": "Recommended topics",
-    "featuredEmpty": "No featured poems yet. Mark poems as featured in the admin panel.",
+    "featuredEmpty": "No liked poems yet. Tap the heart on poem cards to save favorites — they count here.",
     "loadingMore": "Loading more poems",
     "continueReading": "Read on",
     "openSidebar": "Open navigation and authors",
@@ -245,11 +241,6 @@
     "manyResults": "{count} results for \"{q}\"",
     "prompt": "Type to search the poetry collection.",
     "error": "Search failed"
-  },
-  "daily": {
-    "badge": "Poem of the Day — {date}",
-    "empty": "No poem available today.",
-    "browse": "Browse the collection"
   },
   "favorites": {
     "title": "Favorites",
@@ -488,7 +479,6 @@
     "poemsTitle": "Poems — PoetryHub",
     "authorsTitle": "Authors — PoetryHub",
     "searchTitle": "Search — PoetryHub",
-    "dailyTitle": "Daily Poem — PoetryHub",
     "favoritesTitle": "Favorites — PoetryHub",
     "loginTitle": "Sign In — PoetryHub",
     "signupTitle": "Sign Up — PoetryHub",

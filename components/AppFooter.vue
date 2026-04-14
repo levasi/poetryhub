@@ -16,9 +16,7 @@ const year = new Date().getFullYear()
           class="flex shrink-0 flex-wrap justify-center gap-x-8 gap-y-2 text-ui-sm font-medium text-content-soft"
           aria-label="Footer"
         >
-          <NuxtLink to="/poems" class="ds-link hover:text-content-secondary">{{ t('footer.poems') }}</NuxtLink>
-          <NuxtLink to="/authors" class="ds-link hover:text-content-secondary">{{ t('footer.authors') }}</NuxtLink>
-          <NuxtLink to="/daily" class="ds-link hover:text-content-secondary">{{ t('footer.dailyPoem') }}</NuxtLink>
+          <NuxtLink to="/" class="ds-link hover:text-content-secondary">{{ t('home.navHome') }}</NuxtLink>
           <NuxtLink to="/admin" class="ds-link hover:text-content-secondary">{{ t('footer.admin') }}</NuxtLink>
         </nav>
       </div>

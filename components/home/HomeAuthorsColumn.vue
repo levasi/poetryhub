@@ -81,9 +81,5 @@ const authors = computed(() => data.value?.data ?? [])
       </p>
     </div>
 
-    <NuxtLink to="/authors"
-      class="mt-3 block px-1 text-sm font-medium text-content-muted transition-colors hover:text-brand">
-      {{ t('nav.allAuthors') }}
-    </NuxtLink>
   </div>
 </template>

@@ -65,16 +65,16 @@ const related = computed(() => relatedRes.value?.data ?? [])
     <div v-if="poem">
       <!-- Back link -->
       <NuxtLink
-        to="/poems"
+        to="/"
         class="mb-8 inline-flex items-center gap-1 text-sm text-content-secondary hover:text-content"
       >
         <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
         </svg>
-        {{ t('poem.back') }}
+        {{ t('home.navHome') }}
       </NuxtLink>
 
-      <!-- Prev / next in catalog order (same as /poems list) — above the poem -->
+      <!-- Prev / next in catalog order — above the poem -->
       <nav
         v-if="poem.navigation"
         class="mb-10 flex flex-col gap-3 border-b border-edge/80 pb-8 sm:flex-row sm:items-stretch sm:justify-between"

@@ -1,9 +1,6 @@
 {
   "nav": {
-    "poems": "Poezii",
-    "authors": "Autori",
     "search": "Căutare",
-    "daily": "Zilnic",
     "favorites": "Favorite",
     "signIn": "Autentificare",
     "signUp": "Înregistrare",
@@ -142,9 +139,6 @@
   },
   "footer": {
     "quote": "„Poezia este debordarea spontană a unor sentimente puternice” — Wordsworth",
-    "poems": "Poezii",
-    "authors": "Autori",
-    "dailyPoem": "Poezia zilei",
     "admin": "Admin",
     "copyright": "© {year} PoetryHub"
   },
@@ -159,16 +153,18 @@
     "poemOfDay": "Poezia zilei",
     "readFull": "Citește întreaga poezie",
     "browseByMood": "După stare",
-    "featured": "Recomandate",
+    "featured": "Cele mai apreciate",
     "seeAll": "Vezi tot →",
     "themes": "Teme",
     "recentPoems": "Poezii recente",
     "tabForYou": "Pentru tine",
-    "tabFeatured": "Recomandate",
-    "feedTabsAria": "Flux acasă",
+    "tabFeatured": "Cele mai apreciate",
+    "feedTabsAria": "Flux principal",
+    "authorTabsAria": "Autor",
+    "authorTabWorks": "Lucrări",
     "sidebarNavAria": "Navigare site",
     "leftRailAria": "Navigare și autori",
-    "navHome": "Acasă",
+    "navHome": "Citește",
     "sidebarLikedHeading": "Poezii apreciate",
     "sidebarLikedEmpty": "Salvează poezii cu inima de pe carduri.",
     "sidebarLikedAll": "Toate favoritele →",
@@ -176,7 +172,7 @@
     "sidebarAuthorsHeading": "Autori",
     "staffPicksTitle": "Recente",
     "topicsTitle": "Teme recomandate",
-    "featuredEmpty": "Încă nu există poezii recomandate. Marchează poezii ca recomandate în panoul admin.",
+    "featuredEmpty": "Încă nu există poezii cu aprecieri. Apasă inima pe carduri pentru favorite — apar aici în ordinea popularității.",
     "loadingMore": "Se încarcă mai multe poezii",
     "continueReading": "Citește",
     "openSidebar": "Deschide navigarea și autorii",
@@ -245,11 +241,6 @@
     "manyResults": "{count} rezultate pentru „{q}”",
     "prompt": "Scrie pentru a căuta în colecție.",
     "error": "Căutarea a eșuat"
-  },
-  "daily": {
-    "badge": "Poezia zilei — {date}",
-    "empty": "Nu există o poezie disponibilă astăzi.",
-    "browse": "Răsfoiește colecția"
   },
   "favorites": {
     "title": "Favorite",
@@ -488,7 +479,6 @@
     "poemsTitle": "Poezii — PoetryHub",
     "authorsTitle": "Autori — PoetryHub",
     "searchTitle": "Căutare — PoetryHub",
-    "dailyTitle": "Poezia zilei — PoetryHub",
     "favoritesTitle": "Favorite — PoetryHub",
     "loginTitle": "Autentificare — PoetryHub",
     "signupTitle": "Înregistrare — PoetryHub",

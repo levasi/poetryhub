@@ -103,7 +103,7 @@ async function runEnrichBatch() {
       </NuxtLink>
 
       <NuxtLink
-        to="/poems"
+        to="/"
         target="_blank"
         class="flex items-center gap-4 rounded-2xl border border-ink-200 bg-white p-5 shadow-sm transition-colors hover:border-ink-300 hover:bg-ink-50"
       >

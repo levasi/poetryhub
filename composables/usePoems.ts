@@ -124,11 +124,6 @@ export function usePoem(slug: string) {
   return useFetch<Poem>(`/api/poems/${slug}`)
 }
 
-// Fetch the daily poem
-export function useDailyPoem() {
-  return useFetch<Poem>('/api/poems/daily')
-}
-
 /** Random poem; pass `authorSlug` to restrict to that author. */
 export async function fetchRandomPoem(authorSlug?: string): Promise<Poem> {
   const params = authorSlug ? { author: authorSlug } : {}

@@ -8,9 +8,7 @@ const { user, isLoggedIn, logout } = useAuth()
 const userMenuOpen = ref(false)
 
 const navLinks = computed(() => [
-  { label: t('nav.poems'), to: '/poems' },
-  { label: t('nav.authors'), to: '/authors' },
-  { label: t('nav.daily'), to: '/daily' },
+  { label: t('home.navHome'), to: '/' },
   { label: t('nav.write'), to: '/write' },
   { label: t('nav.carousel'), to: '/carousel-generator' },
 ])

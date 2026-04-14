@@ -64,7 +64,7 @@ const favorites = computed(() => {
         <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
       </svg>
       <p class="font-serif text-lg text-content-muted">{{ t('favorites.empty') }}</p>
-      <NuxtLink to="/poems" class="mt-3 inline-block text-sm text-content-muted underline hover:text-content">
+      <NuxtLink to="/" class="mt-3 inline-block text-sm text-content-muted underline hover:text-content">
         {{ t('favorites.hint') }}
       </NuxtLink>
     </div>

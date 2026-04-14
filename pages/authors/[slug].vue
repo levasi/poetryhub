@@ -21,7 +21,7 @@ async function deleteAuthor() {
   deletingAuthor.value = true
   try {
     await rawFetch(`/api/authors/${encodeURIComponent(slug)}`, { method: 'DELETE' })
-    await navigateTo('/authors')
+    await navigateTo('/')
   } catch (err: unknown) {
     const msg =
       err && typeof err === 'object' && 'data' in err
@@ -74,11 +74,11 @@ const avatarSrc = computed(() =>
 <template>
   <div v-if="author" class="animate-fade-in">
     <!-- Back -->
-    <NuxtLink to="/authors" class="mb-8 inline-flex items-center gap-1 text-sm text-content-secondary hover:text-content">
+    <NuxtLink to="/" class="mb-8 inline-flex items-center gap-1 text-sm text-content-secondary hover:text-content">
       <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
         <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
       </svg>
-      {{ t('nav.allAuthors') }}
+      {{ t('home.navHome') }}
     </NuxtLink>
 
     <!-- Author profile -->
