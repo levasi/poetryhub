@@ -93,7 +93,7 @@ const poemIdForTitle = computed(() =>
 
 <template>
   <div class="poem-reader" :class="wrapperClass">
-    <div v-if="showTagsResolved && tags.length" class="mb-8 flex flex-wrap gap-2">
+    <div v-if="showTagsResolved && tags.length" class="mb-6 flex flex-wrap gap-2 md:mb-8">
       <NuxtLink v-for="tag in tags" :key="tag.id" :to="`/?tag=${tag.slug}`"
         class="rounded-full border border-edge bg-surface-raised/90 px-3 py-1 text-xs text-content-secondary shadow-sm transition-colors hover:border-brand/50 hover:text-brand">
         {{ labelForTag(tag.slug, tag.name) }}
@@ -108,10 +108,11 @@ const poemIdForTitle = computed(() =>
       :poem-id="poemIdForTitle" />
 
     <NuxtLink v-if="showAuthor && author && variant === 'pdp'" :to="`/authors/${author.slug}`"
-      class="inline-flex items-center gap-3 text-base text-content-secondary transition-colors hover:text-brand">
+      class="group mt-2 inline-flex max-w-full items-center gap-4 text-content-secondary transition-colors hover:text-brand">
       <img :src="authorAvatar" alt="" loading="lazy"
-        class="h-12 w-12 shrink-0 rounded-full object-cover ring-2 ring-edge" />
-      <span>— {{ author.name }}</span>
+        class="h-14 w-14 shrink-0 rounded-full object-cover ring-2 ring-edge-subtle transition-[box-shadow] group-hover:ring-brand/35" />
+      <span class="font-serif text-lg font-semibold leading-snug tracking-tight text-content group-hover:text-brand">&mdash;
+        {{ author.name }}</span>
     </NuxtLink>
 
     <NuxtLink v-else-if="showAuthor && author && variant === 'banner'" :to="`/authors/${author.slug}`"
@@ -124,10 +125,10 @@ const poemIdForTitle = computed(() =>
       {{ writtenContextLine }}
     </p>
 
-    <div v-if="showOrnamentResolved" class="my-10 flex items-center gap-4">
-      <div class="h-px flex-1 bg-edge" />
-      <span class="text-xl text-content-soft">✦</span>
-      <div class="h-px flex-1 bg-edge" />
+    <div v-if="showOrnamentResolved" class="my-10 flex items-center gap-4 md:my-12">
+      <div class="h-px flex-1 bg-gradient-to-r from-transparent via-edge-strong/40 to-edge-subtle" />
+      <span class="select-none text-lg text-brand/70" aria-hidden="true">✦</span>
+      <div class="h-px flex-1 bg-gradient-to-l from-transparent via-edge-strong/40 to-edge-subtle" />
     </div>
 
     <div class="poem-body w-full" :class="bodyClass">

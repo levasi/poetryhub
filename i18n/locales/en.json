@@ -262,6 +262,7 @@
   "auth": {
     "signInSubtitle": "Sign in to your account",
     "signUpSubtitle": "Create your account",
+    "backToSite": "Back to site",
     "email": "Email",
     "password": "Password",
     "passwordPlaceholder": "Your password",

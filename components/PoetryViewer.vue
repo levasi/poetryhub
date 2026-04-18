@@ -95,7 +95,7 @@ const readingTimeLabel = computed(() => {
     <button
       v-if="!slideMode"
       type="button"
-      class="fixed right-3 top-1/2 z-[45] flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-edge bg-surface-raised/95 text-content-secondary shadow-md backdrop-blur-sm transition hover:border-brand/50 hover:text-brand md:right-6"
+      class="fixed right-3 top-1/2 z-[45] flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-edge-subtle bg-surface-raised/95 text-content-secondary shadow-ds-card backdrop-blur-sm transition hover:border-brand/45 hover:text-brand md:right-6"
       :aria-label="t('viewer.openReadingSettings')"
       @click="readerSettingsOpen = true"
     >
@@ -111,15 +111,15 @@ const readingTimeLabel = computed(() => {
 
     <ReaderSettingsSidebar v-model:open="readerSettingsOpen" id-prefix="poem-pdp" />
 
-    <!-- ── Standard reading view ──────────────────────────────────────────── -->
-    <div v-if="!slideMode" class="animate-fade-in">
+    <!-- ── Standard reading view — reading measure matches poem column ─────── -->
+    <div v-if="!slideMode" class="animate-fade-in mx-auto w-full max-w-reading">
       <PoemReader :poem="poem" variant="pdp" :show-tags="true" />
 
       <!-- Actions bar -->
-      <div class="mt-14 flex w-full flex-wrap items-center gap-3 border-t border-edge pt-8">
-        <button class="flex items-center gap-2 rounded-full border px-5 py-2 text-sm transition-all" :class="liked
-          ? 'border-rose-300 bg-rose-50 text-rose-700'
-          : 'border-edge bg-surface-raised text-content-secondary shadow-sm hover:border-rose-300 hover:text-rose-700'"
+      <div class="mt-12 flex w-full flex-wrap items-center gap-2 border-t border-edge-subtle pt-8 md:mt-16 sm:gap-3">
+        <button class="flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm transition-all md:px-5" :class="liked
+          ? 'border-rose-300 bg-rose-50 text-rose-700 shadow-ds-card'
+          : 'border-edge-subtle bg-surface-raised text-content-secondary shadow-ds-card hover:border-rose-300/80 hover:text-rose-700'"
           @click="toggle(poem.id)">
           <svg class="h-4 w-4" viewBox="0 0 24 24" :fill="liked ? 'currentColor' : 'none'" stroke="currentColor"
             stroke-width="2">
@@ -130,7 +130,7 @@ const readingTimeLabel = computed(() => {
         </button>
 
         <button v-if="stanzas.length > 1"
-          class="flex items-center gap-2 rounded-full border border-edge bg-surface-raised px-5 py-2 text-sm text-content-secondary shadow-sm transition-all hover:border-brand/50 hover:text-brand"
+          class="flex items-center gap-2 rounded-full border border-edge-subtle bg-surface-raised px-4 py-2.5 text-sm text-content-secondary shadow-ds-card transition-all hover:border-brand/40 hover:text-brand md:px-5"
           @click="slideMode = true; currentSlide = 0">
           <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round"
@@ -140,7 +140,8 @@ const readingTimeLabel = computed(() => {
         </button>
 
         <button
-          class="flex items-center gap-2 rounded-full border border-edge bg-surface-raised px-5 py-2 text-sm text-content-secondary shadow-sm transition-all hover:border-brand/50 hover:text-brand"
+          type="button"
+          class="flex items-center gap-2 rounded-full border border-edge-subtle bg-surface-raised px-4 py-2.5 text-sm text-content-secondary shadow-ds-card transition-all hover:border-brand/40 hover:text-brand md:px-5"
           @click="sharePoem"
         >
           <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -149,7 +150,7 @@ const readingTimeLabel = computed(() => {
           {{ copied ? t('viewer.linkCopied') : t('viewer.sharePoem') }}
         </button>
 
-        <span v-if="readingTimeLabel" class="ml-auto text-xs text-content-muted">
+        <span v-if="readingTimeLabel" class="ml-auto rounded-full border border-edge-subtle bg-surface-subtle/80 px-3 py-1.5 text-ui-xs tabular-nums text-content-muted">
           {{ readingTimeLabel }}
         </span>
       </div>

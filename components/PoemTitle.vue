@@ -43,7 +43,7 @@ const wrapperClass = computed(() => (props.variant === 'pdp' ? 'mb-3' : ''))
   <div class="flex flex-wrap items-start gap-x-3 gap-y-2" :class="wrapperClass">
     <component
       :is="heading"
-      class="min-w-0 flex-1 font-serif font-bold text-content"
+      class="min-w-0 flex-1 font-serif font-semibold text-content"
       :class="titleClass"
     >
       {{ title }}

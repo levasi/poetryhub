@@ -47,17 +47,6 @@ function startGoogle() {
 
 <template>
   <div class="relative flex min-h-screen items-center justify-center bg-surface-base px-4">
-    <div class="absolute left-4 top-4 z-10">
-      <NuxtLink
-        to="/"
-        class="inline-flex items-center gap-1.5 text-sm font-medium text-content-secondary transition hover:text-content"
-      >
-        <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-        </svg>
-        {{ t('home.navHome') }}
-      </NuxtLink>
-    </div>
     <div class="absolute right-4 top-4 z-10">
       <LanguageSwitch v-if="showLanguageSwitch" />
     </div>
@@ -202,6 +191,18 @@ function startGoogle() {
           {{ t('auth.haveAccount') }}
           <NuxtLink to="/login" class="font-medium text-brand underline-offset-2 hover:underline">{{ t('auth.signInLink') }}</NuxtLink>
         </p>
+      </div>
+
+      <div class="mt-6 flex justify-center">
+        <NuxtLink
+          to="/"
+          class="inline-flex items-center gap-1.5 text-sm font-medium text-content-secondary transition hover:text-content"
+        >
+          <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+          {{ t('auth.backToSite') }}
+        </NuxtLink>
       </div>
     </div>
   </div>

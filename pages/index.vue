@@ -128,19 +128,34 @@ interface HomePayload {
 
 const { data: home, pending: homePending } = await useFetch<HomePayload>('/api/home')
 
-const forYouSeed = ref(Date.now())
+/** Same seed for the whole SPA session until full reload — avoids reshuffling “For you” on every revisit to `/`. */
+const forYouSeed = useState<number>('home-for-you-seed', () => Date.now())
 
+type ForYouApiMeta = { limit: number; total: number; exclude: number; hasMore: boolean }
+
+const nuxtApp = useNuxtApp()
 const { data: forYouRes, pending: forYouPending } = await useAsyncData(
   'home-for-you',
   () =>
-    $fetch<{ data: Poem[]; meta: { limit: number; total: number; exclude: number; hasMore: boolean } }>(
-      '/api/home/for-you',
-      { query: { limit: 5, seed: forYouSeed.value } },
-    ),
+    $fetch<{ data: Poem[]; meta: ForYouApiMeta }>('/api/home/for-you', {
+      query: { limit: 5, seed: forYouSeed.value },
+    }),
+  {
+    /** Reuse Nitro payload when navigating back to home — no duplicate fetch + same poems. */
+    getCachedData(key) {
+      return nuxtApp.payload.data[key] ?? nuxtApp.static?.data[key]
+    },
+  },
 )
 
-const forYouPoems = ref<Poem[]>([])
-const forYouMeta = ref({ total: 0, limit: 5, hasMore: true })
+/** Persist list + meta across route changes so the feed does not flash empty or re-randomize. */
+const forYouPoems = useState<Poem[]>('home-for-you-poems', () => [])
+const forYouMeta = useState<ForYouApiMeta>('home-for-you-meta', () => ({
+  total: 0,
+  limit: 5,
+  exclude: 0,
+  hasMore: true,
+}))
 const forYouLoadingMore = ref(false)
 
 watch(

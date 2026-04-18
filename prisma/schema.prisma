@@ -128,7 +128,7 @@ model User {
   /// Poem reader font key (see READER_FONT_STACKS in composables/useReaderPreferences.ts)
   poemFontFamily String   @default("playfair")
   /// Body font size in px (16–48)
-  poemFontSize   Int      @default(22)
+  poemFontSize   Int      @default(16)
   /// Line height multiplier for poem body (e.g. 1.2–2.5)
   poemLineHeight Float    @default(1.2)
   /// Letter spacing in em (e.g. 0.02 = 0.02em)

@@ -103,7 +103,7 @@ function prefsFromUser(u: AuthUser | null): {
 } | null {
   if (!u || !('poemFontFamily' in u) || !u.poemFontFamily) return null
   if (!isFontKey(u.poemFontFamily)) return null
-  const raw = typeof u.poemFontSize === 'number' ? u.poemFontSize : 22
+  const raw = typeof u.poemFontSize === 'number' ? u.poemFontSize : 16
   const lhRaw = typeof u.poemLineHeight === 'number' ? u.poemLineHeight : READER_LINE_HEIGHT_DEFAULT
   const lsRaw = typeof u.poemLetterSpacing === 'number' ? u.poemLetterSpacing : READER_LETTER_SPACING_DEFAULT
   return {
@@ -137,7 +137,7 @@ export function useReaderPreferences() {
 
   /** Shared across PoetryViewer, poem cards, etc. so one source of truth. */
   const fontKey = useState<ReaderFontKey>('reader-pref-font', () => 'playfair')
-  const fontSizePx = useState<number>('reader-pref-size', () => 22)
+  const fontSizePx = useState<number>('reader-pref-size', () => 16)
   const lineHeight = useState<number>('reader-pref-line-height', () => READER_LINE_HEIGHT_DEFAULT)
   const letterSpacingEm = useState<number>('reader-pref-letter-spacing', () => READER_LETTER_SPACING_DEFAULT)
 
@@ -161,7 +161,7 @@ export function useReaderPreferences() {
     const ls = rls ? parseFloat(rls) : NaN
     return {
       font: font ?? 'playfair',
-      size: Number.isFinite(size) && size >= 16 && size <= 48 ? size : 22,
+      size: Number.isFinite(size) && size >= 16 && size <= 48 ? size : 16,
       lineHeight: Number.isFinite(lh) ? clampLineHeight(lh) : READER_LINE_HEIGHT_DEFAULT,
       letterSpacingEm: Number.isFinite(ls) ? clampLetterSpacingEm(ls) : READER_LETTER_SPACING_DEFAULT,
     }
