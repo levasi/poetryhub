@@ -2,6 +2,7 @@
 import { z } from 'zod'
 import { prisma } from '~/server/utils/prisma'
 import { requireAuthorCatalogEditor } from '~/server/utils/auth'
+import { invalidateAuthorDetailCaches } from '~/server/utils/invalidatePublicCache'
 
 const schema = z.object({
   name:        z.string().min(1).max(200).optional(),
@@ -25,8 +26,12 @@ export default defineEventHandler(async (event) => {
   const existing = await prisma.author.findUnique({ where: { slug } })
   if (!existing) throw createError({ statusCode: 404, statusMessage: 'Author not found' })
 
-  return prisma.author.update({
+  const updated = await prisma.author.update({
     where: { slug },
     data: { ...parsed.data, imageUrl: parsed.data.imageUrl || null },
   })
+
+  await invalidateAuthorDetailCaches(slug)
+
+  return updated
 })

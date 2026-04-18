@@ -176,14 +176,12 @@ watchEffect((onCleanup) => {
 </script>
 
 <template>
-  <div
-    :class="[
-      layout === 'masonry' ? 'h-auto' : 'h-full',
-      {
-        'col-span-2 row-span-2': featured && view !== 'list' && layout !== 'masonry',
-      },
-    ]"
-  >
+  <div :class="[
+    layout === 'masonry' ? 'h-auto' : 'h-full',
+    {
+      'col-span-2 row-span-2': featured && view !== 'list' && layout !== 'masonry',
+    },
+  ]">
     <!-- List view -->
     <article v-if="view === 'list'"
       class="group flex items-start gap-5 border-b border-edge-subtle py-6 transition-colors last:border-0 hover:bg-surface-subtle/50">
@@ -229,10 +227,8 @@ watchEffect((onCleanup) => {
       <div class="flex shrink-0 flex-col items-end gap-2">
         <div class="flex items-center gap-0.5">
           <button type="button"
-            class="inline-flex items-center justify-center rounded-ds-md p-2 text-content-muted transition-colors hover:bg-surface-subtle hover:text-brand"
-            :aria-label="t('card.quickRead')"
-            :title="t('card.quickRead')"
-            @click.stop="openQuickRead">
+            class="inline-flex items-center justify-center rounded-ds-md text-content-muted transition-colors hover:bg-surface-subtle hover:text-brand"
+            :aria-label="t('card.quickRead')" :title="t('card.quickRead')" @click.stop="openQuickRead">
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
               aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round"
@@ -253,16 +249,11 @@ watchEffect((onCleanup) => {
     </article>
 
     <!-- Grid view (default) -->
-    <article
-      v-else
+    <article v-else
       class="group relative flex flex-col overflow-hidden rounded-ds-lg border border-edge-subtle bg-surface-raised shadow-ds-card transition-all duration-300 ease-out hover:-translate-y-1 hover:border-edge hover:shadow-ds-card-hover"
-      :class="layout === 'masonry' ? 'h-auto' : 'h-full'"
-    >
+      :class="layout === 'masonry' ? 'h-auto' : 'h-full'">
 
-      <div
-        class="flex flex-col"
-        :class="[featured ? 'p-6' : 'p-5', layout === 'masonry' ? '' : 'flex-1']"
-      >
+      <div class="flex flex-col p-3">
         <!-- Title -->
         <div class="mb-2 flex items-start gap-2">
           <NuxtLink :to="poemHref" class="block min-w-0 flex-1">
@@ -291,39 +282,38 @@ watchEffect((onCleanup) => {
           :show-ornament="false" :body-plain-override="previewLines"
           body-class="min-h-[4.5rem] flex-1 font-serif text-sm italic leading-relaxed text-content-secondary" />
 
-        <NuxtLink :to="poemHref"
-          class="group/readmore mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-brand transition-colors hover:text-brand-hover"
-          @click.stop>
-          {{ t('card.readMore') }}
-          <svg class="h-4 w-4 shrink-0 transition-transform group-hover/readmore:translate-x-0.5" fill="none"
-            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-          </svg>
-        </NuxtLink>
-
         <!-- Footer -->
         <div class="mt-5 flex items-center justify-end gap-3 border-t border-edge-subtle pt-4">
-          <div class="flex items-center gap-0.5">
-            <button type="button"
-              class="inline-flex items-center justify-center rounded-ds-md p-2 text-content-muted transition-colors hover:bg-surface-subtle hover:text-brand"
-              :aria-label="t('card.quickRead')"
-              :title="t('card.quickRead')"
-              @click.stop="openQuickRead">
-              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
-                aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3M8 21H5a2 2 0 01-2-2v-3m18 0v3a2 2 0 01-2 2h-3" />
+          <div class="flex items-center justify-between gap-0.5 w-full">
+            <NuxtLink :to="poemHref"
+              class="group/readmore inline-flex items-center gap-1.5 text-sm font-semibold text-brand transition-colors hover:text-brand-hover"
+              @click.stop>
+              {{ t('card.readMore') }}
+              <svg class="h-4 w-4 shrink-0 transition-transform group-hover/readmore:translate-x-0.5" fill="none"
+                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
               </svg>
-            </button>
-            <button type="button" class="rounded-ds-md p-2 transition-colors hover:bg-rose-50"
-              :class="liked ? 'text-rose-600' : 'text-content-hint hover:text-rose-600'"
-              :aria-label="liked ? t('card.favoriteRemove') : t('card.favoriteAdd')" @click.prevent="toggle(poem.id)">
-              <svg class="h-4 w-4" viewBox="0 0 24 24" :fill="liked ? 'currentColor' : 'none'" stroke="currentColor"
-                stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-              </svg>
-            </button>
+            </NuxtLink>
+            <template>
+              <button type="button"
+                class="inline-flex items-center justify-center rounded-ds-md text-content-muted transition-colors hover:bg-surface-subtle hover:text-brand"
+                :aria-label="t('card.quickRead')" :title="t('card.quickRead')" @click.stop="openQuickRead">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
+                  aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3M8 21H5a2 2 0 01-2-2v-3m18 0v3a2 2 0 01-2 2h-3" />
+                </svg>
+              </button>
+              <button type="button" class="rounded-ds-md p-2 transition-colors hover:bg-rose-50"
+                :class="liked ? 'text-rose-600' : 'text-content-hint hover:text-rose-600'"
+                :aria-label="liked ? t('card.favoriteRemove') : t('card.favoriteAdd')" @click.prevent="toggle(poem.id)">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" :fill="liked ? 'currentColor' : 'none'" stroke="currentColor"
+                  stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+              </button>
+            </template>
           </div>
         </div>
       </div>
@@ -379,33 +369,26 @@ watchEffect((onCleanup) => {
             <PoemReader :poem="readerPoem" variant="modal" :show-title="false" :show-author="false"
               :show-written-context="false" :show-ornament="false" />
           </div>
-          <footer
-            v-if="showQuickReadNav"
-            class="shrink-0 border-t border-edge-subtle bg-surface-raised px-5 py-4"
-            :aria-busy="quickReadNavLoading"
-          >
+          <footer v-if="showQuickReadNav" class="shrink-0 border-t border-edge-subtle bg-surface-raised px-5 py-4"
+            :aria-busy="quickReadNavLoading">
             <div class="flex items-center justify-between gap-3">
-              <button
-                type="button"
+              <button type="button"
                 class="inline-flex min-h-[2.5rem] items-center gap-2 rounded-ds-md border border-edge-subtle bg-surface-page px-3 py-2 text-sm font-medium text-content transition hover:border-edge hover:bg-surface-subtle disabled:cursor-not-allowed disabled:opacity-40"
-                :disabled="!hasQuickReadPrev || quickReadNavLoading"
-                :aria-label="t('card.quickReadPrevAria')"
-                @click="quickReadGoPrev"
-              >
-                <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                :disabled="!hasQuickReadPrev || quickReadNavLoading" :aria-label="t('card.quickReadPrevAria')"
+                @click="quickReadGoPrev">
+                <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
+                  aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
                 </svg>
                 {{ t('card.quickReadPrev') }}
               </button>
-              <button
-                type="button"
+              <button type="button"
                 class="inline-flex min-h-[2.5rem] items-center gap-2 rounded-ds-md border border-edge-subtle bg-surface-page px-3 py-2 text-sm font-medium text-content transition hover:border-edge hover:bg-surface-subtle disabled:cursor-not-allowed disabled:opacity-40"
-                :disabled="!hasQuickReadNext || quickReadNavLoading"
-                :aria-label="t('card.quickReadNextAria')"
-                @click="quickReadGoNext"
-              >
+                :disabled="!hasQuickReadNext || quickReadNavLoading" :aria-label="t('card.quickReadNextAria')"
+                @click="quickReadGoNext">
                 {{ t('card.quickReadNext') }}
-                <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
+                  aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
               </button>

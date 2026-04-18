@@ -238,8 +238,20 @@
     "poemCouldNotLoad": "This poem could not be loaded.",
     "editBiography": "Edit biography",
     "editAuthorName": "Edit name",
+    "profileDetails": "Profile",
+    "editProfileDetails": "Edit portrait & dates",
+    "portraitUrlPlaceholder": "https://…",
+    "profileDetailsHint": "Leave years empty if unknown. Clear the URL to use the default portrait.",
+    "invalidYear": "Enter a year between 1000 and 2100, or leave the field empty.",
+    "invalidPortraitUrl": "Portrait URL must start with http:// or https://",
     "editPoem": "Edit poem",
-    "savingBio": "Saving…"
+    "savingBio": "Saving…",
+    "openAuthorEdit": "Edit author profile",
+    "exitAuthorEdit": "Exit author edit mode",
+    "saveAuthorChanges": "Save changes",
+    "discardEdits": "Discard",
+    "biographyExpand": "Read more",
+    "biographyCollapse": "Show less"
   },
   "search": {
     "title": "Search",

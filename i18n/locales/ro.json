@@ -238,8 +238,20 @@
     "poemCouldNotLoad": "Nu s-a putut încărca această poezie.",
     "editBiography": "Editează biografia",
     "editAuthorName": "Editează numele",
+    "profileDetails": "Profil",
+    "editProfileDetails": "Editează portret și ani",
+    "portraitUrlPlaceholder": "https://…",
+    "profileDetailsHint": "Lasă anii goi dacă nu sunt cunoscuți. Șterge URL-ul pentru portretul implicit.",
+    "invalidYear": "Introdu un an între 1000 și 2100 sau lasă câmpul gol.",
+    "invalidPortraitUrl": "URL-ul trebuie să înceapă cu http:// sau https://",
     "editPoem": "Editează poezia",
-    "savingBio": "Se salvează…"
+    "savingBio": "Se salvează…",
+    "openAuthorEdit": "Editează profilul autorului",
+    "exitAuthorEdit": "Ieși din modul de editare autor",
+    "saveAuthorChanges": "Salvează modificările",
+    "discardEdits": "Renunță",
+    "biographyExpand": "Citește mai mult",
+    "biographyCollapse": "Arată mai puțin"
   },
   "search": {
     "title": "Căutare",

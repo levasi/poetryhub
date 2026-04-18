@@ -148,7 +148,7 @@ watchEffect((onCleanup) => {
     <!-- Grid view (default) -->
     <article v-else
       class="group relative flex h-full flex-col overflow-hidden rounded-ds-lg border border-edge-subtle bg-surface-raised shadow-ds-card transition-all duration-300 ease-out hover:-translate-y-1 hover:border-edge hover:shadow-ds-card-hover">
-      <div class="flex flex-1 flex-col" :class="featured ? 'p-6' : 'p-5'">
+      <div class="flex flex-1 flex-col">
         <!-- Title -->
         <div class="mb-2 flex items-start gap-2">
           <NuxtLink :to="`/poems/${poem.slug}`" class="block min-w-0 flex-1">

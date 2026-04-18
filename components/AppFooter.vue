@@ -33,7 +33,7 @@ const mailtoHref = computed(() => {
           </span>
         </p>
         <nav
-          class="flex shrink-0 flex-wrap justify-center gap-x-8 gap-y-2 text-ui-sm font-medium text-content-soft align-center"
+          class="flex shrink-0 flex-wrap justify-center gap-x-8 gap-y-2 text-ui-sm font-medium text-content-soft items-center"
           aria-label="Footer">
           <NuxtLink to="/" class="ds-link hover:text-content-secondary">{{ t('home.navHome') }}</NuxtLink>
           <NuxtLink to="/admin" class="ds-link hover:text-content-secondary">{{ t('footer.admin') }}</NuxtLink>
@@ -45,7 +45,6 @@ const mailtoHref = computed(() => {
       </div>
       <div
         class="mt-10 flex flex-col items-center gap-5 border-t border-edge-subtle pt-8 md:flex-row md:items-center md:justify-between">
-        <p class="text-center text-ui-xs text-content-hint md:text-left">{{ t('colorScheme.hint') }}</p>
         <ColorSchemeSwitch />
       </div>
       <p class="mt-6 text-center text-ui-xs text-content-hint">

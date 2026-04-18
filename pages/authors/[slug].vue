@@ -190,146 +190,206 @@ function onPoemUpdated(updated: Poem) {
   if (entry) entry.title = updated.title
 }
 
-const editingName = ref(false)
+/** Single edit mode for the whole author profile (triggered by floating edit FAB). */
+const authorEditMode = ref(false)
 const nameDraft = ref('')
-const savingName = ref(false)
-
-const editingEthnicity = ref(false)
 const ethnicityDraft = ref('')
-const savingEthnicity = ref(false)
-
-const editingBio = ref(false)
 const bioDraft = ref('')
-const savingBio = ref(false)
+const imageUrlDraft = ref('')
+const birthYearDraft = ref('')
+const deathYearDraft = ref('')
 
 const nationalityLabel = computed(() => displayNationality(author.value?.nationality))
 
+function syncDraftsFromAuthor() {
+  const a = author.value
+  if (!a) return
+  nameDraft.value = a.name
+  ethnicityDraft.value = a.nationality ?? ''
+  bioDraft.value = a.bio ?? ''
+  imageUrlDraft.value = a.imageUrl ?? ''
+  birthYearDraft.value = a.birthYear != null ? String(a.birthYear) : ''
+  deathYearDraft.value = a.deathYear != null ? String(a.deathYear) : ''
+}
+
 watch(
   author,
-  (a) => {
-    if (!a) return
-    if (!editingName.value) nameDraft.value = a.name
-    ethnicityDraft.value = a.nationality ?? ''
-    if (!editingBio.value) bioDraft.value = a.bio ?? ''
+  () => {
+    if (!authorEditMode.value) syncDraftsFromAuthor()
   },
   { immediate: true },
 )
 
-function startEditName() {
+function openAuthorEdit() {
   if (!author.value) return
-  nameDraft.value = author.value.name
-  editingName.value = true
+  syncDraftsFromAuthor()
+  authorEditMode.value = true
 }
 
-function cancelEditName() {
-  editingName.value = false
-  nameDraft.value = author.value?.name ?? ''
+function cancelAuthorEdit() {
+  authorEditMode.value = false
+  syncDraftsFromAuthor()
 }
 
-async function saveName() {
-  if (!author.value || savingName.value) return
-  const trimmed = nameDraft.value.trim()
-  if (!trimmed) {
+/** Empty → null; invalid range → `'invalid'`. */
+function parseYearField(raw: string): number | null | 'invalid' {
+  const s = raw.trim()
+  if (!s) return null
+  const n = Number.parseInt(s, 10)
+  if (!Number.isFinite(n) || n < 1000 || n > 2100) return 'invalid'
+  return n
+}
+
+/** Persist author draft to API; updates local state. Does not exit edit mode or refresh. */
+async function persistAuthorDrafts(): Promise<boolean> {
+  if (!author.value) return false
+  const nameTrim = nameDraft.value.trim()
+  if (!nameTrim) {
     alert(t('admin.authors.nameRequiredError'))
-    return
+    return false
   }
-  savingName.value = true
+  const by = parseYearField(birthYearDraft.value)
+  const dy = parseYearField(deathYearDraft.value)
+  if (by === 'invalid' || dy === 'invalid') {
+    alert(t('authors.invalidYear'))
+    return false
+  }
+  const urlTrim = imageUrlDraft.value.trim()
+  if (urlTrim && !/^https?:\/\//i.test(urlTrim)) {
+    alert(t('authors.invalidPortraitUrl'))
+    return false
+  }
+
   try {
     const updated = await rawFetch<AuthorDetailPayload['author']>(`/api/authors/${encodeURIComponent(slug)}`, {
       method: 'PUT',
-      body: { name: trimmed },
+      body: {
+        name: nameTrim,
+        bio: bioDraft.value.trim(),
+        nationality: ethnicityDraft.value.trim(),
+        imageUrl: urlTrim,
+        birthYear: by,
+        deathYear: dy,
+      },
     })
     if (data.value?.author) Object.assign(data.value.author, updated)
-    editingName.value = false
     if (activePoem.value?.author?.id === updated.id) {
       activePoem.value = {
         ...activePoem.value,
         author: { ...activePoem.value.author, name: updated.name },
       }
     }
-    await refresh()
+    return true
   } catch (err: unknown) {
     const msg =
       err && typeof err === 'object' && 'data' in err
         ? String((err as { data?: { statusMessage?: string } }).data?.statusMessage ?? '')
         : ''
     alert(msg || t('admin.authors.updateFailed'))
-  } finally {
-    savingName.value = false
+    return false
   }
 }
 
-function startEditEthnicity() {
-  if (!author.value) return
-  editingEthnicity.value = true
-  ethnicityDraft.value = author.value.nationality ?? ''
-}
+const savingEdits = ref(false)
 
-function cancelEditEthnicity() {
-  editingEthnicity.value = false
-  ethnicityDraft.value = author.value?.nationality ?? ''
-}
-
-function startEditBio() {
-  if (!author.value) return
-  bioDraft.value = author.value.bio ?? ''
-  editingBio.value = true
-}
-
-function cancelEditBio() {
-  editingBio.value = false
-  bioDraft.value = author.value?.bio ?? ''
-}
-
-async function saveBio() {
-  if (!author.value || savingBio.value) return
-  savingBio.value = true
+/** Save author profile and current poem (if any), then exit edit mode. */
+async function saveAllEdits() {
+  if (savingEdits.value) return
+  savingEdits.value = true
   try {
-    const updated = await rawFetch<AuthorDetailPayload['author']>(`/api/authors/${encodeURIComponent(slug)}`, {
-      method: 'PUT',
-      body: { bio: bioDraft.value.trim() },
-    })
-    if (data.value?.author) Object.assign(data.value.author, updated)
-    editingBio.value = false
+    if (!(await persistAuthorDrafts())) return
+    await poetryViewerRef.value?.savePoemEdit?.()
+    authorEditMode.value = false
     await refresh()
-  } catch (err: unknown) {
-    const msg =
-      err && typeof err === 'object' && 'data' in err
-        ? String((err as { data?: { statusMessage?: string } }).data?.statusMessage ?? '')
-        : ''
-    alert(msg || t('admin.authors.updateFailed'))
   } finally {
-    savingBio.value = false
+    savingEdits.value = false
   }
 }
 
-async function saveEthnicity() {
-  if (!author.value || savingEthnicity.value) return
-  savingEthnicity.value = true
-  try {
-    const updated = await rawFetch(`/api/authors/${encodeURIComponent(slug)}`, {
-      method: 'PUT',
-      body: { nationality: ethnicityDraft.value.trim() },
-    })
-    if (data.value?.author) {
-      Object.assign(data.value.author, updated)
-    }
-    editingEthnicity.value = false
-  } catch (err: unknown) {
-    const msg =
-      err && typeof err === 'object' && 'data' in err
-        ? String((err as { data?: { statusMessage?: string } }).data?.statusMessage ?? '')
-        : ''
-    alert(msg || t('admin.authors.updateFailed'))
-  } finally {
-    savingEthnicity.value = false
+function discardAllEdits() {
+  poetryViewerRef.value?.cancelPoemEdit?.()
+  cancelAuthorEdit()
+}
+
+function onAuthorEditFabClick() {
+  if (authorEditMode.value) {
+    discardAllEdits()
+  } else {
+    openAuthorEdit()
   }
 }
+
+/** Below PoetryViewer reading-settings cog when a poem is open; otherwise vertically centered. */
+const authorEditFabPositionClass = computed(() =>
+  activePoem.value
+    ? 'top-[calc(50%+3.5rem)] -translate-y-1/2'
+    : 'top-1/2 -translate-y-1/2',
+)
+
+const poetryViewerRef = ref<{ savePoemEdit: () => Promise<void>; cancelPoemEdit: () => void } | null>(null)
+
+/** Read mode: clamp long bios and offer expand / collapse. */
+const bioExpanded = ref(false)
+const bioReadRef = ref<HTMLElement | null>(null)
+const bioToggleVisible = ref(false)
+
+function measureBioClamp() {
+  if (!import.meta.client) return
+  const el = bioReadRef.value
+  const text = author.value?.bio?.trim()
+  if (!el || !text || authorEditMode.value) {
+    bioToggleVisible.value = false
+    return
+  }
+  if (bioExpanded.value) {
+    bioToggleVisible.value = true
+    return
+  }
+  bioToggleVisible.value = el.scrollHeight > el.clientHeight + 2
+}
+
+watch(
+  () =>
+    [author.value?.bio, author.value?.id, bioExpanded.value, authorEditMode.value] as const,
+  () => nextTick(() => requestAnimationFrame(measureBioClamp)),
+  { flush: 'post' },
+)
+
+watch(
+  () => route.params.slug as string,
+  () => {
+    bioExpanded.value = false
+  },
+)
+
+onMounted(() => {
+  nextTick(() => requestAnimationFrame(measureBioClamp))
+  window.addEventListener('resize', measureBioClamp)
+})
+
+onBeforeUnmount(() => window.removeEventListener('resize', measureBioClamp))
 </script>
 
 <template>
   <div class="animate-fade-in">
-    <div v-if="author" class="w-full min-w-0 px-4 pb-20 pt-2 md:px-8 md:pt-4 lg:px-10 xl:px-12">
+    <!-- Floating author edit (same style as poem reading settings; below it when a poem is open) -->
+    <button v-if="canEditCatalog && author" type="button"
+      class="fixed right-3 z-[44] flex h-11 w-11 items-center justify-center rounded-full border border-edge-subtle bg-surface-raised/95 text-content-secondary shadow-ds-card backdrop-blur-sm transition hover:border-brand/45 hover:text-brand md:right-6"
+      :class="[authorEditFabPositionClass, authorEditMode ? 'border-brand/50 text-brand ring-2 ring-brand/25' : '']"
+      :aria-label="authorEditMode ? t('authors.exitAuthorEdit') : t('authors.openAuthorEdit')"
+      :disabled="savingEdits || deletingAuthor" @click="onAuthorEditFabClick">
+      <svg v-if="!authorEditMode" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+        stroke-width="1.75">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+      </svg>
+      <svg v-else class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+
+    <div v-if="author" class="w-full min-w-0 px-4 pt-2 md:px-8 md:pt-4 lg:px-10 xl:px-12"
+      :class="authorEditMode ? 'pb-32 md:pb-36' : 'pb-20'">
       <!-- Author profile -->
       <div class="mb-12 flex flex-col items-start gap-6 sm:flex-row">
         <div class="shrink-0">
@@ -337,69 +397,74 @@ async function saveEthnicity() {
             class="h-24 w-24 rounded-full object-cover ring-2 ring-gold-300/60" />
         </div>
 
-        <div>
-          <div class="flex flex-wrap items-baseline gap-x-3 gap-y-2">
-            <template v-if="!editingName">
+        <div class="min-w-0 flex-1">
+          <template v-if="!authorEditMode">
+            <div class="flex flex-wrap items-baseline gap-x-3 gap-y-2">
               <h1 class="font-serif text-4xl font-bold text-content">{{ author.name }}</h1>
-              <button v-if="canEditCatalog" type="button"
-                class="shrink-0 rounded-lg border border-edge-subtle bg-surface-subtle px-2.5 py-1 text-xs font-medium text-content-secondary transition hover:border-edge hover:bg-surface-raised"
-                @click="startEditName">
-                {{ t('authors.editAuthorName') }}
-              </button>
               <button v-if="isSiteOwner" type="button"
                 class="shrink-0 rounded-md border border-danger/40 px-2 py-0.5 text-xs font-medium text-danger transition hover:bg-danger/10 disabled:opacity-50"
                 :disabled="deletingAuthor" @click="deleteAuthor">
                 {{ deletingAuthor ? t('admin.poems.deleting') : t('admin.authors.delete') }}
               </button>
-            </template>
-            <template v-else>
-              <div class="flex w-full min-w-0 flex-wrap items-center gap-2">
-                <label class="sr-only" for="author-name-edit">{{ t('admin.authors.name') }}</label>
-                <input id="author-name-edit" v-model="nameDraft" type="text" maxlength="200"
-                  class="min-w-0 flex-1 rounded-lg border border-edge-subtle bg-surface-page px-3 py-2 font-serif text-2xl font-bold text-content outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 sm:text-3xl md:text-4xl"
-                  :placeholder="t('admin.authors.placeholderName')" autocomplete="off" />
-                <button type="button"
-                  class="inline-flex shrink-0 items-center justify-center rounded-lg bg-brand px-3 py-2 text-xs font-semibold text-brand-foreground transition hover:bg-brand-hover disabled:opacity-50"
-                  :disabled="savingName" @click="saveName">
-                  {{ savingName ? t('admin.authors.saving') : t('admin.authors.save') }}
-                </button>
-                <button type="button"
-                  class="inline-flex shrink-0 items-center justify-center rounded-lg border border-edge-subtle bg-surface-subtle px-3 py-2 text-xs font-medium text-content-secondary transition hover:border-edge hover:bg-surface-raised disabled:opacity-50"
-                  :disabled="savingName" @click="cancelEditName">
-                  {{ t('admin.authors.cancel') }}
-                </button>
-              </div>
-            </template>
-          </div>
-          <p class="mt-1 text-sm text-content-secondary">
-            <template v-if="!editingEthnicity">
+            </div>
+            <p class="mt-1 text-sm text-content-secondary">
               <span v-if="nationalityLabel">{{ nationalityLabel }}</span>
               <span v-if="nationalityLabel && yearsLabel()"> · </span>
               <span>{{ yearsLabel() }}</span>
-              <button v-if="canEditCatalog" type="button"
-                class="ml-2 inline-flex items-center gap-1 rounded-lg border border-edge-subtle bg-surface-subtle px-2 py-1 text-xs font-medium text-content-secondary transition hover:border-edge hover:bg-surface-raised"
-                @click="startEditEthnicity">
-                {{ t('admin.authors.edit') }}
+            </p>
+          </template>
+
+          <template v-else>
+            <div class="max-w-3xl space-y-5">
+              <div>
+                <label class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-content-muted">
+                  {{ t('admin.authors.name') }}
+                </label>
+                <input v-model="nameDraft" type="text" maxlength="200"
+                  class="w-full rounded-lg border border-edge-subtle bg-surface-page px-3 py-2 font-serif text-2xl font-bold text-content outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 sm:text-3xl md:text-4xl"
+                  :placeholder="t('admin.authors.placeholderName')" autocomplete="off" />
+              </div>
+              <div>
+                <label class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-content-muted">
+                  {{ t('admin.authors.nationality') }}
+                </label>
+                <input v-model="ethnicityDraft" type="text"
+                  class="w-full max-w-xl rounded-lg border border-edge-subtle bg-surface-page px-3 py-2 text-sm text-content outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                  :placeholder="t('admin.authors.placeholderNationality')" />
+              </div>
+              <div>
+                <label class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-content-muted">
+                  {{ t('admin.authors.photoUrl') }}
+                </label>
+                <input v-model="imageUrlDraft" type="url"
+                  class="w-full rounded-lg border border-edge-subtle bg-surface-page px-3 py-2 text-sm text-content outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                  :placeholder="t('authors.portraitUrlPlaceholder')" autocomplete="off" />
+              </div>
+              <div class="flex flex-wrap gap-6">
+                <div>
+                  <label class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-content-muted">
+                    {{ t('admin.authors.birthYear') }}
+                  </label>
+                  <input v-model="birthYearDraft" type="text" inputmode="numeric" maxlength="4"
+                    class="w-28 rounded-lg border border-edge-subtle bg-surface-page px-3 py-2 text-sm text-content outline-none focus:border-brand focus:ring-2 focus:ring-brand/20" />
+                </div>
+                <div>
+                  <label class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-content-muted">
+                    {{ t('admin.authors.deathYear') }}
+                  </label>
+                  <input v-model="deathYearDraft" type="text" inputmode="numeric" maxlength="4"
+                    class="w-28 rounded-lg border border-edge-subtle bg-surface-page px-3 py-2 text-sm text-content outline-none focus:border-brand focus:ring-2 focus:ring-brand/20" />
+                </div>
+              </div>
+              <p class="text-xs text-content-muted">{{ t('authors.profileDetailsHint') }}</p>
+              <button v-if="isSiteOwner" type="button"
+                class="rounded-md border border-danger/40 px-3 py-1.5 text-xs font-medium text-danger transition hover:bg-danger/10 disabled:opacity-50"
+                :disabled="deletingAuthor" @click="deleteAuthor">
+                {{ deletingAuthor ? t('admin.poems.deleting') : t('admin.authors.delete') }}
               </button>
-            </template>
-            <template v-else>
-              <span class="sr-only">{{ t('admin.authors.nationality') }}</span>
-              <input v-model="ethnicityDraft" type="text"
-                class="mr-2 inline-flex w-[min(24rem,80vw)] rounded-lg border border-edge-subtle bg-surface-page px-3 py-2 text-sm text-content outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-                :placeholder="t('admin.authors.placeholderNationality')" />
-              <button type="button"
-                class="inline-flex items-center justify-center rounded-lg bg-brand px-3 py-2 text-xs font-semibold text-brand-foreground transition hover:bg-brand-hover disabled:opacity-50"
-                :disabled="savingEthnicity" @click="saveEthnicity">
-                {{ savingEthnicity ? t('admin.authors.saving') : t('admin.authors.save') }}
-              </button>
-              <button type="button"
-                class="ml-2 inline-flex items-center justify-center rounded-lg border border-edge-subtle bg-surface-subtle px-3 py-2 text-xs font-medium text-content-secondary transition hover:border-edge hover:bg-surface-raised disabled:opacity-50"
-                :disabled="savingEthnicity" @click="cancelEditEthnicity">
-                {{ t('admin.authors.cancel') }}
-              </button>
-              <span class="ml-2 text-sm text-content-secondary">{{ yearsLabel() }}</span>
-            </template>
-          </p>
+            </div>
+          </template>
+
           <p class="mt-3 text-sm text-content-muted">
             {{ t('authors.poemCount', meta?.total ?? 0) }}
           </p>
@@ -407,35 +472,26 @@ async function saveEthnicity() {
       </div>
 
       <!-- Biography -->
-      <section class="mb-10 pt-8">
-        <div class="mb-3 flex flex-wrap items-center justify-start gap-3">
-          <h2 class="font-serif text-xl font-bold text-content">{{ t('authors.biography') }}</h2>
-          <button v-if="canEditCatalog && !editingBio" type="button"
-            class="shrink-0 rounded-lg border border-edge-subtle bg-surface-subtle px-3 py-1.5 text-xs font-medium text-content-secondary transition hover:border-edge hover:bg-surface-raised"
-            @click="startEditBio">
-            {{ t('authors.editBiography') }}
-          </button>
-        </div>
-        <template v-if="editingBio">
+      <section class="mb-10">
+        <h2 class="mb-3 font-serif text-xl font-bold text-content">{{ t('authors.biography') }}</h2>
+        <template v-if="authorEditMode">
           <textarea v-model="bioDraft" rows="14"
             class="max-w-3xl w-full rounded-ds-lg border border-edge-subtle bg-surface-page px-4 py-3 font-serif text-base leading-relaxed text-content outline-none focus:border-brand focus:ring-2 focus:ring-brand/20" />
-          <div class="mt-4 flex flex-wrap gap-2">
-            <button type="button"
-              class="inline-flex items-center justify-center rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-brand-foreground transition hover:bg-brand-hover disabled:opacity-50"
-              :disabled="savingBio" @click="saveBio">
-              {{ savingBio ? t('authors.savingBio') : t('admin.authors.save') }}
-            </button>
-            <button type="button"
-              class="inline-flex items-center justify-center rounded-lg border border-edge-subtle bg-surface-subtle px-4 py-2 text-sm font-medium text-content-secondary transition hover:border-edge hover:bg-surface-raised disabled:opacity-50"
-              :disabled="savingBio" @click="cancelEditBio">
-              {{ t('admin.authors.cancel') }}
-            </button>
-          </div>
         </template>
         <template v-else>
-          <p v-if="author.bio" class="max-w-3xl whitespace-pre-wrap text-base leading-relaxed text-content-secondary">
-            {{ author.bio }}
-          </p>
+          <div v-if="author.bio" class="max-w-3xl">
+            <p ref="bioReadRef"
+              class="whitespace-pre-wrap text-base leading-relaxed text-content-secondary"
+              :class="{ 'line-clamp-6': !bioExpanded }">
+              {{ author.bio }}
+            </p>
+            <button v-if="bioToggleVisible && !authorEditMode" type="button"
+              class="mt-3 inline-flex items-center rounded-lg border border-edge-subtle bg-surface-subtle px-3 py-1.5 text-sm font-medium text-brand transition hover:border-brand/45 hover:bg-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35"
+              :aria-expanded="bioExpanded"
+              @click="bioExpanded = !bioExpanded">
+              {{ bioExpanded ? t('authors.biographyCollapse') : t('authors.biographyExpand') }}
+            </button>
+          </div>
           <p v-else class="max-w-3xl text-sm italic text-content-muted">{{ t('authors.bioUnavailable') }}</p>
         </template>
       </section>
@@ -472,7 +528,9 @@ async function saveEthnicity() {
                   aria-hidden="true" />
               </div>
               <template v-else-if="activePoem">
-                <PoetryViewer :poem="activePoem" :allow-poem-edit="canEditPoem" @poem-updated="onPoemUpdated" />
+                <PoetryViewer ref="poetryViewerRef" :poem="activePoem" :allow-poem-edit="canEditPoem && authorEditMode"
+                  :auto-poem-edit="canEditPoem && authorEditMode" :show-poem-edit-toolbar="false"
+                  @poem-updated="onPoemUpdated" />
               </template>
               <p v-else-if="poemLoadFailed" class="text-center text-sm text-content-muted">
                 {{ t('authors.poemCouldNotLoad') }}
@@ -485,6 +543,21 @@ async function saveEthnicity() {
       <div v-else class="border-t border-edge/80 py-16 text-center text-content-secondary">
         <p class="font-serif">{{ t('authors.noPoemsYet') }}</p>
       </div>
+    </div>
+
+    <!-- Unified save / discard — fixed to viewport -->
+    <div v-if="authorEditMode && author"
+      class="fixed inset-x-0 bottom-0 z-[60] flex flex-wrap items-center justify-center gap-2 border-t border-edge-subtle bg-surface-raised/98 px-4 py-3 shadow-[0_-4px_24px_rgba(0,0,0,0.06)] backdrop-blur-md pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      <button type="button"
+        class="inline-flex min-h-[44px] min-w-[44px] flex-1 items-center justify-center rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-brand-foreground transition hover:bg-brand-hover disabled:opacity-50 sm:max-w-xs sm:flex-none"
+        :disabled="savingEdits" @click="saveAllEdits">
+        {{ savingEdits ? t('admin.authors.saving') : t('authors.saveAuthorChanges') }}
+      </button>
+      <button type="button"
+        class="inline-flex min-h-[44px] min-w-[44px] flex-1 items-center justify-center rounded-lg border border-edge-subtle bg-surface-subtle px-5 py-2.5 text-sm font-medium text-content-secondary transition hover:border-edge hover:bg-surface-raised disabled:opacity-50 sm:max-w-xs sm:flex-none"
+        :disabled="savingEdits" @click="discardAllEdits">
+        {{ t('authors.discardEdits') }}
+      </button>
     </div>
   </div>
 </template>

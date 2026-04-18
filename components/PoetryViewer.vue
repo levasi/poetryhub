@@ -9,8 +9,12 @@ const props = withDefaults(
     poem: Poem
     /** Editor / moderator / admin — inline title & body on author PDP. */
     allowPoemEdit?: boolean
+    /** Start in poem edit UI immediately (e.g. author page unified edit). */
+    autoPoemEdit?: boolean
+    /** Show Save / Cancel next to poem fields; hide when parent provides a bottom bar. */
+    showPoemEditToolbar?: boolean
   }>(),
-  { allowPoemEdit: false },
+  { allowPoemEdit: false, autoPoemEdit: false, showPoemEditToolbar: true },
 )
 
 const emit = defineEmits<{ updated: [poem: Poem] }>()
@@ -36,6 +40,36 @@ watch(
     }
   },
   { immediate: true },
+)
+
+watch(
+  () => props.allowPoemEdit,
+  (allow) => {
+    if (!allow) cancelPoemEdit()
+  },
+  { immediate: true },
+)
+
+watch(
+  () => props.autoPoemEdit,
+  (auto, prevAuto) => {
+    if (!props.allowPoemEdit) return
+    if (auto) {
+      nextTick(() => startPoemEdit())
+    } else if (prevAuto === true) {
+      cancelPoemEdit()
+    }
+  },
+  { immediate: true },
+)
+
+watch(
+  () => props.poem.slug,
+  () => {
+    if (props.allowPoemEdit && props.autoPoemEdit && editingPoem.value) {
+      startPoemEdit()
+    }
+  },
 )
 
 function startPoemEdit() {
@@ -88,6 +122,12 @@ async function savePoemEdit() {
     savingPoemEdit.value = false
   }
 }
+
+defineExpose({
+  savePoemEdit,
+  cancelPoemEdit,
+  savingPoemEdit,
+})
 
 // ── Reading progress ─────────────────────────────────────────────────────────
 const progress = ref(0)
@@ -162,7 +202,7 @@ async function sharePoem() {
               class="w-full resize-y rounded-ds-lg border border-edge-subtle bg-surface-page px-4 py-3 font-serif text-base leading-relaxed outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
               :style="poemBodyStyle" />
           </div>
-          <div class="flex flex-wrap gap-2 pt-2">
+          <div v-if="showPoemEditToolbar" class="flex flex-wrap gap-2 pt-2">
             <button type="button"
               class="inline-flex items-center justify-center rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-brand-foreground transition hover:bg-brand-hover disabled:opacity-50"
               :disabled="savingPoemEdit" @click="savePoemEdit">
@@ -177,7 +217,7 @@ async function sharePoem() {
         </div>
       </template>
       <PoemReader v-else :poem="poem" variant="pdp" :show-tags="true">
-        <template v-if="allowPoemEdit" #titleAside>
+        <template v-if="allowPoemEdit && !autoPoemEdit" #titleAside>
           <button type="button"
             class="inline-flex items-center gap-1.5 rounded-full border border-edge-subtle bg-surface-raised px-3 py-1.5 text-xs font-medium text-content-secondary shadow-sm transition-colors hover:border-brand/40 hover:text-brand md:px-4 md:py-2 md:text-sm"
             @click="startPoemEdit">

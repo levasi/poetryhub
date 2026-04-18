@@ -26,6 +26,19 @@ export async function invalidatePoemCaches(slug: string) {
   await storage.removeItem(handlerStorageKey('api-poem-insight', insightKey)).catch(() => {})
 }
 
+/** Bust cached GET /api/authors/:slug (pagination variants) after profile edits. */
+export async function invalidateAuthorDetailCaches(authorSlug: string) {
+  const slugSeg = authorSlug.replace(/[^a-zA-Z0-9]/g, '')
+  const re = new RegExp(`^author${slugSeg}`)
+  const prefix = `${HANDLER_BASE}:api-author-by-slug:`
+  const storage = useStorage()
+  const keys = await storage.getKeys(prefix)
+  for (const k of keys) {
+    const segment = k.split(':').pop()?.replace(/\.json$/i, '') ?? ''
+    if (re.test(segment)) await storage.removeItem(k).catch(() => {})
+  }
+}
+
 async function removeKeysWithPrefix(prefix: string) {
   const storage = useStorage()
   const keys = await storage.getKeys(prefix)
@@ -44,14 +57,7 @@ export async function invalidateCachesAfterAuthorDelete(slug: string, poemSlugs:
   await removeKeysWithPrefix(`${HANDLER_BASE}:api-authors-list:`)
   await removeKeysWithPrefix(`${HANDLER_BASE}:api-poems-list:`)
 
-  const slugSeg = slug.replace(/[^a-zA-Z0-9]/g, '')
-  const authorSegmentRe = new RegExp(`^author${slugSeg}p`)
-  const authorPrefix = `${HANDLER_BASE}:api-author-by-slug:`
-  const authorKeys = await storage.getKeys(authorPrefix)
-  for (const k of authorKeys) {
-    const segment = k.split(':').pop()?.replace(/\.json$/i, '') ?? ''
-    if (authorSegmentRe.test(segment)) await storage.removeItem(k).catch(() => {})
-  }
+  await invalidateAuthorDetailCaches(slug)
 
   for (const ps of poemSlugs) {
     await invalidatePoemCaches(ps)
