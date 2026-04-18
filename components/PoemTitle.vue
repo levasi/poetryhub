@@ -29,8 +29,8 @@ const heading = computed(() => (props.variant === 'pdp' ? 'h1' : 'h3'))
 
 const titleClass = computed(() =>
   props.variant === 'pdp'
-    ? 'leading-tight tracking-tight text-4xl md:text-5xl lg:text-6xl'
-    : 'leading-snug text-xl md:text-2xl',
+    ? 'leading-tight tracking-tight text-4xl md:text-5xl'
+    : 'leading-snug text-xl',
 )
 
 const carouselIconSize = computed(

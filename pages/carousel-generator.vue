@@ -27,6 +27,7 @@ import {
   type PoemCarouselSettingsPayload,
 } from '~/utils/poemCarouselFontSettings'
 import { useAuth } from '~/composables/useAuth'
+import { isStaffRole } from '~/utils/roles'
 
 definePageMeta({
   layout: 'default',
@@ -155,15 +156,28 @@ watch(
 /** Set from GET /api/poems/:slug when a library poem is loaded; `null` = catalog poem with no submitter. */
 const loadedPoemSubmittedByUserId = ref<string | null | undefined>(undefined)
 
-const canSaveCurrentPoemCarousel = computed(() => {
-  const u = user.value
-  if (!u?.id) return false
-  if (u.role === 'admin' || u.role === 'moderator') return true
-  if (!loadedPoemSlug.value) return false
-  const ownerId = loadedPoemSubmittedByUserId.value
-  if (ownerId === undefined) return false
-  if (ownerId === null) return false
-  return ownerId === u.id
+/** Insta carousel save UI is only for administrators and moderators. */
+const showCarouselStaffSaveCard = computed(() => isStaffRole(user.value?.role))
+
+const carouselSaveNeedsLibraryPoem = computed(
+  () => showCarouselStaffSaveCard.value && !loadedPoemSlug.value,
+)
+
+const carouselSaveFabTitle = computed(() => {
+  if (savingCurrentPoemCarousel.value) return t('carousel.savingCurrentPoemCarousel')
+  if (carouselSaveNeedsLibraryPoem.value) return t('carousel.poemSaveNeedPoemHint')
+  return t('carousel.saveCurrentPoemCarousel')
+})
+
+/** Reader URL on the author profile when this page was opened with a catalog poem (`?slug=`). */
+const seePoemPageLocation = computed(() => {
+  const poemSlug = loadedPoemSlug.value?.trim()
+  const authorSlug = authorAvatarFromPoem.value?.slug?.trim()
+  if (!poemSlug || !authorSlug) return null
+  return {
+    path: `/authors/${authorSlug}`,
+    query: { poem: poemSlug },
+  } as const
 })
 
 const savingCurrentPoemCarousel = ref(false)
@@ -172,7 +186,7 @@ let currentPoemCarouselThumbsHideTimer: ReturnType<typeof setTimeout> | null = n
 
 async function saveCurrentPoemCarousel() {
   const slug = loadedPoemSlug.value
-  if (!slug || !canSaveCurrentPoemCarousel.value) return
+  if (!slug || !showCarouselStaffSaveCard.value) return
   savingCurrentPoemCarousel.value = true
   try {
     await $fetch<PoemCarouselSettingsPayload>(`/api/poems/${encodeURIComponent(slug)}/carousel-font`, {
@@ -559,6 +573,29 @@ function onTouchEnd(e: TouchEvent) {
 
 <template>
   <div class="w-full min-w-0 pb-16 pt-2 md:pt-4">
+    <button v-if="showCarouselStaffSaveCard" type="button"
+      class="fixed right-3 top-1/2 z-[45] flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-edge-subtle bg-surface-raised/95 text-content-muted shadow-ds-card backdrop-blur-sm transition md:right-6 disabled:cursor-not-allowed disabled:opacity-45 [&:not(:disabled)]:hover:border-brand-soft [&:not(:disabled)]:hover:text-brand-hover"
+      :disabled="savingCurrentPoemCarousel || !loadedPoemSlug" :title="carouselSaveFabTitle"
+      :aria-label="carouselSaveFabTitle" @click="saveCurrentPoemCarousel">
+      <span v-if="savingCurrentPoemCarousel"
+        class="h-5 w-5 animate-spin rounded-full border-2 border-edge-subtle border-t-brand" aria-hidden="true" />
+      <Icon v-else icon="heroicons:bookmark-square" class="h-5 w-5 shrink-0" aria-hidden="true" />
+    </button>
+
+    <Transition name="defaults-thumbs">
+      <div v-if="showCurrentPoemCarouselThumbsUp && showCarouselStaffSaveCard"
+        class="pointer-events-none fixed right-[3.75rem] top-1/2 z-[44] flex -translate-y-1/2 flex-col items-center md:right-[5.25rem]"
+        role="status" aria-live="polite">
+        <span class="sr-only">{{ t('carousel.poemCarouselSaved') }}</span>
+        <svg class="defaults-save-thumbs-icon h-12 w-12 text-emerald-600" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M7 10v12" />
+          <path
+            d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88Z" />
+        </svg>
+      </div>
+    </Transition>
+
     <!-- Full-width: left 4/7, right 3/7 from md -->
     <div class="grid grid-cols-1 gap-10 md:grid-cols-7 md:items-start md:gap-8 lg:gap-10">
       <!-- Left (4 columns): Controls -->
@@ -572,18 +609,14 @@ function onTouchEnd(e: TouchEvent) {
           <div class="mb-2 flex items-center gap-2">
             <button type="button"
               class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-edge-subtle bg-surface-subtle text-content-secondary transition hover:border-edge hover:bg-surface-raised disabled:opacity-50"
-              :disabled="carouselFontKeys.length < 2"
-              aria-label="Font anterior"
-              title="Font anterior"
+              :disabled="carouselFontKeys.length < 2" aria-label="Font anterior" title="Font anterior"
               @click="prevCarouselFont">
               <Icon icon="heroicons:chevron-left" class="h-5 w-5" aria-hidden="true" />
             </button>
             <CarouselFontSelect v-model="carouselFontKey" class="min-w-0 flex-1" />
             <button type="button"
               class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-edge-subtle bg-surface-subtle text-content-secondary transition hover:border-edge hover:bg-surface-raised disabled:opacity-50"
-              :disabled="carouselFontKeys.length < 2"
-              aria-label="Font următor"
-              title="Font următor"
+              :disabled="carouselFontKeys.length < 2" aria-label="Font următor" title="Font următor"
               @click="nextCarouselFont">
               <Icon icon="heroicons:chevron-right" class="h-5 w-5" aria-hidden="true" />
             </button>
@@ -606,7 +639,7 @@ function onTouchEnd(e: TouchEvent) {
           <div ref="keywordsHelpWrapRef" class="relative mb-1">
             <div class="flex items-baseline gap-1.5">
               <label class="field-label mb-0 flex-1" for="carousel-keyword-input">{{ t('carousel.fieldKeywords')
-                }}</label>
+              }}</label>
               <button id="carousel-keywords-help-trigger" type="button"
                 class="inline-flex shrink-0 rounded-full p-0.5 text-content-soft transition hover:bg-surface-subtle hover:text-content-secondary"
                 :aria-expanded="keywordsHelpOpen" aria-controls="carousel-keywords-help-panel"
@@ -630,7 +663,7 @@ function onTouchEnd(e: TouchEvent) {
             class="mb-4 w-full rounded-xl border border-edge-subtle px-4 py-2.5 text-sm outline-none focus:border-gold-500"
             :placeholder="t('carousel.phKeywords')" />
 
-          <div class="border-t border-edge-subtle pt-4">
+          <div class="mt-6 border-t border-edge-subtle pt-6">
             <h3 class="mb-3 font-serif text-base font-semibold text-content">
               {{ t('carousel.sectionTypography') }}
             </h3>
@@ -646,54 +679,18 @@ function onTouchEnd(e: TouchEvent) {
             <div class="mb-4 flex items-center gap-3">
               <input v-model.number="bodyFontSizeScale" type="range" min="0.7" max="2" step="0.05"
                 class="h-2 flex-1 cursor-pointer accent-gold-600" />
-              <span class="w-12 text-right text-sm tabular-nums text-content-secondary">{{ Math.round(bodyFontSizeScale * 100)
-              }}%</span>
+              <span class="w-12 text-right text-sm tabular-nums text-content-secondary">{{ Math.round(bodyFontSizeScale
+                * 100)
+                }}%</span>
             </div>
 
             <label class="field-label">{{ t('carousel.fieldLineHeight') }}</label>
             <div class="mb-4 flex items-center gap-3">
               <input v-model.number="bodyLineHeight" type="range" min="1.15" max="2.25" step="0.05"
                 class="h-2 flex-1 cursor-pointer accent-gold-600" />
-              <span class="w-12 text-right text-sm tabular-nums text-content-secondary">{{ bodyLineHeight.toFixed(2) }}</span>
+              <span class="w-12 text-right text-sm tabular-nums text-content-secondary">{{ bodyLineHeight.toFixed(2)
+                }}</span>
             </div>
-
-            <div v-if="canSaveCurrentPoemCarousel && loadedPoemSlug" class="mb-4 border-t border-edge-subtle pt-4">
-              <p class="mb-2 text-xs text-content-muted">
-                {{ t('carousel.poemCarouselSaveHintCarouselOnly') }}
-              </p>
-              <button type="button"
-                class="w-full rounded-xl border border-gold-500 bg-gold-500/10 px-4 py-2.5 text-sm font-semibold text-content hover:bg-gold-500/20 disabled:opacity-50"
-                :disabled="savingCurrentPoemCarousel" @click="saveCurrentPoemCarousel">
-                {{ savingCurrentPoemCarousel ? t('carousel.savingCurrentPoemCarousel') :
-                  t('carousel.saveCurrentPoemCarousel') }}
-              </button>
-              <Transition name="defaults-thumbs">
-                <div v-if="showCurrentPoemCarouselThumbsUp"
-                  class="defaults-save-thumbs mt-4 flex flex-col items-center justify-center gap-1" role="status"
-                  aria-live="polite">
-                  <span class="sr-only">{{ t('carousel.poemCarouselSaved') }}</span>
-                  <svg class="defaults-save-thumbs-icon h-14 w-14 text-emerald-600" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"
-                    aria-hidden="true">
-                    <path d="M7 10v12" />
-                    <path
-                      d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88Z" />
-                  </svg>
-                </div>
-              </Transition>
-            </div>
-
-            <p v-if="!isLoggedIn" class="mt-4 border-t border-edge-subtle pt-4 text-xs text-content-muted">
-              {{ t('carousel.poemSaveLoginHint') }}
-            </p>
-            <p v-else-if="isLoggedIn && loadedPoemSlug && !canSaveCurrentPoemCarousel"
-              class="mt-4 border-t border-edge-subtle pt-4 text-xs text-content-muted">
-              {{ t('carousel.poemSaveOwnerOnlyHint') }}
-            </p>
-            <p v-else-if="canSaveCurrentPoemCarousel && !loadedPoemSlug"
-              class="mt-4 border-t border-edge-subtle pt-4 text-xs text-content-muted">
-              {{ t('carousel.poemSaveNeedPoemHint') }}
-            </p>
           </div>
         </section>
 
@@ -704,7 +701,12 @@ function onTouchEnd(e: TouchEvent) {
           <p class="mb-4 text-sm text-content-muted">
             {{ t('carousel.exportHint') }}
           </p>
-          <div class="flex flex-wrap gap-3">
+          <div class="flex flex-wrap items-center gap-3">
+            <NuxtLink v-if="seePoemPageLocation" :to="seePoemPageLocation"
+              class="inline-flex items-center justify-center rounded-xl border border-edge bg-surface-raised px-5 py-2.5 text-sm font-medium text-content-secondary shadow-sm transition hover:border-edge-strong hover:bg-surface-subtle hover:text-content"
+              :aria-label="t('carousel.seePoem')">
+              {{ t('carousel.seePoem') }}
+            </NuxtLink>
             <button type="button"
               class="rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-brand-foreground shadow hover:bg-brand-hover disabled:opacity-50"
               :disabled="exporting" @click="exportZip">
@@ -784,18 +786,14 @@ function onTouchEnd(e: TouchEvent) {
                 <div class="mb-4 flex items-center gap-2">
                   <button type="button"
                     class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-edge-subtle bg-surface-subtle text-content-secondary transition hover:border-edge hover:bg-surface-raised disabled:opacity-50"
-                    :disabled="carouselFontKeys.length < 2"
-                    aria-label="Font anterior"
-                    title="Font anterior"
+                    :disabled="carouselFontKeys.length < 2" aria-label="Font anterior" title="Font anterior"
                     @click="prevCarouselFont">
                     <Icon icon="heroicons:chevron-left" class="h-5 w-5" aria-hidden="true" />
                   </button>
                   <CarouselFontSelect v-model="carouselFontKey" class="min-w-0 flex-1" />
                   <button type="button"
                     class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-edge-subtle bg-surface-subtle text-content-secondary transition hover:border-edge hover:bg-surface-raised disabled:opacity-50"
-                    :disabled="carouselFontKeys.length < 2"
-                    aria-label="Font următor"
-                    title="Font următor"
+                    :disabled="carouselFontKeys.length < 2" aria-label="Font următor" title="Font următor"
                     @click="nextCarouselFont">
                     <Icon icon="heroicons:chevron-right" class="h-5 w-5" aria-hidden="true" />
                   </button>
@@ -812,16 +810,19 @@ function onTouchEnd(e: TouchEvent) {
                 <div class="mb-3 flex items-center gap-3">
                   <input v-model.number="bodyFontSizeScale" type="range" min="0.7" max="2" step="0.05"
                     class="h-2 flex-1 cursor-pointer accent-gold-600" />
-                  <span class="w-12 text-right text-sm tabular-nums text-content-secondary">{{ Math.round(bodyFontSizeScale * 100)
+                  <span class="w-12 text-right text-sm tabular-nums text-content-secondary">{{
+                    Math.round(bodyFontSizeScale * 100)
                     }}%</span>
                 </div>
 
                 <label class="field-label">{{ t('carousel.fieldLineHeight') }}</label>
-                <div class="flex items-center gap-3">
+                <div class="mb-4 flex items-center gap-3">
                   <input v-model.number="bodyLineHeight" type="range" min="1.15" max="2.25" step="0.05"
                     class="h-2 flex-1 cursor-pointer accent-gold-600" />
-                  <span class="w-12 text-right text-sm tabular-nums text-content-secondary">{{ bodyLineHeight.toFixed(2) }}</span>
+                  <span class="w-12 text-right text-sm tabular-nums text-content-secondary">{{ bodyLineHeight.toFixed(2)
+                    }}</span>
                 </div>
+
               </div>
 
               <!-- Preview + nav (right column when fullscreen; full width when not) -->

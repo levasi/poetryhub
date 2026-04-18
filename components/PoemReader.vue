@@ -109,8 +109,7 @@ const hasTitleAside = computed(() => !!slots.titleAside)
     </div>
 
     <template v-if="showTitle && hasTitleAside">
-      <div
-        class="mb-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-3 sm:items-center">
+      <div class="mb-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-3 sm:items-center">
         <div class="min-w-0 flex-1">
           <PoemTitle :title="poem.title" :slug="poem.slug" :variant="titleVariant" :poem-id="poemIdForTitle"
             class="!mb-0" />
@@ -124,10 +123,11 @@ const hasTitleAside = computed(() => !!slots.titleAside)
       :poem-id="poemIdForTitle" />
 
     <NuxtLink v-if="showAuthor && author && variant === 'pdp'" :to="`/authors/${author.slug}`"
-      class="group mt-2 inline-flex max-w-full items-center gap-4 text-content-secondary transition-colors hover:text-brand">
+      class="group mt-2 mb-8 inline-flex max-w-full items-center gap-4 text-content-secondary transition-colors hover:text-brand">
       <img :src="authorAvatar" alt="" loading="lazy"
         class="h-14 w-14 shrink-0 rounded-full object-cover ring-2 ring-edge-subtle transition-[box-shadow] group-hover:ring-brand/35" />
-      <span class="font-serif text-lg font-semibold leading-snug tracking-tight text-content group-hover:text-brand">&mdash;
+      <span
+        class="font-serif text-lg font-semibold leading-snug tracking-tight text-content group-hover:text-brand">&mdash;
         {{ author.name }}</span>
     </NuxtLink>
 

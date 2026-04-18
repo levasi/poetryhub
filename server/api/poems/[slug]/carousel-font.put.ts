@@ -1,4 +1,4 @@
-// PUT /api/poems/:slug/carousel-font — per-poem carousel settings (admin or poem submitter)
+// PUT /api/poems/:slug/carousel-font — per-poem carousel settings (administrators and moderators only)
 import { Prisma } from '@prisma/client'
 import { prisma } from '~/server/utils/prisma'
 import { requireUser } from '~/server/utils/auth'
@@ -6,7 +6,7 @@ import {
   poemCarouselSettingsSchema,
   ensurePoemCarouselFontFamily,
 } from '~/utils/poemCarouselFontSettings'
-import { userCanEditPoem } from '~/server/utils/poemEditAuth'
+import { isStaffRole } from '~/utils/roles'
 
 export default defineEventHandler(async (event) => {
   setHeader(event, 'cache-control', 'no-store')
@@ -31,7 +31,8 @@ export default defineEventHandler(async (event) => {
   if (!existing) {
     throw createError({ statusCode: 404, statusMessage: 'Poem not found' })
   }
-  if (!userCanEditPoem(tokenUser, existing)) {
+  /** Same rule as carousel generator UI: administrators and moderators only. */
+  if (!isStaffRole(tokenUser.role)) {
     throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
   }
 
