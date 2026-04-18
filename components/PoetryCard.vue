@@ -284,9 +284,9 @@ watchEffect((onCleanup) => {
 
         <!-- Footer -->
         <div class="mt-5 flex items-center justify-end gap-3 border-t border-edge-subtle pt-4">
-          <div class="flex items-center justify-between gap-0.5 w-full">
+          <div class="flex w-full items-center justify-between gap-2">
             <NuxtLink :to="poemHref"
-              class="group/readmore inline-flex items-center gap-1.5 text-sm font-semibold text-brand transition-colors hover:text-brand-hover"
+              class="group/readmore inline-flex min-w-0 items-center gap-1.5 text-sm font-semibold text-brand transition-colors hover:text-brand-hover"
               @click.stop>
               {{ t('card.readMore') }}
               <svg class="h-4 w-4 shrink-0 transition-transform group-hover/readmore:translate-x-0.5" fill="none"
@@ -294,7 +294,7 @@ watchEffect((onCleanup) => {
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
               </svg>
             </NuxtLink>
-            <template>
+            <div class="flex shrink-0 items-center gap-0.5">
               <button type="button"
                 class="inline-flex items-center justify-center rounded-ds-md text-content-muted transition-colors hover:bg-surface-subtle hover:text-brand"
                 :aria-label="t('card.quickRead')" :title="t('card.quickRead')" @click.stop="openQuickRead">
@@ -313,7 +313,7 @@ watchEffect((onCleanup) => {
                     d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
               </button>
-            </template>
+            </div>
           </div>
         </div>
       </div>

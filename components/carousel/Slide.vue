@@ -1,12 +1,9 @@
 <script setup lang="ts">
 import type { CarouselTheme, SlideVariant } from '~/composables/useCarouselGenerator'
 import { READER_FONT_STACKS } from '~/composables/useReaderPreferences'
-import TemplateMinimal from './TemplateMinimal.vue'
-import TemplateDark from './TemplateDark.vue'
-import TemplateGradient from './TemplateGradient.vue'
-import TemplateNeon from './TemplateNeon.vue'
+import CarouselInstaTemplate from './CarouselInstaTemplate.vue'
 
-const props = withDefaults(
+withDefaults(
   defineProps<{
     theme: CarouselTheme
     variant: SlideVariant
@@ -41,21 +38,11 @@ const props = withDefaults(
     fontFamily: () => READER_FONT_STACKS.literata,
   },
 )
-
-const tpl = computed(() => {
-  const map = {
-    minimal: TemplateMinimal,
-    dark: TemplateDark,
-    gradient: TemplateGradient,
-    neon: TemplateNeon,
-  } as const
-  return map[props.theme]
-})
 </script>
 
 <template>
-  <component
-    :is="tpl"
+  <CarouselInstaTemplate
+    :theme="theme"
     :variant="variant"
     :title="title"
     :author="author"
