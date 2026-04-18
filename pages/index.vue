@@ -182,7 +182,6 @@ const canLoadMoreForYou = computed(() => forYouMeta.value.hasMore && !authorSlug
 
 const featured = computed(() => home.value?.featured ?? [])
 const recent = computed(() => home.value?.recent ?? [])
-const themeTags = computed(() => home.value?.themeTags ?? [])
 
 function formatDate(iso: string) {
   try {
@@ -448,18 +447,7 @@ function formatDate(iso: string) {
               </NuxtLink>
             </div>
 
-            <div v-if="themeTags.length">
-              <h2 class="mb-4 text-sm font-semibold uppercase tracking-wider text-content">
-                {{ t('home.topicsTitle') }}
-              </h2>
-              <div class="flex flex-wrap gap-2">
-                <NuxtLink v-for="tag in themeTags.slice(0, 14)" :key="tag.id"
-                  :to="`/?tag=${encodeURIComponent(tag.slug)}`"
-                  class="rounded-full border border-edge-subtle bg-surface-subtle/80 px-3 py-1.5 text-[13px] text-content-secondary transition hover:border-edge hover:bg-surface-raised hover:text-content">
-                  {{ tag.name }}
-                </NuxtLink>
-              </div>
-            </div>
+            <!-- Recommended topics removed -->
           </div>
         </aside>
       </div>

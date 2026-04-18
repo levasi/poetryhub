@@ -5,7 +5,7 @@ const { t } = useI18n()
 
 useSeoMeta({ title: computed(() => t('seo.signupTitle')) })
 
-const { register, loading, isLoggedIn, loginWithGoogle } = useAuth()
+const { isLoggedIn, loginWithGoogle } = useAuth()
 const route = useRoute()
 const { showLanguageSwitch } = useSiteSettings()
 
@@ -15,11 +15,6 @@ const { data: googleConfig } = await useFetch<{ enabled: boolean }>('/api/auth/g
 const googleEnabled = computed(() => googleConfig.value?.enabled ?? false)
 
 if (isLoggedIn.value) await navigateTo('/')
-
-const form = reactive({ name: '', email: '', password: '', confirm: '' })
-const error = ref('')
-const showPassword = ref(false)
-const showConfirm = ref(false)
 
 const GOOGLE_ERROR_KEYS: Record<string, string> = {
   google_denied: 'auth.googleErrorDenied',
@@ -42,26 +37,27 @@ function startGoogle() {
   loginWithGoogle(redirect.startsWith('/') ? redirect : '/')
 }
 
-async function submit() {
-  error.value = ''
-
-  if (form.password !== form.confirm) {
-    error.value = t('auth.passwordMismatch')
-    return
-  }
-
-  const result = await register(form.email, form.password, form.name || undefined)
-  if (result.ok) {
-    const redirect = (route.query.redirect as string) || '/'
-    await navigateTo(redirect)
-  } else {
-    error.value = result.message ?? t('auth.registerFailed')
-  }
-}
+/* TEMP: email/password registration — restore by merging into one `useAuth()` destructure:
+ * const { register, loading, isLoggedIn, loginWithGoogle } = useAuth()
+ * const form = reactive({ name: '', email: '', password: '', confirm: '' })
+ * const error = ref(''); const showPassword = ref(false); const showConfirm = ref(false)
+ * async function submit() { ... see commented template block in this file }
+ */
 </script>
 
 <template>
   <div class="relative flex min-h-screen items-center justify-center bg-surface-base px-4">
+    <div class="absolute left-4 top-4 z-10">
+      <NuxtLink
+        to="/"
+        class="inline-flex items-center gap-1.5 text-sm font-medium text-content-secondary transition hover:text-content"
+      >
+        <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+        </svg>
+        {{ t('home.navHome') }}
+      </NuxtLink>
+    </div>
     <div class="absolute right-4 top-4 z-10">
       <LanguageSwitch v-if="showLanguageSwitch" />
     </div>
@@ -92,15 +88,15 @@ async function submit() {
             </svg>
             {{ t('auth.continueWithGoogle') }}
           </button>
-          <div class="relative flex items-center gap-3 py-1">
-            <div class="h-px flex-1 bg-edge-subtle" />
-            <span class="text-xs uppercase tracking-widest text-content-soft">{{ t('auth.orContinueWith') }}</span>
-            <div class="h-px flex-1 bg-edge-subtle" />
-          </div>
         </div>
 
+        <!-- TEMP: email/password registration (Google only for now). Restore with script block above.
+        <div class="relative flex items-center gap-3 py-1">
+          <div class="h-px flex-1 bg-edge-subtle" />
+          <span class="text-xs uppercase tracking-widest text-content-soft">{{ t('auth.orContinueWith') }}</span>
+          <div class="h-px flex-1 bg-edge-subtle" />
+        </div>
         <form class="space-y-5" @submit.prevent="submit">
-          <!-- Name -->
           <div>
             <label class="mb-1.5 block text-xs font-medium uppercase tracking-widest text-content-secondary">
               {{ t('auth.nameOptional') }}
@@ -114,7 +110,6 @@ async function submit() {
             />
           </div>
 
-          <!-- Email -->
           <div>
             <label class="mb-1.5 block text-xs font-medium uppercase tracking-widest text-content-secondary">
               {{ t('auth.email') }}
@@ -129,7 +124,6 @@ async function submit() {
             />
           </div>
 
-          <!-- Password -->
           <div>
             <label class="mb-1.5 block text-xs font-medium uppercase tracking-widest text-content-secondary">
               {{ t('auth.password') }}
@@ -161,7 +155,6 @@ async function submit() {
             </div>
           </div>
 
-          <!-- Confirm password -->
           <div>
             <label class="mb-1.5 block text-xs font-medium uppercase tracking-widest text-content-secondary">
               {{ t('auth.confirmPassword') }}
@@ -193,10 +186,8 @@ async function submit() {
             </div>
           </div>
 
-          <!-- Error -->
-          <p v-if="error" class="rounded-lg bg-danger/10 px-4 py-2.5 text-sm text-danger">{{ error }}</p>
+          <p v-if="error" class="rounded-lg bg-danger/10 px-4 py-2.5 text-sm text-danger">{{ error }}          </p>
 
-          <!-- Submit -->
           <button
             type="submit"
             :disabled="loading"
@@ -205,6 +196,7 @@ async function submit() {
             {{ loading ? t('auth.creating') : t('auth.createAccount') }}
           </button>
         </form>
+        -->
 
         <p class="mt-6 text-center text-sm text-content-secondary">
           {{ t('auth.haveAccount') }}

@@ -570,28 +570,28 @@ onUnmounted(() => {
             <div class="h-48 animate-pulse rounded-2xl bg-surface-subtle" aria-hidden="true" />
           </template>
         </ClientOnly>
-        <!-- Publish button -->
+        <!-- TEMP: Publică poezia — re-enable when publishing is back on -->
+        <!--
         <div class="mt-3 shrink-0">
-          <button type="button"
-            class="flex w-full items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-medium text-blue-700 transition hover:bg-blue-100 hover:text-blue-800"
-            @click="openPublish">
-            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <button type="button" class="ds-btn-primary w-full gap-2 shadow-ds-card" @click="openPublish">
+            <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round"
                 d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
             </svg>
             {{ t('write.publishBtn') }}
           </button>
         </div>
+        -->
       </section>
     </div>
 
-    <!-- Publish panel -->
+    <!-- TEMP: Publish panel — uncomment together with the button above -->
+    <!--
     <Teleport to="body">
       <Transition name="publish-panel">
         <div v-if="publishOpen" class="fixed inset-0 z-[100] flex items-end justify-center sm:items-center sm:p-4">
           <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closePublish" />
-          <div class="relative z-10 w-full max-w-lg rounded-t-2xl bg-surface-raised shadow-2xl sm:rounded-2xl">
-            <!-- Header -->
+          <div class="relative z-10 w-full max-w-lg rounded-t-2xl border border-edge-subtle bg-surface-raised shadow-ds-popover sm:rounded-ds-xl">
             <div class="flex items-center justify-between border-b border-edge-subtle px-6 py-4">
               <h2 class="text-base font-semibold text-content">{{ t('write.publishTitle') }}</h2>
               <button type="button"
@@ -604,70 +604,59 @@ onUnmounted(() => {
             </div>
 
             <div class="max-h-[80vh] overflow-y-auto px-6 py-5">
-              <!-- Not logged in state -->
               <div v-if="!isLoggedIn" class="py-4 text-center">
                 <p class="mb-4 text-sm text-content-muted">{{ t('write.loginRequired') }}</p>
-                <NuxtLink to="/login?redirect=/write"
-                  class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-                  @click="closePublish">
+                <NuxtLink to="/login?redirect=/write" class="ds-btn-primary inline-flex" @click="closePublish">
                   {{ t('auth.signIn') }}
                 </NuxtLink>
               </div>
 
-              <!-- Success state -->
               <div v-else-if="publishMsg?.ok" class="py-4 text-center">
-                <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-                  <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft/40 ring-1 ring-brand/25">
+                  <svg class="h-6 w-6 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor"
                     stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
                 <p class="mb-4 font-medium text-content">{{ publishMsg.text }}</p>
-                <div class="flex justify-center gap-3">
-                  <NuxtLink v-if="publishMsg.slug" :to="`/poems/${publishMsg.slug}`"
-                    class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                <div class="flex flex-wrap justify-center gap-3">
+                  <NuxtLink v-if="publishMsg.slug" :to="`/poems/${publishMsg.slug}`" class="ds-btn-primary"
                     @click="closePublish">
                     {{ t('write.viewPoem') }}
                   </NuxtLink>
-                  <button type="button"
-                    class="rounded-lg border border-edge-subtle px-4 py-2 text-sm text-content-secondary hover:bg-surface-subtle"
-                    @click="closePublish">
+                  <button type="button" class="ds-btn-secondary" @click="closePublish">
                     {{ t('write.cancel') }}
                   </button>
                 </div>
               </div>
 
-              <!-- Form -->
               <form v-else class="space-y-4" @submit.prevent="submitPublish">
                 <p class="text-sm text-content-muted">{{ t('write.publishDesc') }}</p>
 
-                <!-- Title -->
                 <div>
                   <label class="mb-1.5 block text-xs font-medium uppercase tracking-widest text-content-muted">
                     {{ t('write.fieldTitle') }} *
                   </label>
                   <input v-model="publishForm.title" type="text" :placeholder="t('write.fieldTitlePlaceholder')"
                     required maxlength="500"
-                    class="w-full rounded-xl border border-edge bg-surface-raised px-4 py-2.5 text-sm text-content outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" />
+                    class="ds-input px-4 py-2.5" />
                 </div>
 
-                <!-- Author name -->
                 <div>
                   <label class="mb-1.5 block text-xs font-medium uppercase tracking-widest text-content-muted">
                     {{ t('write.fieldAuthorName') }} *
                   </label>
                   <input v-model="publishForm.authorName" type="text" required maxlength="80"
-                    class="w-full rounded-xl border border-edge bg-surface-raised px-4 py-2.5 text-sm text-content outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" />
+                    class="ds-input px-4 py-2.5" />
                   <p class="mt-1 text-xs text-content-soft">{{ t('write.fieldAuthorNameHint') }}</p>
                 </div>
 
-                <!-- Language -->
                 <div>
                   <label class="mb-1.5 block text-xs font-medium uppercase tracking-widest text-content-muted">
                     {{ t('write.fieldLanguage') }}
                   </label>
                   <select v-model="publishForm.language"
-                    class="w-full rounded-xl border border-edge bg-surface-raised px-4 py-2.5 text-sm text-content outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+                    class="ds-input px-4 py-2.5">
                     <option value="ro">Română</option>
                     <option value="en">English</option>
                     <option value="fr">Français</option>
@@ -676,15 +665,14 @@ onUnmounted(() => {
                   </select>
                 </div>
 
-                <!-- Tags -->
                 <div v-if="allTags.length">
                   <label class="mb-2 block text-xs font-medium uppercase tracking-widest text-content-muted">
                     {{ t('write.fieldTags') }}
                   </label>
                   <div class="flex flex-wrap gap-1.5">
                     <button v-for="tag in allTags" :key="tag.id" type="button" :class="publishForm.tagIds.includes(tag.id)
-                      ? 'border-blue-500 bg-blue-50 text-blue-700'
-                      : 'border-edge-subtle bg-surface-subtle text-content-muted hover:border-edge'"
+                      ? 'border-brand bg-brand-soft/35 text-brand shadow-sm ring-1 ring-brand/20'
+                      : 'border-edge-subtle bg-surface-subtle text-content-muted hover:border-edge hover:bg-surface-raised'"
                       class="rounded-full border px-3 py-1 text-xs font-medium transition"
                       @click="togglePublishTag(tag.id)">
                       {{ tag.name }}
@@ -692,19 +680,16 @@ onUnmounted(() => {
                   </div>
                 </div>
 
-                <!-- Error -->
-                <p v-if="publishMsg && !publishMsg.ok" class="rounded-lg bg-red-50 px-4 py-2.5 text-sm text-red-700">
+                <p v-if="publishMsg && !publishMsg.ok"
+                  class="rounded-ds-md border border-danger/25 bg-danger-soft px-4 py-2.5 text-sm text-danger">
                   {{ publishMsg.text }}
                 </p>
 
-                <div class="flex gap-3 pt-1">
-                  <button type="submit" :disabled="publishLoading"
-                    class="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50">
+                <div class="flex flex-wrap gap-3 pt-1">
+                  <button type="submit" :disabled="publishLoading" class="ds-btn-primary px-5">
                     {{ publishLoading ? t('write.publishing') : t('write.publishBtn') }}
                   </button>
-                  <button type="button"
-                    class="rounded-xl border border-edge-subtle px-5 py-2.5 text-sm text-content-secondary hover:bg-surface-subtle"
-                    @click="closePublish">
+                  <button type="button" class="ds-btn-secondary px-5" @click="closePublish">
                     {{ t('write.cancel') }}
                   </button>
                 </div>
@@ -714,6 +699,7 @@ onUnmounted(() => {
         </div>
       </Transition>
     </Teleport>
+    -->
 
     <Teleport to="body">
       <div v-if="defPop" class="fixed inset-0 z-[90]">
