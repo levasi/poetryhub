@@ -260,7 +260,7 @@ const publishForm = reactive({
   tagIds: [] as string[],
 })
 const publishLoading = ref(false)
-const publishMsg = ref<{ ok: boolean; text: string; slug?: string } | null>(null)
+const publishMsg = ref<{ ok: boolean; text: string; slug?: string; authorSlug?: string } | null>(null)
 
 interface Tag { id: string; slug: string; name: string; category: string }
 const allTags = ref<Tag[]>([])
@@ -307,7 +307,7 @@ async function submitPublish() {
   publishMsg.value = null
   publishLoading.value = true
   try {
-    const poem = await $fetch<{ slug: string }>('/api/user/poems', {
+    const poem = await $fetch<{ slug: string; author: { slug: string } }>('/api/user/poems', {
       method: 'POST',
       body: {
         title: publishForm.title.trim(),
@@ -317,7 +317,12 @@ async function submitPublish() {
         tagIds: publishForm.tagIds,
       },
     })
-    publishMsg.value = { ok: true, text: t('write.published'), slug: poem.slug }
+    publishMsg.value = {
+      ok: true,
+      text: t('write.published'),
+      slug: poem.slug,
+      authorSlug: poem.author.slug,
+    }
   } catch {
     publishMsg.value = { ok: false, text: t('write.publishError') }
   } finally {
@@ -620,8 +625,14 @@ onUnmounted(() => {
                 </div>
                 <p class="mb-4 font-medium text-content">{{ publishMsg.text }}</p>
                 <div class="flex flex-wrap justify-center gap-3">
-                  <NuxtLink v-if="publishMsg.slug" :to="`/poems/${publishMsg.slug}`" class="ds-btn-primary"
-                    @click="closePublish">
+                  <NuxtLink
+                    v-if="publishMsg.slug"
+                    :to="publishMsg.authorSlug
+                      ? { path: `/authors/${publishMsg.authorSlug}`, query: { poem: publishMsg.slug } }
+                      : `/poems/${publishMsg.slug}`"
+                    class="ds-btn-primary"
+                    @click="closePublish"
+                  >
                     {{ t('write.viewPoem') }}
                   </NuxtLink>
                   <button type="button" class="ds-btn-secondary" @click="closePublish">

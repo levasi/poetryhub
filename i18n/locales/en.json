@@ -232,7 +232,13 @@
     "biography": "Biography",
     "bibliography": "Bibliography",
     "worksInCollection": "Titles in the PoetryHub collection (alphabetical).",
-    "bioUnavailable": "No biography is available for this author yet. You can add one in the admin panel."
+    "bioUnavailable": "No biography is available for this author yet. You can add one in the admin panel.",
+    "worksListAria": "Browse works",
+    "activePoemHeading": "Reading now",
+    "poemCouldNotLoad": "This poem could not be loaded.",
+    "editBiography": "Edit biography",
+    "editPoem": "Edit poem",
+    "savingBio": "Saving…"
   },
   "search": {
     "title": "Search",
@@ -367,7 +373,6 @@
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
     "closeFilters": "Close filters",
-    "closeStanza": "Close stanza view",
     "poemNavigation": "Adjacent poems in the collection"
   },
   "pagination": {
@@ -377,10 +382,6 @@
   "viewer": {
     "saved": "Saved",
     "savePoem": "Save poem",
-    "stanzaView": "Stanza view",
-    "underMin": "Under 1 min read",
-    "minRead": "{n} min read",
-    "slideHint": "{current} / {total} · Use ← → to navigate · Esc to exit",
     "readingDisplay": "Reading",
     "readingSettingsHint": "Adjust typeface and size for comfortable reading.",
     "openReadingSettings": "Reading appearance",
@@ -417,7 +418,15 @@
     "writtenYearAndPeriod": "Written in {year} · {period}",
     "sharePoem": "Share",
     "copyLink": "Copy link",
-    "linkCopied": "Copied!"
+    "linkCopied": "Copied!",
+    "editPoem": "Edit poem",
+    "poemTitleLabel": "Title",
+    "poemBodyLabel": "Text",
+    "savePoemChanges": "Save changes",
+    "savingPoemEdit": "Saving…",
+    "cancelPoemEdit": "Cancel",
+    "poemTitleRequired": "Please enter a title.",
+    "poemEditFailed": "Could not save changes. Try again."
   },
   "insight": {
     "title": "Poem Insight",
@@ -428,8 +437,6 @@
     "hide": "Hide insight"
   },
   "card": {
-    "underMin": "<1 min",
-    "min": "{n} min",
     "favoriteAdd": "Add to favorites",
     "favoriteRemove": "Remove from favorites",
     "quickRead": "Quick read",
@@ -586,6 +593,7 @@
       "ownerNote": "Site owner — must stay admin.",
       "roleLabels": {
         "user": "User",
+        "editor": "Editor",
         "moderator": "Moderator",
         "admin": "Admin"
       }

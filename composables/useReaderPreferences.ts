@@ -257,15 +257,6 @@ export function useReaderPreferences() {
     letterSpacing: `${letterSpacingEm.value}em`,
   }))
 
-  const stanzaSlideStyle = computed(() => ({
-    whiteSpace: 'pre-wrap' as const,
-    fontFamily: fontFamilyCss.value,
-    fontSize: `clamp(${Math.max(16, fontSizePx.value - 2)}px, 3vw, ${Math.min(52, fontSizePx.value + 4)}px)`,
-    lineHeight: lineHeight.value,
-    color: 'rgb(var(--color-poem-text))',
-    letterSpacing: `${letterSpacingEm.value}em`,
-  }))
-
   return {
     fontKey,
     fontSizePx,
@@ -273,7 +264,6 @@ export function useReaderPreferences() {
     letterSpacingEm,
     fontFamilyCss,
     poemBodyStyle,
-    stanzaSlideStyle,
     onReaderPreferenceChange,
     cycleFont,
     fontOptions: READER_FONT_OPTIONS_ORDER,

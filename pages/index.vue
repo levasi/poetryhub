@@ -272,8 +272,10 @@ function formatDate(iso: string) {
                     <p class="mt-1 text-sm text-content-secondary">
                       <span v-if="displayNationality(authorPage.author.nationality)">{{
                         displayNationality(authorPage.author.nationality)
-                      }}</span>
-                      <span v-if="displayNationality(authorPage.author.nationality) && authorYearsLabel(authorPage.author)"> · </span>
+                        }}</span>
+                      <span
+                        v-if="displayNationality(authorPage.author.nationality) && authorYearsLabel(authorPage.author)">
+                        · </span>
                       <span>{{ authorYearsLabel(authorPage.author) }}</span>
                     </p>
                     <p class="mt-2 text-sm text-content-muted">
@@ -346,9 +348,7 @@ function formatDate(iso: string) {
                 </p>
                 <button type="button"
                   class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-edge-subtle bg-surface-raised text-content-muted shadow-sm transition hover:border-edge hover:bg-surface-page hover:text-content"
-                  aria-label="Închide"
-                  title="Închide"
-                  @click="dismissDbNotice">
+                  aria-label="Închide" title="Închide" @click="dismissDbNotice">
                   <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
                     aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -405,8 +405,7 @@ function formatDate(iso: string) {
                     <div v-if="canLoadMoreForYou" class="mt-10 flex justify-center">
                       <button type="button"
                         class="inline-flex min-w-[12rem] items-center justify-center gap-2 rounded-full border border-edge bg-surface-raised px-6 py-2.5 text-sm font-medium text-content-secondary transition hover:border-edge-strong hover:text-content disabled:cursor-not-allowed disabled:opacity-60"
-                        :disabled="forYouLoadingMore" :aria-busy="forYouLoadingMore"
-                        @click="loadMoreForYou">
+                        :disabled="forYouLoadingMore" :aria-busy="forYouLoadingMore" @click="loadMoreForYou">
                         <span v-if="forYouLoadingMore"
                           class="h-4 w-4 animate-spin rounded-full border-2 border-edge-subtle border-t-brand"
                           aria-hidden="true" />
@@ -441,8 +440,12 @@ function formatDate(iso: string) {
               </h2>
               <div class="flex flex-col border-t border-edge-subtle">
                 <template v-if="recent.length">
-                  <NuxtLink v-for="poem in recent.slice(0, 6)" :key="poem.id" :to="`/poems/${poem.slug}`"
-                    class="group border-b border-edge-subtle py-4 first:pt-3">
+                  <NuxtLink
+                    v-for="poem in recent.slice(0, 6)"
+                    :key="poem.id"
+                    :to="{ path: `/authors/${poem.author.slug}`, query: { poem: poem.slug } }"
+                    class="group border-b border-edge-subtle py-4 first:pt-3"
+                  >
                     <p
                       class="font-serif text-[15px] font-semibold leading-snug text-content group-hover:text-brand line-clamp-2">
                       {{ poem.title }}
@@ -461,8 +464,6 @@ function formatDate(iso: string) {
                 {{ t('home.allPoemsLink') }}
               </NuxtLink>
             </div>
-
-            <!-- Recommended topics removed -->
           </div>
         </aside>
       </div>

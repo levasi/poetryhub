@@ -147,6 +147,7 @@ async function onRoleSelect(u: AdminUser, ev: Event) {
                 @change="onRoleSelect(u, $event)"
               >
                 <option value="user">{{ t('admin.users.roleLabels.user') }}</option>
+                <option value="editor">{{ t('admin.users.roleLabels.editor') }}</option>
                 <option value="moderator">{{ t('admin.users.roleLabels.moderator') }}</option>
                 <option value="admin">{{ t('admin.users.roleLabels.admin') }}</option>
               </select>

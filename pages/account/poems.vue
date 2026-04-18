@@ -97,7 +97,7 @@ async function deletePoem(slug: string) {
       >
         <div class="min-w-0 flex-1">
           <NuxtLink
-            :to="`/poems/${poem.slug}`"
+            :to="{ path: `/authors/${poem.author.slug}`, query: { poem: poem.slug } }"
             class="font-semibold text-content transition hover:text-brand"
           >
             {{ poem.title }}
@@ -118,7 +118,7 @@ async function deletePoem(slug: string) {
         </div>
         <div class="flex shrink-0 flex-col items-stretch gap-1 sm:flex-row sm:items-center">
           <NuxtLink
-            :to="`/poems/${poem.slug}`"
+            :to="{ path: `/authors/${poem.author.slug}`, query: { poem: poem.slug } }"
             class="rounded-ds-md px-3 py-2 text-center text-xs font-medium text-content-secondary transition hover:bg-surface-subtle hover:text-brand"
           >
             {{ t('account.poemsViewPoem') }}

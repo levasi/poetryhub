@@ -1,4 +1,4 @@
-// PUT /api/authors/:slug (admin only)
+// PUT /api/authors/:slug — signed-in staff (moderator/admin) or admin JWT; see requireAdmin.
 import { z } from 'zod'
 import { prisma } from '~/server/utils/prisma'
 import { requireAdmin } from '~/server/utils/auth'

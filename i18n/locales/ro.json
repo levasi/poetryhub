@@ -232,7 +232,13 @@
     "biography": "Biografie",
     "bibliography": "Bibliografie",
     "worksInCollection": "Titluri din colecția PoetryHub (ordonate alfabetic).",
-    "bioUnavailable": "Nu există o biografie disponibilă pentru acest autor. Poți completa una din panoul admin."
+    "bioUnavailable": "Nu există o biografie disponibilă pentru acest autor. Poți completa una din panoul admin.",
+    "worksListAria": "Lucrări — parcurge lista",
+    "activePoemHeading": "În curs de lectură",
+    "poemCouldNotLoad": "Nu s-a putut încărca această poezie.",
+    "editBiography": "Editează biografia",
+    "editPoem": "Editează poezia",
+    "savingBio": "Se salvează…"
   },
   "search": {
     "title": "Căutare",
@@ -367,7 +373,6 @@
     "openMenu": "Deschide meniul",
     "closeMenu": "Închide meniul",
     "closeFilters": "Închide filtrele",
-    "closeStanza": "Închide vizualizarea pe strofe",
     "poemNavigation": "Poezii alăturate în colecție"
   },
   "pagination": {
@@ -377,10 +382,6 @@
   "viewer": {
     "saved": "Salvată",
     "savePoem": "Salvează poezia",
-    "stanzaView": "Vizualizare pe strofe",
-    "underMin": "Sub 1 min citire",
-    "minRead": "{n} min citire",
-    "slideHint": "{current} / {total} · Folosește ← → pentru navigare · Esc pentru ieșire",
     "readingDisplay": "Citire",
     "readingSettingsHint": "Ajustează fontul și mărimea pentru citit confortabil.",
     "openReadingSettings": "Aspect citire",
@@ -417,7 +418,15 @@
     "writtenYearAndPeriod": "Scrisă în {year} · {period}",
     "sharePoem": "Distribuie",
     "copyLink": "Copiază link-ul",
-    "linkCopied": "Copiat!"
+    "linkCopied": "Copiat!",
+    "editPoem": "Editează poezia",
+    "poemTitleLabel": "Titlu",
+    "poemBodyLabel": "Text",
+    "savePoemChanges": "Salvează modificările",
+    "savingPoemEdit": "Se salvează…",
+    "cancelPoemEdit": "Renunță",
+    "poemTitleRequired": "Introdu un titlu.",
+    "poemEditFailed": "Nu s-au putut salva modificările. Încearcă din nou."
   },
   "insight": {
     "title": "Interpretare",
@@ -428,8 +437,6 @@
     "hide": "Ascunde interpretarea"
   },
   "card": {
-    "underMin": "<1 min",
-    "min": "{n} min",
     "favoriteAdd": "Adaugă la favorite",
     "favoriteRemove": "Elimină din favorite",
     "quickRead": "Citire rapidă",
@@ -586,6 +593,7 @@
       "ownerNote": "Proprietar site — rămâne admin.",
       "roleLabels": {
         "user": "Utilizator",
+        "editor": "Editor",
         "moderator": "Moderator",
         "admin": "Admin"
       }

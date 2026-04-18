@@ -1,13 +1,19 @@
-// PUT /api/poems/:slug/content — update poem body (moderators and admins only)
+// PUT /api/poems/:slug/content — update poem body and/or title (editor, moderator, admin)
 import { z } from 'zod'
 import { prisma } from '~/server/utils/prisma'
 import { requireUser } from '~/server/utils/auth'
 import { estimateReadingTime, extractExcerpt } from '~/server/utils/slug'
-import { isStaffRole } from '~/utils/roles'
+import { isPoemEditorRole, isSiteOwnerEmail } from '~/utils/roles'
 
-const schema = z.object({
-  content: z.string().min(1),
-})
+const schema = z
+  .object({
+    content: z.string().min(1).optional(),
+    title: z.string().min(1).max(500).optional(),
+  })
+  .strict()
+  .refine((d) => d.content !== undefined || d.title !== undefined, {
+    message: 'Provide content and/or title',
+  })
 
 export default defineEventHandler(async (event) => {
   setHeader(event, 'cache-control', 'no-store')
@@ -32,20 +38,25 @@ export default defineEventHandler(async (event) => {
   if (!existing) {
     throw createError({ statusCode: 404, statusMessage: 'Poem not found' })
   }
-  if (!isStaffRole(tokenUser.role)) {
+  if (!isPoemEditorRole(tokenUser.role) && !isSiteOwnerEmail(tokenUser.email)) {
     throw createError({
       statusCode: 403,
-      statusMessage: 'Only moderators and admins can edit poem text',
+      statusMessage: 'Only editors, moderators and admins can edit poem text',
     })
   }
 
-  const content = parsed.data.content
+  const { content, title } = parsed.data
   await prisma.poem.update({
     where: { slug },
     data: {
-      content,
-      excerpt: extractExcerpt(content),
-      readingTime: estimateReadingTime(content),
+      ...(title !== undefined ? { title } : {}),
+      ...(content !== undefined
+        ? {
+            content,
+            excerpt: extractExcerpt(content),
+            readingTime: estimateReadingTime(content),
+          }
+        : {}),
     },
   })
 

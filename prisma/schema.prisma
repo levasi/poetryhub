@@ -112,6 +112,7 @@ model PoemTag {
 
 enum UserRole {
   user
+  editor
   moderator
   admin
 }

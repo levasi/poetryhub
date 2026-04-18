@@ -26,30 +26,25 @@ const mailtoHref = computed(() => {
     <div class="mx-auto w-full max-w-content px-4 md:px-6">
       <div class="flex flex-col items-center justify-between gap-8 md:flex-row md:items-start md:gap-12">
         <p
-          class="max-w-reading text-balance text-center font-serif text-sm leading-relaxed italic text-content-secondary md:text-left"
-        >
+          class="max-w-reading text-balance text-center font-serif text-sm leading-relaxed italic text-content-secondary md:text-left">
           „Nu credeam să-nvăț a muri vreodată.”
           <span class="mt-2 block not-italic text-ui-xs font-semibold tracking-wide text-content-soft">
             — Mihai Eminescu
           </span>
         </p>
         <nav
-          class="flex shrink-0 flex-wrap justify-center gap-x-8 gap-y-2 text-ui-sm font-medium text-content-soft"
-          aria-label="Footer"
-        >
+          class="flex shrink-0 flex-wrap justify-center gap-x-8 gap-y-2 text-ui-sm font-medium text-content-soft align-center"
+          aria-label="Footer">
           <NuxtLink to="/" class="ds-link hover:text-content-secondary">{{ t('home.navHome') }}</NuxtLink>
           <NuxtLink to="/admin" class="ds-link hover:text-content-secondary">{{ t('footer.admin') }}</NuxtLink>
-          <a
-            :href="mailtoHref"
-            class="inline-flex items-center justify-center gap-2 rounded-ds-md border border-edge-subtle bg-surface-raised px-3 py-2 text-ui-sm font-semibold text-content-secondary shadow-sm transition hover:border-edge hover:bg-surface-page hover:text-content"
-          >
+          <a :href="mailtoHref"
+            class="inline-flex items-center justify-center gap-2 rounded-ds-md border border-edge-subtle bg-surface-raised px-3 py-2 text-ui-sm font-semibold text-content-secondary shadow-sm transition hover:border-edge hover:bg-surface-page hover:text-content">
             {{ t('footer.emailCta') }}
           </a>
         </nav>
       </div>
       <div
-        class="mt-10 flex flex-col items-center gap-5 border-t border-edge-subtle pt-8 md:flex-row md:items-center md:justify-between"
-      >
+        class="mt-10 flex flex-col items-center gap-5 border-t border-edge-subtle pt-8 md:flex-row md:items-center md:justify-between">
         <p class="text-center text-ui-xs text-content-hint md:text-left">{{ t('colorScheme.hint') }}</p>
         <ColorSchemeSwitch />
       </div>

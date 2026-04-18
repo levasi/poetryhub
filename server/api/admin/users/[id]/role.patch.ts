@@ -5,7 +5,7 @@ import { requireAdmin } from '~/server/utils/auth'
 import { SITE_OWNER_EMAIL } from '~/utils/roles'
 
 const schema = z.object({
-  role: z.enum(['user', 'moderator', 'admin']),
+  role: z.enum(['user', 'editor', 'moderator', 'admin']),
 })
 
 export default defineEventHandler(async (event) => {

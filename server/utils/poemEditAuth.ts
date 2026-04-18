@@ -1,13 +1,14 @@
-import { isStaffRole } from '~/utils/roles'
+import { isPoemEditorRole, isSiteOwnerEmail } from '~/utils/roles'
 
 /**
  * Who may change poem rows via user session (not admin JWT).
- * Staff (admin, moderator) may edit any poem; others only poems they submitted.
+ * Editors, staff, and the site owner email may edit any poem; others only poems they submitted.
  */
 export function userCanEditPoem(
-  user: { id: string; role?: string },
+  user: { id: string; role?: string; email?: string },
   poem: { submittedByUserId: string | null },
 ): boolean {
-  if (isStaffRole(user.role)) return true
+  if (isPoemEditorRole(user.role)) return true
+  if (isSiteOwnerEmail(user.email)) return true
   return poem.submittedByUserId != null && poem.submittedByUserId === user.id
 }

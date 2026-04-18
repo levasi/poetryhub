@@ -22,6 +22,13 @@ const props = defineProps<{
 const author = computed(() => props.poem.author)
 const authorAvatar = computed(() => authorAvatarUrl(author.value))
 
+/** Canonical reader: author page with poem selected (/poems/:slug redirects there). */
+const poemHref = computed(() => {
+  const s = props.poem.author?.slug
+  if (s) return { path: `/authors/${s}`, query: { poem: props.poem.slug } }
+  return `/poems/${props.poem.slug}`
+})
+
 const { toggle, isFavorite } = useFavorites()
 const liked = computed(() => isFavorite(props.poem.id))
 
@@ -42,12 +49,6 @@ const previewLines = computed(() => {
 })
 
 const accentColor = computed(() => moodTag.value?.color ?? null)
-
-const readingTimeLabel = computed(() => {
-  if (!props.poem.readingTime) return null
-  const mins = Math.ceil(props.poem.readingTime / 60)
-  return mins < 1 ? t('card.underMin') : t('card.min', { n: mins })
-})
 
 /** Site catalog is Romanian-only; show a flag only for unexpected non-`ro` languages. */
 const showLangFlag = computed(
@@ -192,7 +193,7 @@ watchEffect((onCleanup) => {
 
       <div class="min-w-0 flex-1">
         <div class="mb-1.5 flex items-baseline gap-2">
-          <NuxtLink :to="`/poems/${poem.slug}`" class="min-w-0 flex-1">
+          <NuxtLink :to="poemHref" class="min-w-0 flex-1">
             <h2
               class="font-serif text-lg font-semibold leading-snug tracking-tight text-content transition-colors group-hover:text-brand">
               {{ poem.title }}<span v-if="poem.writtenYear"
@@ -214,7 +215,7 @@ watchEffect((onCleanup) => {
         <PoemReader :poem="poem" variant="banner" :show-title="false" :show-author="false" :show-written-context="false"
           :show-ornament="false" :body-plain-override="previewLines"
           body-class="font-serif text-sm italic leading-relaxed text-content-secondary" />
-        <NuxtLink :to="`/poems/${poem.slug}`"
+        <NuxtLink :to="poemHref"
           class="mt-2.5 inline-flex items-center gap-1 text-sm font-semibold text-brand transition-colors hover:text-brand-hover"
           @click.stop>
           {{ t('card.readMore') }}
@@ -248,7 +249,6 @@ watchEffect((onCleanup) => {
             </svg>
           </button>
         </div>
-        <span v-if="readingTimeLabel" class="text-ui-xs tabular-nums text-content-soft">{{ readingTimeLabel }}</span>
       </div>
     </article>
 
@@ -265,7 +265,7 @@ watchEffect((onCleanup) => {
       >
         <!-- Title -->
         <div class="mb-2 flex items-start gap-2">
-          <NuxtLink :to="`/poems/${poem.slug}`" class="block min-w-0 flex-1">
+          <NuxtLink :to="poemHref" class="block min-w-0 flex-1">
             <h2
               class="font-serif font-semibold leading-snug tracking-tight text-content transition-colors group-hover:text-brand"
               :class="featured ? 'text-2xl md:text-[1.65rem]' : 'text-lg'">
@@ -291,7 +291,7 @@ watchEffect((onCleanup) => {
           :show-ornament="false" :body-plain-override="previewLines"
           body-class="min-h-[4.5rem] flex-1 font-serif text-sm italic leading-relaxed text-content-secondary" />
 
-        <NuxtLink :to="`/poems/${poem.slug}`"
+        <NuxtLink :to="poemHref"
           class="group/readmore mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-brand transition-colors hover:text-brand-hover"
           @click.stop>
           {{ t('card.readMore') }}
@@ -302,9 +302,8 @@ watchEffect((onCleanup) => {
         </NuxtLink>
 
         <!-- Footer -->
-        <div class="mt-5 flex items-center justify-between gap-3 border-t border-edge-subtle pt-4">
-          <span v-if="readingTimeLabel" class="text-ui-xs tabular-nums text-content-soft">{{ readingTimeLabel }}</span>
-          <div class="ml-auto flex items-center gap-0.5">
+        <div class="mt-5 flex items-center justify-end gap-3 border-t border-edge-subtle pt-4">
+          <div class="flex items-center gap-0.5">
             <button type="button"
               class="inline-flex items-center justify-center rounded-ds-md p-2 text-content-muted transition-colors hover:bg-surface-subtle hover:text-brand"
               :aria-label="t('card.quickRead')"

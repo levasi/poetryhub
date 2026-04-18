@@ -2,7 +2,7 @@
 import { SignJWT, jwtVerify } from 'jose'
 import { H3Event, getCookie } from 'h3'
 import type { Role } from '~/utils/roles'
-import { isStaffRole, normalizeRole, SITE_OWNER_EMAIL } from '~/utils/roles'
+import { isSiteOwnerEmail, isStaffRole, normalizeRole, SITE_OWNER_EMAIL } from '~/utils/roles'
 
 const TOKEN_COOKIE = 'ph_admin_token'
 const USER_TOKEN_COOKIE = 'ph_user_token'
@@ -47,6 +47,10 @@ export async function requireAdmin(event: H3Event) {
   const user = await getUserFromEvent(event)
   if (user && isStaffRole(user.role)) {
     return { id: user.id, email: user.email, role: user.role }
+  }
+  /** Site owner (same email as `SITE_OWNER_EMAIL`) — full admin API when logged in with app session. */
+  if (user && isSiteOwnerEmail(user.email)) {
+    return { id: user.id, email: user.email, role: 'admin' }
   }
 
   throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })

@@ -89,6 +89,10 @@ const titleVariant = computed(() => (props.variant === 'banner' ? 'banner' : 'pd
 const poemIdForTitle = computed(() =>
   props.variant === 'pdp' || props.variant === 'banner' ? props.poem.id : undefined,
 )
+
+const slots = useSlots()
+/** Extra control beside the title row (e.g. author PDP “Edit poem”). */
+const hasTitleAside = computed(() => !!slots.titleAside)
 </script>
 
 <template>
@@ -104,7 +108,19 @@ const poemIdForTitle = computed(() =>
       </span>
     </div>
 
-    <PoemTitle v-if="showTitle" :title="poem.title" :slug="poem.slug" :variant="titleVariant"
+    <template v-if="showTitle && hasTitleAside">
+      <div
+        class="mb-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-3 sm:items-center">
+        <div class="min-w-0 flex-1">
+          <PoemTitle :title="poem.title" :slug="poem.slug" :variant="titleVariant" :poem-id="poemIdForTitle"
+            class="!mb-0" />
+        </div>
+        <div class="flex shrink-0 items-center self-start pt-1 sm:self-center sm:pt-0">
+          <slot name="titleAside" />
+        </div>
+      </div>
+    </template>
+    <PoemTitle v-else-if="showTitle" :title="poem.title" :slug="poem.slug" :variant="titleVariant"
       :poem-id="poemIdForTitle" />
 
     <NuxtLink v-if="showAuthor && author && variant === 'pdp'" :to="`/authors/${author.slug}`"

@@ -27,7 +27,7 @@ import {
   type PoemCarouselSettingsPayload,
 } from '~/utils/poemCarouselFontSettings'
 import { useAuth } from '~/composables/useAuth'
-import { isStaffRole } from '~/utils/roles'
+import { isPoemEditorRoleOrSiteOwner } from '~/utils/roles'
 
 definePageMeta({
   layout: 'default',
@@ -38,7 +38,9 @@ const route = useRoute()
 const { user, fetchMe, isLoggedIn } = useAuth()
 
 /** Poem text & metadata inputs: moderators and admins only; others adjust carousel styling only. */
-const canEditPoemData = computed(() => isStaffRole(user.value?.role))
+const canEditPoemData = computed(() =>
+  isPoemEditorRoleOrSiteOwner(user.value?.role, user.value?.email),
+)
 
 const keywordsHelpOpen = ref(false)
 const keywordsHelpWrapRef = ref<HTMLElement | null>(null)

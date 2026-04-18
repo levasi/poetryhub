@@ -99,7 +99,9 @@ async function deletePoem(slug: string) {
                   {{ t('admin.poems.edit') }}
                 </NuxtLink>
                 <NuxtLink
-                  :to="`/poems/${poem.slug}`"
+                  :to="poem.author?.slug
+                    ? { path: `/authors/${poem.author.slug}`, query: { poem: poem.slug } }
+                    : `/poems/${poem.slug}`"
                   target="_blank"
                   class="rounded px-2 py-1 text-xs text-ink-500 hover:bg-ink-100 hover:text-ink-800"
                 >
