@@ -228,13 +228,15 @@ watchEffect((onCleanup) => {
       <div class="flex shrink-0 flex-col items-end gap-2">
         <div class="flex items-center gap-0.5">
           <button type="button"
-            class="inline-flex max-w-[11rem] items-center gap-1.5 rounded-ds-md py-2 pl-2 pr-2.5 text-content-muted transition-colors hover:bg-surface-subtle hover:text-brand"
+            class="inline-flex items-center justify-center rounded-ds-md p-2 text-content-muted transition-colors hover:bg-surface-subtle hover:text-brand"
+            :aria-label="t('card.quickRead')"
+            :title="t('card.quickRead')"
             @click.stop="openQuickRead">
-            <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
+              aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round"
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3M8 21H5a2 2 0 01-2-2v-3m18 0v3a2 2 0 01-2 2h-3" />
             </svg>
-            <span class="text-left text-[11px] font-medium leading-tight">{{ t('card.quickReadLabel') }}</span>
           </button>
           <button type="button" class="rounded-ds-md p-2 transition-colors hover:bg-rose-50"
             :class="liked ? 'text-rose-600' : 'text-content-hint hover:text-rose-600'"
@@ -304,13 +306,15 @@ watchEffect((onCleanup) => {
           <span v-if="readingTimeLabel" class="text-ui-xs tabular-nums text-content-soft">{{ readingTimeLabel }}</span>
           <div class="ml-auto flex items-center gap-0.5">
             <button type="button"
-              class="inline-flex items-center gap-1.5 rounded-ds-md py-2 pl-2 pr-2.5 text-content-muted transition-colors hover:bg-surface-subtle hover:text-brand"
+              class="inline-flex items-center justify-center rounded-ds-md p-2 text-content-muted transition-colors hover:bg-surface-subtle hover:text-brand"
+              :aria-label="t('card.quickRead')"
+              :title="t('card.quickRead')"
               @click.stop="openQuickRead">
-              <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
+                aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3M8 21H5a2 2 0 01-2-2v-3m18 0v3a2 2 0 01-2 2h-3" />
               </svg>
-              <span class="text-[11px] font-medium leading-tight">{{ t('card.quickReadLabel') }}</span>
             </button>
             <button type="button" class="rounded-ds-md p-2 transition-colors hover:bg-rose-50"
               :class="liked ? 'text-rose-600' : 'text-content-hint hover:text-rose-600'"
@@ -334,7 +338,7 @@ watchEffect((onCleanup) => {
       <div v-if="quickReadOpen" class="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6"
         @click.self="closeQuickRead">
         <div role="dialog" aria-modal="true" :aria-label="t('card.quickRead')"
-          class="relative z-10 flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-ds-xl border border-edge-subtle bg-surface-raised shadow-ds-popover"
+          class="relative z-10 flex max-h-[78vh] w-full max-w-2xl flex-col overflow-hidden rounded-ds-xl border border-edge-subtle bg-surface-raised shadow-ds-popover sm:max-h-[90vh]"
           @click.stop>
           <header
             class="flex shrink-0 items-start justify-between gap-3 border-b border-edge-subtle bg-surface-raised px-5 py-4">

@@ -128,18 +128,19 @@ interface HomePayload {
 
 const { data: home, pending: homePending } = await useFetch<HomePayload>('/api/home')
 
+const forYouSeed = ref(Date.now())
+
 const { data: forYouRes, pending: forYouPending } = await useAsyncData(
   'home-for-you',
   () =>
-    $fetch<{ data: Poem[]; meta: { page: number; limit: number; total: number; totalPages: number } }>(
+    $fetch<{ data: Poem[]; meta: { limit: number; total: number; exclude: number; hasMore: boolean } }>(
       '/api/home/for-you',
-      { query: { page: 1, limit: 5 } },
+      { query: { limit: 5, seed: forYouSeed.value } },
     ),
 )
 
 const forYouPoems = ref<Poem[]>([])
-const forYouPage = ref(1)
-const forYouMeta = ref({ total: 0, totalPages: 1, limit: 5 })
+const forYouMeta = ref({ total: 0, limit: 5, hasMore: true })
 const forYouLoadingMore = ref(false)
 
 watch(
@@ -148,20 +149,19 @@ watch(
     if (!v?.data) return
     forYouPoems.value = v.data
     forYouMeta.value = v.meta
-    forYouPage.value = v.meta.page
   },
   { immediate: true },
 )
 
 async function loadMoreForYou() {
   if (forYouLoadingMore.value) return
-  if (forYouPage.value >= forYouMeta.value.totalPages) return
+  if (!forYouMeta.value.hasMore) return
   forYouLoadingMore.value = true
-  const next = forYouPage.value + 1
   try {
-    const res = await $fetch<{ data: Poem[]; meta: { page: number; limit: number; total: number; totalPages: number } }>(
+    const exclude = forYouPoems.value.map((p) => p.id).join(',')
+    const res = await $fetch<{ data: Poem[]; meta: { limit: number; total: number; exclude: number; hasMore: boolean } }>(
       '/api/home/for-you',
-      { query: { page: next, limit: 5 } },
+      { query: { limit: 5, seed: Date.now(), exclude } },
     )
     const seen = new Set(forYouPoems.value.map((p) => p.id))
     for (const p of res.data) {
@@ -171,7 +171,6 @@ async function loadMoreForYou() {
       }
     }
     forYouMeta.value = res.meta
-    forYouPage.value = res.meta.page
   } finally {
     forYouLoadingMore.value = false
   }
@@ -179,9 +178,7 @@ async function loadMoreForYou() {
 
 const feedTab = ref<'foryou' | 'featured'>('foryou')
 
-const canLoadMoreForYou = computed(
-  () => forYouPage.value < forYouMeta.value.totalPages && !authorSlug.value,
-)
+const canLoadMoreForYou = computed(() => forYouMeta.value.hasMore && !authorSlug.value)
 
 const featured = computed(() => home.value?.featured ?? [])
 const recent = computed(() => home.value?.recent ?? [])

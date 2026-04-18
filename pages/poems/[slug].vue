@@ -25,25 +25,6 @@ useSeoMeta({
   twitterImage:  ogImage,
 })
 
-// ── Poem Insight (lazy — client only, non-blocking) ──────────────────────────
-const insightOpen = ref(false)
-const {
-  data: insightData,
-  pending: insightPending,
-  error: insightError,
-  execute: fetchInsight,
-} = useLazyFetch<{ insight: string }>(`/api/poems/${slug}/insight`, {
-  immediate: false,
-  server: false,
-})
-
-function toggleInsight() {
-  insightOpen.value = !insightOpen.value
-  if (insightOpen.value && !insightData.value && !insightPending.value) {
-    void fetchInsight()
-  }
-}
-
 // ── Related poems by same author ──────────────────────────────────────────────
 const authorSlug = poem.value.author?.slug ?? ''
 const { data: relatedRes } = await useAsyncData(
@@ -142,57 +123,6 @@ const related = computed(() => relatedRes.value?.data ?? [])
 
       <!-- Full poem viewer with carousel mode -->
       <PoetryViewer :poem="poem" />
-
-      <!-- AI Poem Insight -->
-      <div class="mt-10 border-t border-edge/80 pt-8">
-        <button
-          class="flex items-center gap-2 text-sm text-content-secondary transition-colors hover:text-brand"
-          @click="toggleInsight"
-        >
-          <svg
-            class="h-4 w-4 transition-transform duration-200"
-            :class="insightOpen ? 'rotate-90' : ''"
-            fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
-          >
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-          </svg>
-          <span class="font-medium">{{ insightOpen ? t('insight.hide') : t('insight.show') }}</span>
-          <span class="ml-1 rounded-full bg-brand/10 px-2 py-0.5 text-xs font-medium text-brand">AI</span>
-        </button>
-
-        <Transition
-          enter-active-class="transition-all duration-300 ease-out"
-          enter-from-class="opacity-0 translate-y-1"
-          enter-to-class="opacity-100 translate-y-0"
-          leave-active-class="transition-all duration-200 ease-in"
-          leave-from-class="opacity-100"
-          leave-to-class="opacity-0"
-        >
-          <div v-if="insightOpen" class="mt-5 rounded-xl border border-edge bg-surface-subtle/60 p-6">
-            <!-- Loading -->
-            <div v-if="insightPending" class="flex items-center gap-3 text-sm text-content-muted">
-              <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-              {{ t('insight.loading') }}
-            </div>
-
-            <!-- Error -->
-            <p v-else-if="insightError" class="text-sm text-danger">
-              {{ t('insight.error') }}
-            </p>
-
-            <!-- Content -->
-            <div v-else-if="insightData?.insight">
-              <p class="font-serif text-base leading-relaxed text-content-secondary">
-                {{ insightData.insight }}
-              </p>
-              <p class="mt-4 text-xs text-content-muted">{{ t('insight.poweredBy') }}</p>
-            </div>
-          </div>
-        </Transition>
-      </div>
 
       <!-- Related poems -->
       <section v-if="related.length && poem.author" class="mt-20 border-t border-edge/80 pt-16">
