@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { SearchMode } from '~/lib/rhyme/wordQueries'
-import { normForSearch, normalizeWord } from '~/lib/rhyme/normalize'
-import { splitSyllables } from '~/lib/rhyme/syllableParser'
+import { Icon } from '@iconify/vue'
 import WriteLyricsEditor from '~/components/write/LyricsEditor.vue'
 
 definePageMeta({
@@ -18,56 +17,55 @@ useHead({
 const lyrics = useWriteLyricsStore()
 const projects = useWriteProjectsStore()
 
-// —— Căutare cuvinte
+// —— Căutare dicționar
 const modes: { id: SearchMode; label: string; hint: string }[] = [
   { id: 'fuzzy', label: 'Potrivire', hint: 'Căutare fuzzy în dicționar' },
   { id: 'starts', label: 'Începe cu', hint: 'Prefix' },
   { id: 'ends', label: 'Se termină cu', hint: 'Sufix' },
-  { id: 'contains', label: 'Conține', hint: 'Subșir' },
+  { id: 'contains', label: 'Conține', hint: 'Subșir în cuvânt' },
   { id: 'anagram', label: 'Anagramă', hint: 'Aceleași litere' },
   { id: 'exact', label: 'Exact', hint: 'Formă exactă' },
 ]
 
 const mode = ref<SearchMode>('contains')
-const q = ref('')
 const loading = ref(false)
 
 /** Dacă true, „mar” nu potrivește „măr” (fără pliere diacritice la căutare). */
 const strictDiacritics = ref(false)
 
-/** Mod „Conține”: folosește logica OR pe silabe (implicit) sau doar subșir pe întreg cuvântul. */
-const useSyllablesInSearch = ref(true)
-
-let nextSyllableSlotId = 0
-interface SyllableSlot {
+let nextSearchQueryId = 0
+interface SearchQueryRow {
   id: number
   text: string
 }
-/** Câte un câmp per silabă; poți adăuga silabe care nu apar în împărțirea automată. */
-const syllableSlots = ref<SyllableSlot[]>([])
 
-function syllablePartsFromSlots(): string[] {
-  return syllableSlots.value.map((s) => s.text.trim()).filter(Boolean)
+/** Unul sau mai multe câmpuri de căutare; rezultatele se unesc (fără duplicate). */
+const searchQueries = ref<SearchQueryRow[]>([{ id: ++nextSearchQueryId, text: '' }])
+
+function nonEmptySearchTerms(): string[] {
+  return searchQueries.value.map((r) => r.text.trim()).filter(Boolean)
 }
 
-function syncSyllableSlotsFromQuery() {
-  if (mode.value !== 'contains') return
-  const parts = splitSyllables(q.value.trim())
-  syllableSlots.value = parts.length
-    ? parts.map((text) => ({ id: ++nextSyllableSlotId, text }))
-    : [{ id: ++nextSyllableSlotId, text: '' }]
+function addSearchQuery() {
+  searchQueries.value.push({ id: ++nextSearchQueryId, text: '' })
 }
 
-function addSyllableSlot() {
-  syllableSlots.value.push({ id: ++nextSyllableSlotId, text: '' })
-}
-
-function removeSyllableSlot(index: number) {
-  if (syllableSlots.value.length <= 1) {
-    syllableSlots.value[0]!.text = ''
+function removeSearchQuery(index: number) {
+  if (searchQueries.value.length <= 1) {
+    searchQueries.value[0]!.text = ''
     return
   }
-  syllableSlots.value.splice(index, 1)
+  searchQueries.value.splice(index, 1)
+}
+
+let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null
+
+function scheduleRunSearch() {
+  if (searchDebounceTimer) clearTimeout(searchDebounceTimer)
+  searchDebounceTimer = setTimeout(() => {
+    searchDebounceTimer = null
+    void runSearch()
+  }, 320)
 }
 
 interface Hit {
@@ -82,37 +80,15 @@ interface Hit {
 
 const results = ref<Hit[]>([])
 
-/** Silabe pentru textul din câmp (aceeași euristică ca la server) */
-const querySyllables = computed(() => {
-  const t = q.value.trim()
-  if (!t) return [] as string[]
-  return splitSyllables(t)
+/** Cuvinte afișate în ordinea: cele mai scurte înainte celor mai lungi; la egalitate, alfabetic (ro). */
+const resultsSortedByWordLength = computed(() => {
+  return [...results.value].sort((a, b) => {
+    const la = a.word.length
+    const lb = b.word.length
+    if (la !== lb) return la - lb
+    return a.word.localeCompare(b.word, 'ro')
+  })
 })
-
-/** Pentru previzualizare: același lucru ca pe server (`lib/wordQueries` „Conține”). */
-const containsMatchers = computed(() => {
-  if (mode.value !== 'contains') return [] as string[]
-  const needle = normalizeWord(q.value)
-  if (!needle) return [] as string[]
-  const st = strictDiacritics.value
-  const fullNorm = normForSearch(needle, st)
-  if (!useSyllablesInSearch.value) return [fullNorm]
-  const syllables = syllableSlots.value.map((s) => s.text.trim()).filter(Boolean)
-  const effective = syllables.length > 0 ? syllables : splitSyllables(needle)
-  if (effective.length < 2) return [fullNorm]
-  const parts = effective
-    .map((s) => normForSearch(s, st))
-    .filter((s) => s.length >= 2)
-  return [...new Set([...parts, fullNorm])].filter((m) => m.length > 0)
-})
-
-watch(
-  [q, mode],
-  () => {
-    syncSyllableSlotsFromQuery()
-  },
-  { immediate: true }
-)
 
 const placeholder = computed(() => {
   switch (mode.value) {
@@ -135,32 +111,40 @@ const placeholder = computed(() => {
 const WORDS_LIMIT = 5000
 
 async function runSearch() {
-  const query = q.value.trim()
-  if (!query) {
+  const terms = nonEmptySearchTerms()
+  if (terms.length === 0) {
     results.value = []
     return
   }
   loading.value = true
   try {
-    const queryParams: Record<string, string | number> = {
-      q: query,
-      mode: mode.value,
-      limit: WORDS_LIMIT,
-      strictDiacritics: strictDiacritics.value ? 1 : 0,
-    }
-    if (mode.value === 'contains') {
-      queryParams.useSyllablesInSearch = useSyllablesInSearch.value ? 1 : 0
-      if (useSyllablesInSearch.value) {
-        const parts = syllablePartsFromSlots()
-        if (parts.length > 0) {
-          queryParams.syllablesOverride = JSON.stringify(parts)
+    const seen = new Set<string>()
+    const merged: Hit[] = []
+    const responses = await Promise.all(
+      terms.map((query) => {
+        const queryParams: Record<string, string | number> = {
+          q: query,
+          mode: mode.value,
+          limit: WORDS_LIMIT,
+          strictDiacritics: strictDiacritics.value ? 1 : 0,
+        }
+        if (mode.value === 'contains') {
+          queryParams.useSyllablesInSearch = 0
+        }
+        return $fetch<{ results: Hit[] }>('/api/words', {
+          query: queryParams,
+        })
+      })
+    )
+    for (const res of responses) {
+      for (const h of res.results) {
+        if (!seen.has(h.id)) {
+          seen.add(h.id)
+          merged.push(h)
         }
       }
     }
-    const res = await $fetch<{ results: Hit[] }>('/api/words', {
-      query: queryParams,
-    })
-    results.value = res.results
+    results.value = merged
   } finally {
     loading.value = false
   }
@@ -170,13 +154,11 @@ watch(mode, () => {
   void runSearch()
 })
 
-watch(useSyllablesInSearch, () => {
-  if (mode.value === 'contains' && q.value.trim()) void runSearch()
+watch(strictDiacritics, () => {
+  if (nonEmptySearchTerms().length) void runSearch()
 })
 
-watch(strictDiacritics, () => {
-  if (q.value.trim()) void runSearch()
-})
+watch(searchQueries, () => scheduleRunSearch(), { deep: true })
 
 function pickWord(w: string) {
   lyrics.appendToActive(w)
@@ -342,153 +324,246 @@ async function submitPublish() {
     publishLoading.value = false
   }
 }
+
+// ── Split panes (desktop) ───────────────────────────────────────────────────
+const WRITE_RIGHT_WIDTH_KEY = 'poetryhub-write-right-width'
+const DEFAULT_RIGHT_WIDTH_PX = 280
+/** Coloana dreaptă poate merge între ¼ și ¾ din lățimea containerului (și stânga la fel). */
+const RIGHT_COL_MIN_FRAC = 0.25
+const RIGHT_COL_MAX_FRAC = 0.75
+
+const splitContainerRef = ref<HTMLElement | null>(null)
+const rightWidthPx = ref(DEFAULT_RIGHT_WIDTH_PX)
+const isResizingSplit = ref(false)
+
+let resizeStartX = 0
+let resizeStartWidth = DEFAULT_RIGHT_WIDTH_PX
+
+function clampRightWidth(w: number, containerWidth: number) {
+  const min = containerWidth * RIGHT_COL_MIN_FRAC
+  const max = containerWidth * RIGHT_COL_MAX_FRAC
+  return Math.min(max, Math.max(min, w))
+}
+
+function persistRightWidth() {
+  if (!import.meta.client) return
+  try {
+    localStorage.setItem(WRITE_RIGHT_WIDTH_KEY, String(rightWidthPx.value))
+  } catch {
+    // ignore quota / private mode
+  }
+}
+
+function onSplitResizeMove(e: MouseEvent) {
+  if (!isResizingSplit.value) return
+  const el = splitContainerRef.value
+  if (!el) return
+  const delta = e.clientX - resizeStartX
+  const next = resizeStartWidth - delta
+  rightWidthPx.value = clampRightWidth(next, el.getBoundingClientRect().width)
+}
+
+function endSplitResize() {
+  if (!isResizingSplit.value) return
+  isResizingSplit.value = false
+  document.body.style.removeProperty('cursor')
+  document.body.style.removeProperty('user-select')
+  document.removeEventListener('mousemove', onSplitResizeMove)
+  document.removeEventListener('mouseup', endSplitResize)
+  persistRightWidth()
+}
+
+function startSplitResize(e: MouseEvent) {
+  e.preventDefault()
+  resizeStartX = e.clientX
+  resizeStartWidth = rightWidthPx.value
+  isResizingSplit.value = true
+  document.body.style.cursor = 'col-resize'
+  document.body.style.userSelect = 'none'
+  document.addEventListener('mousemove', onSplitResizeMove)
+  document.addEventListener('mouseup', endSplitResize)
+}
+
+function onSplitKeydown(e: KeyboardEvent) {
+  if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
+  const el = splitContainerRef.value
+  if (!el) return
+  e.preventDefault()
+  const step = e.shiftKey ? 40 : 12
+  const cw = el.getBoundingClientRect().width
+  if (e.key === 'ArrowLeft') {
+    rightWidthPx.value = clampRightWidth(rightWidthPx.value + step, cw)
+  } else {
+    rightWidthPx.value = clampRightWidth(rightWidthPx.value - step, cw)
+  }
+  persistRightWidth()
+}
+
+function clampRightToContainer() {
+  const el = splitContainerRef.value
+  if (!el) return
+  const cw = el.getBoundingClientRect().width
+  rightWidthPx.value = clampRightWidth(rightWidthPx.value, cw)
+}
+
+onMounted(() => {
+  if (!import.meta.client) return
+  try {
+    const raw = localStorage.getItem(WRITE_RIGHT_WIDTH_KEY)
+    if (raw) {
+      const n = Number.parseInt(raw, 10)
+      if (!Number.isNaN(n)) {
+        const el = splitContainerRef.value
+        const cw = el?.getBoundingClientRect().width ?? 1200
+        rightWidthPx.value = clampRightWidth(n, cw)
+      }
+    }
+  } catch {
+    // ignore
+  }
+  window.addEventListener('resize', clampRightToContainer)
+})
+
+onUnmounted(() => {
+  if (searchDebounceTimer) {
+    clearTimeout(searchDebounceTimer)
+    searchDebounceTimer = null
+  }
+  window.removeEventListener('resize', clampRightToContainer)
+  document.removeEventListener('mousemove', onSplitResizeMove)
+  document.removeEventListener('mouseup', endSplitResize)
+  document.body.style.removeProperty('cursor')
+  document.body.style.removeProperty('user-select')
+})
 </script>
 
 <template>
   <main class="flex min-w-0 flex-1 flex-col" aria-label="Lucru: dicționar, versuri">
     <WriteToolsBar />
-    <div
-      class="grid min-h-0 min-w-0 flex-1 grid-cols-1 divide-y divide-edge-subtle lg:grid-cols-[minmax(0,1fr)_minmax(0,17.5rem)] lg:divide-y-0">
-      <!-- Stânga: căutare și rezultate -->
-      <section class="flex min-w-0 flex-col gap-4 p-3 sm:p-4 lg:pr-5" aria-label="Căutare dicționar">
+    <div ref="splitContainerRef"
+      class="flex min-h-0 min-w-0 flex-1 flex-col divide-y divide-edge-subtle lg:flex-row lg:divide-y-0">
+      <!-- Stânga (desktop): căutare + rezultate; pe mobil order: versuri → căutare → rezultate (contents + order) -->
+      <div
+        class="contents min-h-0 min-w-0 lg:order-1 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col lg:gap-4 lg:p-4 lg:pr-5">
         <!-- Bară căutare -->
-        <div class="shrink-0 rounded-2xl border border-edge-subtle bg-surface-raised p-4 shadow-sm sm:p-5">
-          <div class="mt-4 flex flex-wrap gap-2">
-            <button v-for="m in modes" :key="m.id" type="button" :title="m.hint"
-              class="rounded-lg border px-3 py-1.5 text-xs font-medium transition" :class="mode === m.id
-                ? 'border-blue-600 bg-blue-50 text-blue-900'
-                : 'border-edge-subtle bg-surface-subtle text-content-secondary hover:border-edge'
-                " @click="mode = m.id">
-              {{ m.label }}
-            </button>
-          </div>
+        <div class="order-2 shrink-0 p-3 sm:p-4 lg:order-none lg:p-0" aria-label="Căutare dicționar">
+          <div class="shrink-0 rounded-2xl border border-edge-subtle bg-surface-raised p-4 shadow-sm sm:p-5">
+            <div class="flex flex-wrap gap-2">
+              <button v-for="m in modes" :key="m.id" type="button" :title="m.hint"
+                class="rounded-lg border px-3 py-1.5 text-xs font-medium transition" :class="mode === m.id
+                  ? 'border-blue-600 bg-blue-50 text-blue-900'
+                  : 'border-edge-subtle bg-surface-subtle text-content-secondary hover:border-edge'
+                  " @click="mode = m.id">
+                {{ m.label }}
+              </button>
+            </div>
 
-          <div class="mt-4">
-            <label class="sr-only">Căutare</label>
-            <p class="mb-1.5 text-xs text-content-muted">Apasă Enter pentru a căuta.</p>
-            <input v-model="q" type="search" autocomplete="off" enterkeyhint="search" :placeholder="placeholder"
-              class="w-full rounded-xl border border-edge bg-surface-raised px-4 py-3 text-base text-content shadow-inner outline-none ring-blue-500/20 transition placeholder:text-content-soft focus:border-blue-500 focus:ring-2"
-              @keydown.enter.prevent="runSearch" />
-            <label class="mt-3 flex cursor-pointer items-start gap-2.5 text-sm text-content-secondary">
-              <input v-model="strictDiacritics" type="checkbox"
-                class="mt-0.5 h-4 w-4 shrink-0 rounded border-edge text-blue-600 focus:ring-blue-500" />
-              <span>
-                <span class="font-medium">Diacritice fixe</span>
-                <span class="mt-0.5 block text-xs font-normal text-content-muted">
-                  Dacă e bifat, literele cu diacritice sunt distincte (ex. „mar” nu potrivește „măr”). Debifat =
-                  potrivire largă (a ≈ ă, î ≈ i etc.).
-                </span>
-              </span>
-            </label>
-          </div>
-
-          <div v-if="querySyllables.length || (mode === 'contains' && q.trim())"
-            class="mt-3 space-y-3 rounded-lg border border-edge-subtle bg-surface-subtle/90 px-3 py-2">
-            <template v-if="mode === 'contains' && q.trim()">
-              <label class="flex cursor-pointer items-start gap-2.5 text-sm text-content-secondary">
-                <input v-model="useSyllablesInSearch" type="checkbox"
-                  class="mt-0.5 h-4 w-4 shrink-0 rounded border-edge text-blue-600 focus:ring-blue-500" />
-                <span>
-                  <span class="font-medium">Folosește silabele în căutare</span>
-                  <span class="mt-0.5 block text-xs font-normal text-content-muted">
-                    Dacă e bifat, „Conține” caută OR pe părți (silabe ≥2 caractere) și pe întregul text pliat;
-                    dacă nu, doar subșir pe cuvântul normalizat.
-                  </span>
-                </span>
-              </label>
-              <div v-if="useSyllablesInSearch" class="space-y-2">
-                <p class="text-[10px] font-semibold uppercase tracking-wide text-content-muted">Silabe</p>
-                <p class="text-[11px] text-content-muted">
-                  Câte un câmp; poți corecta împărțirea sau adăuga silabe care nu apar în cuvânt. La schimbarea
-                  textului căutat, silabele se resincronizează. <span class="font-medium text-content-secondary">Enter</span>
-                  în orice câmp pornește căutarea.
-                </p>
-                <div class="flex flex-wrap items-end gap-2">
-                  <div v-for="(slot, i) in syllableSlots" :key="slot.id"
-                    class="flex min-w-[5.5rem] max-w-[min(100%,11rem)] flex-1 flex-col gap-0.5">
-                    <span class="text-[10px] text-content-muted">Silabă {{ i + 1 }}</span>
-                    <div class="flex gap-1">
-                      <input v-model="slot.text" type="text" spellcheck="false" autocomplete="off" enterkeyhint="search"
-                        class="min-w-0 flex-1 rounded-lg border border-edge-subtle bg-surface-raised px-2 py-1.5 font-mono text-sm text-content outline-none ring-blue-500/20 focus:border-blue-500 focus:ring-2"
-                        @keydown.enter.prevent="runSearch" />
-                      <button v-if="syllableSlots.length > 1" type="button"
-                        class="shrink-0 rounded border border-edge-subtle px-2 py-1 text-sm leading-none text-content-muted hover:bg-surface-subtle"
-                        :title="'Elimină silaba ' + (i + 1)" @click="removeSyllableSlot(i)">
-                        ×
-                      </button>
-                    </div>
-                  </div>
-                  <button type="button"
-                    class="shrink-0 rounded-lg border border-dashed border-edge bg-surface-raised px-3 py-2 text-xs font-medium text-content-secondary hover:border-blue-400 hover:text-blue-800"
-                    @click="addSyllableSlot">
-                    + Adaugă silabă
+            <div class="mt-4">
+              <label class="sr-only">Căutare</label>
+              <p class="mb-1.5 text-xs text-content-muted">
+                Butonul + e lângă ultimul câmp; poți avea mai multe câmpuri pe același rând (se împachetează când e nevoie). Rezultatele se combină din toate căutările. Enter sau butonul Caută pornește căutarea imediat.
+              </p>
+              <div class="flex flex-wrap items-center gap-2">
+                <div
+                  v-for="(row, i) in searchQueries"
+                  :key="row.id"
+                  class="flex min-w-0 max-w-[min(100%,20rem)] flex-[1_1_11rem] items-center gap-1.5 sm:flex-[1_1_13rem]">
+                  <label class="sr-only">Cuvânt căutat {{ i + 1 }}</label>
+                  <input v-model="row.text" type="search" autocomplete="off" enterkeyhint="search" :placeholder="placeholder"
+                    class="min-w-0 flex-1 rounded-xl border border-edge bg-surface-raised px-3 py-2.5 text-base text-content shadow-inner outline-none ring-blue-500/20 transition placeholder:text-content-soft focus:border-blue-500 focus:ring-2 sm:min-w-[10rem] sm:px-4 sm:py-3"
+                    @keydown.enter.prevent="runSearch" />
+                  <button v-if="searchQueries.length > 1" type="button"
+                    class="shrink-0 rounded-lg border border-edge-subtle px-2 py-2 text-content-muted hover:bg-surface-subtle sm:px-2.5"
+                    :title="'Elimină câmpul ' + (i + 1)" @click="removeSearchQuery(i)">
+                    ×
                   </button>
                 </div>
                 <button type="button"
-                  class="mt-1 w-full rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:w-auto"
-                  @click="runSearch">
-                  Caută
+                  class="inline-flex h-11 w-11 shrink-0 items-center justify-center self-center rounded-xl border border-dashed border-blue-300 bg-blue-50/80 text-blue-800 transition hover:border-blue-400 hover:bg-blue-100"
+                  title="Adaugă alt cuvânt de căutare"
+                  aria-label="Adaugă alt cuvânt de căutare"
+                  @click="addSearchQuery">
+                  <Icon icon="heroicons:plus" class="h-6 w-6 shrink-0" aria-hidden="true" />
                 </button>
               </div>
-              <p v-else class="text-xs text-content-muted">
-                Căutare doar ca subșir pe textul pliat (fără împărțire pe silabe).
-              </p>
-            </template>
-
-            <div v-if="querySyllables.length && !(mode === 'contains' && useSyllablesInSearch)">
-              <p class="text-[10px] font-semibold uppercase tracking-wide text-content-muted">Silabe (euristică)</p>
-              <p class="mt-1 font-mono text-sm leading-relaxed text-content">
-                <span v-for="(syl, idx) in querySyllables" :key="idx" class="inline-flex items-center">
-                  <span v-if="idx > 0" class="mx-1.5 text-content-hint" aria-hidden="true">·</span>
-                  <span>{{ syl }}</span>
+              <button type="button"
+                class="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-brand-foreground shadow-sm transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/45 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-raised disabled:cursor-not-allowed disabled:opacity-50 lg:w-auto"
+                :disabled="loading"
+                @click="runSearch">
+                <Icon icon="heroicons:magnifying-glass" class="h-5 w-5 shrink-0" aria-hidden="true" />
+                {{ t('write.searchBtn') }}
+              </button>
+              <label class="mt-3 flex cursor-pointer items-start gap-2.5 text-sm text-content-secondary">
+                <input v-model="strictDiacritics" type="checkbox"
+                  class="mt-0.5 h-4 w-4 shrink-0 rounded border-edge text-blue-600 focus:ring-blue-500" />
+                <span>
+                  <span class="font-medium">Diacritice fixe</span>
+                  <span class="mt-0.5 block text-xs font-normal text-content-muted">
+                    Dacă e bifat, literele cu diacritice sunt distincte (ex. „mar” nu potrivește „măr”). Debifat =
+                    potrivire largă (a ≈ ă, î ≈ i etc.).
+                  </span>
                 </span>
-              </p>
+              </label>
             </div>
-
-            <p v-if="mode === 'contains' && q.trim() && containsMatchers.length"
-              class="border-t border-edge-subtle/80 pt-2 text-[11px] text-content-muted">
-              <span class="font-medium text-content-secondary">Șiruri căutate (forma pliată):</span>
-              {{ containsMatchers.join(', ') }}
-            </p>
           </div>
         </div>
 
         <!-- Rezultate dicționar -->
-        <div class="flex min-w-0 flex-col rounded-2xl border border-edge-subtle bg-surface-raised p-4 shadow-sm sm:p-5">
-          <p class="mb-2 text-xs font-medium uppercase tracking-wide text-content-muted">
-            Rezultate
-            <span v-if="loading" class="font-normal text-content-soft">— se încarcă…</span>
-          </p>
-          <ul v-if="results.length"
-            class="grid auto-rows-min grid-cols-2 gap-2 rounded-xl border border-edge-subtle p-2 content-start sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
-            <li v-for="r in results" :key="r.id" class="min-w-0">
-              <div
-                class="group relative flex h-full gap-0.5 rounded-lg border border-edge-subtle bg-surface-subtle/50 p-1 transition hover:border-blue-200 hover:bg-blue-50/80">
-                <button type="button" class="flex min-w-0 flex-1 flex-col items-center gap-1 rounded-md text-center"
-                  :title="'Definiție: ' + r.word" @click="openWordDefinition(r, $event)">
-                  <span class="w-full truncate text-sm font-semibold leading-tight text-content">{{ r.word }}</span>
-                </button>
-                <button type="button"
-                  class="shrink-0 self-start rounded-md border border-edge-subtle bg-surface-raised px-1.5 py-0.5 text-sm font-semibold leading-none text-blue-700 shadow-sm hover:border-blue-400 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-40"
-                  :title="projects.isWordSaved(r.word)
-                    ? 'Deja în cuvinte salvate'
-                    : 'Salvează cuvântul în proiect'
-                    " :disabled="projects.isWordSaved(r.word)" aria-label="Salvează în proiect"
-                  @click="saveWordToProject(r.word, $event)">
-                  {{ projects.isWordSaved(r.word) ? '✓' : '+' }}
-                </button>
-              </div>
-            </li>
-          </ul>
-          <p v-else-if="!loading"
-            class="rounded-xl border border-dashed border-edge-subtle px-4 py-8 text-center text-sm text-content-muted">
-            Niciun rezultat. Schimbă modul sau textul căutat.
-          </p>
+        <div class="order-3 flex min-h-0 min-w-0 flex-1 flex-col p-3 pt-0 sm:p-4 sm:pt-0 lg:order-none lg:min-h-0 lg:flex-none lg:p-0"
+          aria-label="Rezultate dicționar">
+          <div class="flex min-w-0 flex-col rounded-2xl border border-edge-subtle bg-surface-raised p-4 shadow-sm sm:p-5">
+            <p class="mb-2 text-xs font-medium uppercase tracking-wide text-content-muted">
+              Rezultate
+              <span v-if="loading" class="font-normal text-content-soft">— se încarcă…</span>
+            </p>
+            <ul v-if="results.length" class="flex flex-wrap content-start gap-2 rounded-xl p-2">
+              <li v-for="r in resultsSortedByWordLength" :key="r.id" class="min-w-0 max-w-full">
+                <div
+                  class="group relative inline-flex max-w-full min-w-0 items-center gap-0.5 rounded-lg border border-edge-subtle bg-surface-subtle/50 p-1 transition hover:border-blue-200 hover:bg-blue-50/80">
+                  <button type="button"
+                    class="flex min-w-0 max-w-[12rem] items-center justify-center rounded-md px-1.5 py-0.5"
+                    :title="'Definiție: ' + r.word" @click="openWordDefinition(r, $event)">
+                    <span class="min-w-0 truncate text-sm font-semibold leading-tight text-content">{{ r.word }}</span>
+                  </button>
+                  <button type="button"
+                    class="shrink-0 rounded-md border border-edge-subtle bg-surface-raised px-1.5 py-0.5 text-sm font-semibold leading-none text-blue-700 shadow-sm hover:border-blue-400 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-40"
+                    :title="projects.isWordSaved(r.word)
+                      ? 'Deja în cuvinte salvate'
+                      : 'Salvează cuvântul în proiect'
+                      " :disabled="projects.isWordSaved(r.word)" aria-label="Salvează în proiect"
+                    @click="saveWordToProject(r.word, $event)">
+                    {{ projects.isWordSaved(r.word) ? '✓' : '+' }}
+                  </button>
+                </div>
+              </li>
+            </ul>
+            <p v-else-if="!loading"
+              class="rounded-xl border border-dashed border-edge-subtle px-4 py-8 text-center text-sm text-content-muted">
+              Niciun rezultat. Schimbă modul sau textul căutat.
+            </p>
+          </div>
         </div>
-      </section>
+      </div>
 
-      <!-- Dreapta: versuri -->
-      <section class="flex min-w-0 flex-col p-3 sm:p-4" aria-label="Editor versuri">
+      <!-- Mâner redimensionare (doar desktop) -->
+      <div class="group relative order-2 hidden shrink-0 items-stretch justify-center lg:flex" role="separator"
+        aria-orientation="vertical" aria-label="Redimensionează coloanele (săgeți stânga/dreapta)" tabindex="0"
+        @mousedown="startSplitResize" @keydown="onSplitKeydown">
+        <div class="absolute inset-y-0 -left-2 -right-2 z-[1] cursor-col-resize" aria-hidden="true" />
+        <div
+          class="relative z-0 flex w-[1.625rem] flex-col items-center justify-center border-x border-edge-subtle bg-surface-subtle/90 px-0.5 py-3 shadow-sm transition-colors group-hover:border-brand/50 group-hover:bg-brand-soft/50 group-focus-visible:border-brand group-focus-visible:ring-2 group-focus-visible:ring-brand/30">
+          <span
+            class="pointer-events-none flex items-center gap-px text-content-muted group-hover:text-brand group-focus-visible:text-brand"
+            aria-hidden="true">
+            <Icon icon="heroicons:chevron-left" class="h-3.5 w-3.5 shrink-0" />
+            <Icon icon="heroicons:chevron-right" class="h-3.5 w-3.5 shrink-0" />
+          </span>
+        </div>
+      </div>
+
+      <!-- Dreapta: versuri (pe mobil deasupra căutării) -->
+      <section class="write-split-right order-1 flex min-w-0 flex-col p-3 sm:p-4 lg:order-3"
+        :style="{ '--write-right-w': rightWidthPx + 'px' }" aria-label="Editor versuri">
         <ClientOnly>
           <WriteLyricsEditor />
           <template #fallback>
@@ -497,13 +572,12 @@ async function submitPublish() {
         </ClientOnly>
         <!-- Publish button -->
         <div class="mt-3 shrink-0">
-          <button
-            type="button"
+          <button type="button"
             class="flex w-full items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-medium text-blue-700 transition hover:bg-blue-100 hover:text-blue-800"
-            @click="openPublish"
-          >
+            @click="openPublish">
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
             </svg>
             {{ t('write.publishBtn') }}
           </button>
@@ -520,7 +594,9 @@ async function submitPublish() {
             <!-- Header -->
             <div class="flex items-center justify-between border-b border-edge-subtle px-6 py-4">
               <h2 class="text-base font-semibold text-content">{{ t('write.publishTitle') }}</h2>
-              <button type="button" class="rounded-lg p-1.5 text-content-soft hover:bg-surface-subtle hover:text-content-secondary" @click="closePublish">
+              <button type="button"
+                class="rounded-lg p-1.5 text-content-soft hover:bg-surface-subtle hover:text-content-secondary"
+                @click="closePublish">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -531,7 +607,9 @@ async function submitPublish() {
               <!-- Not logged in state -->
               <div v-if="!isLoggedIn" class="py-4 text-center">
                 <p class="mb-4 text-sm text-content-muted">{{ t('write.loginRequired') }}</p>
-                <NuxtLink to="/login?redirect=/write" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700" @click="closePublish">
+                <NuxtLink to="/login?redirect=/write"
+                  class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                  @click="closePublish">
                   {{ t('auth.signIn') }}
                 </NuxtLink>
               </div>
@@ -539,21 +617,21 @@ async function submitPublish() {
               <!-- Success state -->
               <div v-else-if="publishMsg?.ok" class="py-4 text-center">
                 <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-                  <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                    stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
                 <p class="mb-4 font-medium text-content">{{ publishMsg.text }}</p>
                 <div class="flex justify-center gap-3">
-                  <NuxtLink
-                    v-if="publishMsg.slug"
-                    :to="`/poems/${publishMsg.slug}`"
+                  <NuxtLink v-if="publishMsg.slug" :to="`/poems/${publishMsg.slug}`"
                     class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-                    @click="closePublish"
-                  >
+                    @click="closePublish">
                     {{ t('write.viewPoem') }}
                   </NuxtLink>
-                  <button type="button" class="rounded-lg border border-edge-subtle px-4 py-2 text-sm text-content-secondary hover:bg-surface-subtle" @click="closePublish">
+                  <button type="button"
+                    class="rounded-lg border border-edge-subtle px-4 py-2 text-sm text-content-secondary hover:bg-surface-subtle"
+                    @click="closePublish">
                     {{ t('write.cancel') }}
                   </button>
                 </div>
@@ -568,14 +646,9 @@ async function submitPublish() {
                   <label class="mb-1.5 block text-xs font-medium uppercase tracking-widest text-content-muted">
                     {{ t('write.fieldTitle') }} *
                   </label>
-                  <input
-                    v-model="publishForm.title"
-                    type="text"
-                    :placeholder="t('write.fieldTitlePlaceholder')"
-                    required
-                    maxlength="500"
-                    class="w-full rounded-xl border border-edge bg-surface-raised px-4 py-2.5 text-sm text-content outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                  />
+                  <input v-model="publishForm.title" type="text" :placeholder="t('write.fieldTitlePlaceholder')"
+                    required maxlength="500"
+                    class="w-full rounded-xl border border-edge bg-surface-raised px-4 py-2.5 text-sm text-content outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" />
                 </div>
 
                 <!-- Author name -->
@@ -583,13 +656,8 @@ async function submitPublish() {
                   <label class="mb-1.5 block text-xs font-medium uppercase tracking-widest text-content-muted">
                     {{ t('write.fieldAuthorName') }} *
                   </label>
-                  <input
-                    v-model="publishForm.authorName"
-                    type="text"
-                    required
-                    maxlength="80"
-                    class="w-full rounded-xl border border-edge bg-surface-raised px-4 py-2.5 text-sm text-content outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                  />
+                  <input v-model="publishForm.authorName" type="text" required maxlength="80"
+                    class="w-full rounded-xl border border-edge bg-surface-raised px-4 py-2.5 text-sm text-content outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" />
                   <p class="mt-1 text-xs text-content-soft">{{ t('write.fieldAuthorNameHint') }}</p>
                 </div>
 
@@ -598,10 +666,8 @@ async function submitPublish() {
                   <label class="mb-1.5 block text-xs font-medium uppercase tracking-widest text-content-muted">
                     {{ t('write.fieldLanguage') }}
                   </label>
-                  <select
-                    v-model="publishForm.language"
-                    class="w-full rounded-xl border border-edge bg-surface-raised px-4 py-2.5 text-sm text-content outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                  >
+                  <select v-model="publishForm.language"
+                    class="w-full rounded-xl border border-edge bg-surface-raised px-4 py-2.5 text-sm text-content outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
                     <option value="ro">Română</option>
                     <option value="en">English</option>
                     <option value="fr">Français</option>
@@ -616,16 +682,11 @@ async function submitPublish() {
                     {{ t('write.fieldTags') }}
                   </label>
                   <div class="flex flex-wrap gap-1.5">
-                    <button
-                      v-for="tag in allTags"
-                      :key="tag.id"
-                      type="button"
-                      :class="publishForm.tagIds.includes(tag.id)
-                        ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-edge-subtle bg-surface-subtle text-content-muted hover:border-edge'"
+                    <button v-for="tag in allTags" :key="tag.id" type="button" :class="publishForm.tagIds.includes(tag.id)
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-edge-subtle bg-surface-subtle text-content-muted hover:border-edge'"
                       class="rounded-full border px-3 py-1 text-xs font-medium transition"
-                      @click="togglePublishTag(tag.id)"
-                    >
+                      @click="togglePublishTag(tag.id)">
                       {{ tag.name }}
                     </button>
                   </div>
@@ -637,14 +698,13 @@ async function submitPublish() {
                 </p>
 
                 <div class="flex gap-3 pt-1">
-                  <button
-                    type="submit"
-                    :disabled="publishLoading"
-                    class="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50"
-                  >
+                  <button type="submit" :disabled="publishLoading"
+                    class="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50">
                     {{ publishLoading ? t('write.publishing') : t('write.publishBtn') }}
                   </button>
-                  <button type="button" class="rounded-xl border border-edge-subtle px-5 py-2.5 text-sm text-content-secondary hover:bg-surface-subtle" @click="closePublish">
+                  <button type="button"
+                    class="rounded-xl border border-edge-subtle px-5 py-2.5 text-sm text-content-secondary hover:bg-surface-subtle"
+                    @click="closePublish">
                     {{ t('write.cancel') }}
                   </button>
                 </div>
@@ -657,8 +717,7 @@ async function submitPublish() {
 
     <Teleport to="body">
       <div v-if="defPop" class="fixed inset-0 z-[90]">
-        <div class="absolute inset-0 bg-black/30 backdrop-blur-[1px]" aria-hidden="true"
-          @click="closeWordDefinition" />
+        <div class="absolute inset-0 bg-black/30 backdrop-blur-[1px]" aria-hidden="true" @click="closeWordDefinition" />
         <div
           class="absolute z-[91] max-h-[min(22rem,70vh)] overflow-y-auto rounded-2xl border border-edge-subtle bg-surface-raised p-4 shadow-2xl ring-1 ring-black/10"
           :style="{
@@ -703,18 +762,33 @@ async function submitPublish() {
 </template>
 
 <style scoped>
+/* Lățime coloană dreaptă doar pe desktop; pe mobil rămâne 100%. */
+.write-split-right {
+  width: 100%;
+}
+
+@media (min-width: 1024px) {
+  .write-split-right {
+    width: var(--write-right-w, 280px);
+    flex-shrink: 0;
+  }
+}
+
 .publish-panel-enter-active,
 .publish-panel-leave-active {
   transition: opacity 0.2s ease;
 }
+
 .publish-panel-enter-active .relative.z-10,
 .publish-panel-leave-active .relative.z-10 {
   transition: transform 0.25s ease, opacity 0.2s ease;
 }
+
 .publish-panel-enter-from,
 .publish-panel-leave-to {
   opacity: 0;
 }
+
 .publish-panel-enter-from .relative.z-10,
 .publish-panel-leave-to .relative.z-10 {
   transform: translateY(1.5rem);

@@ -15,6 +15,11 @@ export interface WordSearchOptions {
   containsUseSyllables?: boolean
   /** Silabe folosite la OR; dacă lipsește sau e gol, se folosește `splitSyllables(needle)`. */
   containsSyllablesOverride?: string[] | null
+  /**
+   * Dacă true, cuvântul trebuie să conțină **fiecare** silabă cu ≥2 caractere (formă pliată), nu doar una (OR).
+   * Silabele de 1 literă sunt ignorate la această regulă (ca înainte).
+   */
+  containsSyllablesMatchAll?: boolean
 }
 
 /** Separatori acceptați în câmpul manual de silabe (ex: „a · b · c”). */
@@ -137,7 +142,8 @@ export function queryCorpus(
   }
 
   /**
-   * Conține: opțional OR pe silabe (≥2 caractere) + întregul text pliat; altfel doar subșir.
+   * Conține: silabe ≥2 caractere — fie OR (implicit), fie toate obligatorii (`containsSyllablesMatchAll`);
+   * fără silabe sau sub 2 silabe: subșir pe întregul text pliat.
    */
   if (mode === 'contains') {
     if (!needle) return corpus.slice(0, lim)
@@ -158,6 +164,24 @@ export function queryCorpus(
     const parts = syllables
       .map((s) => norm(s))
       .filter((s) => s.length >= 2)
+
+    if (parts.length === 0) {
+      const matchers = [needleNorm]
+      const filtered = corpus.filter((w) => norm(w.word).includes(needleNorm))
+      return sortContainsMatches(filtered, matchers, strict).slice(0, lim)
+    }
+
+    const matchAll = options?.containsSyllablesMatchAll === true
+
+    if (matchAll) {
+      const matchersForSort = parts
+      const filtered = corpus.filter((w) => {
+        const nw = norm(w.word)
+        return parts.every((m) => nw.includes(m))
+      })
+      return sortContainsMatches(filtered, matchersForSort, strict).slice(0, lim)
+    }
+
     const matchers = [...new Set([...parts, needleNorm])].filter((m) => m.length > 0)
     const filtered = corpus.filter((w) => {
       const nw = norm(w.word)

@@ -33,6 +33,9 @@ export default defineEventHandler(async (event) => {
     }
     wordSearchOptions.containsUseSyllables = containsUseSyllables
     wordSearchOptions.containsSyllablesOverride = containsSyllablesOverride ?? null
+    const rawMatchAll = query.syllablesMatchAll?.toString().toLowerCase()
+    wordSearchOptions.containsSyllablesMatchAll =
+      rawMatchAll === '1' || rawMatchAll === 'true'
   }
 
   try {
