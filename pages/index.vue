@@ -224,7 +224,7 @@ function formatDate(iso: string) {
     </button>
     <ReaderSettingsSidebar v-model:open="readerSettingsOpen" id-prefix="home" />
 
-    <div class="w-full min-w-0 px-4 pb-20 pt-2 md:px-8 md:pt-4 lg:px-10 xl:px-12">
+    <div class="w-full min-w-0 pb-20 pt-2 md:pt-4">
       <div
         class="grid grid-cols-1 gap-12 lg:gap-10 xl:grid-cols-[minmax(200px,260px)_minmax(0,1fr)_minmax(280px,380px)] xl:gap-12 2xl:gap-16">
         <!-- Left: authors -->

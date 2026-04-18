@@ -2,7 +2,7 @@
 import { z } from 'zod'
 import { prisma } from '~/server/utils/prisma'
 import { requireUser } from '~/server/utils/auth'
-import { invalidatePoemCaches } from '~/server/utils/invalidatePublicCache'
+import { invalidateAuthorDetailCaches, invalidatePoemCaches } from '~/server/utils/invalidatePublicCache'
 import { estimateReadingTime, extractExcerpt } from '~/server/utils/slug'
 import { isPoemEditorRole, isSiteOwnerEmail } from '~/utils/roles'
 
@@ -35,7 +35,12 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const existing = await prisma.poem.findUnique({ where: { slug } })
+  const existing = await prisma.poem.findUnique({
+    where: { slug },
+    select: {
+      author: { select: { slug: true } },
+    },
+  })
   if (!existing) {
     throw createError({ statusCode: 404, statusMessage: 'Poem not found' })
   }
@@ -62,6 +67,8 @@ export default defineEventHandler(async (event) => {
   })
 
   await invalidatePoemCaches(slug)
+  const authorSlug = existing.author?.slug
+  if (authorSlug) await invalidateAuthorDetailCaches(authorSlug)
 
   return { ok: true as const }
 })

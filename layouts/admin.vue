@@ -62,7 +62,7 @@ const navItems = computed(() => [
       </aside>
 
       <!-- Main content -->
-      <main class="min-h-screen flex-1 overflow-auto p-6 md:p-8">
+      <main class="min-h-screen flex-1 overflow-auto px-4 py-6 md:px-8 md:py-8 lg:px-10">
         <slot />
       </main>
     </div>

@@ -185,7 +185,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="shrink-0 px-4 py-2 backdrop-blur-sm" aria-label="Instrumente">
+  <div class="shrink-0 py-2 backdrop-blur-sm" aria-label="Instrumente">
     <div class="flex w-full min-w-0 items-center justify-between gap-3">
       <div ref="rootRef" class="relative min-w-0">
         <button type="button"
@@ -217,9 +217,9 @@ onUnmounted(() => {
             role="listbox" @click.stop>
             <div class="border-b border-edge-subtle/90 bg-gradient-to-b from-surface-subtle/80 to-surface-raised px-3 pb-3 pt-3">
               <button type="button"
-                class="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2"
+                class="flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-3 py-2.5 text-sm font-semibold text-brand-foreground shadow-sm transition hover:bg-brand-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/45 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-overlay"
                 @click="openNewProjectModal">
-                <Icon :icon="icons.plus" class="h-5 w-5 shrink-0" aria-hidden="true" />
+                <Icon :icon="icons.plus" class="h-5 w-5 shrink-0 text-brand-foreground" aria-hidden="true" />
                 Proiect nou
               </button>
             </div>

@@ -4,6 +4,7 @@ import { displayNationality } from '~/utils/nationality'
 import { SITE_OWNER_EMAIL } from '~/utils/roles'
 import { isPoemEditorRoleOrSiteOwner } from '~/utils/roles'
 import type { Poem } from '~/composables/usePoems'
+import { PAGE_SHELL_INSET_CLASS } from '~/utils/pageShell'
 
 /** Matches GET /api/authors/:slug response shape. */
 interface AuthorDetailPayload {
@@ -58,9 +59,16 @@ async function deleteAuthor() {
   }
 }
 
+/** Bump after saves so GET bypasses Nitro/client dedupe for the same URL + params. */
+const authorFetchNonce = ref(0)
+
 /** Minimal pagination params — we only need author, works, and total count. */
 const { data, error, refresh } = await useFetch<AuthorDetailPayload>(`/api/authors/${slug}`, {
-  params: { page: 1, limit: 1 },
+  params: computed(() => ({
+    page: 1,
+    limit: 1,
+    _hub: authorFetchNonce.value,
+  })),
 })
 
 if (error.value || !data.value) {
@@ -300,7 +308,8 @@ async function saveAllEdits() {
     if (!(await persistAuthorDrafts())) return
     await poetryViewerRef.value?.savePoemEdit?.()
     authorEditMode.value = false
-    await refresh()
+    authorFetchNonce.value += 1
+    await refresh({ dedupe: 'cancel' })
   } finally {
     savingEdits.value = false
   }
@@ -388,7 +397,7 @@ onBeforeUnmount(() => window.removeEventListener('resize', measureBioClamp))
       </svg>
     </button>
 
-    <div v-if="author" class="w-full min-w-0 px-4 pt-2 md:px-8 md:pt-4 lg:px-10 xl:px-12"
+    <div v-if="author" class="w-full min-w-0 pt-2 md:pt-4"
       :class="authorEditMode ? 'pb-32 md:pb-36' : 'pb-20'">
       <!-- Author profile -->
       <div class="mb-12 flex flex-col items-start gap-6 sm:flex-row">
@@ -547,17 +556,19 @@ onBeforeUnmount(() => window.removeEventListener('resize', measureBioClamp))
 
     <!-- Unified save / discard — fixed to viewport -->
     <div v-if="authorEditMode && author"
-      class="fixed inset-x-0 bottom-0 z-[60] flex flex-wrap items-center justify-center gap-2 border-t border-edge-subtle bg-surface-raised/98 px-4 py-3 shadow-[0_-4px_24px_rgba(0,0,0,0.06)] backdrop-blur-md pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-      <button type="button"
-        class="inline-flex min-h-[44px] min-w-[44px] flex-1 items-center justify-center rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-brand-foreground transition hover:bg-brand-hover disabled:opacity-50 sm:max-w-xs sm:flex-none"
-        :disabled="savingEdits" @click="saveAllEdits">
-        {{ savingEdits ? t('admin.authors.saving') : t('authors.saveAuthorChanges') }}
-      </button>
-      <button type="button"
-        class="inline-flex min-h-[44px] min-w-[44px] flex-1 items-center justify-center rounded-lg border border-edge-subtle bg-surface-subtle px-5 py-2.5 text-sm font-medium text-content-secondary transition hover:border-edge hover:bg-surface-raised disabled:opacity-50 sm:max-w-xs sm:flex-none"
-        :disabled="savingEdits" @click="discardAllEdits">
-        {{ t('authors.discardEdits') }}
-      </button>
+      class="fixed inset-x-0 bottom-0 z-[60] border-t border-edge-subtle bg-surface-raised/98 py-3 shadow-[0_-4px_24px_rgba(0,0,0,0.06)] backdrop-blur-md pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      <div :class="[PAGE_SHELL_INSET_CLASS, 'flex flex-wrap items-center justify-center gap-2']">
+        <button type="button"
+          class="inline-flex min-h-[44px] min-w-[44px] flex-1 items-center justify-center rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-brand-foreground transition hover:bg-brand-hover disabled:opacity-50 sm:max-w-xs sm:flex-none"
+          :disabled="savingEdits" @click="saveAllEdits">
+          {{ savingEdits ? t('admin.authors.saving') : t('authors.saveAuthorChanges') }}
+        </button>
+        <button type="button"
+          class="inline-flex min-h-[44px] min-w-[44px] flex-1 items-center justify-center rounded-lg border border-edge-subtle bg-surface-subtle px-5 py-2.5 text-sm font-medium text-content-secondary transition hover:border-edge hover:bg-surface-raised disabled:opacity-50 sm:max-w-xs sm:flex-none"
+          :disabled="savingEdits" @click="discardAllEdits">
+          {{ t('authors.discardEdits') }}
+        </button>
+      </div>
     </div>
   </div>
 </template>

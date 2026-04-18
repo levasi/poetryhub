@@ -443,20 +443,20 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <main class="flex min-w-0 flex-1 flex-col" aria-label="Lucru: dicționar, versuri">
+  <div class="flex min-w-0 flex-1 flex-col" aria-label="Lucru: dicționar, versuri">
     <WriteToolsBar />
     <div ref="splitContainerRef"
       class="flex min-h-0 min-w-0 flex-1 flex-col divide-y divide-edge-subtle lg:flex-row lg:divide-y-0">
       <!-- Stânga (desktop): căutare + rezultate; pe mobil order: versuri → căutare → rezultate (contents + order) -->
       <div
-        class="contents min-h-0 min-w-0 lg:order-1 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col lg:gap-4 lg:p-4 lg:pr-5">
+        class="contents min-h-0 min-w-0 lg:order-1 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col lg:gap-4 sm:pr-4 sm:pb-6">
         <!-- Bară căutare -->
         <div class="order-2 shrink-0 p-3 sm:p-4 lg:order-none lg:p-0" aria-label="Căutare dicționar">
           <div class="shrink-0 rounded-2xl border border-edge-subtle bg-surface-raised p-4 shadow-sm sm:p-5">
             <div class="flex flex-wrap gap-2">
               <button v-for="m in modes" :key="m.id" type="button" :title="m.hint"
                 class="rounded-lg border px-3 py-1.5 text-xs font-medium transition" :class="mode === m.id
-                  ? 'border-blue-600 bg-blue-50 text-blue-900'
+                  ? 'border-brand bg-brand-soft/40 text-content shadow-sm'
                   : 'border-edge-subtle bg-surface-subtle text-content-secondary hover:border-edge'
                   " @click="mode = m.id">
                 {{ m.label }}
@@ -465,17 +465,13 @@ onUnmounted(() => {
 
             <div class="mt-4">
               <label class="sr-only">Căutare</label>
-              <p class="mb-1.5 text-xs text-content-muted">
-                Butonul + e lângă ultimul câmp; poți avea mai multe câmpuri pe același rând (se împachetează când e nevoie). Rezultatele se combină din toate căutările. Enter sau butonul Caută pornește căutarea imediat.
-              </p>
               <div class="flex flex-wrap items-center gap-2">
-                <div
-                  v-for="(row, i) in searchQueries"
-                  :key="row.id"
+                <div v-for="(row, i) in searchQueries" :key="row.id"
                   class="flex min-w-0 max-w-[min(100%,20rem)] flex-[1_1_11rem] items-center gap-1.5 sm:flex-[1_1_13rem]">
                   <label class="sr-only">Cuvânt căutat {{ i + 1 }}</label>
-                  <input v-model="row.text" type="search" autocomplete="off" enterkeyhint="search" :placeholder="placeholder"
-                    class="min-w-0 flex-1 rounded-xl border border-edge bg-surface-raised px-3 py-2.5 text-base text-content shadow-inner outline-none ring-blue-500/20 transition placeholder:text-content-soft focus:border-blue-500 focus:ring-2 sm:min-w-[10rem] sm:px-4 sm:py-3"
+                  <input v-model="row.text" type="search" autocomplete="off" enterkeyhint="search"
+                    :placeholder="placeholder"
+                    class="min-w-0 flex-1 rounded-xl border border-edge bg-surface-raised px-3 py-2.5 text-base text-content shadow-inner outline-none ring-blue-500/20 transition placeholder:text-sm placeholder:text-content-soft focus:border-blue-500 focus:ring-2 sm:min-w-[10rem] sm:px-4 sm:py-3"
                     @keydown.enter.prevent="runSearch" />
                   <button v-if="searchQueries.length > 1" type="button"
                     class="shrink-0 rounded-lg border border-edge-subtle px-2 py-2 text-content-muted hover:bg-surface-subtle sm:px-2.5"
@@ -484,17 +480,15 @@ onUnmounted(() => {
                   </button>
                 </div>
                 <button type="button"
-                  class="inline-flex h-11 w-11 shrink-0 items-center justify-center self-center rounded-xl border border-dashed border-blue-300 bg-blue-50/80 text-blue-800 transition hover:border-blue-400 hover:bg-blue-100"
-                  title="Adaugă alt cuvânt de căutare"
-                  aria-label="Adaugă alt cuvânt de căutare"
+                  class="inline-flex h-11 w-11 shrink-0 items-center justify-center self-center rounded-xl border border-dashed border-brand/45 bg-brand-soft/30 text-brand transition hover:border-brand hover:bg-brand-soft/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35"
+                  title="Adaugă alt cuvânt de căutare" aria-label="Adaugă alt cuvânt de căutare"
                   @click="addSearchQuery">
-                  <Icon icon="heroicons:plus" class="h-6 w-6 shrink-0" aria-hidden="true" />
+                  <Icon icon="heroicons:plus" class="h-6 w-6 shrink-0 text-current" aria-hidden="true" />
                 </button>
               </div>
               <button type="button"
                 class="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-brand-foreground shadow-sm transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/45 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-raised disabled:cursor-not-allowed disabled:opacity-50 lg:w-auto"
-                :disabled="loading"
-                @click="runSearch">
+                :disabled="loading" @click="runSearch">
                 <Icon icon="heroicons:magnifying-glass" class="h-5 w-5 shrink-0" aria-hidden="true" />
                 {{ t('write.searchBtn') }}
               </button>
@@ -514,9 +508,11 @@ onUnmounted(() => {
         </div>
 
         <!-- Rezultate dicționar -->
-        <div class="order-3 flex min-h-0 min-w-0 flex-1 flex-col p-3 pt-0 sm:p-4 sm:pt-0 lg:order-none lg:min-h-0 lg:flex-none lg:p-0"
+        <div
+          class="order-3 flex min-h-0 min-w-0 flex-1 flex-col p-3 pt-0 sm:p-4 sm:pt-0 lg:order-none lg:min-h-0 lg:flex-none lg:p-0"
           aria-label="Rezultate dicționar">
-          <div class="flex min-w-0 flex-col rounded-2xl border border-edge-subtle bg-surface-raised p-4 shadow-sm sm:p-5">
+          <div
+            class="flex min-w-0 flex-col rounded-2xl border border-edge-subtle bg-surface-raised p-4 shadow-sm sm:p-5">
             <p class="mb-2 text-xs font-medium uppercase tracking-wide text-content-muted">
               Rezultate
               <span v-if="loading" class="font-normal text-content-soft">— se încarcă…</span>
@@ -556,7 +552,7 @@ onUnmounted(() => {
         @mousedown="startSplitResize" @keydown="onSplitKeydown">
         <div class="absolute inset-y-0 -left-2 -right-2 z-[1] cursor-col-resize" aria-hidden="true" />
         <div
-          class="relative z-0 flex w-[1.625rem] flex-col items-center justify-center border-x border-edge-subtle bg-surface-subtle/90 px-0.5 py-3 shadow-sm transition-colors group-hover:border-brand/50 group-hover:bg-brand-soft/50 group-focus-visible:border-brand group-focus-visible:ring-2 group-focus-visible:ring-brand/30">
+          class="relative z-0 flex w-[1.625rem] flex-col items-center justify-center border border-edge-subtle bg-surface-subtle/90 px-0.5 py-3 shadow-sm transition-colors group-hover:border-brand/50 group-hover:bg-brand-soft/50 group-focus-visible:border-brand group-focus-visible:ring-2 group-focus-visible:ring-brand/30">
           <span
             class="pointer-events-none flex items-center gap-px text-content-muted group-hover:text-brand group-focus-visible:text-brand"
             aria-hidden="true">
@@ -567,7 +563,7 @@ onUnmounted(() => {
       </div>
 
       <!-- Dreapta: versuri (pe mobil deasupra căutării) -->
-      <section class="write-split-right order-1 flex min-w-0 flex-col p-3 sm:p-4 lg:order-3"
+      <section class="write-split-right order-1 flex min-w-0 flex-col sm:pl-4 lg:order-3"
         :style="{ '--write-right-w': rightWidthPx + 'px' }" aria-label="Editor versuri">
         <ClientOnly>
           <WriteLyricsEditor />
@@ -755,7 +751,7 @@ onUnmounted(() => {
         </div>
       </div>
     </Teleport>
-  </main>
+  </div>
 </template>
 
 <style scoped>

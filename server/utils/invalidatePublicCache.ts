@@ -28,14 +28,16 @@ export async function invalidatePoemCaches(slug: string) {
 
 /** Bust cached GET /api/authors/:slug (pagination variants) after profile edits. */
 export async function invalidateAuthorDetailCaches(authorSlug: string) {
-  const slugSeg = authorSlug.replace(/[^a-zA-Z0-9]/g, '')
-  const re = new RegExp(`^author${slugSeg}`)
+  const trimmed = authorSlug.trim()
+  if (!trimmed) return
+  /** Matches Nitro `escapeKey` on handler cache keys built from `getKey` (`author:${slug}:…`). */
+  const escapedPrefix = escapeCacheKey(`author:${trimmed}:`)
   const prefix = `${HANDLER_BASE}:api-author-by-slug:`
   const storage = useStorage()
   const keys = await storage.getKeys(prefix)
   for (const k of keys) {
-    const segment = k.split(':').pop()?.replace(/\.json$/i, '') ?? ''
-    if (re.test(segment)) await storage.removeItem(k).catch(() => {})
+    const segment = k.slice(prefix.length).replace(/\.json$/i, '')
+    if (segment.startsWith(escapedPrefix)) await storage.removeItem(k).catch(() => {})
   }
 }
 

@@ -27,7 +27,6 @@ import {
   type PoemCarouselSettingsPayload,
 } from '~/utils/poemCarouselFontSettings'
 import { useAuth } from '~/composables/useAuth'
-import { isPoemEditorRoleOrSiteOwner } from '~/utils/roles'
 
 definePageMeta({
   layout: 'default',
@@ -36,11 +35,6 @@ definePageMeta({
 const { t } = useI18n()
 const route = useRoute()
 const { user, fetchMe, isLoggedIn } = useAuth()
-
-/** Poem text & metadata inputs: moderators and admins only; others adjust carousel styling only. */
-const canEditPoemData = computed(() =>
-  isPoemEditorRoleOrSiteOwner(user.value?.role, user.value?.email),
-)
 
 const keywordsHelpOpen = ref(false)
 const keywordsHelpWrapRef = ref<HTMLElement | null>(null)
@@ -74,8 +68,6 @@ const keywords = computed(() =>
     .map((k) => k.trim())
     .filter(Boolean),
 )
-
-const { query: libraryQuery, results: searchResults, loading: searchLoading, search: runSearch } = useSearch()
 
 /** Verse layout (body slides). */
 const linesPerSlide = ref(CAROUSEL_LINES_PER_BODY_SLIDE)
@@ -177,52 +169,12 @@ const canSaveCurrentPoemCarousel = computed(() => {
 const savingCurrentPoemCarousel = ref(false)
 const showCurrentPoemCarouselThumbsUp = ref(false)
 let currentPoemCarouselThumbsHideTimer: ReturnType<typeof setTimeout> | null = null
-const deletingPoem = ref(false)
-
-async function deleteLoadedPoem() {
-  const slug = loadedPoemSlug.value
-  if (!slug || !canEditPoemData.value || !canSaveCurrentPoemCarousel.value) return
-  if (!confirm(t('carousel.deletePoemConfirm'))) return
-  deletingPoem.value = true
-  try {
-    await $fetch(`/api/poems/${encodeURIComponent(slug)}`, {
-      method: 'DELETE',
-      credentials: 'include',
-    })
-    if (typeof route.query.slug === 'string' && route.query.slug === slug) {
-      await navigateTo({ path: '/carousel-generator', replace: true })
-    }
-    loadSample()
-  } catch (e: unknown) {
-    console.error(e)
-    const code =
-      e && typeof e === 'object' && 'statusCode' in e
-        ? (e as { statusCode?: number }).statusCode
-        : undefined
-    const msg =
-      code === 401
-        ? t('carousel.defaultsSaveError401')
-        : code === 403
-          ? t('carousel.defaultsSaveError403')
-          : t('carousel.deletePoemError')
-    alert(msg)
-  } finally {
-    deletingPoem.value = false
-  }
-}
 
 async function saveCurrentPoemCarousel() {
   const slug = loadedPoemSlug.value
   if (!slug || !canSaveCurrentPoemCarousel.value) return
   savingCurrentPoemCarousel.value = true
   try {
-    if (canEditPoemData.value && poemText.value.trim()) {
-      await $fetch(`/api/poems/${encodeURIComponent(slug)}/content`, {
-        method: 'PUT',
-        credentials: 'include',
-        body: { content: poemText.value },
-      })
-    }
     await $fetch<PoemCarouselSettingsPayload>(`/api/poems/${encodeURIComponent(slug)}/carousel-font`, {
       method: 'PUT',
       credentials: 'include',
@@ -524,35 +476,6 @@ function copyCaption() {
   void navigator.clipboard.writeText(captionText.value)
 }
 
-async function applyPoem(p: Poem) {
-  title.value = p.title
-  author.value = p.author.name
-  authorAvatarFromPoem.value = { slug: p.author.slug, name: p.author.name, imageUrl: p.author.imageUrl }
-  const full = await $fetch<Poem>(`/api/poems/${p.slug}`)
-  loadedPoemSlug.value = full.slug
-  poemText.value = full.content
-  authorAvatarFromPoem.value = {
-    slug: full.author.slug,
-    name: full.author.name,
-    imageUrl: full.author.imageUrl,
-  }
-  applyAuthorMetaFromApi(full.author)
-  poemWrittenYear.value = full.writtenYear != null ? String(full.writtenYear) : ''
-  loadedPoemSubmittedByUserId.value = full.submittedByUserId ?? null
-  const parsed = parsePoemCarouselSettings(full.carouselFontSettings)
-  if (parsed) {
-    applyPoemCarouselSettings(parsed)
-    poemCarouselOverridesFromDb.value = true
-  } else {
-    poemCarouselOverridesFromDb.value = false
-    if (siteDefaults.value) {
-      applyCarouselSiteDefaultsNonTypography(siteDefaults.value)
-      applyCarouselTypographyFromSiteDefaults(siteDefaults.value)
-    }
-  }
-  currentIndex.value = 0
-}
-
 async function loadFromSlug(slug: string) {
   try {
     const full = await $fetch<Poem>(`/api/poems/${slug}`)
@@ -635,54 +558,12 @@ function onTouchEnd(e: TouchEvent) {
 </script>
 
 <template>
-  <div class="w-full px-4 pb-16 sm:px-6 lg:px-10 xl:px-14">
+  <div class="w-full min-w-0 pb-16 pt-2 md:pt-4">
     <!-- Full-width: left 4/7, right 3/7 from md -->
     <div class="grid grid-cols-1 gap-10 md:grid-cols-7 md:items-start md:gap-8 lg:gap-10">
       <!-- Left (4 columns): Controls -->
       <div class="min-w-0 space-y-6 md:col-span-4">
         <section class="rounded-2xl border border-edge-subtle bg-surface-raised p-6 shadow-ds-card">
-          <template v-if="canEditPoemData">
-            <label class="field-label">{{ t('carousel.fieldTitle') }}</label>
-            <input v-model="title" type="text"
-              class="mb-4 w-full rounded-xl border border-edge-subtle px-4 py-2.5 font-serif text-content outline-none focus:border-gold-500"
-              :placeholder="t('carousel.phTitle')" />
-
-            <label class="field-label">{{ t('carousel.fieldAuthor') }}</label>
-            <input v-model="author" type="text"
-              class="mb-4 w-full rounded-xl border border-edge-subtle px-4 py-2.5 outline-none focus:border-gold-500"
-              :placeholder="t('carousel.phAuthor')" />
-
-            <label class="field-label">{{ t('carousel.fieldNationality') }}</label>
-            <input v-model="authorNationality" type="text"
-              class="mb-4 w-full rounded-xl border border-edge-subtle px-4 py-2.5 outline-none focus:border-gold-500"
-              :placeholder="t('carousel.phNationality')" />
-
-            <div class="mb-4 grid grid-cols-2 gap-4">
-              <div>
-                <label class="field-label">{{ t('carousel.fieldBirthYear') }}</label>
-                <input v-model="authorBirthYear" type="text" inputmode="numeric"
-                  class="w-full rounded-xl border border-edge-subtle px-4 py-2.5 outline-none focus:border-gold-500"
-                  :placeholder="t('carousel.phBirthYear')" />
-              </div>
-              <div>
-                <label class="field-label">{{ t('carousel.fieldDeathYear') }}</label>
-                <input v-model="authorDeathYear" type="text" inputmode="numeric"
-                  class="w-full rounded-xl border border-edge-subtle px-4 py-2.5 outline-none focus:border-gold-500"
-                  :placeholder="t('carousel.phDeathYear')" />
-              </div>
-            </div>
-
-            <label class="field-label">{{ t('carousel.fieldPoemWrittenYear') }}</label>
-            <input v-model="poemWrittenYear" type="text" inputmode="numeric"
-              class="mb-4 w-full rounded-xl border border-edge-subtle px-4 py-2.5 outline-none focus:border-gold-500"
-              :placeholder="t('carousel.phPoemWrittenYear')" />
-
-            <label class="field-label">{{ t('carousel.fieldPoem') }}</label>
-            <textarea v-model="poemText" rows="10"
-              class="mb-4 w-full rounded-xl border border-edge-subtle px-4 py-3 font-serif leading-relaxed text-content-secondary outline-none focus:border-gold-500"
-              :placeholder="t('carousel.phPoem')" />
-          </template>
-
           <h3 class="mb-3 font-serif text-base font-semibold text-content">
             {{ t('carousel.sectionInstagramPostSettings') }}
           </h3>
@@ -778,8 +659,7 @@ function onTouchEnd(e: TouchEvent) {
 
             <div v-if="canSaveCurrentPoemCarousel && loadedPoemSlug" class="mb-4 border-t border-edge-subtle pt-4">
               <p class="mb-2 text-xs text-content-muted">
-                {{ canEditPoemData ? t('carousel.poemCarouselSaveHintStaff') :
-                  t('carousel.poemCarouselSaveHintCarouselOnly') }}
+                {{ t('carousel.poemCarouselSaveHintCarouselOnly') }}
               </p>
               <button type="button"
                 class="w-full rounded-xl border border-gold-500 bg-gold-500/10 px-4 py-2.5 text-sm font-semibold text-content hover:bg-gold-500/20 disabled:opacity-50"
@@ -803,15 +683,6 @@ function onTouchEnd(e: TouchEvent) {
               </Transition>
             </div>
 
-            <div v-if="canEditPoemData && canSaveCurrentPoemCarousel && loadedPoemSlug"
-              class="border-t border-edge-subtle pt-4">
-              <button type="button"
-                class="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-800 hover:bg-red-100 disabled:opacity-50"
-                :disabled="deletingPoem || savingCurrentPoemCarousel" @click="deleteLoadedPoem">
-                {{ deletingPoem ? t('carousel.deletingPoem') : t('carousel.deletePoem') }}
-              </button>
-            </div>
-
             <p v-if="!isLoggedIn" class="mt-4 border-t border-edge-subtle pt-4 text-xs text-content-muted">
               {{ t('carousel.poemSaveLoginHint') }}
             </p>
@@ -824,39 +695,6 @@ function onTouchEnd(e: TouchEvent) {
               {{ t('carousel.poemSaveNeedPoemHint') }}
             </p>
           </div>
-        </section>
-
-        <section v-if="canEditPoemData" class="rounded-2xl border border-edge-subtle bg-surface-raised p-6 shadow-ds-card">
-          <h2 class="mb-4 font-serif text-lg font-semibold text-content">
-            {{ t('carousel.sectionLibrary') }}
-          </h2>
-          <label class="field-label">{{ t('carousel.searchPoems') }}</label>
-          <input v-model="libraryQuery" type="search"
-            class="mb-3 w-full rounded-xl border border-edge-subtle px-4 py-2.5 outline-none focus:border-gold-500"
-            :placeholder="t('carousel.searchPlaceholder')" @keyup.enter="runSearch(libraryQuery)" />
-          <p v-if="searchLoading" class="text-sm text-content-muted">
-            {{ t('carousel.searching') }}
-          </p>
-          <template v-else>
-            <ul v-if="searchResults.length"
-              class="max-h-48 space-y-1 overflow-y-auto rounded-lg border border-edge-subtle bg-surface-subtle/80 p-2">
-              <li v-for="p in searchResults" :key="p.id">
-                <button type="button" class="w-full rounded-lg px-3 py-2 text-left text-sm text-content-secondary hover:bg-surface-raised"
-                  @click="applyPoem(p)">
-                  <span class="font-medium">{{ p.title }}</span>
-                  <span class="text-content-muted"> — {{ p.author.name }}</span>
-                </button>
-              </li>
-            </ul>
-            <p v-else-if="libraryQuery.trim() && !searchResults.length"
-              class="rounded-lg border border-edge-subtle bg-surface-subtle/80 px-3 py-2 text-sm text-content-muted">
-              {{ t('carousel.noResults') }}
-            </p>
-          </template>
-          <button type="button" class="mt-3 text-sm text-brand underline-offset-2 hover:underline"
-            @click="loadSample">
-            {{ t('carousel.loadSample') }}
-          </button>
         </section>
 
         <section class="rounded-2xl border border-edge-subtle bg-surface-overlay p-6 text-content shadow-ds-card">
@@ -942,7 +780,6 @@ function onTouchEnd(e: TouchEvent) {
                 <p class="mb-3 text-xs font-semibold uppercase tracking-wider text-content-muted">
                   {{ t('carousel.fullscreenFontSettings') }}
                 </p>
-                <label class="field-label">{{ t('carousel.fieldFont') }}</label>
                 <label class="field-label">{{ t('carousel.fieldFont') }}</label>
                 <div class="mb-4 flex items-center gap-2">
                   <button type="button"

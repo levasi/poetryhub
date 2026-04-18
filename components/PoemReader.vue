@@ -147,9 +147,9 @@ const hasTitleAside = computed(() => !!slots.titleAside)
       <div class="h-px flex-1 bg-gradient-to-l from-transparent via-edge-strong/40 to-edge-subtle" />
     </div>
 
-    <div class="poem-body w-full" :class="bodyClass">
+    <div class="poem-body w-full space-y-6" :class="bodyClass">
       <template v-if="bodyModeResolved === 'stanzas'">
-        <p v-for="(stanza, i) in stanzas" :key="i" :style="poemBodyStyle">{{ stanza }}</p>
+        <p v-for="(stanza, i) in stanzas" :key="i" class="whitespace-pre-wrap" :style="poemBodyStyle">{{ stanza }}</p>
       </template>
       <p v-else :style="poemBodyStyle" class="whitespace-pre-wrap">{{ plainBody }}</p>
     </div>

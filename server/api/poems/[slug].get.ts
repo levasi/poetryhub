@@ -1,5 +1,6 @@
 // GET /api/poems/:slug — fetch a single poem with full details
 import { prisma } from '~/server/utils/prisma'
+import { withResolvedAuthorPortrait } from '~/server/utils/authorPortrait'
 
 export default defineCachedEventHandler(
   async (event) => {
@@ -16,6 +17,9 @@ export default defineCachedEventHandler(
     if (!poem) {
       throw createError({ statusCode: 404, statusMessage: 'Poem not found' })
     }
+
+    /** Same as author profile API: Wikipedia portrait when missing, persisted on `Author`. */
+    const author = await withResolvedAuthorPortrait(poem.author)
 
     const neighborSelect = { slug: true, title: true } as const
 
@@ -48,6 +52,7 @@ export default defineCachedEventHandler(
 
     return {
       ...poem,
+      author,
       navigation: {
         newer: newer ? { slug: newer.slug, title: newer.title } : null,
         older: older ? { slug: older.slug, title: older.title } : null,
