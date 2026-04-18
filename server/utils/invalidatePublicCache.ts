@@ -17,6 +17,15 @@ function handlerStorageKey(handlerName: string, escapedKeyPart: string) {
   return `${HANDLER_BASE}:${handlerName}:${escapedKeyPart}.json`
 }
 
+/** After poem content/title changes — bust single-poem GET + AI insight caches (otherwise edits look “unsaved”). */
+export async function invalidatePoemCaches(slug: string) {
+  const poemKey = escapeCacheKey(`poem:${slug}`)
+  const insightKey = escapeCacheKey(`insight:${slug}`)
+  const storage = useStorage()
+  await storage.removeItem(handlerStorageKey('api-poem-by-slug', poemKey)).catch(() => {})
+  await storage.removeItem(handlerStorageKey('api-poem-insight', insightKey)).catch(() => {})
+}
+
 async function removeKeysWithPrefix(prefix: string) {
   const storage = useStorage()
   const keys = await storage.getKeys(prefix)
@@ -45,9 +54,6 @@ export async function invalidateCachesAfterAuthorDelete(slug: string, poemSlugs:
   }
 
   for (const ps of poemSlugs) {
-    const poemKey = escapeCacheKey(`poem:${ps}`)
-    await storage.removeItem(handlerStorageKey('api-poem-by-slug', poemKey)).catch(() => {})
-    const insightKey = escapeCacheKey(`insight:${ps}`)
-    await storage.removeItem(handlerStorageKey('api-poem-insight', insightKey)).catch(() => {})
+    await invalidatePoemCaches(ps)
   }
 }

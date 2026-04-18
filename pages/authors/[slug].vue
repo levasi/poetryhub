@@ -2,7 +2,7 @@
 import { $fetch as rawFetch } from 'ofetch'
 import { displayNationality } from '~/utils/nationality'
 import { SITE_OWNER_EMAIL } from '~/utils/roles'
-import { isPoemEditorRoleOrSiteOwner, isStaffRole } from '~/utils/roles'
+import { isPoemEditorRoleOrSiteOwner } from '~/utils/roles'
 import type { Poem } from '~/composables/usePoems'
 
 /** Matches GET /api/authors/:slug response shape. */
@@ -178,8 +178,8 @@ const avatarSrc = computed(() =>
   author.value ? authorAvatarUrl(author.value) : '',
 )
 
-/** Moderator / admin / site owner — author bio & nationality on this page. */
-const canEditCatalog = computed(() => isStaffRole(user.value?.role) || isSiteOwner.value)
+/** Editor / moderator / admin / site owner — author name, bio & nationality on this page. */
+const canEditCatalog = computed(() => isPoemEditorRoleOrSiteOwner(user.value?.role, user.value?.email))
 
 /** Editor / moderator / admin / site owner — poem title & body in the reader panel. */
 const canEditPoem = computed(() => isPoemEditorRoleOrSiteOwner(user.value?.role, user.value?.email))
@@ -189,6 +189,10 @@ function onPoemUpdated(updated: Poem) {
   const entry = data.value?.works?.find((w) => w.slug === updated.slug)
   if (entry) entry.title = updated.title
 }
+
+const editingName = ref(false)
+const nameDraft = ref('')
+const savingName = ref(false)
 
 const editingEthnicity = ref(false)
 const ethnicityDraft = ref('')
@@ -204,11 +208,56 @@ watch(
   author,
   (a) => {
     if (!a) return
+    if (!editingName.value) nameDraft.value = a.name
     ethnicityDraft.value = a.nationality ?? ''
     if (!editingBio.value) bioDraft.value = a.bio ?? ''
   },
   { immediate: true },
 )
+
+function startEditName() {
+  if (!author.value) return
+  nameDraft.value = author.value.name
+  editingName.value = true
+}
+
+function cancelEditName() {
+  editingName.value = false
+  nameDraft.value = author.value?.name ?? ''
+}
+
+async function saveName() {
+  if (!author.value || savingName.value) return
+  const trimmed = nameDraft.value.trim()
+  if (!trimmed) {
+    alert(t('admin.authors.nameRequiredError'))
+    return
+  }
+  savingName.value = true
+  try {
+    const updated = await rawFetch<AuthorDetailPayload['author']>(`/api/authors/${encodeURIComponent(slug)}`, {
+      method: 'PUT',
+      body: { name: trimmed },
+    })
+    if (data.value?.author) Object.assign(data.value.author, updated)
+    editingName.value = false
+    if (activePoem.value?.author?.id === updated.id) {
+      activePoem.value = {
+        ...activePoem.value,
+        author: { ...activePoem.value.author, name: updated.name },
+      }
+    }
+    await refresh()
+  } catch (err: unknown) {
+    const msg =
+      err && typeof err === 'object' && 'data' in err
+        ? String((err as { data?: { statusMessage?: string } }).data?.statusMessage ?? '')
+        : ''
+    alert(msg || t('admin.authors.updateFailed'))
+  } finally {
+    savingName.value = false
+  }
+}
 
 function startEditEthnicity() {
   if (!author.value) return
@@ -289,13 +338,38 @@ async function saveEthnicity() {
         </div>
 
         <div>
-          <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <h1 class="font-serif text-4xl font-bold text-content">{{ author.name }}</h1>
-            <button v-if="isSiteOwner" type="button"
-              class="shrink-0 rounded-md border border-danger/40 px-2 py-0.5 text-xs font-medium text-danger transition hover:bg-danger/10 disabled:opacity-50"
-              :disabled="deletingAuthor" @click="deleteAuthor">
-              {{ deletingAuthor ? t('admin.poems.deleting') : t('admin.authors.delete') }}
-            </button>
+          <div class="flex flex-wrap items-baseline gap-x-3 gap-y-2">
+            <template v-if="!editingName">
+              <h1 class="font-serif text-4xl font-bold text-content">{{ author.name }}</h1>
+              <button v-if="canEditCatalog" type="button"
+                class="shrink-0 rounded-lg border border-edge-subtle bg-surface-subtle px-2.5 py-1 text-xs font-medium text-content-secondary transition hover:border-edge hover:bg-surface-raised"
+                @click="startEditName">
+                {{ t('authors.editAuthorName') }}
+              </button>
+              <button v-if="isSiteOwner" type="button"
+                class="shrink-0 rounded-md border border-danger/40 px-2 py-0.5 text-xs font-medium text-danger transition hover:bg-danger/10 disabled:opacity-50"
+                :disabled="deletingAuthor" @click="deleteAuthor">
+                {{ deletingAuthor ? t('admin.poems.deleting') : t('admin.authors.delete') }}
+              </button>
+            </template>
+            <template v-else>
+              <div class="flex w-full min-w-0 flex-wrap items-center gap-2">
+                <label class="sr-only" for="author-name-edit">{{ t('admin.authors.name') }}</label>
+                <input id="author-name-edit" v-model="nameDraft" type="text" maxlength="200"
+                  class="min-w-0 flex-1 rounded-lg border border-edge-subtle bg-surface-page px-3 py-2 font-serif text-2xl font-bold text-content outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 sm:text-3xl md:text-4xl"
+                  :placeholder="t('admin.authors.placeholderName')" autocomplete="off" />
+                <button type="button"
+                  class="inline-flex shrink-0 items-center justify-center rounded-lg bg-brand px-3 py-2 text-xs font-semibold text-brand-foreground transition hover:bg-brand-hover disabled:opacity-50"
+                  :disabled="savingName" @click="saveName">
+                  {{ savingName ? t('admin.authors.saving') : t('admin.authors.save') }}
+                </button>
+                <button type="button"
+                  class="inline-flex shrink-0 items-center justify-center rounded-lg border border-edge-subtle bg-surface-subtle px-3 py-2 text-xs font-medium text-content-secondary transition hover:border-edge hover:bg-surface-raised disabled:opacity-50"
+                  :disabled="savingName" @click="cancelEditName">
+                  {{ t('admin.authors.cancel') }}
+                </button>
+              </div>
+            </template>
           </div>
           <p class="mt-1 text-sm text-content-secondary">
             <template v-if="!editingEthnicity">

@@ -2,7 +2,13 @@
 import { SignJWT, jwtVerify } from 'jose'
 import { H3Event, getCookie } from 'h3'
 import type { Role } from '~/utils/roles'
-import { isSiteOwnerEmail, isStaffRole, normalizeRole, SITE_OWNER_EMAIL } from '~/utils/roles'
+import {
+  isPoemEditorRole,
+  isSiteOwnerEmail,
+  isStaffRole,
+  normalizeRole,
+  SITE_OWNER_EMAIL,
+} from '~/utils/roles'
 
 const TOKEN_COOKIE = 'ph_admin_token'
 const USER_TOKEN_COOKIE = 'ph_user_token'
@@ -54,6 +60,29 @@ export async function requireAdmin(event: H3Event) {
   }
 
   throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
+}
+
+/**
+ * Author profile updates on the public PDP (name, bio, nationality, …).
+ * Admin JWT, or app user: moderator/admin, editor, or site-owner email.
+ */
+export async function requireAuthorCatalogEditor(event: H3Event) {
+  const adminToken =
+    getCookie(event, TOKEN_COOKIE) ??
+    event.node.req.headers.authorization?.replace('Bearer ', '')
+  if (adminToken) {
+    const payload = await verifyAdminToken(adminToken)
+    if (payload?.role === 'admin') return payload
+  }
+
+  const user = await getUserFromEvent(event)
+  if (!user) {
+    throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
+  }
+  if (isPoemEditorRole(user.role)) return user
+  if (isSiteOwnerEmail(user.email)) return { ...user, role: 'admin' }
+
+  throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
 }
 
 /** Admin cookie session, or logged-in app user with the site owner email (e.g. Google login). */

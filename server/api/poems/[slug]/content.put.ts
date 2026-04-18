@@ -2,6 +2,7 @@
 import { z } from 'zod'
 import { prisma } from '~/server/utils/prisma'
 import { requireUser } from '~/server/utils/auth'
+import { invalidatePoemCaches } from '~/server/utils/invalidatePublicCache'
 import { estimateReadingTime, extractExcerpt } from '~/server/utils/slug'
 import { isPoemEditorRole, isSiteOwnerEmail } from '~/utils/roles'
 
@@ -59,6 +60,8 @@ export default defineEventHandler(async (event) => {
         : {}),
     },
   })
+
+  await invalidatePoemCaches(slug)
 
   return { ok: true as const }
 })

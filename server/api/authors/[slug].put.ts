@@ -1,7 +1,7 @@
-// PUT /api/authors/:slug — signed-in staff (moderator/admin) or admin JWT; see requireAdmin.
+// PUT /api/authors/:slug — admin JWT, or editor / moderator / admin / site owner (app session).
 import { z } from 'zod'
 import { prisma } from '~/server/utils/prisma'
-import { requireAdmin } from '~/server/utils/auth'
+import { requireAuthorCatalogEditor } from '~/server/utils/auth'
 
 const schema = z.object({
   name:        z.string().min(1).max(200).optional(),
@@ -13,7 +13,7 @@ const schema = z.object({
 })
 
 export default defineEventHandler(async (event) => {
-  await requireAdmin(event)
+  await requireAuthorCatalogEditor(event)
   const slug   = getRouterParam(event, 'slug')!
   const body   = await readBody(event)
   const parsed = schema.safeParse(body)

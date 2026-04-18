@@ -2,6 +2,7 @@
 import { z } from 'zod'
 import { prisma } from '~/server/utils/prisma'
 import { requireAdmin } from '~/server/utils/auth'
+import { invalidatePoemCaches } from '~/server/utils/invalidatePublicCache'
 import { estimateReadingTime, extractExcerpt } from '~/server/utils/slug'
 
 const schema = z.object({
@@ -54,6 +55,8 @@ export default defineEventHandler(async (event) => {
       poemTags: { include: { tag: true } },
     },
   })
+
+  await invalidatePoemCaches(slug)
 
   return poem
 })
