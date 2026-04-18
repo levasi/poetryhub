@@ -28,7 +28,10 @@ const mailtoHref = computed(() => {
         <p
           class="max-w-reading text-balance text-center font-serif text-sm leading-relaxed italic text-content-secondary md:text-left"
         >
-          {{ t('footer.quote') }}
+          „Nu credeam să-nvăț a muri vreodată.”
+          <span class="mt-2 block not-italic text-ui-xs font-semibold tracking-wide text-content-soft">
+            — Mihai Eminescu
+          </span>
         </p>
         <nav
           class="flex shrink-0 flex-wrap justify-center gap-x-8 gap-y-2 text-ui-sm font-medium text-content-soft"
