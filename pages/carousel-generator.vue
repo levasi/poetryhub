@@ -639,7 +639,7 @@ function onTouchEnd(e: TouchEvent) {
           <div ref="keywordsHelpWrapRef" class="relative mb-1">
             <div class="flex items-baseline gap-1.5">
               <label class="field-label mb-0 flex-1" for="carousel-keyword-input">{{ t('carousel.fieldKeywords')
-              }}</label>
+                }}</label>
               <button id="carousel-keywords-help-trigger" type="button"
                 class="inline-flex shrink-0 rounded-full p-0.5 text-content-soft transition hover:bg-surface-subtle hover:text-content-secondary"
                 :aria-expanded="keywordsHelpOpen" aria-controls="carousel-keywords-help-panel"
@@ -681,7 +681,7 @@ function onTouchEnd(e: TouchEvent) {
                 class="h-2 flex-1 cursor-pointer accent-gold-600" />
               <span class="w-12 text-right text-sm tabular-nums text-content-secondary">{{ Math.round(bodyFontSizeScale
                 * 100)
-                }}%</span>
+              }}%</span>
             </div>
 
             <label class="field-label">{{ t('carousel.fieldLineHeight') }}</label>
@@ -689,7 +689,7 @@ function onTouchEnd(e: TouchEvent) {
               <input v-model.number="bodyLineHeight" type="range" min="1.15" max="2.25" step="0.05"
                 class="h-2 flex-1 cursor-pointer accent-gold-600" />
               <span class="w-12 text-right text-sm tabular-nums text-content-secondary">{{ bodyLineHeight.toFixed(2)
-                }}</span>
+              }}</span>
             </div>
           </div>
         </section>
@@ -812,7 +812,7 @@ function onTouchEnd(e: TouchEvent) {
                     class="h-2 flex-1 cursor-pointer accent-gold-600" />
                   <span class="w-12 text-right text-sm tabular-nums text-content-secondary">{{
                     Math.round(bodyFontSizeScale * 100)
-                    }}%</span>
+                  }}%</span>
                 </div>
 
                 <label class="field-label">{{ t('carousel.fieldLineHeight') }}</label>
@@ -820,7 +820,7 @@ function onTouchEnd(e: TouchEvent) {
                   <input v-model.number="bodyLineHeight" type="range" min="1.15" max="2.25" step="0.05"
                     class="h-2 flex-1 cursor-pointer accent-gold-600" />
                   <span class="w-12 text-right text-sm tabular-nums text-content-secondary">{{ bodyLineHeight.toFixed(2)
-                    }}</span>
+                  }}</span>
                 </div>
 
               </div>

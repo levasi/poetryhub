@@ -8,6 +8,7 @@ import {
   isStaffRole,
   normalizeRole,
   SITE_OWNER_EMAIL,
+  type Role,
 } from '~/utils/roles'
 
 const TOKEN_COOKIE = 'ph_admin_token'
@@ -81,6 +82,30 @@ export async function requireAuthorCatalogEditor(event: H3Event) {
   }
   if (isPoemEditorRole(user.role)) return user
   if (isSiteOwnerEmail(user.email)) return { ...user, role: 'admin' }
+
+  throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
+}
+
+/**
+ * Author portrait file upload (`POST …/portrait`): admin panel JWT **or** app user with role `admin` only.
+ * Editors and moderators cannot upload; they may still set an `https://` portrait URL via `PUT`.
+ */
+export async function requireAuthorPortraitAdmin(event: H3Event): Promise<{ id: string; email: string; role: string }> {
+  const adminToken =
+    getCookie(event, TOKEN_COOKIE) ??
+    event.node.req.headers.authorization?.replace('Bearer ', '')
+  if (adminToken) {
+    const payload = await verifyAdminToken(adminToken)
+    if (payload?.role === 'admin') return payload
+  }
+
+  const user = await getUserFromEvent(event)
+  if (!user) {
+    throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
+  }
+  if (normalizeRole(user.role as Role) === 'admin') {
+    return user
+  }
 
   throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
 }

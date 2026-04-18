@@ -2,7 +2,7 @@
 import { $fetch as rawFetch } from 'ofetch'
 import { displayNationality } from '~/utils/nationality'
 import { SITE_OWNER_EMAIL } from '~/utils/roles'
-import { isPoemEditorRoleOrSiteOwner } from '~/utils/roles'
+import { isPoemEditorRoleOrSiteOwner, normalizeRole } from '~/utils/roles'
 import type { Poem } from '~/composables/usePoems'
 import { PAGE_SHELL_INSET_CLASS } from '~/utils/pageShell'
 
@@ -189,6 +189,9 @@ const avatarSrc = computed(() =>
 /** Editor / moderator / admin / site owner — author name, bio & nationality on this page. */
 const canEditCatalog = computed(() => isPoemEditorRoleOrSiteOwner(user.value?.role, user.value?.email))
 
+/** Administrators only (`User.role === 'admin'`) — portrait file upload on this page. */
+const canUploadPortraitAsAdmin = computed(() => normalizeRole(user.value?.role) === 'admin')
+
 /** Editor / moderator / admin / site owner — poem title & body in the reader panel. */
 const canEditPoem = computed(() => isPoemEditorRoleOrSiteOwner(user.value?.role, user.value?.email))
 
@@ -262,11 +265,8 @@ async function persistAuthorDrafts(): Promise<boolean> {
     alert(t('authors.invalidYear'))
     return false
   }
+  /** Portrait: https URL, `data:image/…` from upload, or empty — validated on server (`PUT /api/authors/:slug`). */
   const urlTrim = imageUrlDraft.value.trim()
-  if (urlTrim && !/^https?:\/\//i.test(urlTrim)) {
-    alert(t('authors.invalidPortraitUrl'))
-    return false
-  }
 
   try {
     const updated = await rawFetch<AuthorDetailPayload['author']>(`/api/authors/${encodeURIComponent(slug)}`, {
@@ -289,10 +289,18 @@ async function persistAuthorDrafts(): Promise<boolean> {
     }
     return true
   } catch (err: unknown) {
-    const msg =
-      err && typeof err === 'object' && 'data' in err
-        ? String((err as { data?: { statusMessage?: string } }).data?.statusMessage ?? '')
-        : ''
+    let msg = ''
+    if (err && typeof err === 'object') {
+      const e = err as {
+        data?: { statusMessage?: string }
+        statusMessage?: string
+      }
+      msg =
+        String(e.data?.statusMessage ?? e.statusMessage ?? '').trim() ||
+        (typeof (err as { message?: unknown }).message === 'string'
+          ? String((err as { message: string }).message)
+          : '')
+    }
     alert(msg || t('admin.authors.updateFailed'))
     return false
   }
@@ -336,6 +344,83 @@ const authorEditFabPositionClass = computed(() =>
 )
 
 const poetryViewerRef = ref<{ savePoemEdit: () => Promise<void>; cancelPoemEdit: () => void } | null>(null)
+
+const portraitFileInputRef = ref<HTMLInputElement | null>(null)
+const uploadingPortrait = ref(false)
+
+async function compressImageForPortrait(file: File, maxDim: number, quality: number): Promise<Blob> {
+  const bmp = await createImageBitmap(file)
+  const w = bmp.width
+  const h = bmp.height
+  const scale = Math.min(1, maxDim / Math.max(w, h))
+  const tw = Math.round(w * scale)
+  const th = Math.round(h * scale)
+  const canvas = document.createElement('canvas')
+  canvas.width = tw
+  canvas.height = th
+  const ctx = canvas.getContext('2d')
+  if (!ctx) {
+    bmp.close()
+    throw new Error('canvas')
+  }
+  ctx.drawImage(bmp, 0, 0, tw, th)
+  bmp.close()
+  const out = await new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('toBlob'))), 'image/jpeg', quality)
+  })
+  return out
+}
+
+async function onPortraitFileSelected(e: Event) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file?.type.startsWith('image/')) {
+    alert(t('authors.portraitUploadInvalid'))
+    return
+  }
+  uploadingPortrait.value = true
+  try {
+    let blob: Blob = file
+    try {
+      if (file.size > 900_000) {
+        blob = await compressImageForPortrait(file, 1200, 0.88)
+      }
+      if (blob.size > 2 * 1024 * 1024) {
+        blob = await compressImageForPortrait(file, 960, 0.82)
+      }
+    } catch {
+      alert(t('authors.portraitUploadDecodeFailed'))
+      return
+    }
+    const fd = new FormData()
+    fd.append('file', blob, 'portrait.jpg')
+    const updated = await rawFetch<AuthorDetailPayload['author']>(
+      `/api/authors/${encodeURIComponent(slug)}/portrait`,
+      {
+        method: 'POST',
+        body: fd,
+        credentials: 'include',
+      },
+    )
+    if (data.value?.author) Object.assign(data.value.author, updated)
+    imageUrlDraft.value = updated.imageUrl ?? ''
+    authorFetchNonce.value += 1
+    await refresh({ dedupe: 'cancel' })
+  } catch (err: unknown) {
+    const code =
+      err && typeof err === 'object' && 'statusCode' in err ? (err as { statusCode?: number }).statusCode : undefined
+    const msg =
+      code === 403
+        ? t('authors.portraitUploadForbidden')
+        : code === 401
+          ? t('authors.portraitUploadUnauthorized')
+          : ''
+    alert(msg || t('authors.portraitUploadFailed'))
+  } finally {
+    uploadingPortrait.value = false
+  }
+}
 
 /** Read mode: clamp long bios and offer expand / collapse. */
 const bioExpanded = ref(false)
@@ -445,9 +530,27 @@ onBeforeUnmount(() => window.removeEventListener('resize', measureBioClamp))
                 <label class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-content-muted">
                   {{ t('admin.authors.photoUrl') }}
                 </label>
-                <input v-model="imageUrlDraft" type="url"
+                <input v-model="imageUrlDraft" type="text"
                   class="w-full rounded-lg border border-edge-subtle bg-surface-page px-3 py-2 text-sm text-content outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-                  :placeholder="t('authors.portraitUrlPlaceholder')" autocomplete="off" />
+                  :placeholder="t('authors.portraitUrlPlaceholder')" autocomplete="off" spellcheck="false" />
+              </div>
+              <div v-if="canUploadPortraitAsAdmin" class="rounded-xl border border-edge-subtle bg-surface-subtle/60 p-4">
+                <p class="mb-2 text-xs font-medium uppercase tracking-wide text-content-muted">
+                  {{ t('authors.portraitUploadLabel') }}
+                </p>
+                <input ref="portraitFileInputRef" type="file" accept="image/*,.heic,.heif" class="sr-only"
+                  @change="onPortraitFileSelected" />
+                <div class="flex flex-wrap items-center gap-2">
+                  <button type="button"
+                    class="rounded-lg border border-edge bg-surface-raised px-4 py-2 text-sm font-medium text-content transition hover:border-brand/40 disabled:opacity-50"
+                    :disabled="uploadingPortrait" @click="portraitFileInputRef?.click()">
+                    {{ uploadingPortrait ? t('authors.portraitUploading') : t('authors.portraitUploadPick') }}
+                  </button>
+                  <span class="text-xs text-content-muted">{{ t('authors.portraitUploadAdminOnly') }}</span>
+                </div>
+                <p class="mt-2 text-xs leading-relaxed text-content-muted">
+                  {{ t('authors.portraitUploadHint') }}
+                </p>
               </div>
               <div class="flex flex-wrap gap-6">
                 <div>
