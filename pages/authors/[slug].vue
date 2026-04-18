@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { $fetch as rawFetch } from 'ofetch'
+import { displayNationality } from '~/utils/nationality'
 import { SITE_OWNER_EMAIL } from '~/utils/roles'
+import { isStaffRole } from '~/utils/roles'
 
 const { t } = useI18n()
 const { user } = useAuth()
@@ -69,6 +71,54 @@ function yearsLabel() {
 const avatarSrc = computed(() =>
   author.value ? authorAvatarUrl(author.value) : '',
 )
+
+const canEditEthnicity = computed(() => isStaffRole(user.value?.role))
+const editingEthnicity = ref(false)
+const ethnicityDraft = ref('')
+const savingEthnicity = ref(false)
+
+const nationalityLabel = computed(() => displayNationality(author.value?.nationality))
+
+watch(
+  author,
+  (a) => {
+    if (!a) return
+    ethnicityDraft.value = a.nationality ?? ''
+  },
+  { immediate: true },
+)
+
+function startEditEthnicity() {
+  if (!author.value) return
+  editingEthnicity.value = true
+  ethnicityDraft.value = author.value.nationality ?? ''
+}
+
+function cancelEditEthnicity() {
+  editingEthnicity.value = false
+  ethnicityDraft.value = author.value?.nationality ?? ''
+}
+
+async function saveEthnicity() {
+  if (!author.value || savingEthnicity.value) return
+  savingEthnicity.value = true
+  try {
+    const updated = await rawFetch(`/api/authors/${encodeURIComponent(slug)}`, {
+      method: 'PUT',
+      body: { nationality: ethnicityDraft.value.trim() },
+    })
+    if (data.value?.author) data.value.author = updated
+    editingEthnicity.value = false
+  } catch (err: unknown) {
+    const msg =
+      err && typeof err === 'object' && 'data' in err
+        ? String((err as { data?: { statusMessage?: string } }).data?.statusMessage ?? '')
+        : ''
+    alert(msg || t('admin.authors.updateFailed'))
+  } finally {
+    savingEthnicity.value = false
+  }
+}
 </script>
 
 <template>
@@ -108,9 +158,45 @@ const avatarSrc = computed(() =>
           </button>
         </div>
         <p class="mt-1 text-sm text-content-secondary">
-          <span v-if="author.nationality">{{ author.nationality }}</span>
-          <span v-if="author.nationality && yearsLabel()"> · </span>
-          <span>{{ yearsLabel() }}</span>
+          <template v-if="!editingEthnicity">
+            <span v-if="nationalityLabel">{{ nationalityLabel }}</span>
+            <span v-if="nationalityLabel && yearsLabel()"> · </span>
+            <span>{{ yearsLabel() }}</span>
+            <button
+              v-if="canEditEthnicity"
+              type="button"
+              class="ml-2 inline-flex items-center gap-1 rounded-lg border border-edge-subtle bg-surface-subtle px-2 py-1 text-xs font-medium text-content-secondary transition hover:border-edge hover:bg-surface-raised"
+              @click="startEditEthnicity"
+            >
+              {{ t('admin.authors.edit') }}
+            </button>
+          </template>
+          <template v-else>
+            <span class="sr-only">{{ t('admin.authors.nationality') }}</span>
+            <input
+              v-model="ethnicityDraft"
+              type="text"
+              class="mr-2 inline-flex w-[min(24rem,80vw)] rounded-lg border border-edge-subtle bg-surface-page px-3 py-2 text-sm text-content outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+              :placeholder="t('admin.authors.placeholderNationality')"
+            />
+            <button
+              type="button"
+              class="inline-flex items-center justify-center rounded-lg bg-brand px-3 py-2 text-xs font-semibold text-brand-foreground transition hover:bg-brand-hover disabled:opacity-50"
+              :disabled="savingEthnicity"
+              @click="saveEthnicity"
+            >
+              {{ savingEthnicity ? t('admin.authors.saving') : t('admin.authors.save') }}
+            </button>
+            <button
+              type="button"
+              class="ml-2 inline-flex items-center justify-center rounded-lg border border-edge-subtle bg-surface-subtle px-3 py-2 text-xs font-medium text-content-secondary transition hover:border-edge hover:bg-surface-raised disabled:opacity-50"
+              :disabled="savingEthnicity"
+              @click="cancelEditEthnicity"
+            >
+              {{ t('admin.authors.cancel') }}
+            </button>
+            <span class="ml-2 text-sm text-content-secondary">{{ yearsLabel() }}</span>
+          </template>
         </p>
         <p class="mt-3 text-sm text-content-muted">
           {{ t('authors.poemCount', meta?.total ?? 0) }}

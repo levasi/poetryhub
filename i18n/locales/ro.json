@@ -140,6 +140,7 @@
   },
   "footer": {
     "quote": "„Poezia este debordarea spontană a unor sentimente puternice” — Wordsworth",
+    "emailCta": "Scrie un e-mail",
     "admin": "Admin",
     "copyright": "© {year} PoetryHub"
   },
@@ -171,6 +172,7 @@
     "sidebarLikedAll": "Toate favoritele →",
     "sidebarLikedMissing": "Unele favorite nu mai sunt în bibliotecă.",
     "sidebarAuthorsHeading": "Autori",
+    "dbNotice": "Baza de date de poezii este în actualizare continuă. Orice inconsistență sau eroare va fi corectată — te rugăm s-o raportezi la e-mailul din footer.",
     "staffPicksTitle": "Recente",
     "topicsTitle": "Teme recomandate",
     "featuredEmpty": "Încă nu există poezii cu aprecieri. Apasă inima pe carduri pentru favorite — apar aici în ordinea popularității.",

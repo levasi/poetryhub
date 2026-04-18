@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { displayNationality } from '~/utils/nationality'
+
 interface Author {
   id:          string
   name:        string
@@ -29,6 +31,8 @@ const poemCountLabel = computed(() => {
 })
 
 const avatarSrc = computed(() => authorAvatarUrl(props.author))
+
+const nationalityLabel = computed(() => displayNationality(props.author.nationality))
 </script>
 
 <template>
@@ -53,8 +57,8 @@ const avatarSrc = computed(() => authorAvatarUrl(props.author))
       </h3>
 
       <div class="mt-0.5 flex items-center gap-2 text-xs text-content-muted">
-        <span v-if="author.nationality">{{ author.nationality }}</span>
-        <span v-if="author.nationality && yearsLabel(author.birthYear, author.deathYear)">·</span>
+        <span v-if="nationalityLabel">{{ nationalityLabel }}</span>
+        <span v-if="nationalityLabel && yearsLabel(author.birthYear, author.deathYear)">·</span>
         <span>{{ yearsLabel(author.birthYear, author.deathYear) }}</span>
       </div>
 

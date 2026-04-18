@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { CarouselTheme } from '~/composables/useCarouselGenerator'
+import { Icon } from '@iconify/vue'
 import {
   buildCarouselSlides,
   buildInstagramCaption,
@@ -81,6 +82,24 @@ const bodyLineHeight = ref(1.65)
 /** Font stack for all carousel slide text (same catalog as poem reader). */
 const carouselFontKey = ref<ReaderFontKey>('literata')
 const carouselFontFamily = computed(() => READER_FONT_STACKS[carouselFontKey.value])
+
+const carouselFontKeys = computed(() => Object.keys(READER_FONT_STACKS) as ReaderFontKey[])
+
+function cycleCarouselFont(dir: -1 | 1) {
+  const keys = carouselFontKeys.value
+  if (!keys.length) return
+  const idx = Math.max(0, keys.indexOf(carouselFontKey.value))
+  const nextIdx = (idx + dir + keys.length) % keys.length
+  carouselFontKey.value = keys[nextIdx]!
+}
+
+function prevCarouselFont() {
+  cycleCarouselFont(-1)
+}
+
+function nextCarouselFont() {
+  cycleCarouselFont(1)
+}
 
 const { data: siteDefaults } = await useFetch<CarouselSiteDefaultsPayload>('/api/carousel/defaults', {
   key: 'carousel-site-defaults',
@@ -667,7 +686,25 @@ function onTouchEnd(e: TouchEvent) {
           </h3>
 
           <label class="field-label">{{ t('carousel.fieldFont') }}</label>
-          <CarouselFontSelect v-model="carouselFontKey" class="mb-2" />
+          <div class="mb-2 flex items-center gap-2">
+            <button type="button"
+              class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-edge-subtle bg-surface-subtle text-content-secondary transition hover:border-edge hover:bg-surface-raised disabled:opacity-50"
+              :disabled="carouselFontKeys.length < 2"
+              aria-label="Font anterior"
+              title="Font anterior"
+              @click="prevCarouselFont">
+              <Icon icon="heroicons:chevron-left" class="h-5 w-5" aria-hidden="true" />
+            </button>
+            <CarouselFontSelect v-model="carouselFontKey" class="min-w-0 flex-1" />
+            <button type="button"
+              class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-edge-subtle bg-surface-subtle text-content-secondary transition hover:border-edge hover:bg-surface-raised disabled:opacity-50"
+              :disabled="carouselFontKeys.length < 2"
+              aria-label="Font următor"
+              title="Font următor"
+              @click="nextCarouselFont">
+              <Icon icon="heroicons:chevron-right" class="h-5 w-5" aria-hidden="true" />
+            </button>
+          </div>
           <p class="mb-4 text-xs leading-relaxed text-content-muted">
             {{ t('carousel.fontCarouselHint') }}
           </p>
@@ -904,7 +941,26 @@ function onTouchEnd(e: TouchEvent) {
                   {{ t('carousel.fullscreenFontSettings') }}
                 </p>
                 <label class="field-label">{{ t('carousel.fieldFont') }}</label>
-                <CarouselFontSelect v-model="carouselFontKey" class="mb-4" />
+                <label class="field-label">{{ t('carousel.fieldFont') }}</label>
+                <div class="mb-4 flex items-center gap-2">
+                  <button type="button"
+                    class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-edge-subtle bg-surface-subtle text-content-secondary transition hover:border-edge hover:bg-surface-raised disabled:opacity-50"
+                    :disabled="carouselFontKeys.length < 2"
+                    aria-label="Font anterior"
+                    title="Font anterior"
+                    @click="prevCarouselFont">
+                    <Icon icon="heroicons:chevron-left" class="h-5 w-5" aria-hidden="true" />
+                  </button>
+                  <CarouselFontSelect v-model="carouselFontKey" class="min-w-0 flex-1" />
+                  <button type="button"
+                    class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-edge-subtle bg-surface-subtle text-content-secondary transition hover:border-edge hover:bg-surface-raised disabled:opacity-50"
+                    :disabled="carouselFontKeys.length < 2"
+                    aria-label="Font următor"
+                    title="Font următor"
+                    @click="nextCarouselFont">
+                    <Icon icon="heroicons:chevron-right" class="h-5 w-5" aria-hidden="true" />
+                  </button>
+                </div>
 
                 <label class="field-label">{{ t('carousel.fieldLinesPerSlide') }}</label>
                 <div class="mb-3 flex items-center gap-3">

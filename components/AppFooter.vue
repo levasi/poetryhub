@@ -1,6 +1,24 @@
 <script setup lang="ts">
 const { t } = useI18n()
 const year = new Date().getFullYear()
+
+const supportEmail = 'vasileeduardbogdan@gmail.com'
+const mailtoHref = computed(() => {
+  const subject = encodeURIComponent('PoetryHub — raportare eroare / inconsistență')
+  const body = encodeURIComponent(
+    [
+      'Salut!',
+      '',
+      'Am găsit o posibilă eroare / inconsistență în baza de date:',
+      '- Link: ',
+      '- Ce se vede: ',
+      '- Ce ar trebui să fie: ',
+      '',
+      'Mulțumesc!',
+    ].join('\n'),
+  )
+  return `mailto:${supportEmail}?subject=${subject}&body=${body}`
+})
 </script>
 
 <template>
@@ -18,6 +36,12 @@ const year = new Date().getFullYear()
         >
           <NuxtLink to="/" class="ds-link hover:text-content-secondary">{{ t('home.navHome') }}</NuxtLink>
           <NuxtLink to="/admin" class="ds-link hover:text-content-secondary">{{ t('footer.admin') }}</NuxtLink>
+          <a
+            :href="mailtoHref"
+            class="inline-flex items-center justify-center gap-2 rounded-ds-md border border-edge-subtle bg-surface-raised px-3 py-2 text-ui-sm font-semibold text-content-secondary shadow-sm transition hover:border-edge hover:bg-surface-page hover:text-content"
+          >
+            {{ t('footer.emailCta') }}
+          </a>
         </nav>
       </div>
       <div

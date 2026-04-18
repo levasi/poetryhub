@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { displayNationality } from '~/utils/nationality'
 import type { Poem } from '~/composables/usePoems'
 import { authorAvatarUrl } from '~/utils/authorAvatar'
 
@@ -11,6 +12,26 @@ const readerSettingsOpen = ref(false)
 
 const route = useRoute()
 const router = useRouter()
+
+const DB_NOTICE_DISMISSED_KEY = 'ph_home_db_notice_dismissed_v1'
+const dbNoticeDismissed = ref(false)
+
+onMounted(() => {
+  try {
+    dbNoticeDismissed.value = localStorage.getItem(DB_NOTICE_DISMISSED_KEY) === '1'
+  } catch {
+    // ignore
+  }
+})
+
+function dismissDbNotice() {
+  dbNoticeDismissed.value = true
+  try {
+    localStorage.setItem(DB_NOTICE_DISMISSED_KEY, '1')
+  } catch {
+    // ignore
+  }
+}
 
 /** Home center column: show this author's poems when set (?author=slug). */
 const authorSlug = computed(() => {
@@ -238,8 +259,10 @@ function formatDate(iso: string) {
                       {{ authorPage.author.name }}
                     </h2>
                     <p class="mt-1 text-sm text-content-secondary">
-                      <span v-if="authorPage.author.nationality">{{ authorPage.author.nationality }}</span>
-                      <span v-if="authorPage.author.nationality && authorYearsLabel(authorPage.author)"> · </span>
+                      <span v-if="displayNationality(authorPage.author.nationality)">{{
+                        displayNationality(authorPage.author.nationality)
+                      }}</span>
+                      <span v-if="displayNationality(authorPage.author.nationality) && authorYearsLabel(authorPage.author)"> · </span>
                       <span>{{ authorYearsLabel(authorPage.author) }}</span>
                     </p>
                     <p class="mt-2 text-sm text-content-muted">
@@ -305,6 +328,22 @@ function formatDate(iso: string) {
 
             <!-- Default feed: For you / Featured -->
             <template v-else>
+              <div v-if="!dbNoticeDismissed"
+                class="mb-6 flex items-start justify-between gap-4 rounded-2xl border border-edge-subtle bg-surface-subtle/50 p-4 text-sm text-content-secondary">
+                <p class="min-w-0">
+                  {{ t('home.dbNotice') }}
+                </p>
+                <button type="button"
+                  class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-edge-subtle bg-surface-raised text-content-muted shadow-sm transition hover:border-edge hover:bg-surface-page hover:text-content"
+                  aria-label="Închide"
+                  title="Închide"
+                  @click="dismissDbNotice">
+                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
+                    aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
               <!-- Tabs (Medium-style) -->
               <div
                 class="sticky z-10 -mx-1 mb-8 flex flex-wrap items-end gap-4 border-b border-edge-subtle bg-surface-page/90 px-1 pb-0 pt-1 backdrop-blur-md top-[3.25rem] md:top-16">

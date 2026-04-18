@@ -140,6 +140,7 @@
   },
   "footer": {
     "quote": "\"Poetry is the spontaneous overflow of powerful feelings\" — Wordsworth",
+    "emailCta": "Email us",
     "admin": "Admin",
     "copyright": "© {year} PoetryHub"
   },
@@ -171,6 +172,7 @@
     "sidebarLikedAll": "All favorites →",
     "sidebarLikedMissing": "Some favorites are no longer in the library.",
     "sidebarAuthorsHeading": "Authors",
+    "dbNotice": "The poems database is continuously updated. Any inconsistency or error will be fixed—please report it via the email in the footer.",
     "staffPicksTitle": "Latest",
     "topicsTitle": "Recommended topics",
     "featuredEmpty": "No liked poems yet. Tap the heart on poem cards to save favorites — they count here.",
