@@ -11,6 +11,8 @@ const { showLanguageSwitch } = useSiteSettings()
 
 const { data: googleConfig } = await useFetch<{ enabled: boolean }>('/api/auth/google-config', {
   key: 'auth-google-config',
+  /** Avoid stale payload where `enabled` stayed false after OAuth env vars were added. */
+  getCachedData: () => undefined,
 })
 const googleEnabled = computed(() => googleConfig.value?.enabled ?? false)
 

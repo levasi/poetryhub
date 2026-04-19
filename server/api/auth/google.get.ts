@@ -2,15 +2,15 @@
 import { randomBytes } from 'node:crypto'
 import { getQuery, sendRedirect, setCookie } from 'h3'
 import { getAppBaseUrl } from '~/server/utils/appBaseUrl'
+import { getGoogleOAuthCredentials } from '~/server/utils/googleOAuthConfig'
 
 const STATE_COOKIE = 'oauth_google_state'
 const REDIRECT_COOKIE = 'oauth_google_redirect'
 const COOKIE_MAX_AGE = 60 * 10
 
 export default defineEventHandler(async (event) => {
-  const config = useRuntimeConfig()
-  const clientId = config.oauthGoogleClientId
-  if (!clientId || !config.oauthGoogleClientSecret) {
+  const { clientId, clientSecret } = getGoogleOAuthCredentials()
+  if (!clientId || !clientSecret) {
     return sendRedirect(event, `${getAppBaseUrl(event)}/login?error=google_config`, 302)
   }
 

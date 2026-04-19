@@ -6,14 +6,13 @@ import { signUserToken, USER_TOKEN_COOKIE } from '~/server/utils/auth'
 import { exchangeGoogleCode, fetchGoogleUserInfo } from '~/server/utils/googleOAuth'
 import { normalizeRole } from '~/utils/roles'
 import { getAppBaseUrl } from '~/server/utils/appBaseUrl'
+import { getGoogleOAuthCredentials } from '~/server/utils/googleOAuthConfig'
 
 const STATE_COOKIE = 'oauth_google_state'
 const REDIRECT_COOKIE = 'oauth_google_redirect'
 
 export default defineEventHandler(async (event) => {
-  const config = useRuntimeConfig()
-  const clientId = config.oauthGoogleClientId
-  const clientSecret = config.oauthGoogleClientSecret
+  const { clientId, clientSecret } = getGoogleOAuthCredentials()
   if (!clientId || !clientSecret) {
     return sendRedirect(event, `${getAppBaseUrl(event)}/login?error=google_config`, 302)
   }

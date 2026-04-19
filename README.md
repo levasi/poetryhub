@@ -48,6 +48,8 @@ cp .env.example .env
 
 Get a free PostgreSQL database from [Neon](https://neon.tech) or [Supabase](https://supabase.com).
 
+**Google sign-in on localhost:** the **Continue with Google** button appears only when **`NUXT_OAUTH_GOOGLE_CLIENT_ID`** and **`NUXT_OAUTH_GOOGLE_CLIENT_SECRET`** are both set in `.env`, and Google Cloud has redirect URI `http://localhost:3000/api/auth/google/callback`. Restart `npm run dev` after editing.
+
 ### 3. Set up the database
 
 ```bash
