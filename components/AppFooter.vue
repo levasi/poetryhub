@@ -36,7 +36,6 @@ const mailtoHref = computed(() => {
           class="flex shrink-0 flex-wrap justify-center gap-x-8 gap-y-2 text-ui-sm font-medium text-content-soft items-center"
           aria-label="Footer">
           <NuxtLink to="/" class="ds-link hover:text-content-secondary">{{ t('home.navHome') }}</NuxtLink>
-          <NuxtLink to="/admin" class="ds-link hover:text-content-secondary">{{ t('footer.admin') }}</NuxtLink>
           <a :href="mailtoHref"
             class="inline-flex items-center justify-center gap-2 rounded-ds-md border border-edge-subtle bg-surface-raised px-3 py-2 text-ui-sm font-semibold text-content-secondary shadow-sm transition hover:border-edge hover:bg-surface-page hover:text-content">
             {{ t('footer.emailCta') }}

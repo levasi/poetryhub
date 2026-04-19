@@ -70,6 +70,24 @@ npm run dev
 # → http://localhost:3000
 ```
 
+### 6. Use the **production** database locally (optional)
+
+Your local `.env` can stay on a dev Postgres; **`DATABASE_URL` in `.env.local` overrides it** (see `server/utils/prisma.ts`).
+
+**From Vercel** (recommended — pulls Production env vars including `DATABASE_URL`, `JWT_SECRET`, etc.):
+
+The Vercel CLI does not install cleanly on **Node 25**; these scripts prefer **Homebrew `node@22`** (`brew install node@22` if needed).
+
+```bash
+npm run vercel:link      # once — link this folder to the Vercel project
+npm run env:pull:prod    # writes / updates .env.local
+npm run dev
+```
+
+**Manual:** copy the Production `DATABASE_URL` from Vercel → Settings → Environment Variables into `.env.local` as a single line (see `.env.local.example`).
+
+**Caution:** With a live `DATABASE_URL`, do **not** run `npm run db:push` or `db:migrate` unless you mean to change the production schema.
+
 ---
 
 ## Project Structure

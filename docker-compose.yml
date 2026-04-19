@@ -1,0 +1,21 @@
+# Local PostgreSQL for development. Start: docker compose up -d
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: poetryhub
+      POSTGRES_PASSWORD: poetryhub_dev
+      POSTGRES_DB: poetryhub
+    ports:
+      - "5433:5432"
+    volumes:
+      - poetryhub_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U poetryhub -d poetryhub"]
+      interval: 3s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  poetryhub_pgdata:
