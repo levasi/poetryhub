@@ -33,7 +33,7 @@ definePageMeta({
   layout: 'default',
 })
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const { user, fetchMe, isLoggedIn } = useAuth()
@@ -532,12 +532,17 @@ async function loadFromSlug(slug: string) {
   }
 }
 
+function manualAuthorDefault() {
+  const n = user.value?.name?.trim()
+  return n || t('carousel.sampleAuthor')
+}
+
 function loadSample() {
   loadedPoemSlug.value = null
   loadedPoemSubmittedByUserId.value = undefined
   poemCarouselOverridesFromDb.value = false
   title.value = t('carousel.sampleTitle')
-  author.value = t('carousel.sampleAuthor')
+  author.value = manualAuthorDefault()
   authorAvatarFromPoem.value = null
   authorNationality.value = t('carousel.sampleNationality')
   authorBirthYear.value = t('carousel.sampleBirthYear')
@@ -564,10 +569,23 @@ watch(
   { immediate: true },
 )
 
+/** When session loads after SSR, replace placeholder sample author with the signed-in name. */
+watch(
+  () => [user.value?.name, showManualPoemFields.value, locale.value] as const,
+  () => {
+    if (!showManualPoemFields.value) return
+    const n = user.value?.name?.trim()
+    if (!n) return
+    if (author.value === t('carousel.sampleAuthor')) {
+      author.value = n
+    }
+  },
+)
+
 async function switchToOwnPoem() {
   skipCarouselSampleLoad.value = true
   title.value = ''
-  author.value = ''
+  author.value = user.value?.name?.trim() || ''
   authorNationality.value = ''
   authorBirthYear.value = ''
   authorDeathYear.value = ''
