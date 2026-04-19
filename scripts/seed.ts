@@ -7,6 +7,7 @@
 import { PrismaClient, UserRole } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 import { SITE_OWNER_EMAIL } from '../utils/roles'
+import { estimateReadingTime, extractExcerpt } from '../server/utils/slug'
 
 const prisma = new PrismaClient()
 
@@ -91,6 +92,49 @@ async function main() {
     })
     process.stdout.write(`    · ${tag.name}\n`)
   }
+
+  // ── Placeholder poem (Romanian carousel demo text — same as generator sample) ─
+  const PLACEHOLDER_AUTHOR_SLUG = 'poetryhub'
+  const PLACEHOLDER_POEM_SLUG = 'titlu-exemplu-carousel'
+  const PLACEHOLDER_TITLE = 'Titlu exemplu'
+  const PLACEHOLDER_BODY =
+    'Primul vers al poeziei stă aici,\n\nAl doilea îl completează firesc.\n\nPoți scrie încă un strof, dacă vrei,\n\nCu liniște, lumină sau priviri noi.'
+
+  const placeholderAuthor = await prisma.author.upsert({
+    where: { slug: PLACEHOLDER_AUTHOR_SLUG },
+    update: { name: 'PoetryHub' },
+    create: { name: 'PoetryHub', slug: PLACEHOLDER_AUTHOR_SLUG },
+  })
+
+  const snippet = extractExcerpt(PLACEHOLDER_BODY)
+  const rt = estimateReadingTime(PLACEHOLDER_BODY)
+  await prisma.poem.upsert({
+    where: { slug: PLACEHOLDER_POEM_SLUG },
+    update: {
+      title: PLACEHOLDER_TITLE,
+      content: PLACEHOLDER_BODY,
+      excerpt: snippet,
+      readingTime: rt,
+      authorId: placeholderAuthor.id,
+      language: 'ro',
+      source: 'classic',
+      sourceUrl: null,
+    },
+    create: {
+      slug: PLACEHOLDER_POEM_SLUG,
+      title: PLACEHOLDER_TITLE,
+      content: PLACEHOLDER_BODY,
+      excerpt: snippet,
+      readingTime: rt,
+      authorId: placeholderAuthor.id,
+      language: 'ro',
+      source: 'classic',
+      sourceUrl: null,
+    },
+  })
+  console.log(
+    `  ✓ Placeholder poem upserted: ${PLACEHOLDER_TITLE} (/authors/${PLACEHOLDER_AUTHOR_SLUG}?poem=${PLACEHOLDER_POEM_SLUG})\n`,
+  )
 
   console.log(`\n✅ Seed complete. ${DEFAULT_TAGS.length} tags created/updated.\n`)
   console.log('Next step: npm run poems:import  — to pull poems from PoetryDB')

@@ -35,7 +35,11 @@ definePageMeta({
 
 const { t } = useI18n()
 const route = useRoute()
+const router = useRouter()
 const { user, fetchMe, isLoggedIn } = useAuth()
+
+/** When true, slug watcher must not load sample content (user chose empty manual poem). */
+const skipCarouselSampleLoad = ref(false)
 
 const keywordsHelpOpen = ref(false)
 const keywordsHelpWrapRef = ref<HTMLElement | null>(null)
@@ -72,7 +76,7 @@ const keywords = computed(() =>
 
 /** Verse layout (body slides). */
 const linesPerSlide = ref(CAROUSEL_LINES_PER_BODY_SLIDE)
-const bodyFontSizeScale = ref(1)
+const bodyFontSizeScale = ref(1.5)
 const bodyLineHeight = ref(1.65)
 /** Font stack for all carousel slide text (same catalog as poem reader). */
 const carouselFontKey = ref<ReaderFontKey>('literata')
@@ -137,6 +141,9 @@ const isLibraryPoemContext = computed(() => {
   const fromRoute = typeof q === 'string' && q.trim()
   return Boolean(fromRoute || loadedPoemSlug.value)
 })
+
+/** Custom title/body when no catalog poem is loaded (?slug= or search). */
+const showManualPoemFields = computed(() => !isLibraryPoemContext.value)
 
 watch(
   siteDefaults,
@@ -552,10 +559,33 @@ watch(
     loadedPoemSubmittedByUserId.value = undefined
     poemCarouselOverridesFromDb.value = false
     if (siteDefaults.value) applyCarouselSiteDefaults(siteDefaults.value)
-    if (!poemText.value.trim()) loadSample()
+    if (!poemText.value.trim() && !skipCarouselSampleLoad.value) loadSample()
   },
   { immediate: true },
 )
+
+async function switchToOwnPoem() {
+  skipCarouselSampleLoad.value = true
+  title.value = ''
+  author.value = ''
+  authorNationality.value = ''
+  authorBirthYear.value = ''
+  authorDeathYear.value = ''
+  poemWrittenYear.value = ''
+  poemText.value = ''
+  authorAvatarFromPoem.value = null
+  loadedPoemSubmittedByUserId.value = undefined
+  poemCarouselOverridesFromDb.value = false
+  currentIndex.value = 0
+
+  const q = { ...route.query } as Record<string, string | string[] | null | undefined>
+  delete q.slug
+  await router.replace({ path: route.path, query: q as typeof route.query })
+
+  if (siteDefaults.value) applyCarouselSiteDefaults(siteDefaults.value)
+  await nextTick()
+  skipCarouselSampleLoad.value = false
+}
 
 const touchStartX = ref<number | null>(null)
 function onTouchStart(e: TouchEvent) {
@@ -601,9 +631,38 @@ function onTouchEnd(e: TouchEvent) {
       <!-- Left (4 columns): Controls -->
       <div class="min-w-0 space-y-6 md:col-span-4">
         <section class="rounded-2xl border border-edge-subtle bg-surface-raised p-6 shadow-ds-card">
-          <h3 class="mb-3 font-serif text-base font-semibold text-content">
-            {{ t('carousel.sectionInstagramPostSettings') }}
-          </h3>
+          <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+            <h3 class="min-w-0 flex-1 font-serif text-base font-semibold text-content">
+              {{ t('carousel.sectionInstagramPostSettings') }}
+            </h3>
+            <button v-if="loadedPoemSlug" type="button"
+              class="shrink-0 rounded-xl border border-edge px-4 py-2 text-sm font-medium text-content-secondary transition hover:border-edge-strong hover:bg-surface-subtle hover:text-content"
+              @click="switchToOwnPoem">
+              {{ t('carousel.writeOwnPoem') }}
+            </button>
+          </div>
+
+          <div v-if="showManualPoemFields" class="mb-6 space-y-4 border-b border-edge-subtle pb-6">
+            <h4 class="font-serif text-sm font-semibold text-content">{{ t('carousel.sectionManualPoem') }}</h4>
+            <div>
+              <label class="field-label" for="carousel-manual-title">{{ t('carousel.fieldTitle') }}</label>
+              <input id="carousel-manual-title" v-model="title" type="text"
+                class="w-full rounded-xl border border-edge-subtle px-4 py-2.5 text-sm outline-none focus:border-gold-500"
+                :placeholder="t('carousel.phTitle')" autocomplete="off" />
+            </div>
+            <div>
+              <label class="field-label" for="carousel-manual-author">{{ t('carousel.fieldAuthor') }}</label>
+              <input id="carousel-manual-author" v-model="author" type="text"
+                class="w-full rounded-xl border border-edge-subtle px-4 py-2.5 text-sm outline-none focus:border-gold-500"
+                :placeholder="t('carousel.phAuthor')" autocomplete="off" />
+            </div>
+            <div>
+              <label class="field-label" for="carousel-manual-poem">{{ t('carousel.fieldPoem') }}</label>
+              <textarea id="carousel-manual-poem" v-model="poemText" rows="12"
+                class="min-h-[12rem] w-full resize-y rounded-xl border border-edge-subtle px-4 py-2.5 font-serif text-sm leading-relaxed outline-none focus:border-gold-500"
+                :placeholder="t('carousel.phPoem')" spellcheck="true" />
+            </div>
+          </div>
 
           <label class="field-label">{{ t('carousel.fieldFont') }}</label>
           <div class="mb-2 flex items-center gap-2">

@@ -46,7 +46,7 @@ export function getDefaultCarouselSiteDefaults(): CarouselSiteDefaultsPayload {
     carouselFontKey: 'literata',
     carouselFontFamily: fontStackForCarouselKey('literata'),
     linesPerSlide: 8,
-    bodyFontSizeScale: 1,
+    bodyFontSizeScale: 1.5,
     bodyLineHeight: 1.65,
     ctaText: '',
     keywordInput: '',
