@@ -187,11 +187,7 @@ DATABASE_URL="your-prod-url" npm run poems:import -- --count=100
 
 ## Admin Panel
 
-Navigate to `/admin/login` and sign in with your `ADMIN_EMAIL` / `ADMIN_PASSWORD`.
-
-**Default credentials (change after setup):**
-- Email: `admin@poetryhub.com`
-- Password: `admin123`
+Open `/admin` while signed in with an account that has access (e.g. Google login on `/login`, then visit `/admin`). Password-based admin JWT (`POST /api/auth/login`) remains available for tooling if configured; there is no separate `/admin/login` page.
 
 ---
 

@@ -1,10 +1,12 @@
 <script setup lang="ts">
+import { Icon } from '@iconify/vue'
 import { $fetch as rawFetch } from 'ofetch'
 import { displayNationality } from '~/utils/nationality'
 import { SITE_OWNER_EMAIL } from '~/utils/roles'
 import { isPoemEditorRoleOrSiteOwner, normalizeRole } from '~/utils/roles'
 import type { Poem } from '~/composables/usePoems'
 import { PAGE_SHELL_INSET_CLASS } from '~/utils/pageShell'
+import { getFetchErrorDataCode, getFetchErrorMessage, getFetchErrorStatus } from '~/utils/fetchApiError'
 
 /** Matches GET /api/authors/:slug response shape. */
 interface AuthorDetailPayload {
@@ -194,6 +196,12 @@ const canUploadPortraitAsAdmin = computed(() => normalizeRole(user.value?.role) 
 
 /** Editor / moderator / admin / site owner — poem title & body in the reader panel. */
 const canEditPoem = computed(() => isPoemEditorRoleOrSiteOwner(user.value?.role, user.value?.email))
+
+/** Bibliography “add poem” — administrators and editors only (not moderator). */
+const canAddPoemFromBibliography = computed(() => {
+  const r = normalizeRole(user.value?.role)
+  return r === 'admin' || r === 'editor'
+})
 
 function onPoemUpdated(updated: Poem) {
   activePoem.value = updated
@@ -456,12 +464,117 @@ watch(
   },
 )
 
+let addPoemModalEscapeHandler: ((e: KeyboardEvent) => void) | null = null
+
 onMounted(() => {
   nextTick(() => requestAnimationFrame(measureBioClamp))
   window.addEventListener('resize', measureBioClamp)
 })
 
-onBeforeUnmount(() => window.removeEventListener('resize', measureBioClamp))
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', measureBioClamp)
+  if (addPoemModalEscapeHandler) {
+    window.removeEventListener('keydown', addPoemModalEscapeHandler)
+    addPoemModalEscapeHandler = null
+  }
+})
+
+const addPoemModalOpen = ref(false)
+const newPoemTitle = ref('')
+const newPoemContent = ref('')
+const creatingPoem = ref(false)
+const createPoemError = ref('')
+
+function openAddPoemModal() {
+  newPoemTitle.value = ''
+  newPoemContent.value = ''
+  createPoemError.value = ''
+  addPoemModalOpen.value = true
+}
+
+function closeAddPoemModal() {
+  if (creatingPoem.value) return
+  addPoemModalOpen.value = false
+}
+
+function onAddPoemModalBackdropClick() {
+  closeAddPoemModal()
+}
+
+watch(addPoemModalOpen, (open) => {
+  if (!import.meta.client) return
+  if (addPoemModalEscapeHandler) {
+    window.removeEventListener('keydown', addPoemModalEscapeHandler)
+    addPoemModalEscapeHandler = null
+  }
+  if (open) {
+    addPoemModalEscapeHandler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeAddPoemModal()
+    }
+    window.addEventListener('keydown', addPoemModalEscapeHandler)
+  }
+})
+
+/** Title matches another work for this author (case-insensitive); shown inline in add-poem modal. */
+const newPoemTitleLooksDuplicate = computed(() => {
+  const raw = newPoemTitle.value.trim()
+  if (!raw) return false
+  const lc = raw.toLowerCase()
+  return works.value.some((w) => w.title.trim().toLowerCase() === lc)
+})
+
+watch([newPoemTitle, newPoemContent], () => {
+  createPoemError.value = ''
+})
+
+async function submitNewPoemFromModal() {
+  const a = author.value
+  if (!a || creatingPoem.value) return
+  const title = newPoemTitle.value.trim()
+  const content = newPoemContent.value.trim()
+  if (!title || !content) {
+    createPoemError.value = t('admin.poemForm.requiredFields')
+    return
+  }
+  const titleLc = title.toLowerCase()
+  if (works.value.some((w) => w.title.trim().toLowerCase() === titleLc)) {
+    createPoemError.value = t('authors.duplicatePoemTitle')
+    return
+  }
+  creatingPoem.value = true
+  createPoemError.value = ''
+  try {
+    const poem = await $fetch<{ slug: string }>('/api/poems', {
+      method: 'POST',
+      credentials: 'include',
+      body: {
+        title,
+        content,
+        authorId: a.id,
+        language: 'ro',
+        source: 'classic',
+        featured: false,
+        tagIds: [],
+      },
+    })
+    addPoemModalOpen.value = false
+    newPoemTitle.value = ''
+    newPoemContent.value = ''
+    authorFetchNonce.value += 1
+    await refresh({ dedupe: 'cancel' })
+    await router.replace({ query: { ...route.query, poem: poem.slug } })
+  } catch (err: unknown) {
+    const statusCode = getFetchErrorStatus(err)
+    const code = getFetchErrorDataCode(err)
+    if (statusCode === 409 || code === 'DUPLICATE_POEM_TITLE') {
+      createPoemError.value = t('authors.duplicatePoemTitle')
+    } else {
+      createPoemError.value = getFetchErrorMessage(err) ?? t('admin.poemForm.createFailed')
+    }
+  } finally {
+    creatingPoem.value = false
+  }
+}
 </script>
 
 <template>
@@ -609,14 +722,25 @@ onBeforeUnmount(() => window.removeEventListener('resize', measureBioClamp))
       </section>
 
       <!-- Bibliography + active poem -->
-      <section v-if="works.length" class="pt-8">
-        <h2 class="mb-3 font-serif text-xl font-bold text-content">{{ t('authors.bibliography') }}</h2>
+      <section v-if="works.length || canAddPoemFromBibliography" class="pt-8">
+        <div class="mb-3 flex flex-wrap items-center gap-1.5">
+          <h2 class="font-serif text-xl font-bold text-content">{{ t('authors.bibliography') }}</h2>
+          <button v-if="canAddPoemFromBibliography" type="button"
+            class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-edge-subtle bg-surface-subtle text-content-secondary transition hover:border-brand/45 hover:bg-surface-raised hover:text-brand"
+            :aria-label="t('authors.addPoemAria')" :title="t('authors.addPoemAria')" @click="openAddPoemModal">
+            <Icon icon="heroicons:plus" class="h-5 w-5" aria-hidden="true" />
+          </button>
+        </div>
 
         <div class="grid gap-10 lg:grid-cols-[minmax(260px,340px)_minmax(0,1fr)] lg:items-start lg:gap-10 xl:gap-14">
           <!-- Left: bibliography -->
           <div class="flex min-h-0 flex-col lg:sticky lg:top-28 lg:max-h-[calc(100vh-7rem)]">
             <ul class="min-h-0 flex-1 space-y-1 overflow-y-auto pr-1 text-sm" role="listbox"
               :aria-label="t('authors.worksListAria')">
+              <li v-if="!works.length && canAddPoemFromBibliography"
+                class="rounded-ds-md border border-dashed border-edge-subtle px-3 py-4 text-sm italic text-content-muted">
+                {{ t('authors.bibliographyEmptyStaff') }}
+              </li>
               <li v-for="w in works" :key="w.slug">
                 <button type="button" role="option"
                   class="flex w-full items-center gap-2 rounded-ds-md border px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-page"
@@ -647,6 +771,10 @@ onBeforeUnmount(() => window.removeEventListener('resize', measureBioClamp))
               <p v-else-if="poemLoadFailed" class="text-center text-sm text-content-muted">
                 {{ t('authors.poemCouldNotLoad') }}
               </p>
+              <p v-else-if="!works.length && canAddPoemFromBibliography"
+                class="py-12 text-center text-sm text-content-muted">
+                {{ t('authors.addFirstPoemInPanelHint') }}
+              </p>
             </div>
           </div>
         </div>
@@ -673,5 +801,60 @@ onBeforeUnmount(() => window.removeEventListener('resize', measureBioClamp))
         </button>
       </div>
     </div>
+
+    <Teleport to="body">
+      <div v-if="addPoemModalOpen && author"
+        class="fixed inset-0 z-[70] flex items-center justify-center p-4 sm:p-6">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-[2px]" aria-hidden="true"
+          @click="onAddPoemModalBackdropClick" />
+        <div role="dialog" aria-modal="true" aria-labelledby="authors-add-poem-modal-title"
+          class="relative z-10 flex max-h-[min(90vh,720px)] w-full max-w-lg flex-col rounded-2xl border border-edge-subtle bg-surface-raised shadow-xl">
+          <div class="border-b border-edge-subtle px-5 py-4 sm:px-6">
+            <h3 id="authors-add-poem-modal-title" class="font-serif text-lg font-semibold text-content">
+              {{ t('authors.addPoemModalTitle') }}
+            </h3>
+            <p class="mt-1 text-sm text-content-muted">{{ t('authors.addPoemForAuthor', { name: author.name }) }}</p>
+          </div>
+          <div class="min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-6">
+            <div v-if="createPoemError"
+              class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
+              {{ createPoemError }}
+            </div>
+            <label class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-content-muted"
+              for="authors-new-poem-title">{{ t('admin.poemForm.titleRequired') }}</label>
+            <div class="mb-4">
+              <input id="authors-new-poem-title" v-model="newPoemTitle" type="text" maxlength="500"
+                class="w-full rounded-xl border bg-surface-page px-4 py-2.5 text-sm text-content outline-none focus:ring-2"
+                :class="newPoemTitleLooksDuplicate
+                  ? 'border-amber-500/80 focus:border-amber-500 focus:ring-amber-500/25'
+                  : 'border-edge-subtle focus:border-brand focus:ring-brand/20'"
+                :placeholder="t('admin.poemForm.placeholderTitle')" autocomplete="off"
+                :aria-invalid="newPoemTitleLooksDuplicate ? 'true' : undefined"
+                :aria-describedby="newPoemTitleLooksDuplicate ? 'authors-new-poem-title-dup' : undefined" />
+              <p v-if="newPoemTitleLooksDuplicate" id="authors-new-poem-title-dup" role="alert"
+                class="mt-2 text-sm text-amber-800 dark:text-amber-200">
+                {{ t('authors.duplicatePoemTitle') }}
+              </p>
+            </div>
+            <label class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-content-muted"
+              for="authors-new-poem-content">{{ t('admin.poemForm.contentRequired') }}</label>
+            <textarea id="authors-new-poem-content" v-model="newPoemContent" rows="12"
+              class="w-full resize-y rounded-xl border border-edge-subtle bg-surface-page px-4 py-3 font-serif text-sm leading-relaxed text-content outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+              :placeholder="t('admin.poemForm.placeholderContent')" />
+            <p class="mt-2 text-xs text-content-muted">{{ t('admin.poemForm.contentHint') }}</p>
+          </div>
+          <div class="flex flex-wrap items-center justify-end gap-2 border-t border-edge-subtle px-5 py-4 sm:px-6">
+            <button type="button"
+              class="rounded-xl border border-edge-subtle bg-surface-subtle px-4 py-2.5 text-sm font-medium text-content-secondary transition hover:bg-surface-raised disabled:opacity-50"
+              :disabled="creatingPoem" @click="closeAddPoemModal">{{ t('admin.poemForm.cancel') }}</button>
+            <button type="button"
+              class="rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-brand-foreground shadow transition hover:bg-brand-hover disabled:opacity-50"
+              :disabled="creatingPoem || newPoemTitleLooksDuplicate" @click="submitNewPoemFromModal">
+              {{ creatingPoem ? t('admin.poemForm.saving') : t('authors.addPoemSubmit') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>

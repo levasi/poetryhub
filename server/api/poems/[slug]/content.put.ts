@@ -38,6 +38,8 @@ export default defineEventHandler(async (event) => {
   const existing = await prisma.poem.findUnique({
     where: { slug },
     select: {
+      id: true,
+      authorId: true,
       author: { select: { slug: true } },
     },
   })
@@ -52,10 +54,33 @@ export default defineEventHandler(async (event) => {
   }
 
   const { content, title } = parsed.data
+
+  if (title !== undefined) {
+    const titleTrim = title.trim()
+    if (!titleTrim.length) {
+      throw createError({ statusCode: 400, statusMessage: 'Invalid title' })
+    }
+    const dup = await prisma.poem.findFirst({
+      where: {
+        authorId: existing.authorId,
+        title: { equals: titleTrim, mode: 'insensitive' },
+        NOT: { id: existing.id },
+      },
+      select: { id: true },
+    })
+    if (dup) {
+      throw createError({
+        statusCode: 409,
+        statusMessage: 'Duplicate poem title for this author',
+        data: { code: 'DUPLICATE_POEM_TITLE' },
+      })
+    }
+  }
+
   await prisma.poem.update({
     where: { slug },
     data: {
-      ...(title !== undefined ? { title } : {}),
+      ...(title !== undefined ? { title: title.trim() } : {}),
       ...(content !== undefined
         ? {
             content,

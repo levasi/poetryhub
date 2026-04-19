@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Poem } from '~/composables/usePoems'
 import { useFavorites } from '~/composables/useFavorites'
+import { getFetchErrorDataCode, getFetchErrorMessage, getFetchErrorStatus } from '~/utils/fetchApiError'
 
 const { t } = useI18n()
 
@@ -113,11 +114,13 @@ async function savePoemEdit() {
     titleDraft.value = fresh.title
     contentDraft.value = fresh.content
   } catch (err: unknown) {
-    const msg =
-      err && typeof err === 'object' && 'data' in err
-        ? String((err as { data?: { statusMessage?: string } }).data?.statusMessage ?? '')
-        : ''
-    alert(msg || t('viewer.poemEditFailed'))
+    const status = getFetchErrorStatus(err)
+    const code = getFetchErrorDataCode(err)
+    if (status === 409 || code === 'DUPLICATE_POEM_TITLE') {
+      alert(t('authors.duplicatePoemTitle'))
+      return
+    }
+    alert(getFetchErrorMessage(err) || t('viewer.poemEditFailed'))
   } finally {
     savingPoemEdit.value = false
   }

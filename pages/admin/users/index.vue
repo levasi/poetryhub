@@ -19,6 +19,7 @@ interface AdminUser {
 const page = ref(1)
 const search = ref('')
 const updatingId = ref<string | null>(null)
+const deletingId = ref<string | null>(null)
 const toast = ref<{ ok: boolean; text: string } | null>(null)
 
 const { data: adminSession } = await useFetch<{ id: string; email: string }>('/api/auth/me')
@@ -77,6 +78,28 @@ async function onRoleSelect(u: AdminUser, ev: Event) {
     updatingId.value = null
   }
 }
+
+async function onDeleteUser(u: AdminUser) {
+  if (u.id === adminSession.value?.id || isOwnerAccount(u.email)) return
+  const label = u.name || u.email
+  if (!confirm(t('admin.users.deleteConfirm', { name: label }))) return
+
+  toast.value = null
+  deletingId.value = u.id
+  try {
+    await $fetch(`/api/admin/users/${u.id}`, { method: 'DELETE' })
+    toast.value = { ok: true, text: t('admin.users.userDeleted') }
+    await refresh()
+  } catch (err: unknown) {
+    const msg =
+      err && typeof err === 'object' && 'data' in err
+        ? (err as { data?: { statusMessage?: string } }).data?.statusMessage
+        : undefined
+    toast.value = { ok: false, text: msg || t('admin.users.deleteError') }
+  } finally {
+    deletingId.value = null
+  }
+}
 </script>
 
 <template>
@@ -115,6 +138,9 @@ async function onRoleSelect(u: AdminUser, ev: Event) {
             </th>
             <th class="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-ink-500 lg:table-cell">
               {{ t('admin.users.colJoined') }}
+            </th>
+            <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-widest text-ink-500">
+              {{ t('admin.users.colActions') }}
             </th>
           </tr>
         </thead>
@@ -156,6 +182,28 @@ async function onRoleSelect(u: AdminUser, ev: Event) {
               </p>
             </td>
             <td class="hidden px-4 py-3 text-ink-500 lg:table-cell">{{ formatDate(u.createdAt) }}</td>
+            <td class="px-4 py-3 text-right">
+              <button
+                type="button"
+                class="rounded-md px-2 py-1 text-xs font-medium text-red-700 transition hover:bg-red-50 hover:text-red-800 disabled:cursor-not-allowed disabled:opacity-40"
+                :disabled="
+                  deletingId === u.id ||
+                  updatingId === u.id ||
+                  u.id === adminSession?.id ||
+                  isOwnerAccount(u.email)
+                "
+                :title="
+                  u.id === adminSession?.id
+                    ? t('admin.users.deleteCannotSelf')
+                    : isOwnerAccount(u.email)
+                      ? t('admin.users.deleteCannotOwner')
+                      : t('admin.users.delete')
+                "
+                @click="onDeleteUser(u)"
+              >
+                {{ deletingId === u.id ? t('admin.users.deleting') : t('admin.users.delete') }}
+              </button>
+            </td>
           </tr>
         </tbody>
       </table>

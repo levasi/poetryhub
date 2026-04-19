@@ -190,16 +190,6 @@ onMounted(() => {
 
 <template>
   <div class="mx-auto max-w-3xl">
-    <header class="mb-10 border-b border-edge-subtle pb-8">
-      <p class="ds-eyebrow mb-2 text-brand">{{ t('account.title') }}</p>
-      <h1 class="font-serif text-3xl font-bold tracking-tight text-content md:text-4xl">
-        {{ t('nav.account') }}
-      </h1>
-      <p class="mt-3 max-w-2xl text-sm leading-relaxed text-content-secondary">
-        {{ t('account.pageSubtitle') }}
-      </p>
-    </header>
-
     <div class="space-y-8">
     <!-- ── Profile ──────────────────────────────────────────────────── -->
     <section class="rounded-ds-lg border border-edge-subtle bg-surface-raised p-6 shadow-ds-card transition-shadow hover:shadow-ds-card-hover md:p-8">

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { getFetchErrorDataCode, getFetchErrorMessage, getFetchErrorStatus } from '~/utils/fetchApiError'
+
 definePageMeta({ layout: 'admin', middleware: ['admin'] })
 
 const { t } = useI18n()
@@ -40,7 +42,13 @@ async function submit() {
     const poem = await $fetch('/api/poems', { method: 'POST', body: form })
     router.push(`/admin/poems/${(poem as { slug: string }).slug}`)
   } catch (err: unknown) {
-    error.value = (err as { data?: { statusMessage?: string } })?.data?.statusMessage ?? t('admin.poemForm.createFailed')
+    const status = getFetchErrorStatus(err)
+    const code = getFetchErrorDataCode(err)
+    if (status === 409 || code === 'DUPLICATE_POEM_TITLE') {
+      error.value = t('authors.duplicatePoemTitle')
+    } else {
+      error.value = getFetchErrorMessage(err) ?? t('admin.poemForm.createFailed')
+    }
   } finally {
     loading.value = false
   }

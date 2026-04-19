@@ -38,7 +38,8 @@ const displayName = computed(() => user.value?.name || user.value?.email?.split(
     <FavoritesFlash />
     <AppNav />
 
-    <div class="mx-auto flex w-full max-w-screen-xl flex-1">
+    <!-- Full-width row: sidebar flush left, main fills the rest (page bodies use their own max-width). -->
+    <div class="flex w-full flex-1">
       <!-- Sidebar (desktop) -->
       <aside
         class="sticky top-[3.25rem] z-10 hidden h-[calc(100vh-3.25rem)] w-60 shrink-0 flex-col border-r border-edge-subtle bg-surface-raised/90 shadow-[2px_0_12px_-4px_rgba(0,0,0,0.06)] backdrop-blur-sm supports-[backdrop-filter]:bg-surface-raised/80 md:top-16 md:flex md:h-[calc(100vh-4rem)] lg:w-64"
@@ -55,9 +56,6 @@ const displayName = computed(() => user.value?.name || user.value?.email?.split(
               <p class="truncate text-xs text-content-soft">{{ user?.email }}</p>
             </div>
           </div>
-          <p class="mt-4 text-[11px] font-medium uppercase tracking-wider text-content-soft">
-            {{ t('account.title') }}
-          </p>
         </div>
 
         <nav class="flex-1 space-y-0.5 px-3 py-4" aria-label="Account">
@@ -113,7 +111,7 @@ const displayName = computed(() => user.value?.name || user.value?.email?.split(
       </div>
 
       <!-- Main -->
-      <main class="min-h-[60vh] flex-1 px-4 pb-24 pt-8 md:px-8 md:pb-14 md:pt-10 lg:px-10">
+      <main class="min-h-[60vh] min-w-0 flex-1 px-4 pb-24 pt-8 md:px-8 md:pb-14 md:pt-10 lg:px-10">
         <slot />
       </main>
     </div>

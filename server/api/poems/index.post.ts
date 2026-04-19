@@ -1,7 +1,7 @@
-// POST /api/poems — create a new poem (admin only)
+// POST /api/poems — create poem (admin JWT; app users: editor / moderator / admin / site owner)
 import { z } from 'zod'
 import { prisma } from '~/server/utils/prisma'
-import { requireAdmin } from '~/server/utils/auth'
+import { requireAuthorCatalogEditor } from '~/server/utils/auth'
 import { slugify, uniqueSlug, estimateReadingTime, extractExcerpt } from '~/server/utils/slug'
 
 const schema = z.object({
@@ -16,7 +16,7 @@ const schema = z.object({
 })
 
 export default defineEventHandler(async (event) => {
-  await requireAdmin(event)
+  await requireAuthorCatalogEditor(event)
   const body   = await readBody(event)
   const parsed = schema.safeParse(body)
 
@@ -30,18 +30,49 @@ export default defineEventHandler(async (event) => {
 
   const { tagIds, ...data } = parsed.data
 
-  // Generate a unique slug from the title
-  let slug = slugify(data.title)
-  const existing = await prisma.poem.findUnique({ where: { slug } })
-  if (existing) slug = uniqueSlug(data.title)
+  const titleTrimmed = data.title.trim()
+  if (!titleTrimmed) {
+    throw createError({ statusCode: 400, statusMessage: 'Validation error', data: { title: ['Title cannot be empty'] } })
+  }
+
+  const dup = await prisma.poem.findFirst({
+    where: {
+      authorId: data.authorId,
+      title: { equals: titleTrimmed, mode: 'insensitive' },
+    },
+    select: { id: true },
+  })
+  if (dup) {
+    throw createError({
+      statusCode: 409,
+      statusMessage: 'Duplicate poem title for this author',
+      data: { code: 'DUPLICATE_POEM_TITLE' },
+    })
+  }
+
+  // Generate a unique slug from the title (global uniqueness; avoids URL collisions only)
+  let slug = slugify(titleTrimmed)
+  const existingSlug = await prisma.poem.findUnique({ where: { slug } })
+  if (existingSlug) slug = uniqueSlug(titleTrimmed)
+
+  const contentTrimmed = data.content.trim()
+  if (!contentTrimmed) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Validation error',
+      data: { content: ['Content cannot be empty'] },
+    })
+  }
 
   const poem = await prisma.poem.create({
     data: {
       ...data,
+      title: titleTrimmed,
+      content: contentTrimmed,
       slug,
       sourceUrl: data.sourceUrl || null,
-      excerpt: extractExcerpt(data.content),
-      readingTime: estimateReadingTime(data.content),
+      excerpt: extractExcerpt(contentTrimmed),
+      readingTime: estimateReadingTime(contentTrimmed),
       poemTags: {
         create: tagIds.map((tagId) => ({ tagId })),
       },

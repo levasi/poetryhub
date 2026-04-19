@@ -1,13 +1,11 @@
 // Client-side middleware: protect all /admin/* routes
-// Verifies presence of admin session via /api/auth/me
+// Verifies access via /api/auth/me (admin JWT or app session with staff access)
 export default defineNuxtRouteMiddleware(async (to) => {
-  // Only guard /admin routes (but not /admin/login)
-  if (!to.path.startsWith('/admin') || to.path === '/admin/login') return
+  if (!to.path.startsWith('/admin')) return
 
   try {
     await $fetch('/api/auth/me')
   } catch {
-    // Redirect to login, preserving intended destination
-    return navigateTo(`/admin/login?redirect=${encodeURIComponent(to.fullPath)}`)
+    return navigateTo(`/login?redirect=${encodeURIComponent(to.fullPath)}`)
   }
 })
