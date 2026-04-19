@@ -422,7 +422,7 @@ function formatDate(iso: string) {
                   </p>
                   <div v-else class="home-poem-masonry" role="list">
                     <div v-for="poem in featured" :key="poem.id" class="home-poem-masonry-wrap" role="listitem">
-                      <PoetryCard :poem="poem" featured layout="masonry" :quick-read-list="featured" />
+                      <PoetryCard :poem="poem" layout="masonry" :quick-read-list="featured" />
                     </div>
                   </div>
                 </div>
