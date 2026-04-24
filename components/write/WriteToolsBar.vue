@@ -9,7 +9,6 @@ const icons = {
   plus: 'heroicons:plus',
   magnifyingGlass: 'heroicons:magnifying-glass',
   check: 'heroicons:check',
-  pencilSquare: 'heroicons:pencil-square',
   trash: 'heroicons:trash',
   arrowDownTray: 'heroicons:arrow-down-tray',
 } as const
@@ -46,29 +45,8 @@ function isActiveProject(p: { id: string }) {
 
 const canSubmitNewProject = computed(() => newProjectNameDraft.value.trim().length > 0)
 
-const editingId = ref<string | null>(null)
-const editDraft = ref('')
-
-function startRename(p: { id: string; name: string }, ev?: Event) {
-  ev?.stopPropagation()
-  if (editingId.value && editingId.value !== p.id) commitRename()
-  editingId.value = p.id
-  editDraft.value = p.name
-}
-
-function commitRename() {
-  if (!editingId.value) return
-  projectStore.renameProject(editingId.value, editDraft.value)
-  editingId.value = null
-}
-
-function cancelRename() {
-  editingId.value = null
-}
-
 function requestDeleteProject(p: { id: string; name: string }, ev?: Event) {
   ev?.stopPropagation()
-  if (editingId.value && editingId.value !== p.id) commitRename()
   dropdownOpen.value = false
   projectSearch.value = ''
   deleteTarget.value = { id: p.id, name: p.name }
@@ -83,7 +61,6 @@ function closeDeleteModal() {
 function executeDelete() {
   const p = deleteTarget.value
   if (!p) return
-  if (editingId.value === p.id) editingId.value = null
   projectStore.deleteProject(p.id)
   projectSearch.value = ''
   closeDeleteModal()
@@ -95,7 +72,7 @@ function toggleDropdown() {
 }
 
 watch(dropdownOpen, (open) => {
-  if (!open && editingId.value) commitRename()
+  // no-op (rename removed)
 })
 
 function selectProject(id: string) {
@@ -191,7 +168,8 @@ onUnmounted(() => {
         <button type="button"
           class="flex min-w-[10.5rem] max-w-[min(100%,16rem)] items-center gap-2 rounded-xl border border-edge-subtle/90 bg-surface-raised px-3 py-2 text-left shadow-sm ring-black/5 transition hover:border-edge hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:ring-offset-2"
           :aria-expanded="dropdownOpen" aria-haspopup="listbox" @click.stop="toggleDropdown">
-          <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface-subtle text-content-muted"
+          <span
+            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface-subtle text-content-muted"
             aria-hidden="true">
             <Icon :icon="icons.folder" class="h-4 w-4 shrink-0" />
           </span>
@@ -200,12 +178,8 @@ onUnmounted(() => {
             <span class="mt-0.5 block text-[10px] font-medium uppercase tracking-wide text-content-soft">Proiect
               activ</span>
           </span>
-          <Icon
-            :icon="icons.chevronDown"
-            class="h-5 w-5 shrink-0 text-content-soft transition-transform duration-200"
-            :class="dropdownOpen ? 'rotate-180' : ''"
-            aria-hidden="true"
-          />
+          <Icon :icon="icons.chevronDown" class="h-5 w-5 shrink-0 text-content-soft transition-transform duration-200"
+            :class="dropdownOpen ? 'rotate-180' : ''" aria-hidden="true" />
         </button>
 
         <Transition enter-active-class="transition duration-150 ease-out"
@@ -215,7 +189,8 @@ onUnmounted(() => {
           <div v-show="dropdownOpen"
             class="absolute left-0 z-50 mt-2 w-[min(100vw-2rem,20rem)] origin-top overflow-hidden rounded-2xl border border-edge-subtle/90 bg-surface-overlay/95 shadow-xl shadow-black/10 ring-1 ring-black/[0.04] backdrop-blur-md"
             role="listbox" @click.stop>
-            <div class="border-b border-edge-subtle/90 bg-gradient-to-b from-surface-subtle/80 to-surface-raised px-3 pb-3 pt-3">
+            <div
+              class="border-b border-edge-subtle/90 bg-gradient-to-b from-surface-subtle/80 to-surface-raised px-3 pb-3 pt-3">
               <button type="button"
                 class="flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-3 py-2.5 text-sm font-semibold text-brand-foreground shadow-sm transition hover:bg-brand-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/45 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-overlay"
                 @click="openNewProjectModal">
@@ -225,7 +200,8 @@ onUnmounted(() => {
             </div>
 
             <div class="px-3 pt-3">
-              <label class="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-content-muted">Caută</label>
+              <label
+                class="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-content-muted">Caută</label>
               <div class="relative">
                 <span class="pointer-events-none absolute inset-y-0 left-2.5 flex items-center text-content-soft"
                   aria-hidden="true">
@@ -247,40 +223,27 @@ onUnmounted(() => {
                     ? 'border-blue-200/80 bg-blue-50/90 shadow-sm shadow-blue-900/5'
                     : 'hover:border-edge-subtle/80 hover:bg-surface-subtle'
                     ">
-                  <template v-if="editingId === p.id">
-                    <input v-model="editDraft" type="text"
-                      class="min-w-0 flex-1 rounded-lg border border-blue-300 bg-surface-raised px-2.5 py-2 text-sm text-content outline-none ring-2 ring-blue-500/20"
-                      autocomplete="off" :aria-label="'Redenumește: ' + p.name" @click.stop
-                      @keydown.enter.prevent="commitRename" @keydown.escape.prevent="cancelRename" />
-                  </template>
-                  <template v-else>
+                  <button type="button"
+                    class="flex min-w-0 flex-1 items-center gap-2 rounded-lg py-2 pl-2 pr-1 text-left text-sm text-content-secondary transition"
+                    :class="isActiveProject(p) ? 'font-semibold text-blue-950' : 'font-medium'" role="option"
+                    :aria-selected="isActiveProject(p)" @click="selectProject(p.id)">
+                    <span v-if="isActiveProject(p)"
+                      class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm"
+                      aria-hidden="true">
+                      <Icon :icon="icons.check" class="h-3 w-3 shrink-0" />
+                    </span>
+                    <span v-else class="h-5 w-5 shrink-0 rounded-full border border-edge-subtle/80 bg-surface-raised"
+                      aria-hidden="true" />
+                    <span class="min-w-0 flex-1 truncate">{{ p.name }}</span>
+                  </button>
+                  <div
+                    class="flex shrink-0 items-center gap-0.5 pr-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
                     <button type="button"
-                      class="flex min-w-0 flex-1 items-center gap-2 rounded-lg py-2 pl-2 pr-1 text-left text-sm text-content-secondary transition"
-                      :class="isActiveProject(p) ? 'font-semibold text-blue-950' : 'font-medium'" role="option"
-                      :aria-selected="isActiveProject(p)" @click="selectProject(p.id)">
-                      <span v-if="isActiveProject(p)"
-                        class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm"
-                        aria-hidden="true">
-                        <Icon :icon="icons.check" class="h-3 w-3 shrink-0" />
-                      </span>
-                      <span v-else class="h-5 w-5 shrink-0 rounded-full border border-edge-subtle/80 bg-surface-raised"
-                        aria-hidden="true" />
-                      <span class="min-w-0 flex-1 truncate">{{ p.name }}</span>
+                      class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-red-600/90 transition hover:bg-red-50 hover:text-red-700"
+                      title="Șterge proiectul" aria-label="Șterge proiectul" @click="requestDeleteProject(p, $event)">
+                      <Icon :icon="icons.trash" class="h-4 w-4 shrink-0" aria-hidden="true" />
                     </button>
-                    <div
-                      class="flex shrink-0 items-center gap-0.5 pr-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
-                      <button type="button"
-                        class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-content-muted transition hover:bg-surface-raised hover:text-content"
-                        title="Redenumește" aria-label="Redenumește" @click="startRename(p, $event)">
-                        <Icon :icon="icons.pencilSquare" class="h-4 w-4 shrink-0" aria-hidden="true" />
-                      </button>
-                      <button type="button"
-                        class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-red-600/90 transition hover:bg-red-50 hover:text-red-700"
-                        title="Șterge proiectul" aria-label="Șterge proiectul" @click="requestDeleteProject(p, $event)">
-                        <Icon :icon="icons.trash" class="h-4 w-4 shrink-0" aria-hidden="true" />
-                      </button>
-                    </div>
-                  </template>
+                  </div>
                 </div>
               </li>
               <li v-if="!filteredProjects.length"
@@ -291,20 +254,6 @@ onUnmounted(() => {
             </ul>
           </div>
         </Transition>
-      </div>
-
-      <div class="flex shrink-0 items-center gap-2">
-        <span v-if="saveFeedback" class="hidden max-w-[10rem] truncate text-xs font-medium sm:inline"
-          :class="saveFeedback === 'Eroare la salvare' ? 'text-red-600' : 'text-content-muted'" role="status">
-          {{ saveFeedback }}
-        </span>
-        <button type="button"
-          class="inline-flex items-center gap-2 rounded-xl border border-edge-subtle bg-surface-raised px-3 py-2 text-sm font-semibold text-content-secondary shadow-sm transition hover:border-edge hover:bg-surface-subtle focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
-          :disabled="saveBusy" aria-label="Salvează proiectele" @click="onSaveClick">
-          <Icon :icon="icons.arrowDownTray" class="h-4 w-4 shrink-0 text-content-muted" aria-hidden="true" />
-          <span v-if="saveBusy">Se salvează…</span>
-          <span v-else>Salvează</span>
-        </button>
       </div>
     </div>
   </div>
@@ -337,8 +286,7 @@ onUnmounted(() => {
     </div>
 
     <div v-if="newProjectModalOpen" class="fixed inset-0 z-[200] flex items-center justify-center p-4">
-      <div class="absolute inset-0 bg-black/45 backdrop-blur-[2px]" aria-hidden="true"
-        @click="closeNewProjectModal" />
+      <div class="absolute inset-0 bg-black/45 backdrop-blur-[2px]" aria-hidden="true" @click="closeNewProjectModal" />
       <div role="dialog" aria-modal="true" aria-labelledby="new-project-title"
         class="relative z-10 w-full max-w-md rounded-2xl border border-edge-subtle bg-surface-raised p-5 shadow-2xl ring-1 ring-black/5"
         @click.stop>

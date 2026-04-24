@@ -16,7 +16,7 @@ const schema = z.object({
 })
 
 export default defineEventHandler(async (event) => {
-  await requireAuthorCatalogEditor(event)
+  const actor = await requireAuthorCatalogEditor(event)
   const body   = await readBody(event)
   const parsed = schema.safeParse(body)
 
@@ -64,6 +64,10 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  const submitter =
+    (await prisma.user.findUnique({ where: { id: actor.id }, select: { id: true } })) ??
+    (await prisma.user.findUnique({ where: { email: actor.email }, select: { id: true } }))
+
   const poem = await prisma.poem.create({
     data: {
       ...data,
@@ -73,6 +77,11 @@ export default defineEventHandler(async (event) => {
       sourceUrl: data.sourceUrl || null,
       excerpt: extractExcerpt(contentTrimmed),
       readingTime: estimateReadingTime(contentTrimmed),
+      /**
+       * Ensure poems created via the catalog editor APIs show up under Account → “My poems”.
+       * Admin tokens may not map to a `User` row in some environments, so guard the FK.
+       */
+      submittedByUserId: submitter?.id,
       poemTags: {
         create: tagIds.map((tagId) => ({ tagId })),
       },

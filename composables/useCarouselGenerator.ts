@@ -3,7 +3,27 @@
  * Client-only: call export functions from onMounted or user gestures (uses html2canvas + JSZip).
  */
 
-export type CarouselTheme = 'minimal' | 'dark' | 'gradient' | 'neon'
+/** All built-in Instagram carousel visual styles (controls + templates). */
+export const CAROUSEL_THEME_IDS = [
+  'minimal',
+  'dark',
+  'gradient',
+  'neon',
+  /** Warm paper / manuscript */
+  'parchment',
+  /** Deep teal & cyan seas */
+  'ocean',
+  /** Rose → amber horizon */
+  'sunset',
+  /** Magazine B&W + accent */
+  'editorial',
+  /** Evergreen & gold */
+  'forest',
+  /** Violet galaxy */
+  'cosmos',
+] as const
+
+export type CarouselTheme = (typeof CAROUSEL_THEME_IDS)[number]
 
 export type SlideVariant = 'cover' | 'body' | 'cta'
 

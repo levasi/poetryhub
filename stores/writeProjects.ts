@@ -6,6 +6,7 @@ const DEFAULT_ID = 'project-default'
 export interface WriteProject {
   id: string
   name: string
+  title: string
   lyrics: string
   savedWords: string[]
 }
@@ -40,6 +41,7 @@ function normalizeProjectsList(list: WriteProject[]): WriteProject[] {
   const mapped = list.map((p) => ({
     ...p,
     name: normalizeProjectName(typeof p.name === 'string' ? p.name : 'Proiect'),
+    title: typeof p.title === 'string' ? p.title : '',
     lyrics: typeof p.lyrics === 'string' ? p.lyrics : '',
     savedWords: Array.isArray(p.savedWords)
       ? p.savedWords.filter((x): x is string => typeof x === 'string')
@@ -49,7 +51,7 @@ function normalizeProjectsList(list: WriteProject[]): WriteProject[] {
 }
 
 function defaultProject(): WriteProject {
-  return { id: DEFAULT_ID, name: 'Proiect', lyrics: '', savedWords: [] }
+  return { id: DEFAULT_ID, name: 'Proiect', title: '', lyrics: '', savedWords: [] }
 }
 
 function loadLocal(): { projects: WriteProject[]; currentProjectId: string | null } {
@@ -123,9 +125,11 @@ export const useWriteProjectsStore = defineStore('writeProjects', () => {
   }
 
   function createProject(name: string) {
+    const base = name.trim() || 'Proiect'
     const p: WriteProject = {
       id: newId(),
-      name: name.trim() || 'Proiect',
+      name: base,
+      title: base,
       lyrics: '',
       savedWords: [],
     }
@@ -155,6 +159,16 @@ export const useWriteProjectsStore = defineStore('writeProjects', () => {
     const p = currentProject.value
     if (!p) return
     p.lyrics = text
+  }
+
+  function setTitle(title: string) {
+    const p = currentProject.value
+    if (!p) return
+    const next = title
+    p.title = next
+    const nextTitleTrim = (next || '').trim()
+    // Rename UI was removed; keep the project label identical to the poem title.
+    p.name = nextTitleTrim || 'Proiect'
   }
 
   function appendToLyrics(word: string) {
@@ -207,6 +221,7 @@ export const useWriteProjectsStore = defineStore('writeProjects', () => {
     createProject,
     deleteProject,
     renameProject,
+    setTitle,
     setLyrics,
     appendToLyrics,
     clearLyrics,

@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import type { CarouselTheme } from '~/composables/useCarouselGenerator'
+import { CAROUSEL_THEME_IDS } from '~/composables/useCarouselGenerator'
 import type { ReaderFontKey } from '~/composables/useReaderPreferences'
 import CarouselFontSelect from '~/components/carousel/CarouselFontSelect.vue'
 import type { CarouselSiteDefaultsPayload } from '~/utils/carouselSiteDefaults'
+import { CAROUSEL_FONT_WEIGHT_PRESETS } from '~/utils/carouselFontWeights'
 import {
   isCarouselSiteOwnerEmail,
   userCanManageCarouselDefaults,
@@ -41,6 +43,8 @@ const carouselFontKey = ref<ReaderFontKey>('literata')
 const linesPerSlide = ref(8)
 const bodyFontSizeScale = ref(1.5)
 const bodyLineHeight = ref(1.65)
+const bodyFontWeight = ref<number | null>(null)
+const titleFontWeight = ref<number | null>(null)
 const keywordLocal = ref('')
 const ctaLocal = ref('')
 
@@ -53,6 +57,8 @@ watch(
     linesPerSlide.value = d.linesPerSlide
     bodyFontSizeScale.value = d.bodyFontSizeScale
     bodyLineHeight.value = d.bodyLineHeight
+    bodyFontWeight.value = d.bodyFontWeight ?? null
+    titleFontWeight.value = d.titleFontWeight ?? null
     keywordLocal.value = d.keywordInput
     ctaLocal.value = d.ctaText
   },
@@ -74,6 +80,8 @@ function payloadFromForm(): CarouselSiteDefaultsPayload {
     linesPerSlide: Math.min(16, Math.max(4, Math.round(Number(linesPerSlide.value)))),
     bodyFontSizeScale: bodyFontSizeScale.value,
     bodyLineHeight: bodyLineHeight.value,
+    bodyFontWeight: bodyFontWeight.value,
+    titleFontWeight: titleFontWeight.value,
     ctaText: ctaOut.slice(0, 500),
     keywordInput: keywordLocal.value.slice(0, 2000),
   }
@@ -135,7 +143,7 @@ async function save() {
         }}</label>
         <div class="mb-6 flex flex-wrap gap-2">
           <button
-            v-for="th in (['minimal', 'dark', 'gradient', 'neon'] as CarouselTheme[])"
+            v-for="th in CAROUSEL_THEME_IDS"
             :key="th"
             type="button"
             class="rounded-full border px-4 py-1.5 text-sm transition"
@@ -200,6 +208,46 @@ async function save() {
           />
           <span class="w-12 text-right text-sm tabular-nums text-ink-600">{{ bodyLineHeight.toFixed(2) }}</span>
         </div>
+
+        <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-ink-500" for="insta-body-weight">{{
+          t('carousel.fieldBodyFontWeight')
+        }}</label>
+        <select
+          id="insta-body-weight"
+          class="mb-6 max-w-md w-full rounded-ds-md border border-ink-200 bg-white px-3 py-2 text-sm text-ink-900 outline-none focus:border-gold-500"
+          :value="bodyFontWeight ?? ''"
+          @change="
+            bodyFontWeight =
+              ($event.target as HTMLSelectElement).value === ''
+                ? null
+                : Number(($event.target as HTMLSelectElement).value)
+          "
+        >
+          <option value="">{{ t('carousel.fontWeightDefault') }}</option>
+          <option v-for="w in CAROUSEL_FONT_WEIGHT_PRESETS" :key="w" :value="w">
+            {{ t(`carousel.fontWeight.${w}`) }}
+          </option>
+        </select>
+
+        <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-ink-500" for="insta-title-weight">{{
+          t('carousel.fieldTitleFontWeight')
+        }}</label>
+        <select
+          id="insta-title-weight"
+          class="mb-6 max-w-md w-full rounded-ds-md border border-ink-200 bg-white px-3 py-2 text-sm text-ink-900 outline-none focus:border-gold-500"
+          :value="titleFontWeight ?? ''"
+          @change="
+            titleFontWeight =
+              ($event.target as HTMLSelectElement).value === ''
+                ? null
+                : Number(($event.target as HTMLSelectElement).value)
+          "
+        >
+          <option value="">{{ t('carousel.fontWeightDefault') }}</option>
+          <option v-for="w in CAROUSEL_FONT_WEIGHT_PRESETS" :key="w" :value="w">
+            {{ t(`carousel.fontWeight.${w}`) }}
+          </option>
+        </select>
 
         <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-ink-500" for="insta-keywords">{{
           t('carousel.fieldKeywords')

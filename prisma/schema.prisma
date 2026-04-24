@@ -139,6 +139,7 @@ model User {
 
   favorites        Favorite[]
   submittedPoems   Poem[]
+  poemDrafts       UserPoemDraft[]
 
   @@index([email])
 }
@@ -155,6 +156,24 @@ model Favorite {
 
   @@id([userId, poemId])
   @@index([userId])
+}
+
+// ─── User poem drafts (Write → Save) ──────────────────────────────────────────
+
+model UserPoemDraft {
+  id         String   @id @default(cuid())
+  userId     String
+  title      String
+  authorName String
+  language   String   @default("ro")
+  content    String   @db.Text
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([updatedAt])
 }
 
 // ─── Admin Users ─────────────────────────────────────────────────────────────

@@ -5,7 +5,7 @@ import { useWriteProjectsStore } from '~/stores/writeProjects'
 
 const projects = useWriteProjectsStore()
 const lyrics = useWriteLyricsStore()
-const { text: lyricsText } = storeToRefs(lyrics)
+const { title, text: lyricsText } = storeToRefs(lyrics)
 
 const taRef = ref<HTMLTextAreaElement | null>(null)
 useAutosizeTextarea(taRef, lyricsText)
@@ -14,7 +14,19 @@ useAutosizeTextarea(taRef, lyricsText)
 <template>
   <div class="flex min-w-0 flex-col gap-4">
     <div class="rounded-2xl border border-edge-subtle bg-surface-raised p-4 shadow-ds-card">
-      <label for="lyrics-editor" class="font-serif text-sm font-semibold uppercase tracking-wide text-content-muted">
+      <label for="lyrics-title" class="font-serif text-sm font-semibold uppercase tracking-wide text-content-muted">
+        Titlu
+      </label>
+      <input
+        id="lyrics-title"
+        v-model="title"
+        type="text"
+        autocomplete="off"
+        class="mt-2 w-full rounded-xl border border-edge-subtle bg-surface-subtle/50 px-3 py-2 text-sm text-content outline-none focus:border-brand focus:ring-2 focus:ring-brand/25"
+        placeholder="Titlul poeziei…"
+      />
+
+      <label for="lyrics-editor" class="mt-4 font-serif text-sm font-semibold uppercase tracking-wide text-content-muted">
         Versuri
       </label>
       <textarea

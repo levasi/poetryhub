@@ -6,15 +6,26 @@ import { invalidateAuthorDetailCaches, invalidatePoemCaches } from '~/server/uti
 import { estimateReadingTime, extractExcerpt } from '~/server/utils/slug'
 import { isPoemEditorRole, isSiteOwnerEmail } from '~/utils/roles'
 
+const WRITTEN_PERIOD_MAX = 220
+
 const schema = z
   .object({
     content: z.string().min(1).optional(),
     title: z.string().min(1).max(500).optional(),
+    /** Set to a year, or `null` to clear. Omitted = leave unchanged. */
+    writtenYear: z.union([z.number().int().min(1).max(3000), z.null()]).optional(),
+    /** Free-text “written in” (e.g. date phrase); `null` clears. Omitted = leave unchanged. */
+    writtenPeriod: z.union([z.string().max(WRITTEN_PERIOD_MAX), z.null()]).optional(),
   })
   .strict()
-  .refine((d) => d.content !== undefined || d.title !== undefined, {
-    message: 'Provide content and/or title',
-  })
+  .refine(
+    (d) =>
+      d.content !== undefined ||
+      d.title !== undefined ||
+      d.writtenYear !== undefined ||
+      d.writtenPeriod !== undefined,
+    { message: 'Provide content, title, writtenYear, and/or writtenPeriod' },
+  )
 
 export default defineEventHandler(async (event) => {
   setHeader(event, 'cache-control', 'no-store')
@@ -53,7 +64,13 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const { content, title } = parsed.data
+  const { content, title, writtenYear, writtenPeriod } = parsed.data
+
+  let writtenPeriodOut: string | null | undefined
+  if (writtenPeriod !== undefined) {
+    writtenPeriodOut =
+      writtenPeriod === null ? null : writtenPeriod.trim().slice(0, WRITTEN_PERIOD_MAX) || null
+  }
 
   if (title !== undefined) {
     const titleTrim = title.trim()
@@ -88,6 +105,8 @@ export default defineEventHandler(async (event) => {
             readingTime: estimateReadingTime(content),
           }
         : {}),
+      ...(writtenYear !== undefined ? { writtenYear } : {}),
+      ...(writtenPeriodOut !== undefined ? { writtenPeriod: writtenPeriodOut } : {}),
     },
   })
 

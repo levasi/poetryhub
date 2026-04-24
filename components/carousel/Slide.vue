@@ -28,6 +28,10 @@ withDefaults(
     bodyLineHeight?: number
     /** CSS `font-family` stack for all slide text (matches reader font options). */
     fontFamily?: string
+    /** Verse slide weight override; null = theme default. */
+    bodyFontWeight?: number | null
+    /** Cover title weight override; null = theme default. */
+    titleFontWeight?: number | null
   }>(),
   {
     authorNationality: '',
@@ -36,27 +40,17 @@ withDefaults(
     bodyFontSizeScale: 1,
     bodyLineHeight: 1.65,
     fontFamily: () => READER_FONT_STACKS.literata,
+    bodyFontWeight: null,
+    titleFontWeight: null,
   },
 )
 </script>
 
 <template>
-  <CarouselInstaTemplate
-    :theme="theme"
-    :variant="variant"
-    :title="title"
-    :author="author"
-    :author-nationality="authorNationality"
-    :author-lifespan="authorLifespan"
-    :written-year-line="writtenYearLine"
-    :avatar-url="avatarUrl"
-    :lines="lines"
-    :cta-text="ctaText"
-    :font-scale-body="fontScaleBody"
-    :title-scale="titleScale"
-    :keywords="keywords"
-    :body-font-size-scale="bodyFontSizeScale"
-    :body-line-height="bodyLineHeight"
-    :font-family="fontFamily"
-  />
+  <CarouselInstaTemplate :theme="theme" :variant="variant" :title="title" :author="author"
+    :author-nationality="authorNationality" :author-lifespan="authorLifespan" :written-year-line="writtenYearLine"
+    :avatar-url="avatarUrl" :lines="lines" :cta-text="ctaText" :font-scale-body="fontScaleBody"
+    :title-scale="titleScale" :keywords="keywords" :body-font-size-scale="bodyFontSizeScale"
+    :body-line-height="bodyLineHeight" :font-family="fontFamily" :body-font-weight="bodyFontWeight"
+    :title-font-weight="titleFontWeight" />
 </template>

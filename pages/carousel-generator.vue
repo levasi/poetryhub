@@ -4,6 +4,7 @@ import { Icon } from '@iconify/vue'
 import {
   buildCarouselSlides,
   buildInstagramCaption,
+  CAROUSEL_THEME_IDS,
   CAROUSEL_HEIGHT,
   CAROUSEL_LINES_PER_BODY_SLIDE,
   CAROUSEL_WIDTH,
@@ -22,11 +23,14 @@ import { READER_FONT_STACKS } from '~/composables/useReaderPreferences'
 import CarouselFontSelect from '~/components/carousel/CarouselFontSelect.vue'
 import { authorAvatarUrl } from '~/utils/authorAvatar'
 import type { CarouselSiteDefaultsPayload } from '~/utils/carouselSiteDefaults'
+import { CAROUSEL_FONT_WEIGHT_PRESETS } from '~/utils/carouselFontWeights'
+import { parseStrictPoemWrittenYear } from '~/utils/carouselWrittenIn'
 import {
   parsePoemCarouselSettings,
   type PoemCarouselSettingsPayload,
 } from '~/utils/poemCarouselFontSettings'
 import { useAuth } from '~/composables/useAuth'
+import { getFetchErrorDataCode, getFetchErrorStatus } from '~/utils/fetchApiError'
 import { isStaffRole } from '~/utils/roles'
 
 definePageMeta({
@@ -78,6 +82,9 @@ const keywords = computed(() =>
 const linesPerSlide = ref(CAROUSEL_LINES_PER_BODY_SLIDE)
 const bodyFontSizeScale = ref(1.5)
 const bodyLineHeight = ref(1.65)
+/** null = use theme Tailwind weights */
+const bodyFontWeight = ref<number | null>(null)
+const titleFontWeight = ref<number | null>(null)
 /** Font stack for all carousel slide text (same catalog as poem reader). */
 const carouselFontKey = ref<ReaderFontKey>('literata')
 const carouselFontFamily = computed(() => READER_FONT_STACKS[carouselFontKey.value])
@@ -109,6 +116,8 @@ function applyCarouselTypographyFromSiteDefaults(d: CarouselSiteDefaultsPayload)
   linesPerSlide.value = d.linesPerSlide
   bodyFontSizeScale.value = d.bodyFontSizeScale
   bodyLineHeight.value = d.bodyLineHeight
+  bodyFontWeight.value = d.bodyFontWeight ?? null
+  titleFontWeight.value = d.titleFontWeight ?? null
 }
 
 function applyCarouselSiteDefaultsNonTypography(d: CarouselSiteDefaultsPayload) {
@@ -128,6 +137,8 @@ function applyPoemCarouselSettings(p: PoemCarouselSettingsPayload) {
   linesPerSlide.value = p.linesPerSlide
   bodyFontSizeScale.value = p.bodyFontSizeScale
   bodyLineHeight.value = p.bodyLineHeight
+  bodyFontWeight.value = p.bodyFontWeight ?? null
+  titleFontWeight.value = p.titleFontWeight ?? null
   if (p.keywordInput !== undefined) keywordInput.value = p.keywordInput
 }
 
@@ -144,6 +155,18 @@ const isLibraryPoemContext = computed(() => {
 
 /** Custom title/body when no catalog poem is loaded (?slug= or search). */
 const showManualPoemFields = computed(() => !isLibraryPoemContext.value)
+
+/** Catalog poem: title & body editable only for admin / editor (API also allows moderator & site owner). */
+const canEditCatalogTitleAndPoem = computed(
+  () =>
+    isLibraryPoemContext.value &&
+    (user.value?.role === 'admin' || user.value?.role === 'editor'),
+)
+
+/** Title + poem inputs (manual draft, or catalog poem with edit permission). */
+const showTitleAndPoemFields = computed(
+  () => showManualPoemFields.value || canEditCatalogTitleAndPoem.value,
+)
 
 watch(
   siteDefaults,
@@ -191,6 +214,77 @@ const savingCurrentPoemCarousel = ref(false)
 const showCurrentPoemCarouselThumbsUp = ref(false)
 let currentPoemCarouselThumbsHideTimer: ReturnType<typeof setTimeout> | null = null
 
+const savingCatalogPoemContent = ref(false)
+const catalogPoemContentJustSaved = ref(false)
+let catalogPoemContentSavedHideTimer: ReturnType<typeof setTimeout> | null = null
+
+async function saveCatalogPoemContent() {
+  const slug = loadedPoemSlug.value?.trim()
+  if (!slug || !canEditCatalogTitleAndPoem.value) return
+  const tit = title.value.trim()
+  const body = poemText.value.trim()
+  if (!tit || !body) {
+    alert(t('carousel.needTitleBody'))
+    return
+  }
+  const wyRaw = poemWrittenYear.value.trim()
+  let writtenYearPayload: number | null
+  let writtenPeriodPayload: string | null
+  if (!wyRaw) {
+    writtenYearPayload = null
+    writtenPeriodPayload = null
+  } else {
+    const strictYear = parseStrictPoemWrittenYear(wyRaw)
+    if (strictYear != null) {
+      writtenYearPayload = strictYear
+      writtenPeriodPayload = null
+    } else {
+      if (wyRaw.length > 220) {
+        alert(t('carousel.writtenPeriodTooLong'))
+        return
+      }
+      writtenYearPayload = null
+      writtenPeriodPayload = wyRaw
+    }
+  }
+  savingCatalogPoemContent.value = true
+  try {
+    await $fetch(`/api/poems/${encodeURIComponent(slug)}/content`, {
+      method: 'PUT',
+      credentials: 'include',
+      body: {
+        title: tit,
+        content: body,
+        writtenYear: writtenYearPayload,
+        writtenPeriod: writtenPeriodPayload,
+      },
+    })
+    if (catalogPoemContentSavedHideTimer) clearTimeout(catalogPoemContentSavedHideTimer)
+    catalogPoemContentJustSaved.value = false
+    await nextTick()
+    catalogPoemContentJustSaved.value = true
+    catalogPoemContentSavedHideTimer = setTimeout(() => {
+      catalogPoemContentJustSaved.value = false
+      catalogPoemContentSavedHideTimer = null
+    }, 2400)
+  } catch (e: unknown) {
+    console.error(e)
+    const statusCode = getFetchErrorStatus(e)
+    const dataCode = getFetchErrorDataCode(e)
+    const msg =
+      statusCode === 401
+        ? t('carousel.defaultsSaveError401')
+        : statusCode === 403
+          ? t('carousel.catalogPoemContentSaveForbidden')
+          : statusCode === 409 || dataCode === 'DUPLICATE_POEM_TITLE'
+            ? t('carousel.catalogPoemDuplicateTitle')
+            : t('carousel.catalogPoemContentSaveError')
+    alert(msg)
+  } finally {
+    savingCatalogPoemContent.value = false
+  }
+}
+
 async function saveCurrentPoemCarousel() {
   const slug = loadedPoemSlug.value
   if (!slug || !showCarouselStaffSaveCard.value) return
@@ -205,6 +299,8 @@ async function saveCurrentPoemCarousel() {
         linesPerSlide: linesPerSlide.value,
         bodyFontSizeScale: bodyFontSizeScale.value,
         bodyLineHeight: bodyLineHeight.value,
+        bodyFontWeight: bodyFontWeight.value,
+        titleFontWeight: titleFontWeight.value,
         keywordInput: keywordInput.value,
       },
     })
@@ -278,6 +374,15 @@ function parseYearInput(s: string): number | null {
   return Number.isFinite(n) ? n : null
 }
 
+/** Cover slide “Written in …” — full phrase for free text; numeric-only strings use year template. */
+function coverWrittenLineFromInput(raw: string): string {
+  const s = raw.trim()
+  if (!s) return ''
+  const strictYear = parseStrictPoemWrittenYear(s)
+  if (strictYear != null) return t('carousel.coverWrittenYear', { year: strictYear })
+  return t('carousel.coverWrittenIn', { text: s })
+}
+
 function applyAuthorMetaFromApi(a: {
   nationality?: string | null
   birthYear?: number | null
@@ -303,9 +408,7 @@ function slidePropsFor(index: number) {
   const models = slideModels.value
   const model = models[index]
   if (!model) return null
-  const wy = parseYearInput(poemWrittenYear.value)
-  const writtenYearLine =
-    wy != null ? t('carousel.coverWrittenYear', { year: wy }) : ''
+  const writtenYearLine = coverWrittenLineFromInput(poemWrittenYear.value)
   const base = {
     theme: theme.value,
     title: title.value || t('carousel.untitled'),
@@ -322,6 +425,8 @@ function slidePropsFor(index: number) {
     bodyFontSizeScale: bodyFontSizeScale.value,
     bodyLineHeight: bodyLineHeight.value,
     fontFamily: carouselFontFamily.value,
+    bodyFontWeight: bodyFontWeight.value,
+    titleFontWeight: titleFontWeight.value,
   }
   const splitOpts = { linesPerSlide: slideSplitOpts.value.maxLinesPerSlide }
   if (model.kind === 'cover') {
@@ -419,6 +524,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   previewResizeObserver?.disconnect()
+  if (catalogPoemContentSavedHideTimer) clearTimeout(catalogPoemContentSavedHideTimer)
   if (currentPoemCarouselThumbsHideTimer) clearTimeout(currentPoemCarouselThumbsHideTimer)
   document.removeEventListener('click', closeKeywordsHelpOnDocumentClick)
   document.removeEventListener('fullscreenchange', syncPreviewFullscreenState)
@@ -510,7 +616,9 @@ async function loadFromSlug(slug: string) {
     }
     applyAuthorMetaFromApi(full.author)
     poemText.value = full.content
-    poemWrittenYear.value = full.writtenYear != null ? String(full.writtenYear) : ''
+    poemWrittenYear.value =
+      full.writtenPeriod?.trim() ||
+      (full.writtenYear != null ? String(full.writtenYear) : '')
     loadedPoemSubmittedByUserId.value = full.submittedByUserId ?? null
     const parsed = parsePoemCarouselSettings(full.carouselFontSettings)
     if (parsed) {
@@ -660,8 +768,27 @@ function onTouchEnd(e: TouchEvent) {
             </button>
           </div>
 
-          <div v-if="showManualPoemFields" class="mb-6 space-y-4 border-b border-edge-subtle pb-6">
-            <h4 class="font-serif text-sm font-semibold text-content">{{ t('carousel.sectionManualPoem') }}</h4>
+          <div v-if="showTitleAndPoemFields" class="mb-6 space-y-4 border-b border-edge-subtle pb-6">
+            <h4 class="font-serif text-sm font-semibold text-content">{{
+              showManualPoemFields ? t('carousel.sectionManualPoem') : t('carousel.sectionCatalogPoemEdit')
+            }}</h4>
+            <p v-if="canEditCatalogTitleAndPoem && !showManualPoemFields"
+              class="text-xs leading-relaxed text-content-muted">
+              {{ t('carousel.catalogPoemEditHint') }}
+            </p>
+            <div>
+              <label class="field-label" for="carousel-written-year">{{ t('carousel.fieldPoemWrittenYear') }}</label>
+              <input id="carousel-written-year" v-model="poemWrittenYear" type="text" inputmode="numeric" maxlength="12"
+                class="w-full max-w-xs rounded-xl border border-edge-subtle px-4 py-2.5 text-sm tabular-nums outline-none focus:border-gold-500"
+                :placeholder="t('carousel.phPoemWrittenYear')" autocomplete="off" />
+              <p class="mt-1 text-xs text-content-muted">{{ t('carousel.writtenYearHint') }}</p>
+            </div>
+            <div v-if="showManualPoemFields">
+              <label class="field-label" for="carousel-manual-author">{{ t('carousel.fieldAuthor') }}</label>
+              <input id="carousel-manual-author" v-model="author" type="text"
+                class="w-full rounded-xl border border-edge-subtle px-4 py-2.5 text-sm outline-none focus:border-gold-500"
+                :placeholder="t('carousel.phAuthor')" autocomplete="off" />
+            </div>
             <div>
               <label class="field-label" for="carousel-manual-title">{{ t('carousel.fieldTitle') }}</label>
               <input id="carousel-manual-title" v-model="title" type="text"
@@ -669,16 +796,24 @@ function onTouchEnd(e: TouchEvent) {
                 :placeholder="t('carousel.phTitle')" autocomplete="off" />
             </div>
             <div>
-              <label class="field-label" for="carousel-manual-author">{{ t('carousel.fieldAuthor') }}</label>
-              <input id="carousel-manual-author" v-model="author" type="text"
-                class="w-full rounded-xl border border-edge-subtle px-4 py-2.5 text-sm outline-none focus:border-gold-500"
-                :placeholder="t('carousel.phAuthor')" autocomplete="off" />
-            </div>
-            <div>
               <label class="field-label" for="carousel-manual-poem">{{ t('carousel.fieldPoem') }}</label>
               <textarea id="carousel-manual-poem" v-model="poemText" rows="12"
                 class="min-h-[12rem] w-full resize-y rounded-xl border border-edge-subtle px-4 py-2.5 font-serif text-sm leading-relaxed outline-none focus:border-gold-500"
                 :placeholder="t('carousel.phPoem')" spellcheck="true" />
+            </div>
+            <div v-if="canEditCatalogTitleAndPoem && loadedPoemSlug" class="flex flex-wrap items-center gap-3 pt-1">
+              <button type="button"
+                class="inline-flex items-center gap-2 rounded-xl border border-edge-strong bg-surface-subtle px-4 py-2 text-sm font-medium text-content transition hover:bg-surface-overlay disabled:opacity-50"
+                :disabled="savingCatalogPoemContent" @click="saveCatalogPoemContent">
+                <span v-if="savingCatalogPoemContent"
+                  class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-edge-subtle border-t-gold-500"
+                  aria-hidden="true" />
+                {{ savingCatalogPoemContent ? t('carousel.savingCatalogPoemContent') :
+                  t('carousel.saveCatalogPoemContent')
+                }}
+              </button>
+              <span v-if="catalogPoemContentJustSaved" class="text-sm font-medium text-emerald-600" role="status">{{
+                t('carousel.catalogPoemContentSaved') }}</span>
             </div>
           </div>
 
@@ -704,7 +839,7 @@ function onTouchEnd(e: TouchEvent) {
 
           <label class="field-label">{{ t('carousel.fieldTheme') }}</label>
           <div class="mb-4 flex flex-wrap gap-2">
-            <button v-for="th in (['minimal', 'dark', 'gradient', 'neon'] as CarouselTheme[])" :key="th" type="button"
+            <button v-for="th in CAROUSEL_THEME_IDS" :key="th" type="button"
               class="rounded-full border px-4 py-1.5 text-sm transition" :class="theme === th
                 ? 'border-gold-500 bg-gold-500 text-white'
                 : 'border-edge-subtle bg-surface-subtle text-content-secondary hover:border-edge'
@@ -768,6 +903,26 @@ function onTouchEnd(e: TouchEvent) {
               <span class="w-12 text-right text-sm tabular-nums text-content-secondary">{{ bodyLineHeight.toFixed(2)
               }}</span>
             </div>
+
+            <label class="field-label" for="carousel-body-font-weight">{{ t('carousel.fieldBodyFontWeight') }}</label>
+            <select id="carousel-body-font-weight"
+              class="mb-4 w-full rounded-xl border border-edge-subtle bg-surface-raised px-4 py-2.5 text-sm outline-none focus:border-gold-500"
+              :value="bodyFontWeight ?? ''"
+              @change="bodyFontWeight = ($event.target as HTMLSelectElement).value === '' ? null : Number(($event.target as HTMLSelectElement).value)">
+              <option value="">{{ t('carousel.fontWeightDefault') }}</option>
+              <option v-for="w in CAROUSEL_FONT_WEIGHT_PRESETS" :key="w" :value="w">{{ t(`carousel.fontWeight.${w}`)
+              }}</option>
+            </select>
+
+            <label class="field-label" for="carousel-title-font-weight">{{ t('carousel.fieldTitleFontWeight') }}</label>
+            <select id="carousel-title-font-weight"
+              class="mb-4 w-full rounded-xl border border-edge-subtle bg-surface-raised px-4 py-2.5 text-sm outline-none focus:border-gold-500"
+              :value="titleFontWeight ?? ''"
+              @change="titleFontWeight = ($event.target as HTMLSelectElement).value === '' ? null : Number(($event.target as HTMLSelectElement).value)">
+              <option value="">{{ t('carousel.fontWeightDefault') }}</option>
+              <option v-for="w in CAROUSEL_FONT_WEIGHT_PRESETS" :key="w" :value="w">{{ t(`carousel.fontWeight.${w}`)
+              }}</option>
+            </select>
           </div>
         </section>
 
@@ -893,12 +1048,34 @@ function onTouchEnd(e: TouchEvent) {
                 </div>
 
                 <label class="field-label">{{ t('carousel.fieldLineHeight') }}</label>
-                <div class="mb-4 flex items-center gap-3">
+                <div class="mb-3 flex items-center gap-3">
                   <input v-model.number="bodyLineHeight" type="range" min="1.15" max="2.25" step="0.05"
                     class="h-2 flex-1 cursor-pointer accent-gold-600" />
                   <span class="w-12 text-right text-sm tabular-nums text-content-secondary">{{ bodyLineHeight.toFixed(2)
                   }}</span>
                 </div>
+
+                <label class="field-label" for="carousel-fs-body-font-weight">{{ t('carousel.fieldBodyFontWeight')
+                }}</label>
+                <select id="carousel-fs-body-font-weight"
+                  class="mb-3 w-full rounded-xl border border-edge-subtle bg-surface-raised px-3 py-2 text-sm outline-none focus:border-gold-500"
+                  :value="bodyFontWeight ?? ''"
+                  @change="bodyFontWeight = ($event.target as HTMLSelectElement).value === '' ? null : Number(($event.target as HTMLSelectElement).value)">
+                  <option value="">{{ t('carousel.fontWeightDefault') }}</option>
+                  <option v-for="w in CAROUSEL_FONT_WEIGHT_PRESETS" :key="w" :value="w">{{ t(`carousel.fontWeight.${w}`)
+                  }}</option>
+                </select>
+
+                <label class="field-label" for="carousel-fs-title-font-weight">{{ t('carousel.fieldTitleFontWeight')
+                }}</label>
+                <select id="carousel-fs-title-font-weight"
+                  class="mb-4 w-full rounded-xl border border-edge-subtle bg-surface-raised px-3 py-2 text-sm outline-none focus:border-gold-500"
+                  :value="titleFontWeight ?? ''"
+                  @change="titleFontWeight = ($event.target as HTMLSelectElement).value === '' ? null : Number(($event.target as HTMLSelectElement).value)">
+                  <option value="">{{ t('carousel.fontWeightDefault') }}</option>
+                  <option v-for="w in CAROUSEL_FONT_WEIGHT_PRESETS" :key="w" :value="w">{{ t(`carousel.fontWeight.${w}`)
+                  }}</option>
+                </select>
 
               </div>
 
@@ -916,7 +1093,9 @@ function onTouchEnd(e: TouchEvent) {
                       transform: `translate(-50%, -50%) scale(${previewScale})`,
                     }">
                       <Transition name="carousel-preview" mode="out-in">
-                        <div :key="`${currentIndex}-${theme}-${title}-${poemText.length}`" class="h-full w-full">
+                        <div
+                          :key="`${currentIndex}-${theme}-${title}-${poemText.length}-${bodyFontWeight}-${titleFontWeight}`"
+                          class="h-full w-full">
                           <CarouselSlide v-bind="currentSlideProps" />
                         </div>
                       </Transition>

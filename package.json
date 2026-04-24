@@ -26,6 +26,7 @@
     "db:ro-diacritics": "tsx scripts/add-ro-diacritics.ts",
     "db:studio": "prisma studio",
     "write:lexicon": "tsx scripts/import-write-lexicon.ts",
+    "write:dom-definitions": "tsx scripts/apply-dom-definitions.ts",
     "write:lexicon:from-sqlite": "tsx scripts/import-lexicon-from-sqlite.ts",
     "poems:import": "tsx scripts/import-poems.ts",
     "poems:import-ro": "tsx scripts/import-romanianvoice.ts",

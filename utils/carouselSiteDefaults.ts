@@ -21,13 +21,26 @@ export const CAROUSEL_SITE_FONT_KEYS = [
 ] as const
 
 export const carouselSiteDefaultsSchema = z.object({
-  theme: z.enum(['minimal', 'dark', 'gradient', 'neon']),
+  theme: z.enum([
+    'minimal',
+    'dark',
+    'gradient',
+    'neon',
+    'parchment',
+    'ocean',
+    'sunset',
+    'editorial',
+    'forest',
+    'cosmos',
+  ]),
   carouselFontKey: z.enum(CAROUSEL_SITE_FONT_KEYS),
   /** CSS `font-family` stack; optional on input — server fills from `carouselFontKey` before DB write. */
   carouselFontFamily: z.string().min(1).max(2000).optional(),
   linesPerSlide: z.number().int().min(4).max(16),
   bodyFontSizeScale: z.number().min(0.7).max(2),
   bodyLineHeight: z.number().min(1.15).max(2.25),
+  bodyFontWeight: z.number().int().min(100).max(900).nullable().optional(),
+  titleFontWeight: z.number().int().min(100).max(900).nullable().optional(),
   /** Last-slide CTA; empty means client may show i18n default in preview. */
   ctaText: z.string().max(500),
   keywordInput: z.string().max(2000),
@@ -48,6 +61,8 @@ export function getDefaultCarouselSiteDefaults(): CarouselSiteDefaultsPayload {
     linesPerSlide: 8,
     bodyFontSizeScale: 1.5,
     bodyLineHeight: 1.65,
+    bodyFontWeight: null,
+    titleFontWeight: null,
     ctaText: '',
     keywordInput: '',
   }
