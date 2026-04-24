@@ -182,6 +182,7 @@ const defText = ref<string | null>(null)
 const defSource = ref<'db' | 'wikipedia' | 'wiktionary' | 'none' | null>(null)
 
 let defEscHandler: ((e: KeyboardEvent) => void) | null = null
+let defOutsideHandler: ((e: PointerEvent) => void) | null = null
 
 function closeWordDefinition() {
   defPop.value = null
@@ -191,6 +192,10 @@ function closeWordDefinition() {
   if (defEscHandler) {
     document.removeEventListener('keydown', defEscHandler)
     defEscHandler = null
+  }
+  if (defOutsideHandler) {
+    document.removeEventListener('pointerdown', defOutsideHandler, true)
+    defOutsideHandler = null
   }
 }
 
@@ -222,6 +227,16 @@ async function openWordDefinition(hit: Hit, ev: MouseEvent) {
   }
   document.addEventListener('keydown', defEscHandler)
 
+  if (defOutsideHandler) document.removeEventListener('pointerdown', defOutsideHandler, true)
+  defOutsideHandler = (e: PointerEvent) => {
+    const pop = document.getElementById('word-def-tooltip')
+    const target = e.target as Node | null
+    if (!pop || !target) return
+    if (!pop.contains(target)) closeWordDefinition()
+  }
+  // Capture so we close even if the click is handled elsewhere.
+  document.addEventListener('pointerdown', defOutsideHandler, true)
+
   try {
     const res = await $fetch<{
       word: string
@@ -248,13 +263,13 @@ function addWordFromDefinitionPopover() {
 
 onUnmounted(() => {
   if (defEscHandler) document.removeEventListener('keydown', defEscHandler)
+  if (defOutsideHandler) document.removeEventListener('pointerdown', defOutsideHandler, true)
 })
 
 // ── Publish panel ──────────────────────────────────────────────────────────
 const { user, isLoggedIn } = useAuth()
 
 const publishOpen = ref(false)
-const saveOpen = ref(false)
 const publishForm = reactive({
   title: '',
   authorName: '',
@@ -319,21 +334,16 @@ function closePublish() {
   publishOpen.value = false
 }
 
-async function openSave() {
+async function saveNowDirect() {
+  if (saveLoading.value) return
   if (!isLoggedIn.value) {
     saveMsg.value = { ok: false, text: t('write.loginRequired') }
-    saveOpen.value = true
     return
   }
-  saveMsg.value = null
-  // Always reflect the latest editor state when opening the modal.
+  // Always reflect the latest editor state when saving.
   publishForm.title = lyrics.title || ''
   publishForm.authorName = user.value?.name ?? user.value?.email?.split('@')[0] ?? ''
-  saveOpen.value = true
-}
-
-function closeSave() {
-  saveOpen.value = false
+  await submitSave()
 }
 
 function togglePublishTag(id: string) {
@@ -569,14 +579,14 @@ onUnmounted(() => {
 <template>
   <div class="flex min-w-0 flex-1 flex-col" aria-label="Lucru: dicționar, versuri">
     <WriteToolsBar />
-    <div ref="splitContainerRef"
-      class="flex min-h-0 min-w-0 flex-1 flex-col divide-y divide-edge-subtle lg:flex-row lg:divide-y-0 pb-8">
+    <div ref="splitContainerRef" class="flex min-h-0 min-w-0 flex-1 flex-col lg:flex-row pb-8">
       <!-- Stânga (desktop): căutare + rezultate; pe mobil order: versuri → căutare → rezultate (contents + order) -->
       <div
         class="contents min-h-0 min-w-0 lg:order-1 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col lg:gap-4 sm:pr-4 sm:pb-6">
         <!-- Bară căutare -->
-        <div class="order-2 shrink-0 p-3 sm:p-4 lg:order-none lg:p-0" aria-label="Căutare dicționar">
-          <div class="shrink-0 rounded-2xl border border-edge-subtle bg-surface-raised p-4 shadow-sm sm:p-5">
+        <div class="order-2 shrink-0 lg:order-none" aria-label="Căutare dicționar">
+          <div
+            class="shrink-0 rounded-xl border border-edge-subtle bg-surface-raised p-2 my-2 sm:my-0 shadow-sm sm:p-4">
             <div class="flex flex-wrap gap-2">
               <button v-for="m in modes" :key="m.id" type="button" :title="m.hint"
                 class="rounded-lg border px-3 py-1.5 text-xs font-medium transition" :class="mode === m.id
@@ -632,26 +642,24 @@ onUnmounted(() => {
         </div>
 
         <!-- Rezultate dicționar -->
-        <div
-          class="order-3 flex min-h-0 min-w-0 flex-1 flex-col p-3 pt-0 sm:p-4 sm:pt-0 lg:order-none lg:min-h-0 lg:flex-none lg:p-0"
+        <div class="order-3 flex min-h-0 min-w-0 flex-1 flex-col lg:order-none lg:min-h-0 lg:flex-none lg:p-0"
           aria-label="Rezultate dicționar">
           <div
-            class="flex min-w-0 flex-col rounded-2xl border border-edge-subtle bg-surface-raised p-4 shadow-sm sm:p-5">
+            class="flex min-w-0 flex-col rounded-xl border border-edge-subtle bg-surface-raised p-2 shadow-sm sm:p-4">
             <p class="mb-2 text-xs font-medium uppercase tracking-wide text-content-muted">
               Rezultate
               <span v-if="loading" class="font-normal text-content-soft">— se încarcă…</span>
             </p>
-            <ul v-if="results.length" class="flex flex-wrap content-start gap-2 rounded-xl p-2">
+            <ul v-if="results.length" class="flex flex-wrap content-start gap-2 rounded-xl">
               <li v-for="r in resultsSortedByWordLength" :key="r.id" class="min-w-0 max-w-full">
                 <div
-                  class="group relative inline-flex max-w-full min-w-0 items-center gap-0.5 rounded-lg border border-edge-subtle bg-surface-subtle/50 p-1 transition hover:border-blue-200 hover:bg-blue-50/80">
-                  <button type="button"
-                    class="flex min-w-0 max-w-[12rem] items-center justify-center rounded-md px-1.5 py-0.5"
+                  class="group relative inline-flex max-w-full min-w-0 items-center gap-0.5 rounded-lg bg-surface-subtle/50 p-1 transition hover:border-blue-200 hover:bg-blue-50/80">
+                  <button type="button" class="flex min-w-0 max-w-[12rem] items-center justify-center rounded-md"
                     :title="'Definiție: ' + r.word" @click="openWordDefinition(r, $event)">
                     <span class="min-w-0 truncate text-sm font-semibold leading-tight text-content">{{ r.word }}</span>
                   </button>
                   <button type="button"
-                    class="shrink-0 rounded-md border border-edge-subtle bg-surface-raised px-1.5 py-0.5 text-sm font-semibold leading-none text-blue-700 shadow-sm hover:border-blue-400 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-40"
+                    class="shrink-0 rounded-md bg-surface-raised p-1 text-sm font-semibold leading-none text-blue-700 shadow-sm hover:border-blue-400 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-40"
                     :title="projects.isWordSaved(r.word)
                       ? 'Deja în cuvinte salvate'
                       : 'Salvează cuvântul în proiect'
@@ -676,7 +684,7 @@ onUnmounted(() => {
         @mousedown="startSplitResize" @keydown="onSplitKeydown">
         <div class="absolute inset-y-0 -left-2 -right-2 z-[1] cursor-col-resize" aria-hidden="true" />
         <div
-          class="relative z-0 flex w-[1.625rem] flex-col items-center justify-center border border-edge-subtle bg-surface-subtle/90 px-0.5 py-3 shadow-sm transition-colors group-hover:border-brand/50 group-hover:bg-brand-soft/50 group-focus-visible:border-brand group-focus-visible:ring-2 group-focus-visible:ring-brand/30">
+          class="relative z-0 flex w-[1.625rem] flex-col items-center justify-start border border-edge-subtle bg-surface-subtle/90 px-0.5 py-3 shadow-sm transition-colors group-hover:border-brand/50 group-hover:bg-brand-soft/50 group-focus-visible:border-brand group-focus-visible:ring-2 group-focus-visible:ring-brand/30">
           <span
             class="pointer-events-none flex items-center gap-px text-content-muted group-hover:text-brand group-focus-visible:text-brand"
             aria-hidden="true">
@@ -692,17 +700,18 @@ onUnmounted(() => {
         <ClientOnly>
           <WriteLyricsEditor />
           <template #fallback>
-            <div class="h-48 animate-pulse rounded-2xl bg-surface-subtle" aria-hidden="true" />
+            <div class="h-48 animate-pulse rounded-xl bg-surface-subtle" aria-hidden="true" />
           </template>
         </ClientOnly>
-        <div class="mt-3 grid shrink-0 grid-cols-1 gap-2 sm:grid-cols-2">
-          <button type="button" class="ds-btn-secondary w-full gap-2 shadow-ds-card" @click="openSave">
+        <div class="mt-2 shrink-0 flex gap-2 sm:grid-cols-2">
+          <button type="button" class="ds-btn-secondary w-full gap-2 shadow-ds-card" :disabled="saveLoading"
+            @click="saveNowDirect">
             <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round"
                 d="M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z" />
               <path stroke-linecap="round" stroke-linejoin="round" d="M9 9h6M9 13h6M9 17h4" />
             </svg>
-            {{ t('write.saveBtn') }}
+            {{ saveLoading ? t('write.savingDraft') : t('write.saveBtn') }}
           </button>
 
           <button type="button" class="ds-btn-primary w-full gap-2 shadow-ds-card" @click="openPublish">
@@ -715,116 +724,6 @@ onUnmounted(() => {
         </div>
       </section>
     </div>
-
-    <Teleport to="body">
-      <Transition name="publish-panel">
-        <div v-if="saveOpen" class="fixed inset-0 z-[100] flex items-end justify-center sm:items-center sm:p-4">
-          <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closeSave" />
-          <div
-            class="relative z-10 w-full max-w-lg rounded-t-2xl border border-edge-subtle bg-surface-raised shadow-ds-popover sm:rounded-ds-xl">
-            <div class="flex items-center justify-between border-b border-edge-subtle px-6 py-4">
-              <h2 class="text-base font-semibold text-content">{{ t('write.saveTitle') }}</h2>
-              <button type="button"
-                class="rounded-lg p-1.5 text-content-soft hover:bg-surface-subtle hover:text-content-secondary"
-                @click="closeSave">
-                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <div class="max-h-[80vh] overflow-y-auto px-6 py-5">
-              <div v-if="!isLoggedIn" class="py-4 text-center">
-                <p class="mb-4 text-sm text-content-muted">{{ t('write.loginRequired') }}</p>
-                <NuxtLink to="/login?redirect=/write" class="ds-btn-primary inline-flex" @click="closeSave">
-                  {{ t('auth.signIn') }}
-                </NuxtLink>
-              </div>
-
-              <div v-else-if="saveMsg?.ok" class="py-4 text-center">
-                <div
-                  class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft/40 ring-1 ring-brand/25">
-                  <svg class="h-6 w-6 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                    stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                <p class="mb-4 font-medium text-content">{{ saveMsg.text }}</p>
-                <div class="flex flex-wrap justify-center gap-3">
-                  <button type="button" class="ds-btn-primary" @click="closeSave">
-                    {{ t('write.done') }}
-                  </button>
-                </div>
-              </div>
-
-              <form v-else class="space-y-4" @submit.prevent="submitSave">
-                <p class="text-sm text-content-muted">{{ t('write.saveDesc') }}</p>
-
-                <div>
-                  <label class="mb-1.5 block text-xs font-medium uppercase tracking-widest text-content-muted">
-                    {{ t('write.fieldTitle') }} *
-                  </label>
-                  <input v-model="publishForm.title" type="text" :placeholder="t('write.fieldTitlePlaceholder')"
-                    required maxlength="500" class="ds-input px-4 py-2.5" />
-                </div>
-
-                <div>
-                  <label class="mb-1.5 block text-xs font-medium uppercase tracking-widest text-content-muted">
-                    {{ t('write.fieldAuthorName') }} *
-                  </label>
-                  <input v-model="publishForm.authorName" type="text" required maxlength="80"
-                    class="ds-input px-4 py-2.5" />
-                  <p class="mt-1 text-xs text-content-soft">{{ t('write.fieldAuthorNameHint') }}</p>
-                </div>
-
-                <div>
-                  <label class="mb-1.5 block text-xs font-medium uppercase tracking-widest text-content-muted">
-                    {{ t('write.fieldLanguage') }}
-                  </label>
-                  <select v-model="publishForm.language" class="ds-input px-4 py-2.5">
-                    <option value="ro">Română</option>
-                    <option value="en">English</option>
-                    <option value="fr">Français</option>
-                    <option value="de">Deutsch</option>
-                    <option value="es">Español</option>
-                  </select>
-                </div>
-
-                <div v-if="allTags.length">
-                  <label class="mb-2 block text-xs font-medium uppercase tracking-widest text-content-muted">
-                    {{ t('write.fieldTags') }}
-                  </label>
-                  <div class="flex flex-wrap gap-1.5">
-                    <button v-for="tag in allTags" :key="tag.id" type="button"
-                      :class="publishForm.tagIds.includes(tag.id)
-                        ? 'border-brand bg-brand-soft/35 text-brand shadow-sm ring-1 ring-brand/20'
-                        : 'border-edge-subtle bg-surface-subtle text-content-muted hover:border-edge hover:bg-surface-raised'"
-                      class="rounded-full border px-3 py-1 text-xs font-medium transition"
-                      @click="togglePublishTag(tag.id)">
-                      {{ tag.name }}
-                    </button>
-                  </div>
-                </div>
-
-                <p v-if="saveMsg && !saveMsg.ok"
-                  class="rounded-ds-md border border-danger/25 bg-danger-soft px-4 py-2.5 text-sm text-danger">
-                  {{ saveMsg.text }}
-                </p>
-
-                <div class="flex flex-wrap gap-3 pt-1">
-                  <button type="submit" :disabled="saveLoading" class="ds-btn-primary px-5">
-                    {{ saveLoading ? t('write.savingDraft') : t('write.saveBtn') }}
-                  </button>
-                  <button type="button" class="ds-btn-secondary px-5" @click="closeSave">
-                    {{ t('write.cancel') }}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      </Transition>
-    </Teleport>
 
     <Teleport to="body">
       <Transition name="publish-panel">
@@ -941,49 +840,55 @@ onUnmounted(() => {
       </Transition>
     </Teleport>
 
-    <Teleport to="body">
-      <div v-if="defPop" class="fixed inset-0 z-[90]">
-        <div class="absolute inset-0 bg-black/30 backdrop-blur-[1px]" aria-hidden="true" @click="closeWordDefinition" />
-        <div
-          class="absolute z-[91] max-h-[min(22rem,70vh)] overflow-y-auto rounded-2xl border border-edge-subtle bg-surface-raised p-4 shadow-2xl ring-1 ring-black/10"
-          :style="{
-            top: defPop.top + 'px',
-            left: defPop.left + 'px',
-            width: defPop.maxW + 'px',
-          }" role="dialog" aria-modal="true" aria-labelledby="word-def-popover-title" @click.stop>
-          <h2 id="word-def-popover-title" class="font-display text-base font-semibold text-content">
-            {{ defPop.hit.word }}
-          </h2>
-          <div class="mt-3 text-sm leading-relaxed text-content-secondary">
-            <p v-if="defLoading" class="text-content-muted">Se încarcă definiția…</p>
-            <template v-else>
-              <p v-if="defText" class="whitespace-pre-wrap">{{ defText }}</p>
-              <p v-else class="text-content-muted">
-                Nu există definiție în dicționar și nu s-a găsit nici pe Wikipedia (RO), nici pe Wiktionary (RO).
-              </p>
-            </template>
-          </div>
-          <p v-if="!defLoading && defSource === 'wikipedia'" class="mt-2 text-[11px] text-content-soft">
-            Sursă: Wikipedia (limba română) — salvată în baza de date.
-          </p>
-          <p v-if="!defLoading && defSource === 'wiktionary'" class="mt-2 text-[11px] text-content-soft">
-            Sursă: Wiktionary (limba română) — salvată în baza de date.
-          </p>
-          <div class="mt-4 flex flex-wrap gap-2">
-            <button type="button"
-              class="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
-              @click="addWordFromDefinitionPopover">
-              Adaugă la versuri
-            </button>
-            <button type="button"
-              class="rounded-lg border border-edge-subtle bg-surface-raised px-3 py-2 text-sm font-medium text-content-secondary hover:bg-surface-subtle"
-              @click="closeWordDefinition">
-              Închide
-            </button>
-          </div>
-        </div>
+    <!-- Tooltip: definition next to clicked word (no backdrop) -->
+    <div
+      v-if="defPop"
+      id="word-def-tooltip"
+      class="fixed z-[90] max-h-[min(22rem,70vh)] overflow-y-auto rounded-xl border border-edge-subtle bg-surface-raised p-4 shadow-2xl ring-1 ring-black/10"
+      :style="{
+        top: defPop.top + 'px',
+        left: defPop.left + 'px',
+        width: defPop.maxW + 'px',
+      }"
+      role="tooltip"
+      aria-labelledby="word-def-tooltip-title"
+    >
+      <div class="flex items-start justify-between gap-3">
+        <h2 id="word-def-tooltip-title" class="font-display text-base font-semibold text-content">
+          {{ defPop.hit.word }}
+        </h2>
+        <button
+          type="button"
+          class="-mt-1 -mr-1 rounded-lg p-1.5 text-content-soft hover:bg-surface-subtle hover:text-content-secondary"
+          aria-label="Închide"
+          @click="closeWordDefinition"
+        >
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
       </div>
-    </Teleport>
+
+      <div class="mt-3 text-sm leading-relaxed text-content-secondary">
+        <p v-if="defLoading" class="text-content-muted">Se încarcă definiția…</p>
+        <template v-else>
+          <p v-if="defText" class="whitespace-pre-wrap">{{ defText }}</p>
+          <p v-else class="text-content-muted">
+            Nu există definiție în dicționar și nu s-a găsit nici pe Wikipedia (RO), nici pe Wiktionary (RO).
+          </p>
+        </template>
+      </div>
+
+      <div class="mt-4 flex flex-wrap gap-2">
+        <button
+          type="button"
+          class="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
+          @click="addWordFromDefinitionPopover"
+        >
+          Adaugă la versuri
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 

@@ -162,7 +162,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="shrink-0 py-2 backdrop-blur-sm" aria-label="Instrumente">
+  <div class="shrink-0 py-4 backdrop-blur-sm" aria-label="Instrumente">
     <div class="flex w-full min-w-0 items-center justify-between gap-3">
       <div ref="rootRef" class="relative min-w-0">
         <button type="button"
@@ -187,7 +187,7 @@ onUnmounted(() => {
           leave-active-class="transition duration-100 ease-in" leave-from-class="opacity-100 translate-y-0 scale-100"
           leave-to-class="opacity-0 -translate-y-0.5 scale-[0.99]">
           <div v-show="dropdownOpen"
-            class="absolute left-0 z-50 mt-2 w-[min(100vw-2rem,20rem)] origin-top overflow-hidden rounded-2xl border border-edge-subtle/90 bg-surface-overlay/95 shadow-xl shadow-black/10 ring-1 ring-black/[0.04] backdrop-blur-md"
+            class="absolute left-0 z-50 mt-2 w-[min(100vw-2rem,20rem)] origin-top overflow-hidden rounded-xl border border-edge-subtle/90 bg-surface-overlay/95 shadow-xl shadow-black/10 ring-1 ring-black/[0.04] backdrop-blur-md"
             role="listbox" @click.stop>
             <div
               class="border-b border-edge-subtle/90 bg-gradient-to-b from-surface-subtle/80 to-surface-raised px-3 pb-3 pt-3">
@@ -263,7 +263,7 @@ onUnmounted(() => {
       <div class="absolute inset-0 bg-black/45 backdrop-blur-[2px]" aria-hidden="true" @click="closeDeleteModal" />
       <div role="alertdialog" aria-modal="true" aria-labelledby="delete-project-title"
         aria-describedby="delete-project-desc"
-        class="relative z-10 w-full max-w-md rounded-2xl border border-edge-subtle bg-surface-raised p-5 shadow-2xl ring-1 ring-black/5"
+        class="relative z-10 w-full max-w-md rounded-xl border border-edge-subtle bg-surface-raised p-5 shadow-2xl ring-1 ring-black/5"
         @click.stop>
         <h2 id="delete-project-title" class="font-display text-lg font-semibold text-content">Ștergi proiectul?</h2>
         <p id="delete-project-desc" class="mt-2 text-sm text-content-muted">
@@ -288,7 +288,7 @@ onUnmounted(() => {
     <div v-if="newProjectModalOpen" class="fixed inset-0 z-[200] flex items-center justify-center p-4">
       <div class="absolute inset-0 bg-black/45 backdrop-blur-[2px]" aria-hidden="true" @click="closeNewProjectModal" />
       <div role="dialog" aria-modal="true" aria-labelledby="new-project-title"
-        class="relative z-10 w-full max-w-md rounded-2xl border border-edge-subtle bg-surface-raised p-5 shadow-2xl ring-1 ring-black/5"
+        class="relative z-10 w-full max-w-md rounded-xl border border-edge-subtle bg-surface-raised p-5 shadow-2xl ring-1 ring-black/5"
         @click.stop>
         <h2 id="new-project-title" class="font-display text-lg font-semibold text-content">Proiect nou</h2>
         <p class="mt-1 text-sm text-content-muted">Alege un nume pentru proiect. Îl poți schimba oricând din meniu.</p>

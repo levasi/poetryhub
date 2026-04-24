@@ -272,7 +272,7 @@ function formatDate(iso: string) {
                     <p class="mt-1 text-sm text-content-secondary">
                       <span v-if="displayNationality(authorPage.author.nationality)">{{
                         displayNationality(authorPage.author.nationality)
-                        }}</span>
+                      }}</span>
                       <span
                         v-if="displayNationality(authorPage.author.nationality) && authorYearsLabel(authorPage.author)">
                         · </span>
@@ -342,7 +342,7 @@ function formatDate(iso: string) {
             <!-- Default feed: For you / Featured -->
             <template v-else>
               <div v-if="!dbNoticeDismissed"
-                class="mb-6 flex items-start justify-between gap-4 rounded-2xl border border-edge-subtle bg-surface-subtle/50 p-4 text-sm text-content-secondary">
+                class="mb-6 flex items-start justify-between gap-4 rounded-xl border border-edge-subtle bg-surface-subtle/50 p-4 text-sm text-content-secondary">
                 <p class="min-w-0">
                   {{ t('home.dbNotice') }}
                 </p>
@@ -440,12 +440,9 @@ function formatDate(iso: string) {
               </h2>
               <div class="flex flex-col border-t border-edge-subtle">
                 <template v-if="recent.length">
-                  <NuxtLink
-                    v-for="poem in recent.slice(0, 6)"
-                    :key="poem.id"
+                  <NuxtLink v-for="poem in recent.slice(0, 6)" :key="poem.id"
                     :to="{ path: `/authors/${poem.author.slug}`, query: { poem: poem.slug } }"
-                    class="group border-b border-edge-subtle py-4 first:pt-3"
-                  >
+                    class="group border-b border-edge-subtle py-4 first:pt-3">
                     <p
                       class="font-serif text-[15px] font-semibold leading-snug text-content group-hover:text-brand line-clamp-2">
                       {{ poem.title }}

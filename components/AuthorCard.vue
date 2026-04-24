@@ -2,15 +2,15 @@
 import { displayNationality } from '~/utils/nationality'
 
 interface Author {
-  id:          string
-  name:        string
-  slug:        string
-  bio:         string | null
+  id: string
+  name: string
+  slug: string
+  bio: string | null
   nationality: string | null
-  birthYear:   number | null
-  deathYear:   number | null
-  imageUrl:    string | null
-  _count?:     { poems: number }
+  birthYear: number | null
+  deathYear: number | null
+  imageUrl: string | null
+  _count?: { poems: number }
 }
 
 const props = defineProps<{ author: Author }>()
@@ -36,18 +36,12 @@ const nationalityLabel = computed(() => displayNationality(props.author.national
 </script>
 
 <template>
-  <NuxtLink
-    :to="`/authors/${author.slug}`"
-    class="group flex items-start gap-4 rounded-2xl border border-edge-subtle bg-surface-raised p-5 shadow-ds-card transition-all hover:border-brand/40 hover:shadow-ds-card-hover"
-  >
+  <NuxtLink :to="`/authors/${author.slug}`"
+    class="group flex items-start gap-4 rounded-xl border border-edge-subtle bg-surface-raised p-5 shadow-ds-card transition-all hover:border-brand/40 hover:shadow-ds-card-hover">
     <!-- Avatar -->
     <div class="shrink-0">
-      <img
-        :src="avatarSrc"
-        :alt="author.name"
-        loading="lazy"
-        class="h-14 w-14 rounded-full object-cover ring-2 ring-edge-subtle group-hover:ring-brand/40"
-      />
+      <img :src="avatarSrc" :alt="author.name" loading="lazy"
+        class="h-14 w-14 rounded-full object-cover ring-2 ring-edge-subtle group-hover:ring-brand/40" />
     </div>
 
     <!-- Info -->

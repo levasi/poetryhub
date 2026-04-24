@@ -756,7 +756,7 @@ function onTouchEnd(e: TouchEvent) {
     <div class="grid grid-cols-1 gap-10 md:grid-cols-7 md:items-start md:gap-8 lg:gap-10">
       <!-- Left (4 columns): Controls -->
       <div class="min-w-0 space-y-6 md:col-span-4">
-        <section class="rounded-2xl border border-edge-subtle bg-surface-raised p-6 shadow-ds-card">
+        <section class="rounded-xl border border-edge-subtle bg-surface-raised p-6 shadow-ds-card">
           <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
             <h3 class="min-w-0 flex-1 font-serif text-base font-semibold text-content">
               {{ t('carousel.sectionInstagramPostSettings') }}
@@ -771,7 +771,7 @@ function onTouchEnd(e: TouchEvent) {
           <div v-if="showTitleAndPoemFields" class="mb-6 space-y-4 border-b border-edge-subtle pb-6">
             <h4 class="font-serif text-sm font-semibold text-content">{{
               showManualPoemFields ? t('carousel.sectionManualPoem') : t('carousel.sectionCatalogPoemEdit')
-            }}</h4>
+              }}</h4>
             <p v-if="canEditCatalogTitleAndPoem && !showManualPoemFields"
               class="text-xs leading-relaxed text-content-muted">
               {{ t('carousel.catalogPoemEditHint') }}
@@ -851,7 +851,7 @@ function onTouchEnd(e: TouchEvent) {
           <div ref="keywordsHelpWrapRef" class="relative mb-1">
             <div class="flex items-baseline gap-1.5">
               <label class="field-label mb-0 flex-1" for="carousel-keyword-input">{{ t('carousel.fieldKeywords')
-                }}</label>
+              }}</label>
               <button id="carousel-keywords-help-trigger" type="button"
                 class="inline-flex shrink-0 rounded-full p-0.5 text-content-soft transition hover:bg-surface-subtle hover:text-content-secondary"
                 :aria-expanded="keywordsHelpOpen" aria-controls="carousel-keywords-help-panel"
@@ -893,7 +893,7 @@ function onTouchEnd(e: TouchEvent) {
                 class="h-2 flex-1 cursor-pointer accent-gold-600" />
               <span class="w-12 text-right text-sm tabular-nums text-content-secondary">{{ Math.round(bodyFontSizeScale
                 * 100)
-              }}%</span>
+                }}%</span>
             </div>
 
             <label class="field-label">{{ t('carousel.fieldLineHeight') }}</label>
@@ -901,7 +901,7 @@ function onTouchEnd(e: TouchEvent) {
               <input v-model.number="bodyLineHeight" type="range" min="1.15" max="2.25" step="0.05"
                 class="h-2 flex-1 cursor-pointer accent-gold-600" />
               <span class="w-12 text-right text-sm tabular-nums text-content-secondary">{{ bodyLineHeight.toFixed(2)
-              }}</span>
+                }}</span>
             </div>
 
             <label class="field-label" for="carousel-body-font-weight">{{ t('carousel.fieldBodyFontWeight') }}</label>
@@ -911,7 +911,7 @@ function onTouchEnd(e: TouchEvent) {
               @change="bodyFontWeight = ($event.target as HTMLSelectElement).value === '' ? null : Number(($event.target as HTMLSelectElement).value)">
               <option value="">{{ t('carousel.fontWeightDefault') }}</option>
               <option v-for="w in CAROUSEL_FONT_WEIGHT_PRESETS" :key="w" :value="w">{{ t(`carousel.fontWeight.${w}`)
-              }}</option>
+                }}</option>
             </select>
 
             <label class="field-label" for="carousel-title-font-weight">{{ t('carousel.fieldTitleFontWeight') }}</label>
@@ -921,12 +921,12 @@ function onTouchEnd(e: TouchEvent) {
               @change="titleFontWeight = ($event.target as HTMLSelectElement).value === '' ? null : Number(($event.target as HTMLSelectElement).value)">
               <option value="">{{ t('carousel.fontWeightDefault') }}</option>
               <option v-for="w in CAROUSEL_FONT_WEIGHT_PRESETS" :key="w" :value="w">{{ t(`carousel.fontWeight.${w}`)
-              }}</option>
+                }}</option>
             </select>
           </div>
         </section>
 
-        <section class="rounded-2xl border border-edge-subtle bg-surface-overlay p-6 text-content shadow-ds-card">
+        <section class="rounded-xl border border-edge-subtle bg-surface-overlay p-6 text-content shadow-ds-card">
           <h2 class="mb-3 font-serif text-lg font-semibold">
             {{ t('carousel.sectionExport') }}
           </h2>
@@ -952,7 +952,7 @@ function onTouchEnd(e: TouchEvent) {
           </div>
         </section>
 
-        <section class="rounded-2xl border border-edge-subtle bg-surface-raised p-6 shadow-ds-card">
+        <section class="rounded-xl border border-edge-subtle bg-surface-raised p-6 shadow-ds-card">
           <div class="flex items-center justify-between gap-2">
             <h2 class="font-serif text-lg font-semibold text-content">
               {{ t('carousel.sectionCaption') }}
@@ -1044,7 +1044,7 @@ function onTouchEnd(e: TouchEvent) {
                     class="h-2 flex-1 cursor-pointer accent-gold-600" />
                   <span class="w-12 text-right text-sm tabular-nums text-content-secondary">{{
                     Math.round(bodyFontSizeScale * 100)
-                  }}%</span>
+                    }}%</span>
                 </div>
 
                 <label class="field-label">{{ t('carousel.fieldLineHeight') }}</label>
@@ -1052,29 +1052,29 @@ function onTouchEnd(e: TouchEvent) {
                   <input v-model.number="bodyLineHeight" type="range" min="1.15" max="2.25" step="0.05"
                     class="h-2 flex-1 cursor-pointer accent-gold-600" />
                   <span class="w-12 text-right text-sm tabular-nums text-content-secondary">{{ bodyLineHeight.toFixed(2)
-                  }}</span>
+                    }}</span>
                 </div>
 
                 <label class="field-label" for="carousel-fs-body-font-weight">{{ t('carousel.fieldBodyFontWeight')
-                }}</label>
+                  }}</label>
                 <select id="carousel-fs-body-font-weight"
                   class="mb-3 w-full rounded-xl border border-edge-subtle bg-surface-raised px-3 py-2 text-sm outline-none focus:border-gold-500"
                   :value="bodyFontWeight ?? ''"
                   @change="bodyFontWeight = ($event.target as HTMLSelectElement).value === '' ? null : Number(($event.target as HTMLSelectElement).value)">
                   <option value="">{{ t('carousel.fontWeightDefault') }}</option>
                   <option v-for="w in CAROUSEL_FONT_WEIGHT_PRESETS" :key="w" :value="w">{{ t(`carousel.fontWeight.${w}`)
-                  }}</option>
+                    }}</option>
                 </select>
 
                 <label class="field-label" for="carousel-fs-title-font-weight">{{ t('carousel.fieldTitleFontWeight')
-                }}</label>
+                  }}</label>
                 <select id="carousel-fs-title-font-weight"
                   class="mb-4 w-full rounded-xl border border-edge-subtle bg-surface-raised px-3 py-2 text-sm outline-none focus:border-gold-500"
                   :value="titleFontWeight ?? ''"
                   @change="titleFontWeight = ($event.target as HTMLSelectElement).value === '' ? null : Number(($event.target as HTMLSelectElement).value)">
                   <option value="">{{ t('carousel.fontWeightDefault') }}</option>
                   <option v-for="w in CAROUSEL_FONT_WEIGHT_PRESETS" :key="w" :value="w">{{ t(`carousel.fontWeight.${w}`)
-                  }}</option>
+                    }}</option>
                 </select>
 
               </div>

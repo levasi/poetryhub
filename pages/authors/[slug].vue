@@ -595,8 +595,7 @@ async function submitNewPoemFromModal() {
       </svg>
     </button>
 
-    <div v-if="author" class="w-full min-w-0 pt-2 md:pt-4"
-      :class="authorEditMode ? 'pb-32 md:pb-36' : 'pb-20'">
+    <div v-if="author" class="w-full min-w-0 pt-2 md:pt-4" :class="authorEditMode ? 'pb-32 md:pb-36' : 'pb-20'">
       <!-- Author profile -->
       <div class="mb-12 flex flex-col items-start gap-6 sm:flex-row">
         <div class="shrink-0">
@@ -647,7 +646,8 @@ async function submitNewPoemFromModal() {
                   class="w-full rounded-lg border border-edge-subtle bg-surface-page px-3 py-2 text-sm text-content outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
                   :placeholder="t('authors.portraitUrlPlaceholder')" autocomplete="off" spellcheck="false" />
               </div>
-              <div v-if="canUploadPortraitAsAdmin" class="rounded-xl border border-edge-subtle bg-surface-subtle/60 p-4">
+              <div v-if="canUploadPortraitAsAdmin"
+                class="rounded-xl border border-edge-subtle bg-surface-subtle/60 p-4">
                 <p class="mb-2 text-xs font-medium uppercase tracking-wide text-content-muted">
                   {{ t('authors.portraitUploadLabel') }}
                 </p>
@@ -705,15 +705,13 @@ async function submitNewPoemFromModal() {
         </template>
         <template v-else>
           <div v-if="author.bio" class="max-w-3xl">
-            <p ref="bioReadRef"
-              class="whitespace-pre-wrap text-base leading-relaxed text-content-secondary"
+            <p ref="bioReadRef" class="whitespace-pre-wrap text-base leading-relaxed text-content-secondary"
               :class="{ 'line-clamp-6': !bioExpanded }">
               {{ author.bio }}
             </p>
             <button v-if="bioToggleVisible && !authorEditMode" type="button"
               class="mt-3 inline-flex items-center rounded-lg border border-edge-subtle bg-surface-subtle px-3 py-1.5 text-sm font-medium text-brand transition hover:border-brand/45 hover:bg-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35"
-              :aria-expanded="bioExpanded"
-              @click="bioExpanded = !bioExpanded">
+              :aria-expanded="bioExpanded" @click="bioExpanded = !bioExpanded">
               {{ bioExpanded ? t('authors.biographyCollapse') : t('authors.biographyExpand') }}
             </button>
           </div>
@@ -803,12 +801,11 @@ async function submitNewPoemFromModal() {
     </div>
 
     <Teleport to="body">
-      <div v-if="addPoemModalOpen && author"
-        class="fixed inset-0 z-[70] flex items-center justify-center p-4 sm:p-6">
+      <div v-if="addPoemModalOpen && author" class="fixed inset-0 z-[70] flex items-center justify-center p-4 sm:p-6">
         <div class="absolute inset-0 bg-black/50 backdrop-blur-[2px]" aria-hidden="true"
           @click="onAddPoemModalBackdropClick" />
         <div role="dialog" aria-modal="true" aria-labelledby="authors-add-poem-modal-title"
-          class="relative z-10 flex max-h-[min(90vh,720px)] w-full max-w-lg flex-col rounded-2xl border border-edge-subtle bg-surface-raised shadow-xl">
+          class="relative z-10 flex max-h-[min(90vh,720px)] w-full max-w-lg flex-col rounded-xl border border-edge-subtle bg-surface-raised shadow-xl">
           <div class="border-b border-edge-subtle px-5 py-4 sm:px-6">
             <h3 id="authors-add-poem-modal-title" class="font-serif text-lg font-semibold text-content">
               {{ t('authors.addPoemModalTitle') }}
