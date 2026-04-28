@@ -18,6 +18,7 @@ export interface WordRecord {
   endingLast: string
   definition: string | null
   synonyms: string[]
+  antonyms: string[]
 }
 
 export interface RhymeMatch extends WordRecord {

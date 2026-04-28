@@ -7,6 +7,8 @@ export interface AuthUser {
   name?: string
   /** Set in DB; JWT refreshed on login */
   role?: Role
+  /** User profile flag (DB: User.isPoet) */
+  isPoet?: boolean
   createdAt?: string | Date
   poemFontFamily?: string
   poemFontSize?: number

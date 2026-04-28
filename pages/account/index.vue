@@ -26,6 +26,39 @@ const profileName = ref(user.value?.name ?? '')
 const profileLoading = ref(false)
 const profileMsg = ref<{ ok: boolean; text: string } | null>(null)
 
+// ── Poet account flag ───────────────────────────────────────────────────────
+const poetEnabled = ref(!!user.value?.isPoet)
+const poetLoading = ref(false)
+const poetMsg = ref<{ ok: boolean; text: string } | null>(null)
+
+watch(user, () => {
+  poetEnabled.value = !!user.value?.isPoet
+})
+
+async function savePoetFlag(next: boolean) {
+  poetMsg.value = null
+  poetLoading.value = true
+  try {
+    const res = await $fetch<{ id: string; isPoet: boolean }>('/api/user/me/poet', {
+      method: 'PATCH',
+      body: { isPoet: next },
+    })
+    poetEnabled.value = res.isPoet
+    if (user.value) user.value = { ...user.value, isPoet: res.isPoet }
+    poetMsg.value = { ok: true, text: t('account.poetSaved') }
+  } catch {
+    poetEnabled.value = !!user.value?.isPoet
+    poetMsg.value = { ok: false, text: t('account.poetError') }
+  } finally {
+    poetLoading.value = false
+  }
+}
+
+function onPoetToggle(e: Event) {
+  const next = (e.target as HTMLInputElement).checked
+  void savePoetFlag(next)
+}
+
 async function saveProfile() {
   profileMsg.value = null
   profileLoading.value = true
@@ -191,54 +224,74 @@ onMounted(() => {
 <template>
   <div class="mx-auto max-w-3xl">
     <div class="space-y-8">
-    <!-- ── Profile ──────────────────────────────────────────────────── -->
-    <section class="rounded-ds-lg border border-edge-subtle bg-surface-raised p-6 shadow-ds-card transition-shadow hover:shadow-ds-card-hover md:p-8">
-      <div class="mb-6 flex items-start gap-3">
-        <span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-soft/35 text-brand">
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-          </svg>
-        </span>
-        <div>
-          <h2 class="font-serif text-lg font-semibold text-content">{{ t('account.profileSection') }}</h2>
-          <p class="mt-1 text-sm text-content-secondary">{{ t('account.profileDesc') }}</p>
-        </div>
-      </div>
-
-      <form class="space-y-4" @submit.prevent="saveProfile">
-        <div>
-          <label class="mb-1.5 block text-xs font-medium uppercase tracking-widest text-content-secondary">
-            {{ t('account.nameLabel') }}
-          </label>
-          <input
-            v-model="profileName"
-            type="text"
-            :placeholder="t('account.namePlaceholder')"
-            maxlength="80"
-            autocomplete="name"
-            required
-            class="w-full rounded-lg border border-edge-subtle bg-surface-subtle px-4 py-3 text-sm text-content placeholder-content-soft outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20"
-          />
+      <!-- ── Profile ──────────────────────────────────────────────────── -->
+      <section
+        class="rounded-ds-lg border border-edge-subtle bg-surface-raised p-6 shadow-ds-card transition-shadow hover:shadow-ds-card-hover md:p-8">
+        <div class="mb-6 flex items-start gap-3">
+          <span
+            class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-soft/35 text-brand">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          </span>
+          <div>
+            <h2 class="font-serif text-lg font-semibold text-content">{{ t('account.profileSection') }}</h2>
+            <p class="mt-1 text-sm text-content-secondary">{{ t('account.profileDesc') }}</p>
+          </div>
         </div>
 
-        <Transition name="msg">
-          <p
-            v-if="profileMsg"
-            :class="profileMsg.ok ? 'bg-green-50 text-green-700' : 'bg-danger/10 text-danger'"
-            class="rounded-lg px-4 py-2.5 text-sm"
-          >
-            {{ profileMsg.text }}
-          </p>
-        </Transition>
+        <form class="space-y-4" @submit.prevent="saveProfile">
+          <div>
+            <label class="mb-1.5 block text-xs font-medium uppercase tracking-widest text-content-secondary">
+              {{ t('account.nameLabel') }}
+            </label>
+            <input v-model="profileName" type="text" :placeholder="t('account.namePlaceholder')" maxlength="80"
+              autocomplete="name" required
+              class="w-full rounded-lg border border-edge-subtle bg-surface-subtle px-4 py-3 text-sm text-content placeholder-content-soft outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20" />
+          </div>
 
-        <button type="submit" :disabled="profileLoading" class="ds-btn-primary disabled:opacity-50">
-          {{ profileLoading ? t('account.savingProfile') : t('account.saveProfile') }}
-        </button>
-      </form>
-    </section>
+          <Transition name="msg">
+            <p v-if="profileMsg" :class="profileMsg.ok ? 'bg-green-50 text-green-700' : 'bg-danger/10 text-danger'"
+              class="rounded-lg px-4 py-2.5 text-sm">
+              {{ profileMsg.text }}
+            </p>
+          </Transition>
 
-    <!-- ── Security ─────────────────────────────────────────────────── -->
-    <section class="rounded-ds-lg border border-edge-subtle bg-surface-raised p-6 shadow-ds-card transition-shadow hover:shadow-ds-card-hover md:p-8">
+          <button type="submit" :disabled="profileLoading" class="ds-btn-primary disabled:opacity-50">
+            {{ profileLoading ? t('account.savingProfile') : t('account.saveProfile') }}
+          </button>
+        </form>
+
+        <div class="mt-6 border-t border-edge-subtle pt-6">
+          <div class="flex items-start justify-between gap-4">
+            <div class="min-w-0">
+              <p class="text-sm font-semibold text-content">{{ t('account.poetLabel') }}</p>
+              <p class="mt-1 text-sm leading-relaxed text-content-secondary">{{ t('account.poetDesc') }}</p>
+            </div>
+            <label class="relative inline-flex shrink-0 cursor-pointer items-center">
+              <input class="peer sr-only" type="checkbox" :checked="poetEnabled" :disabled="poetLoading"
+                @change="onPoetToggle" />
+              <span
+                class="h-6 w-11 rounded-full border border-edge-subtle bg-surface-subtle transition peer-checked:bg-brand peer-focus-visible:ring-2 peer-focus-visible:ring-brand/30 peer-disabled:opacity-50"
+                aria-hidden="true" />
+              <span
+                class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition peer-checked:translate-x-5 peer-disabled:opacity-80"
+                aria-hidden="true" />
+            </label>
+          </div>
+
+          <Transition name="msg">
+            <p v-if="poetMsg" :class="poetMsg.ok ? 'bg-green-50 text-green-700' : 'bg-danger/10 text-danger'"
+              class="mt-4 rounded-lg px-4 py-2.5 text-sm">
+              {{ poetMsg.text }}
+            </p>
+          </Transition>
+        </div>
+      </section>
+
+      <!-- ── Security ─────────────────────────────────────────────────── -->
+      <!-- <section class="rounded-ds-lg border border-edge-subtle bg-surface-raised p-6 shadow-ds-card transition-shadow hover:shadow-ds-card-hover md:p-8">
       <div class="mb-6 flex items-start gap-3">
         <span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-soft/35 text-brand">
           <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
@@ -326,144 +379,141 @@ onMounted(() => {
           }}
         </button>
       </form>
-    </section>
+    </section> -->
 
-    <!-- ── Reading preferences ────────────────────────────────────────── -->
-    <section class="rounded-ds-lg border border-edge-subtle bg-surface-raised p-6 shadow-ds-card transition-shadow hover:shadow-ds-card-hover md:p-8">
-      <div class="mb-6 flex items-start gap-3">
-        <span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-soft/35 text-brand">
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-          </svg>
-        </span>
-        <div>
-          <h2 class="font-serif text-lg font-semibold text-content">{{ t('account.readingSection') }}</h2>
-          <p class="mt-1 text-sm text-content-secondary">{{ t('account.readingDesc') }}</p>
-        </div>
-      </div>
-
-      <div class="space-y-5">
-        <div>
-          <label class="mb-1.5 block text-xs font-medium uppercase tracking-widest text-content-secondary">{{ t('viewer.font') }}</label>
-          <select v-model="fontKey" class="w-full rounded-lg border border-edge-subtle bg-surface-subtle px-4 py-3 text-sm text-content outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20" @change="onReaderPreferenceChange">
-            <option v-for="f in fontOptions" :key="f" :value="f">{{ t(READER_FONT_I18N_KEYS[f]) }}</option>
-          </select>
-        </div>
-
-        <div>
-          <div class="mb-1.5 flex items-center justify-between">
-            <label class="text-xs font-medium uppercase tracking-widest text-content-secondary">{{ t('viewer.fontSize') }}</label>
-            <span class="text-xs tabular-nums text-content-soft">{{ fontSizePx }}px</span>
+      <!-- ── Reading preferences ────────────────────────────────────────── -->
+      <section
+        class="rounded-ds-lg border border-edge-subtle bg-surface-raised p-6 shadow-ds-card transition-shadow hover:shadow-ds-card-hover md:p-8">
+        <div class="mb-6 flex items-start gap-3">
+          <span
+            class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-soft/35 text-brand">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+          </span>
+          <div>
+            <h2 class="font-serif text-lg font-semibold text-content">{{ t('account.readingSection') }}</h2>
+            <p class="mt-1 text-sm text-content-secondary">{{ t('account.readingDesc') }}</p>
           </div>
-          <input v-model.number="fontSizePx" type="range" min="16" max="48" step="1" class="w-full accent-brand" @change="onReaderPreferenceChange" />
         </div>
-
-        <div>
-          <div class="mb-1.5 flex items-center justify-between">
-            <label class="text-xs font-medium uppercase tracking-widest text-content-secondary">{{ t('viewer.lineHeight') }}</label>
-            <span class="text-xs tabular-nums text-content-soft">{{ lineHeight.toFixed(2) }}</span>
+  
+        <div class="space-y-5">
+          <div>
+            <label class="mb-1.5 block text-xs font-medium uppercase tracking-widest text-content-secondary">{{
+              t('viewer.font') }}</label>
+            <select v-model="fontKey"
+              class="w-full rounded-lg border border-edge-subtle bg-surface-subtle px-4 py-3 text-sm text-content outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20"
+              @change="onReaderPreferenceChange">
+              <option v-for="f in fontOptions" :key="f" :value="f">{{ t(READER_FONT_I18N_KEYS[f]) }}</option>
+            </select>
           </div>
-          <input v-model.number="lineHeight" type="range" :min="READER_LINE_HEIGHT_MIN" :max="READER_LINE_HEIGHT_MAX" :step="READER_LINE_HEIGHT_STEP" class="w-full accent-brand" @change="onReaderPreferenceChange" />
-        </div>
 
-        <div>
-          <div class="mb-1.5 flex items-center justify-between">
-            <label class="text-xs font-medium uppercase tracking-widest text-content-secondary">{{ t('viewer.letterSpacing') }}</label>
-            <span class="text-xs tabular-nums text-content-soft">{{ letterSpacingEm.toFixed(3) }}em</span>
+          <div>
+            <div class="mb-1.5 flex items-center justify-between">
+              <label class="text-xs font-medium uppercase tracking-widest text-content-secondary">{{
+                t('viewer.fontSize') }}</label>
+              <span class="text-xs tabular-nums text-content-soft">{{ fontSizePx }}px</span>
+            </div>
+            <input v-model.number="fontSizePx" type="range" min="16" max="48" step="1" class="w-full accent-brand"
+              @change="onReaderPreferenceChange" />
           </div>
-          <input v-model.number="letterSpacingEm" type="range" :min="READER_LETTER_SPACING_MIN" :max="READER_LETTER_SPACING_MAX" :step="READER_LETTER_SPACING_STEP" class="w-full accent-brand" @change="onReaderPreferenceChange" />
-        </div>
 
-        <div
-          class="rounded-lg border border-edge-subtle bg-surface-subtle px-5 py-4 text-content"
-          :style="{
+          <div>
+            <div class="mb-1.5 flex items-center justify-between">
+              <label class="text-xs font-medium uppercase tracking-widest text-content-secondary">{{
+                t('viewer.lineHeight') }}</label>
+              <span class="text-xs tabular-nums text-content-soft">{{ lineHeight.toFixed(2) }}</span>
+            </div>
+            <input v-model.number="lineHeight" type="range" :min="READER_LINE_HEIGHT_MIN" :max="READER_LINE_HEIGHT_MAX"
+              :step="READER_LINE_HEIGHT_STEP" class="w-full accent-brand" @change="onReaderPreferenceChange" />
+          </div>
+
+          <div>
+            <div class="mb-1.5 flex items-center justify-between">
+              <label class="text-xs font-medium uppercase tracking-widest text-content-secondary">{{
+                t('viewer.letterSpacing') }}</label>
+              <span class="text-xs tabular-nums text-content-soft">{{ letterSpacingEm.toFixed(3) }}em</span>
+            </div>
+            <input v-model.number="letterSpacingEm" type="range" :min="READER_LETTER_SPACING_MIN"
+              :max="READER_LETTER_SPACING_MAX" :step="READER_LETTER_SPACING_STEP" class="w-full accent-brand"
+              @change="onReaderPreferenceChange" />
+          </div>
+
+          <div class="rounded-lg border border-edge-subtle bg-surface-subtle px-5 py-4 text-content" :style="{
             fontFamily: READER_FONT_STACKS[fontKey as ReaderFontKey],
             fontSize: `${fontSizePx}px`,
             lineHeight,
             letterSpacing: `${letterSpacingEm}em`,
-          }"
-        >
-          <span class="italic">"Two roads diverged in a yellow wood,<br />And sorry I could not travel both."</span>
+          }">
+            <span class="italic">"Two roads diverged in a yellow wood,<br />And sorry I could not travel both."</span>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- ── Account info ───────────────────────────────────────────────── -->
-    <section class="rounded-ds-lg border border-edge-subtle bg-surface-raised p-6 shadow-ds-card transition-shadow hover:shadow-ds-card-hover md:p-8">
-      <div class="mb-6 flex items-start gap-3">
-        <span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-soft/35 text-brand">
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </span>
-        <div>
-          <h2 class="font-serif text-lg font-semibold text-content">{{ t('account.accountInfo') }}</h2>
+      <!-- ── Account info ───────────────────────────────────────────────── -->
+      <section
+        class="rounded-ds-lg border border-edge-subtle bg-surface-raised p-6 shadow-ds-card transition-shadow hover:shadow-ds-card-hover md:p-8">
+        <div class="mb-6 flex items-start gap-3">
+          <span
+            class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-soft/35 text-brand">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </span>
+          <div>
+            <h2 class="font-serif text-lg font-semibold text-content">{{ t('account.accountInfo') }}</h2>
+          </div>
         </div>
-      </div>
-      <dl class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <div class="rounded-ds-md border border-edge-subtle bg-surface-subtle/50 px-4 py-3">
-          <dt class="text-xs font-medium uppercase tracking-wider text-content-soft">{{ t('account.emailLabel') }}</dt>
-          <dd class="mt-1 break-all font-medium text-content">{{ user?.email }}</dd>
-        </div>
-        <div class="rounded-ds-md border border-edge-subtle bg-surface-subtle/50 px-4 py-3">
-          <dt class="text-xs font-medium uppercase tracking-wider text-content-soft">{{ t('account.roleLabel') }}</dt>
-          <dd class="mt-1">
-            <span
-              class="inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-medium"
-              :class="roleBadgeClass"
-            >
-              {{ roleDisplayName }}
-            </span>
-          </dd>
-        </div>
-        <div v-if="memberSince" class="rounded-ds-md border border-edge-subtle bg-surface-subtle/50 px-4 py-3">
-          <dt class="text-xs font-medium uppercase tracking-wider text-content-soft">{{ t('account.memberSince') }}</dt>
-          <dd class="mt-1 font-medium text-content">{{ memberSince }}</dd>
-        </div>
-      </dl>
-    </section>
+        <dl class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div class="rounded-ds-md border border-edge-subtle bg-surface-subtle/50 px-4 py-3">
+            <dt class="text-xs font-medium uppercase tracking-wider text-content-soft">{{ t('account.emailLabel') }}
+            </dt>
+            <dd class="mt-1 break-all font-medium text-content">{{ user?.email }}</dd>
+          </div>
+          <div class="rounded-ds-md border border-edge-subtle bg-surface-subtle/50 px-4 py-3">
+            <dt class="text-xs font-medium uppercase tracking-wider text-content-soft">{{ t('account.roleLabel') }}</dt>
+            <dd class="mt-1">
+              <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-medium"
+                :class="roleBadgeClass">
+                {{ roleDisplayName }}
+              </span>
+            </dd>
+          </div>
+          <div v-if="memberSince" class="rounded-ds-md border border-edge-subtle bg-surface-subtle/50 px-4 py-3">
+            <dt class="text-xs font-medium uppercase tracking-wider text-content-soft">{{ t('account.memberSince') }}
+            </dt>
+            <dd class="mt-1 font-medium text-content">{{ memberSince }}</dd>
+          </div>
+        </dl>
+      </section>
 
-    <!-- ── Delete account ─────────────────────────────────────────────── -->
-    <section
-      class="rounded-ds-lg border border-danger/25 bg-danger/5 p-6 shadow-ds-card md:p-8"
-      :aria-label="t('account.deleteAccountSection')"
-    >
-      <h2 class="font-serif text-lg font-semibold text-content">{{ t('account.deleteAccountSection') }}</h2>
-      <p class="mt-2 text-sm leading-relaxed text-content-secondary">
-        {{ t('account.deleteAccountLead') }}
-      </p>
-      <p v-if="isSiteOwnerAccount" class="mt-3 text-sm text-content-muted">
-        {{ t('account.deleteAccountOwnerNote') }}
-      </p>
-      <button
-        v-else
-        type="button"
-        class="mt-4 rounded-ds-md border border-danger/40 bg-surface-raised px-4 py-2.5 text-sm font-medium text-danger transition hover:bg-danger/10"
-        @click="openDeleteModal"
-      >
-        {{ t('account.deleteAccountButton') }}
-      </button>
-    </section>
+      <!-- ── Delete account ─────────────────────────────────────────────── -->
+      <section class="rounded-ds-lg border border-danger/25 bg-danger/5 p-6 shadow-ds-card md:p-8"
+        :aria-label="t('account.deleteAccountSection')">
+        <h2 class="font-serif text-lg font-semibold text-content">{{ t('account.deleteAccountSection') }}</h2>
+        <p class="mt-2 text-sm leading-relaxed text-content-secondary">
+          {{ t('account.deleteAccountLead') }}
+        </p>
+        <p v-if="isSiteOwnerAccount" class="mt-3 text-sm text-content-muted">
+          {{ t('account.deleteAccountOwnerNote') }}
+        </p>
+        <button v-else type="button"
+          class="mt-4 rounded-ds-md border border-danger/40 bg-surface-raised px-4 py-2.5 text-sm font-medium text-danger transition hover:bg-danger/10"
+          @click="openDeleteModal">
+          {{ t('account.deleteAccountButton') }}
+        </button>
+      </section>
     </div>
 
     <Teleport to="body">
-      <div
-        v-if="deleteModalOpen"
-        class="fixed inset-0 z-[100] flex items-center justify-center p-4"
-      >
-        <div
-          class="absolute inset-0 bg-content/40 backdrop-blur-[2px]"
-          aria-hidden="true"
-          @click="closeDeleteModal"
-        />
-        <div
-          role="alertdialog"
-          aria-modal="true"
-          aria-labelledby="delete-account-title"
+      <div v-if="deleteModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-content/40 backdrop-blur-[2px]" aria-hidden="true" @click="closeDeleteModal" />
+        <div role="alertdialog" aria-modal="true" aria-labelledby="delete-account-title"
           aria-describedby="delete-account-desc"
           class="relative z-10 w-full max-w-md rounded-ds-lg border border-edge-subtle bg-surface-raised p-6 shadow-ds-card"
-          @click.stop
-        >
+          @click.stop>
           <h3 id="delete-account-title" class="font-serif text-lg font-semibold text-content">
             {{ t('account.deleteAccountModalTitle') }}
           </h3>
@@ -474,32 +524,22 @@ onMounted(() => {
             <label class="mb-1.5 block text-xs font-medium uppercase tracking-wider text-content-secondary">
               {{ hasPassword ? t('account.currentPassword') : t('account.deleteAccountConfirmEmailLabel') }}
             </label>
-            <input
-              v-model="deleteConfirmInput"
-              :type="hasPassword ? 'password' : 'email'"
+            <input v-model="deleteConfirmInput" :type="hasPassword ? 'password' : 'email'"
               :autocomplete="hasPassword ? 'current-password' : 'email'"
               class="w-full rounded-lg border border-edge-subtle bg-surface-subtle px-4 py-3 text-sm text-content outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20"
-              @keydown.enter.prevent="confirmDeleteAccount"
-            />
+              @keydown.enter.prevent="confirmDeleteAccount" />
           </div>
           <p v-if="deleteError" class="mt-3 text-sm text-danger">
             {{ deleteError }}
           </p>
           <div class="mt-6 flex flex-wrap justify-end gap-2">
-            <button
-              type="button"
-              class="ds-btn-secondary px-4 py-2 text-sm"
-              :disabled="deleteLoading"
-              @click="closeDeleteModal"
-            >
+            <button type="button" class="ds-btn-secondary px-4 py-2 text-sm" :disabled="deleteLoading"
+              @click="closeDeleteModal">
               {{ t('account.deleteAccountCancel') }}
             </button>
-            <button
-              type="button"
+            <button type="button"
               class="inline-flex items-center justify-center rounded-ds-md bg-danger px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-danger/90 disabled:cursor-not-allowed disabled:opacity-50"
-              :disabled="deleteLoading"
-              @click="confirmDeleteAccount"
-            >
+              :disabled="deleteLoading" @click="confirmDeleteAccount">
               {{ deleteLoading ? t('account.deleteAccountDeleting') : t('account.deleteAccountConfirm') }}
             </button>
           </div>
@@ -510,6 +550,14 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.msg-enter-active, .msg-leave-active { transition: all 0.2s ease; }
-.msg-enter-from, .msg-leave-to { opacity: 0; transform: translateY(-4px); }
+.msg-enter-active,
+.msg-leave-active {
+  transition: all 0.2s ease;
+}
+
+.msg-enter-from,
+.msg-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
 </style>

@@ -22,12 +22,19 @@ function mapRow(r: {
   endingLast: string
   definition: string | null
   synonymsJson: string
+  antonymsJson: string
 }): WordRecord {
   let synonyms: string[] = []
   try {
     synonyms = JSON.parse(r.synonymsJson) as string[]
   } catch {
     synonyms = []
+  }
+  let antonyms: string[] = []
+  try {
+    antonyms = JSON.parse(r.antonymsJson) as string[]
+  } catch {
+    antonyms = []
   }
   return {
     id: r.id,
@@ -40,6 +47,7 @@ function mapRow(r: {
     endingLast: r.endingLast,
     definition: r.definition,
     synonyms,
+    antonyms,
   }
 }
 

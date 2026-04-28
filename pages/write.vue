@@ -26,13 +26,15 @@ const modes: { id: SearchMode; label: string; hint: string }[] = [
   { id: 'contains', label: 'Conține', hint: 'Subșir în cuvânt' },
   { id: 'anagram', label: 'Anagramă', hint: 'Aceleași litere' },
   { id: 'exact', label: 'Exact', hint: 'Formă exactă' },
+  { id: 'synonyms', label: 'Sinonime', hint: 'Sinonime pentru cuvânt' },
+  { id: 'antonyms', label: 'Antonime', hint: 'Antonime pentru cuvânt' },
 ]
 
 const mode = ref<SearchMode>('contains')
 const loading = ref(false)
 
-/** Dacă true, „mar” nu potrivește „măr” (fără pliere diacritice la căutare). */
-const strictDiacritics = ref(false)
+/** Always treat diacritics as distinct in dictionary search (strict matching). */
+const STRICT_DIACRITICS = true
 
 let nextSearchQueryId = 0
 interface SearchQueryRow {
@@ -103,6 +105,10 @@ const placeholder = computed(() => {
       return 'Literele unui cuvânt (ex: listen → silent)'
     case 'exact':
       return 'Cuvântul exact'
+    case 'synonyms':
+      return 'Cuvântul pentru care vrei sinonime'
+    case 'antonyms':
+      return 'Cuvântul pentru care vrei antonime'
     default:
       return 'Scrie un cuvânt sau o parte din el…'
   }
@@ -127,7 +133,7 @@ async function runSearch() {
           q: query,
           mode: mode.value,
           limit: WORDS_LIMIT,
-          strictDiacritics: strictDiacritics.value ? 1 : 0,
+          strictDiacritics: STRICT_DIACRITICS ? 1 : 0,
         }
         if (mode.value === 'contains') {
           queryParams.useSyllablesInSearch = 0
@@ -153,10 +159,6 @@ async function runSearch() {
 
 watch(mode, () => {
   void runSearch()
-})
-
-watch(strictDiacritics, () => {
-  if (nonEmptySearchTerms().length) void runSearch()
 })
 
 watch(searchQueries, () => scheduleRunSearch(), { deep: true })
@@ -420,6 +422,58 @@ async function saveDraftInternal(): Promise<void> {
   persistDraftIdLocal(created.id)
 }
 
+// ── First-save poet switch modal ────────────────────────────────────────────
+const poetSwitchOpen = ref(false)
+const poetSwitchLoading = ref(false)
+const POET_SWITCH_SEEN_KEY = 'poetryhub-poet-switch-seen-v1'
+
+function hasSeenPoetSwitch(): boolean {
+  if (!import.meta.client) return false
+  try {
+    return localStorage.getItem(POET_SWITCH_SEEN_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+function markSeenPoetSwitch() {
+  if (!import.meta.client) return
+  try {
+    localStorage.setItem(POET_SWITCH_SEEN_KEY, '1')
+  } catch {
+    /* ignore */
+  }
+}
+
+function maybeOpenPoetSwitchModal(wasNewDraft: boolean) {
+  if (!wasNewDraft) return
+  if (!import.meta.client) return
+  if (hasSeenPoetSwitch()) return
+  if (!user.value) return
+  if (user.value.isPoet) return
+  poetSwitchOpen.value = true
+  markSeenPoetSwitch()
+}
+
+async function confirmPoetSwitch() {
+  if (!user.value || poetSwitchLoading.value) return
+  poetSwitchLoading.value = true
+  try {
+    const res = await $fetch<{ id: string; isPoet: boolean }>('/api/user/me/poet', {
+      method: 'PATCH',
+      body: { isPoet: true },
+    })
+    user.value = { ...user.value, isPoet: res.isPoet }
+    poetSwitchOpen.value = false
+  } finally {
+    poetSwitchLoading.value = false
+  }
+}
+
+function closePoetSwitch() {
+  poetSwitchOpen.value = false
+}
+
 async function submitSave() {
   const content = lyrics.text.trim()
   if (!content) {
@@ -429,8 +483,10 @@ async function submitSave() {
   saveMsg.value = null
   saveLoading.value = true
   try {
+    const wasNewDraft = !draftId.value
     await saveDraftInternal()
     saveMsg.value = { ok: true, text: t('write.savedDraft') }
+    maybeOpenPoetSwitchModal(wasNewDraft)
   } catch {
     saveMsg.value = { ok: false, text: t('write.saveDraftError') }
   } finally {
@@ -585,8 +641,7 @@ onUnmounted(() => {
         class="contents min-h-0 min-w-0 lg:order-1 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col lg:gap-4 sm:pr-4 sm:pb-6">
         <!-- Bară căutare -->
         <div class="order-2 shrink-0 lg:order-none" aria-label="Căutare dicționar">
-          <div
-            class="shrink-0 rounded-xl border border-edge-subtle bg-surface-raised p-2 my-2 sm:my-0 shadow-sm sm:p-4">
+          <div class="shrink-0 rounded-xl bg-surface-raised p-2 my-2 sm:my-0 shadow-sm sm:p-4">
             <div class="flex flex-wrap gap-2">
               <button v-for="m in modes" :key="m.id" type="button" :title="m.hint"
                 class="rounded-lg border px-3 py-1.5 text-xs font-medium transition" :class="mode === m.id
@@ -626,17 +681,6 @@ onUnmounted(() => {
                 <Icon icon="heroicons:magnifying-glass" class="h-5 w-5 shrink-0" aria-hidden="true" />
                 {{ t('write.searchBtn') }}
               </button>
-              <label class="mt-3 flex cursor-pointer items-start gap-2.5 text-sm text-content-secondary">
-                <input v-model="strictDiacritics" type="checkbox"
-                  class="mt-0.5 h-4 w-4 shrink-0 rounded border-edge text-blue-600 focus:ring-blue-500" />
-                <span>
-                  <span class="font-medium">Diacritice fixe</span>
-                  <span class="mt-0.5 block text-xs font-normal text-content-muted">
-                    Dacă e bifat, literele cu diacritice sunt distincte (ex. „mar” nu potrivește „măr”). Debifat =
-                    potrivire largă (a ≈ ă, î ≈ i etc.).
-                  </span>
-                </span>
-              </label>
             </div>
           </div>
         </div>
@@ -644,8 +688,7 @@ onUnmounted(() => {
         <!-- Rezultate dicționar -->
         <div class="order-3 flex min-h-0 min-w-0 flex-1 flex-col lg:order-none lg:min-h-0 lg:flex-none lg:p-0"
           aria-label="Rezultate dicționar">
-          <div
-            class="flex min-w-0 flex-col rounded-xl border border-edge-subtle bg-surface-raised p-2 shadow-sm sm:p-4">
+          <div class="flex min-w-0 flex-col rounded-xl bg-surface-raised p-2 shadow-sm sm:p-4">
             <p class="mb-2 text-xs font-medium uppercase tracking-wide text-content-muted">
               Rezultate
               <span v-if="loading" class="font-normal text-content-soft">— se încarcă…</span>
@@ -684,7 +727,7 @@ onUnmounted(() => {
         @mousedown="startSplitResize" @keydown="onSplitKeydown">
         <div class="absolute inset-y-0 -left-2 -right-2 z-[1] cursor-col-resize" aria-hidden="true" />
         <div
-          class="relative z-0 flex w-[1.625rem] flex-col items-center justify-start border border-edge-subtle bg-surface-subtle/90 px-0.5 py-3 shadow-sm transition-colors group-hover:border-brand/50 group-hover:bg-brand-soft/50 group-focus-visible:border-brand group-focus-visible:ring-2 group-focus-visible:ring-brand/30">
+          class="relative z-0 flex w-[1.625rem] flex-col items-center justify-start bg-surface-subtle/90 px-0.5 py-3 shadow-sm transition-colors group-hover:border-brand/50 group-hover:bg-brand-soft/50 group-focus-visible:border-brand group-focus-visible:ring-2 group-focus-visible:ring-brand/30">
           <span
             class="pointer-events-none flex items-center gap-px text-content-muted group-hover:text-brand group-focus-visible:text-brand"
             aria-hidden="true">
@@ -840,30 +883,65 @@ onUnmounted(() => {
       </Transition>
     </Teleport>
 
+    <Teleport to="body">
+      <Transition name="publish-panel">
+        <div v-if="poetSwitchOpen" class="fixed inset-0 z-[110] flex items-end justify-center sm:items-center sm:p-4">
+          <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closePoetSwitch" />
+          <div
+            class="relative z-10 w-full max-w-lg rounded-t-2xl border border-edge-subtle bg-surface-raised shadow-ds-popover sm:rounded-ds-xl"
+            role="dialog" aria-modal="true" aria-labelledby="poet-switch-title" @click.stop>
+            <div class="flex items-center justify-between border-b border-edge-subtle px-6 py-4">
+              <h2 id="poet-switch-title" class="text-base font-semibold text-content">
+                {{ t('write.poetSwitchTitle') }}
+              </h2>
+              <button type="button"
+                class="rounded-lg p-1.5 text-content-soft hover:bg-surface-subtle hover:text-content-secondary"
+                @click="closePoetSwitch">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
+                  aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div class="px-6 py-5">
+              <p class="text-sm leading-relaxed text-content-secondary">
+                {{ t('write.poetSwitchDesc') }}
+              </p>
+
+              <div class="mt-5 flex flex-wrap gap-3">
+                <button type="button" class="ds-btn-primary px-5" :disabled="poetSwitchLoading"
+                  @click="confirmPoetSwitch">
+                  {{ poetSwitchLoading ? t('write.poetSwitching') : t('write.poetSwitchConfirm') }}
+                </button>
+                <button type="button" class="ds-btn-secondary px-5" :disabled="poetSwitchLoading"
+                  @click="closePoetSwitch">
+                  {{ t('write.poetSwitchCancel') }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
     <!-- Tooltip: definition next to clicked word (no backdrop) -->
-    <div
-      v-if="defPop"
-      id="word-def-tooltip"
+    <div v-if="defPop" id="word-def-tooltip"
       class="fixed z-[90] max-h-[min(22rem,70vh)] overflow-y-auto rounded-xl border border-edge-subtle bg-surface-raised p-4 shadow-2xl ring-1 ring-black/10"
       :style="{
         top: defPop.top + 'px',
         left: defPop.left + 'px',
         width: defPop.maxW + 'px',
-      }"
-      role="tooltip"
-      aria-labelledby="word-def-tooltip-title"
-    >
+      }" role="tooltip" aria-labelledby="word-def-tooltip-title">
       <div class="flex items-start justify-between gap-3">
         <h2 id="word-def-tooltip-title" class="font-display text-base font-semibold text-content">
           {{ defPop.hit.word }}
         </h2>
-        <button
-          type="button"
+        <button type="button"
           class="-mt-1 -mr-1 rounded-lg p-1.5 text-content-soft hover:bg-surface-subtle hover:text-content-secondary"
-          aria-label="Închide"
-          @click="closeWordDefinition"
-        >
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          aria-label="Închide" @click="closeWordDefinition">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
+            aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
@@ -880,11 +958,9 @@ onUnmounted(() => {
       </div>
 
       <div class="mt-4 flex flex-wrap gap-2">
-        <button
-          type="button"
+        <button type="button"
           class="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
-          @click="addWordFromDefinitionPopover"
-        >
+          @click="addWordFromDefinitionPopover">
           Adaugă la versuri
         </button>
       </div>

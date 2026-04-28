@@ -1,6 +1,6 @@
-import { loadWordCorpus, queryByMode, type SearchMode, type WordSearchOptions } from '../utils/wordCorpus'
+import { getCorpusSnapshot, loadWordCorpus, queryByMode, type SearchMode, type WordSearchOptions } from '../utils/wordCorpus'
 
-const MODES: SearchMode[] = ['fuzzy', 'starts', 'ends', 'contains', 'anagram', 'exact']
+const MODES: SearchMode[] = ['fuzzy', 'starts', 'ends', 'contains', 'anagram', 'exact', 'synonyms', 'antonyms']
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
@@ -40,7 +40,40 @@ export default defineEventHandler(async (event) => {
 
   try {
     await loadWordCorpus()
-    const results = queryByMode(mode, q, limit, wordSearchOptions)
+    const results = (() => {
+      if (mode !== 'synonyms' && mode !== 'antonyms') {
+        return queryByMode(mode, q, limit, wordSearchOptions)
+      }
+
+      // Relationship lookup: search *everywhere* for base words, then expand their relations.
+      // We intentionally use `contains` without syllable-OR for predictable substring search.
+      const bases = queryByMode('contains', q, 250, {
+        ...wordSearchOptions,
+        containsUseSyllables: false,
+        containsSyllablesOverride: null,
+        containsSyllablesMatchAll: false,
+      })
+      if (!bases.length) return []
+
+      const corpus = getCorpusSnapshot()
+      const byLower = new Map(corpus.map((w) => [w.word.toLowerCase(), w] as const))
+
+      const out = []
+      const seen = new Set<string>()
+      for (const base of bases) {
+        const rel = mode === 'synonyms' ? base.synonyms : base.antonyms
+        if (!rel?.length) continue
+        for (const raw of rel) {
+          const k = raw.trim().toLowerCase()
+          if (!k || seen.has(k)) continue
+          seen.add(k)
+          const hit = byLower.get(k)
+          if (hit) out.push(hit)
+          if (out.length >= limit) return out
+        }
+      }
+      return out
+    })()
     return {
       mode,
       query: q,
@@ -53,6 +86,7 @@ export default defineEventHandler(async (event) => {
         syllableCount: w.syllableCount,
         definition: w.definition,
         synonyms: w.synonyms,
+        antonyms: w.antonyms,
       })),
     }
   } catch (err) {

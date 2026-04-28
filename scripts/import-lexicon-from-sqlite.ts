@@ -47,6 +47,7 @@ async function main() {
         endingLast: String(r.endingLast),
         definition: r.definition == null ? null : String(r.definition),
         synonymsJson: String(r.synonymsJson ?? '[]'),
+        antonymsJson: String((r as { antonymsJson?: unknown }).antonymsJson ?? '[]'),
         createdAt: r.createdAt instanceof Date ? r.createdAt : new Date(String(r.createdAt)),
         updatedAt: r.updatedAt instanceof Date ? r.updatedAt : new Date(String(r.updatedAt)),
       }))

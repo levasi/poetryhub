@@ -76,6 +76,7 @@ async function main() {
       ...fields,
       definition: null,
       synonymsJson: '[]',
+      antonymsJson: '[]',
     })
     return true
   }

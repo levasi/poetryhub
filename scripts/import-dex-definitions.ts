@@ -159,7 +159,9 @@ async function main() {
   )
 
   const toUpdate: Array<{ word: string; definition: string }> = []
-  const toCreate: Array<ReturnType<typeof wordToLexiconFields> & { definition: string; synonymsJson: string }> = []
+  const toCreate: Array<
+    ReturnType<typeof wordToLexiconFields> & { definition: string; synonymsJson: string; antonymsJson: string }
+  > = []
 
   let skippedInvalid = 0
   for (const e of entries) {
@@ -172,7 +174,7 @@ async function main() {
       skippedInvalid++
       continue
     }
-    toCreate.push({ ...fields, definition: e.definition, synonymsJson: '[]' })
+    toCreate.push({ ...fields, definition: e.definition, synonymsJson: '[]', antonymsJson: '[]' })
   }
 
   console.log(`[dex] plan: update=${toUpdate.length}, create=${toCreate.length}, skipped_invalid=${skippedInvalid}`)

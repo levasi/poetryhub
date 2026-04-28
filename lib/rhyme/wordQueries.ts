@@ -3,7 +3,7 @@ import type { WordRecord } from './types'
 import { foldDiacritics, normalizeWord, normForSearch } from './normalize'
 import { splitSyllables } from './syllableParser'
 
-export type SearchMode = 'fuzzy' | 'starts' | 'ends' | 'contains' | 'anagram' | 'exact'
+export type SearchMode = 'fuzzy' | 'starts' | 'ends' | 'contains' | 'anagram' | 'exact' | 'synonyms' | 'antonyms'
 
 export interface WordSearchOptions {
   /**
@@ -91,6 +91,17 @@ export function queryCorpus(
   const strict = options?.strictDiacritics === true
   const norm = (s: string) => normForSearch(s, strict)
   const needleNorm = norm(needle)
+
+  // Relationship modes are expanded at the API layer; here we resolve the base word like `exact`.
+  if (mode === 'synonyms' || mode === 'antonyms') {
+    const lowNeedle = needle.toLowerCase()
+    const direct = corpus.filter((w) => w.word.toLowerCase() === lowNeedle)
+    if (direct.length) return direct
+    if (strict) return []
+    const fuse = getFuse()
+    if (!fuse) return corpus.slice(0, lim)
+    return fuse.search(needle, { limit: lim }).map((r) => r.item)
+  }
 
   if (mode === 'fuzzy') {
     if (!needle) return corpus.slice(0, lim)

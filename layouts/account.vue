@@ -6,18 +6,25 @@ const route = useRoute()
 // Redirect to login if not authenticated
 if (!user.value) await navigateTo('/login?redirect=' + route.fullPath)
 
-const navItems = computed(() => [
-  {
-    label: t('account.navProfile'),
-    to: '/account',
-    icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z',
-  },
-  {
-    label: t('account.navPoems'),
-    to: '/account/poems',
-    icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
-  },
-])
+const navItems = computed(() => {
+  const items = [
+    {
+      label: t('account.navProfile'),
+      to: '/account',
+      icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z',
+    },
+  ]
+
+  if (user.value?.isPoet) {
+    items.push({
+      label: t('account.navPoems'),
+      to: '/account/poems',
+      icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
+    })
+  }
+
+  return items
+})
 
 function navIsActive(to: string) {
   const p = route.path

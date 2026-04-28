@@ -55,6 +55,7 @@ export default defineEventHandler(async (event) => {
       email: user.email,
       name: user.name,
       role: user.role,
+      isPoet: user.isPoet,
       hasPassword: true,
       poemFontFamily: user.poemFontFamily,
       poemFontSize: user.poemFontSize,

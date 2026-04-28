@@ -166,7 +166,7 @@ onUnmounted(() => {
     <div class="flex w-full min-w-0 items-center justify-between gap-3">
       <div ref="rootRef" class="relative min-w-0">
         <button type="button"
-          class="flex min-w-[10.5rem] max-w-[min(100%,16rem)] items-center gap-2 rounded-xl border border-edge-subtle/90 bg-surface-raised px-3 py-2 text-left shadow-sm ring-black/5 transition hover:border-edge hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:ring-offset-2"
+          class="flex min-w-[10.5rem] max-w-[min(100%,16rem)] items-center gap-2 rounded-xl bg-surface-raised px-3 py-2 text-left shadow-sm ring-black/5 transition hover:border-edge hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:ring-offset-2"
           :aria-expanded="dropdownOpen" aria-haspopup="listbox" @click.stop="toggleDropdown">
           <span
             class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface-subtle text-content-muted"

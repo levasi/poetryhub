@@ -126,6 +126,8 @@ model User {
   googleId     String?    @unique
   name         String?
   role         UserRole   @default(user)
+  /// When enabled, the account is marked as a poet/creator profile in UI.
+  isPoet       Boolean    @default(false)
   /// Poem reader font key (see READER_FONT_STACKS in composables/useReaderPreferences.ts)
   poemFontFamily String   @default("playfair")
   /// Body font size in px (16–48)
@@ -233,6 +235,7 @@ model WriteLexiconWord {
   endingLast    String
   definition    String?
   synonymsJson  String   @default("[]")
+  antonymsJson  String   @default("[]")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
