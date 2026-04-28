@@ -755,8 +755,7 @@ async function submitNewPoemFromModal() {
 
           <!-- Right: active poem (scroll target for ?poem= deep links) -->
           <div ref="activePoemPanelRef" class="min-w-0 scroll-mt-24 md:scroll-mt-28">
-            <div
-              class="rounded-ds-lg border border-edge-subtle bg-surface-raised/40 px-3 py-6 shadow-ds-card sm:px-5 md:px-8 md:py-10">
+            <div class="rounded-ds-lg bg-surface-raised/40 px-3 py-6 shadow-ds-card sm:px-5 md:px-8 md:py-10">
               <div v-if="poemPending" class="flex min-h-[16rem] items-center justify-center py-12">
                 <span class="h-9 w-9 animate-spin rounded-full border-2 border-edge-subtle border-t-brand"
                   aria-hidden="true" />

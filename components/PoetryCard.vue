@@ -59,12 +59,18 @@ const langFlag = computed(() => langFlags[props.poem.language] ?? props.poem.lan
 
 // ─── Quick-read modal (opened from card icon)
 const quickReadOpen = ref(false)
-const readerPrefsOpen = ref(false)
 const modalPoem = ref<Poem | null>(null)
 const quickReadNavLoading = ref(false)
 
 const readerPoem = computed(() => modalPoem.value ?? props.poem)
 const readerAuthor = computed(() => readerPoem.value.author ?? null)
+
+const readerPoemHref = computed(() => {
+  const p = readerPoem.value
+  const s = p.author?.slug
+  if (s) return { path: `/authors/${s}`, query: { poem: p.slug } }
+  return `/poems/${p.slug}`
+})
 
 const quickReadIndex = computed(() => {
   const list = props.quickReadList
@@ -148,13 +154,6 @@ async function quickReadGoNext() {
 watchEffect((onCleanup) => {
   if (!import.meta.client || !quickReadOpen.value) return
   const onKey = (e: KeyboardEvent) => {
-    if (readerPrefsOpen.value) {
-      if (e.key === 'Escape') {
-        readerPrefsOpen.value = false
-        e.stopImmediatePropagation()
-      }
-      return
-    }
     if (e.key === 'Escape') {
       closeQuickRead()
       return
@@ -210,9 +209,10 @@ watchEffect((onCleanup) => {
           <span>{{ author.name }}</span>
         </NuxtLink>
 
-        <PoemReader :poem="poem" variant="banner" :show-title="false" :show-author="false" :show-written-context="false"
-          :show-ornament="false" :body-plain-override="previewLines"
-          body-class="font-serif text-sm italic leading-relaxed text-content-secondary" />
+        <p class="whitespace-pre-wrap leading-relaxed text-content-secondary"
+          :style="{ fontFamily: `'Literata', Georgia, serif`, fontSize: '16px' }">
+          {{ previewLines }}
+        </p>
         <NuxtLink :to="poemHref"
           class="mt-2.5 inline-flex items-center gap-1 text-sm font-semibold text-brand transition-colors hover:text-brand-hover"
           @click.stop>
@@ -250,7 +250,7 @@ watchEffect((onCleanup) => {
 
     <!-- Grid view (default) -->
     <article v-else
-      class="group relative flex flex-col overflow-hidden rounded-ds-lg border border-edge-subtle bg-surface-raised shadow-ds-card transition-all duration-300 ease-out hover:-translate-y-1 hover:border-edge hover:shadow-ds-card-hover"
+      class="group relative flex flex-col overflow-hidden rounded-ds-lg bg-surface-raised transition-all duration-300 ease-out hover:-translate-y-1 hover:border-edge hover:shadow-ds-card-hover"
       :class="layout === 'masonry' ? 'h-auto' : 'h-full'">
 
       <div class="flex flex-col p-3">
@@ -278,9 +278,10 @@ watchEffect((onCleanup) => {
           <span class="truncate">{{ author.name }}</span>
         </NuxtLink>
 
-        <PoemReader :poem="poem" variant="banner" :show-title="false" :show-author="false" :show-written-context="false"
-          :show-ornament="false" :body-plain-override="previewLines"
-          body-class="min-h-[4.5rem] flex-1 font-serif text-sm italic leading-relaxed text-content-secondary" />
+        <p class="min-h-[4.5rem] flex-1 whitespace-pre-wrap leading-relaxed text-content-secondary"
+          :style="{ fontFamily: `'Literata', Georgia, serif`, fontSize: '16px' }">
+          {{ previewLines }}
+        </p>
 
         <!-- Footer -->
         <div class="mt-5 flex items-center justify-end gap-3 border-t border-edge-subtle pt-4">
@@ -327,32 +328,23 @@ watchEffect((onCleanup) => {
       <div v-if="quickReadOpen" class="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6"
         @click.self="closeQuickRead">
         <div role="dialog" aria-modal="true" :aria-label="t('card.quickRead')"
-          class="relative z-10 flex max-h-[78vh] w-full max-w-2xl flex-col overflow-hidden rounded-ds-xl border border-edge-subtle bg-surface-raised shadow-ds-popover sm:max-h-[90vh]"
+          class="relative z-10 flex max-h-[78vh] w-full max-w-2xl flex-col overflow-hidden rounded-ds-xl bg-surface-raised shadow-ds-popover sm:max-h-[90vh]"
           @click.stop>
           <header
-            class="flex shrink-0 items-start justify-between gap-3 border-b border-edge-subtle bg-surface-raised px-5 py-4">
+            class="flex shrink-0 items-start justify-between gap-3 bg-surface-raised p-2 sm:p-4 bg-surface-page/50">
             <div class="min-w-0 flex-1">
-              <p class="mb-0 block text-ui-xs font-semibold uppercase tracking-widest text-content-soft">
-                {{ t('card.quickRead') }}
-              </p>
               <div class="mt-1 flex items-start gap-2">
-                <h3 class="min-w-0 flex-1 font-serif text-xl font-semibold leading-snug tracking-tight text-content">
-                  {{ readerPoem.title }}
-                </h3>
+                <NuxtLink :to="readerPoemHref" class="min-w-0 flex-1" @click="closeQuickRead">
+                  <h3
+                    class="min-w-0 flex-1 font-serif text-xl font-semibold leading-snug tracking-tight text-content hover:text-brand">
+                    {{ readerPoem.title }}
+                  </h3>
+                </NuxtLink>
                 <PoemCarouselIcon :slug="readerPoem.slug" size="sm" class="shrink-0" />
               </div>
               <p v-if="readerAuthor" class="mt-1 truncate text-sm text-content-secondary">{{ readerAuthor.name }}</p>
             </div>
             <div class="flex shrink-0 items-center gap-0.5">
-              <button type="button"
-                class="rounded-ds-md p-2 text-content-muted transition-colors hover:bg-surface-subtle hover:text-content"
-                :aria-label="t('viewer.openReadingSettings')" @click="readerPrefsOpen = true">
-                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-                  <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              </button>
               <button type="button"
                 class="rounded-ds-md p-2 text-content-muted transition-colors hover:bg-surface-subtle hover:text-content"
                 :aria-label="t('card.quickReadClose')" @click="closeQuickRead">
@@ -363,14 +355,11 @@ watchEffect((onCleanup) => {
             </div>
           </header>
 
-          <ReaderSettingsSidebar v-model:open="readerPrefsOpen" :id-prefix="`qr-${readerPoem.id}`" />
-
-          <div class="min-h-0 flex-1 overflow-y-auto bg-surface-page/50 px-5 py-6">
+          <div class="min-h-0 flex-1 overflow-y-auto bg-surface-raised p-2 sm:p-4">
             <PoemReader :poem="readerPoem" variant="modal" :show-title="false" :show-author="false"
               :show-written-context="false" :show-ornament="false" />
           </div>
-          <footer v-if="showQuickReadNav" class="shrink-0 border-t border-edge-subtle bg-surface-raised px-5 py-4"
-            :aria-busy="quickReadNavLoading">
+          <footer v-if="showQuickReadNav" class="shrink-0 bg-surface-page/50 p-4" :aria-busy="quickReadNavLoading">
             <div class="flex items-center justify-between gap-3">
               <button type="button"
                 class="inline-flex min-h-[2.5rem] items-center gap-2 rounded-ds-md border border-edge-subtle bg-surface-page px-3 py-2 text-sm font-medium text-content transition hover:border-edge hover:bg-surface-subtle disabled:cursor-not-allowed disabled:opacity-40"
@@ -380,13 +369,11 @@ watchEffect((onCleanup) => {
                   aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
                 </svg>
-                {{ t('card.quickReadPrev') }}
               </button>
               <button type="button"
                 class="inline-flex min-h-[2.5rem] items-center gap-2 rounded-ds-md border border-edge-subtle bg-surface-page px-3 py-2 text-sm font-medium text-content transition hover:border-edge hover:bg-surface-subtle disabled:cursor-not-allowed disabled:opacity-40"
                 :disabled="!hasQuickReadNext || quickReadNavLoading" :aria-label="t('card.quickReadNextAria')"
                 @click="quickReadGoNext">
-                {{ t('card.quickReadNext') }}
                 <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
                   aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />

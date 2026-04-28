@@ -33,6 +33,53 @@ const {
   fontOptions,
 } = useReaderPreferences()
 
+function clamp(n: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, n))
+}
+
+function decFontSize() {
+  fontSizePx.value = clamp(Math.round(fontSizePx.value - 1), 16, 48)
+  onReaderPreferenceChange()
+}
+function incFontSize() {
+  fontSizePx.value = clamp(Math.round(fontSizePx.value + 1), 16, 48)
+  onReaderPreferenceChange()
+}
+
+function decLineHeight() {
+  lineHeight.value = clamp(
+    Math.round((lineHeight.value - READER_LINE_HEIGHT_STEP) * 100) / 100,
+    READER_LINE_HEIGHT_MIN,
+    READER_LINE_HEIGHT_MAX,
+  )
+  onReaderPreferenceChange()
+}
+function incLineHeight() {
+  lineHeight.value = clamp(
+    Math.round((lineHeight.value + READER_LINE_HEIGHT_STEP) * 100) / 100,
+    READER_LINE_HEIGHT_MIN,
+    READER_LINE_HEIGHT_MAX,
+  )
+  onReaderPreferenceChange()
+}
+
+function decLetterSpacing() {
+  letterSpacingEm.value = clamp(
+    Math.round((letterSpacingEm.value - READER_LETTER_SPACING_STEP) * 1000) / 1000,
+    READER_LETTER_SPACING_MIN,
+    READER_LETTER_SPACING_MAX,
+  )
+  onReaderPreferenceChange()
+}
+function incLetterSpacing() {
+  letterSpacingEm.value = clamp(
+    Math.round((letterSpacingEm.value + READER_LETTER_SPACING_STEP) * 1000) / 1000,
+    READER_LETTER_SPACING_MIN,
+    READER_LETTER_SPACING_MAX,
+  )
+  onReaderPreferenceChange()
+}
+
 
 function id(suffix: string) {
   return `${props.idPrefix}-${suffix}`
@@ -71,80 +118,52 @@ watchEffect((onCleanup) => {
 
 <template>
   <Teleport to="body">
-    <Transition
-      enter-active-class="transition-transform duration-300 ease-out"
-      leave-active-class="transition-transform duration-200 ease-in"
-      enter-from-class="translate-x-full"
-      leave-to-class="translate-x-full"
-    >
-      <aside
-        v-if="open"
-        ref="panelEl"
-        class="fixed inset-y-0 right-0 z-[210] flex w-full max-w-md flex-col border-l border-edge-subtle bg-surface-overlay shadow-2xl ring-1 ring-edge-subtle/60"
-        role="dialog"
-        aria-modal="false"
-        :aria-labelledby="id('title')"
-        @click.stop
-      >
-        <div class="flex shrink-0 items-start justify-between gap-3 border-b border-edge-subtle px-5 py-4">
-          <div>
-            <p :id="id('title')" class="text-xs font-semibold uppercase tracking-widest text-content-muted">
-              {{ t('viewer.readingDisplay') }}
-            </p>
-            <p class="mt-1 text-sm text-content-secondary">{{ t('viewer.readingSettingsHint') }}</p>
-          </div>
-          <button
-            type="button"
-            class="shrink-0 rounded-lg p-2 text-content-muted transition-colors hover:bg-surface-subtle hover:text-content"
-            :aria-label="t('viewer.closeReadingSettings')"
-            @click="open = false"
-          >
-            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+    <aside ref="panelEl" class="fixed inset-x-0 bottom-0 z-[211] w-full transition-[max-height] duration-300 ease-out"
+      :class="open
+        ? 'bg-surface-overlay shadow-2xl ring-1 ring-edge-subtle/60'
+        : 'bg-transparent shadow-none ring-0'" role="dialog" aria-modal="false" :aria-labelledby="id('title')"
+      @click.stop :style="{ maxHeight: open ? '24rem' : '3.25rem' }">
+      <!-- Pin to panel top edge: -top-full was relative to the tall inner wrapper when open, which shoved the control up the viewport -->
+      <div class="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-center px-2">
+        <div class="pointer-events-auto flex w-full max-w-content justify-end">
+          <button type="button"
+            class="reader-settings-toggle inline-flex h-8 min-w-[2.75rem] -translate-y-full items-center justify-center rounded-ds-md bg-surface-overlay/95 text-content-secondary shadow-ds-card backdrop-blur-sm transition hover:border-edge hover:bg-surface-raised hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-overlay"
+            :aria-label="open ? t('viewer.closeReadingSettings') : t('viewer.openReadingSettings')"
+            :aria-expanded="open" aria-haspopup="dialog" @click="open = !open">
+            <svg class="h-5 w-5 shrink-0 transition-transform duration-200" :class="open ? 'rotate-180' : ''"
+              fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
             </svg>
           </button>
         </div>
+      </div>
 
-        <div class="min-h-0 flex-1 overflow-y-auto px-5 py-5">
-          <div class="space-y-5">
-            <div>
-              <label class="mb-1 block text-xs font-medium text-content-secondary" :for="id('font')">{{ t('viewer.font') }}</label>
+      <div class="mx-auto w-full max-w-content p-2">
+        <!-- Controls (only when open) -->
+        <div v-show="open" class="max-h-[calc(24rem-3.25rem)] overflow-y-auto">
+          <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div class="sm:col-span-2 lg:col-span-1 flex items-end">
               <div
                 class="flex w-full items-stretch gap-0 overflow-hidden rounded-lg border border-edge-subtle bg-surface-raised shadow-ds-card focus-within:ring-1 focus-within:ring-brand/30"
-                role="group"
-                :aria-label="t('viewer.font')"
-              >
-                <button
-                  type="button"
+                role="group" :aria-label="t('viewer.font')">
+                <button type="button"
                   class="flex shrink-0 items-center justify-center px-2.5 py-2 text-content-secondary transition hover:bg-surface-subtle hover:text-content"
-                  :aria-label="t('viewer.fontPrev')"
-                  @click="cycleFont(-1)"
-                >
+                  :aria-label="t('viewer.fontPrev')" @click="cycleFont(-1)">
                   <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
                   </svg>
                 </button>
-                <select
-                  :id="id('font')"
-                  v-model="fontKey"
+                <select :id="id('font')" v-model="fontKey"
                   class="min-w-0 flex-1 cursor-pointer border-x border-edge-subtle bg-surface-raised px-2 py-2 text-center text-sm font-medium text-content-secondary focus:border-brand focus:outline-none focus:ring-0"
-                  @change="onReaderPreferenceChange"
-                >
-                  <option
-                    v-for="f in fontOptions"
-                    :key="f"
-                    :value="f"
-                    :title="READER_FONT_DESC_I18N_KEYS[f] ? t(READER_FONT_DESC_I18N_KEYS[f]) : undefined"
-                  >
+                  @change="onReaderPreferenceChange">
+                  <option v-for="f in fontOptions" :key="f" :value="f"
+                    :title="READER_FONT_DESC_I18N_KEYS[f] ? t(READER_FONT_DESC_I18N_KEYS[f]) : undefined">
                     {{ t(READER_FONT_I18N_KEYS[f]) }}
                   </option>
                 </select>
-                <button
-                  type="button"
+                <button type="button"
                   class="flex shrink-0 items-center justify-center px-2.5 py-2 text-content-secondary transition hover:bg-surface-subtle hover:text-content"
-                  :aria-label="t('viewer.fontNext')"
-                  @click="cycleFont(1)"
-                >
+                  :aria-label="t('viewer.fontNext')" @click="cycleFont(1)">
                   <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
                   </svg>
@@ -152,63 +171,79 @@ watchEffect((onCleanup) => {
               </div>
             </div>
 
-            <div>
-              <label class="mb-1 block text-xs font-medium text-content-secondary" :for="id('size')">
-                {{ t('viewer.fontSize') }}
-                <span class="tabular-nums text-content-muted">({{ fontSizePx }}px)</span>
-              </label>
-              <input
-                :id="id('size')"
-                v-model.number="fontSizePx"
-                type="range"
-                min="16"
-                max="48"
-                step="1"
-                class="h-2 w-full cursor-pointer accent-gold-600"
-                @input="onReaderPreferenceChange"
-              />
-            </div>
+            <div class="flex flex-nowrap justify-between overflow-x-auto reader-settings-items [scrollbar-width:thin]">
+              <div class="reader-settings-item">
+                <p class="mb-1 text-xs font-medium text-content-secondary">{{ t('viewer.fontSize') }}</p>
+                <div
+                  class="inline-flex overflow-hidden rounded-full border border-edge-subtle bg-surface-raised shadow-ds-card">
+                  <button type="button"
+                    class="flex h-9 w-9 items-center justify-center border-r border-edge-subtle text-content-secondary transition hover:bg-surface-subtle"
+                    :aria-label="t('viewer.fontSize') + ' -'" @click="decFontSize">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14" />
+                    </svg>
+                  </button>
+                  <button type="button"
+                    class="flex h-9 w-9 items-center justify-center text-content-secondary transition hover:bg-surface-subtle"
+                    :aria-label="t('viewer.fontSize') + ' +'" @click="incFontSize">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
 
-            <div>
-              <label class="mb-1 block text-xs font-medium text-content-secondary" :for="id('lineheight')">
-                {{ t('viewer.lineHeight') }}
-                <span class="tabular-nums text-content-muted">({{ lineHeight.toFixed(2) }})</span>
-              </label>
-              <input
-                :id="id('lineheight')"
-                v-model.number="lineHeight"
-                type="range"
-                :min="READER_LINE_HEIGHT_MIN"
-                :max="READER_LINE_HEIGHT_MAX"
-                :step="READER_LINE_HEIGHT_STEP"
-                class="h-2 w-full cursor-pointer accent-gold-600"
-                @input="onReaderPreferenceChange"
-              />
-            </div>
+              <div class="reader-settings-item">
+                <p class="mb-1 text-xs font-medium text-content-secondary">{{ t('viewer.lineHeight') }}</p>
+                <div
+                  class="inline-flex overflow-hidden rounded-full border border-edge-subtle bg-surface-raised shadow-ds-card">
+                  <button type="button"
+                    class="flex h-9 w-9 items-center justify-center border-r border-edge-subtle text-content-secondary transition hover:bg-surface-subtle"
+                    :aria-label="t('viewer.lineHeight') + ' -'" @click="decLineHeight">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14" />
+                    </svg>
+                  </button>
+                  <button type="button"
+                    class="flex h-9 w-9 items-center justify-center text-content-secondary transition hover:bg-surface-subtle"
+                    :aria-label="t('viewer.lineHeight') + ' +'" @click="incLineHeight">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
 
-            <div>
-              <label class="mb-1 block text-xs font-medium text-content-secondary" :for="id('letterspacing')">
-                {{ t('viewer.letterSpacing') }}
-                <span class="tabular-nums text-content-muted">({{ letterSpacingEm.toFixed(3) }}em)</span>
-              </label>
-              <input
-                :id="id('letterspacing')"
-                v-model.number="letterSpacingEm"
-                type="range"
-                :min="READER_LETTER_SPACING_MIN"
-                :max="READER_LETTER_SPACING_MAX"
-                :step="READER_LETTER_SPACING_STEP"
-                class="h-2 w-full cursor-pointer accent-gold-600"
-                @input="onReaderPreferenceChange"
-              />
+              <div class="reader-settings-item">
+                <p class="mb-1 text-xs font-medium text-content-secondary">{{ t('viewer.letterSpacing') }}</p>
+                <div
+                  class="inline-flex overflow-hidden rounded-full border border-edge-subtle bg-surface-raised shadow-ds-card">
+                  <button type="button"
+                    class="flex h-9 w-9 items-center justify-center border-r border-edge-subtle text-content-secondary transition hover:bg-surface-subtle"
+                    :aria-label="t('viewer.letterSpacing') + ' -'" @click="decLetterSpacing">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14" />
+                    </svg>
+                  </button>
+                  <button type="button"
+                    class="flex h-9 w-9 items-center justify-center text-content-secondary transition hover:bg-surface-subtle"
+                    :aria-label="t('viewer.letterSpacing') + ' +'" @click="incLetterSpacing">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
-
-          <p class="mt-6 text-xs text-content-muted">
-            {{ isLoggedIn ? t('viewer.prefsSavedHint') : t('viewer.prefsLocalHint') }}
-          </p>
         </div>
-      </aside>
-    </Transition>
+      </div>
+    </aside>
   </Teleport>
 </template>
