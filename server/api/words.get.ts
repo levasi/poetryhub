@@ -1,4 +1,5 @@
 import { getCorpusSnapshot, loadWordCorpus, queryByMode, type SearchMode, type WordSearchOptions } from '../utils/wordCorpus'
+import { normForSearch } from '../../lib/rhyme/normalize'
 
 const MODES: SearchMode[] = ['fuzzy', 'starts', 'ends', 'contains', 'anagram', 'exact', 'synonyms', 'antonyms']
 
@@ -45,18 +46,19 @@ export default defineEventHandler(async (event) => {
         return queryByMode(mode, q, limit, wordSearchOptions)
       }
 
-      // Relationship lookup: search *everywhere* for base words, then expand their relations.
-      // We intentionally use `contains` without syllable-OR for predictable substring search.
-      const bases = queryByMode('contains', q, 250, {
-        ...wordSearchOptions,
-        containsUseSyllables: false,
-        containsSyllablesOverride: null,
-        containsSyllablesMatchAll: false,
-      })
+      // Relationship lookup must resolve the queried base word(s) only.
+      // Do not broaden with "contains"/fuzzy here, otherwise synonym/antonym modes
+      // will leak results from unrelated words.
+      const needle = q.trim()
+      if (!needle) return []
+      const needleNorm = normForSearch(needle, strictDiacritics)
+      const corpus = getCorpusSnapshot()
+      const bases = corpus.filter((w) => normForSearch(w.word, strictDiacritics) === needleNorm)
       if (!bases.length) return []
 
-      const corpus = getCorpusSnapshot()
-      const byLower = new Map(corpus.map((w) => [w.word.toLowerCase(), w] as const))
+      // Normalize lexicon words the same way we matched the base, so relation tokens
+      // are matched consistently even when diacritics folding is enabled.
+      const byNorm = new Map(corpus.map((w) => [normForSearch(w.word, strictDiacritics), w] as const))
 
       const out = []
       const seen = new Set<string>()
@@ -64,10 +66,10 @@ export default defineEventHandler(async (event) => {
         const rel = mode === 'synonyms' ? base.synonyms : base.antonyms
         if (!rel?.length) continue
         for (const raw of rel) {
-          const k = raw.trim().toLowerCase()
+          const k = normForSearch(raw, strictDiacritics)
           if (!k || seen.has(k)) continue
           seen.add(k)
-          const hit = byLower.get(k)
+          const hit = byNorm.get(k)
           if (hit) out.push(hit)
           if (out.length >= limit) return out
         }
