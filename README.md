@@ -1,35 +1,93 @@
 # PoetryHub
 
-A modern, typography-focused platform to read, discover, and share poetry.
-Built with **Nuxt 3**, **TailwindCSS**, **Prisma**, and **PostgreSQL**. Deploys to **Vercel**.
+A modern, typography-focused platform to **read**, **discover**, **write**, and **share** poetry — with a strong focus on Romanian literature and tools for poets.
+
+Built with **Nuxt 3**, **Tailwind CSS**, **Prisma**, and **PostgreSQL**. Deploys to **Vercel**.
 
 ---
 
-## Features
+## Main features
 
-- **Public site** — browse poems by mood, theme, author, language; full-text search; random poem; daily poem
-- **Poetry reader** — clean immersive layout + Instagram-style carousel/slide mode per stanza
-- **Author pages** — bio, nationality, years, paginated poem list
-- **Favorites** — save poems to localStorage (no account needed)
-- **Admin panel** — JWT-secured dashboard to add/edit/delete poems and authors
-- **Bulk import** — import from [PoetryDB](https://poetrydb.org) API or paste JSON
+### Reading & discovery
+
+- **Homepage** — featured poems, recent additions, mood/theme browsing, random poem (3D dice)
+- **Poem library** — grid/list with filters by author, tag, source, language; URL-synced state
+- **Poem reader** — clean, immersive layout; customizable typography (font, size, line height, spacing)
+- **Stanza / slide mode** — read one stanza at a time, Instagram-carousel style
+- **Author pages** — bio, nationality, life years, portrait, paginated bibliography
+- **Search** — full-text search across poems and authors
+- **Daily poem** — poem of the day endpoint and page
+- **Favorites** — save poems locally; sync to your account when signed in
+- **Related poems** — suggestions on the poem detail page
+- **AI literary insight** — optional Claude-powered commentary on a poem (when `ANTHROPIC_API_KEY` is set)
+- **i18n** — Romanian and English UI (`@nuxtjs/i18n`)
+- **Themes** — reader color schemes (paper, ink, sepia, etc.)
+
+### Writing workspace (`/write`)
+
+Romanian-focused **dictionary and rhyme assistant** for composing lyrics and poetry:
+
+- **Multi-mode lexicon search** — fuzzy match, prefix/suffix, contains (with syllable-aware matching), anagram, exact
+- **Synonyms & antonyms** — expand from the lexicon (Wiktionary-backed `synonymsJson` / `antonymsJson`)
+- **Definitions** — DB first, then Wikipedia RO, then Wiktionary RO
+- **Lyrics editor** — write verses alongside the dictionary panel; resizable split layout
+- **Saved words** — pin useful words to a project list
+- **Drafts & publish** — save drafts to your account; publish poems when logged in
+- **Poet profile** — optional switch to “poet” mode after first save
+
+Lexicon data lives in `WriteLexiconWord` (import via `npm run write:lexicon`, DEX, SQLite, or Wiktionary backfill — see [Scripts](#scripts) below).
+
+### Instagram carousel generator (`/carousel-generator`)
+
+- Build **slide-by-slide carousels** from any poem (split by stanza)
+- Customize fonts, colors, and branding per slide
+- **Export PNG slides** or a ZIP; per-poem font settings stored in the database
+- Site-wide carousel defaults configurable in admin
+
+### Accounts & community
+
+- **Sign up / sign in** — email + password, or **Google OAuth** (when configured)
+- **Account** — profile, preferences (reader settings sync), your published poems
+- **User-published poems** — poets can publish from `/write` to the public catalog
+- **Favorites API** — server-backed favorites when authenticated
+
+### Admin (`/admin`)
+
+JWT-secured dashboard (admin role):
+
+- **Poems & authors** — full CRUD
+- **Bulk import** — [PoetryDB](https://poetrydb.org), JSON paste, Romanian corpus presets
+- **Users** — user management
+- **Site settings** — appearance and carousel defaults
+- **Instagram post helper** — admin tooling for social assets
+
+### Content pipeline
+
+- **CLI importers** — PoetryDB, Romanian Voice, Wikisource (Alecsandri), etc.
+- **Author enrichment** — portraits and life years from Wikidata
+- **SEO** — dynamic `sitemap.xml` for poems and authors
+- **Caching** — SWR on poem lists, detail, homepage, and AI insight endpoints
 
 ---
 
 ## Stack
 
-| Layer     | Tech                        |
-|-----------|-----------------------------|
-| Framework | Nuxt 3                      |
-| Styling   | TailwindCSS + custom tokens |
+| Layer     | Tech                          |
+|-----------|-------------------------------|
+| Framework | Nuxt 3                        |
+| UI        | Vue 3, Pinia, Iconify         |
+| Styling   | Tailwind CSS + design tokens  |
 | Database  | PostgreSQL (Neon or Supabase) |
-| ORM       | Prisma                      |
-| Auth      | JWT via `jose` + HttpOnly cookies |
-| Deploy    | Vercel (Nitro preset)       |
+| ORM       | Prisma                        |
+| Auth      | JWT (`jose`) + HttpOnly cookies; Google OAuth |
+| AI        | Anthropic Claude (optional)   |
+| Deploy    | Vercel (Nitro preset)         |
+
+For a deeper reference (routes, API, schema), see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ---
 
-## Quick Start
+## Quick start
 
 ### 1. Clone & install
 
@@ -92,60 +150,37 @@ npm run dev
 
 ---
 
-## Project Structure
+## Scripts
+
+| Command | Purpose |
+|---------|---------|
+| `npm run dev` | Development server |
+| `npm run build` | Production build (`prisma generate` + `nuxt build`) |
+| `npm run db:push` / `db:migrate` / `db:seed` / `db:studio` | Database schema & seed |
+| `npm run poems:import` | Import poems from PoetryDB |
+| `npm run poems:import-ro` | Romanian Voice corpus |
+| `npm run write:lexicon` | Import write-tool lexicon |
+| `npm run write:dex` | Import DEX definitions into lexicon |
+| `npm run write:wiktionary-relations` | Backfill `synonymsJson` / `antonymsJson` from ro.wiktionary |
+| `npm run write:lexicon:from-sqlite` | Copy lexicon from rhymescheme SQLite (`RHYMESCHEME_SQLITE_PATH`) |
+| `npm run authors:portraits` | Backfill author images |
+| `npm run authors:life-years` | Fetch birth/death years from Wikidata |
+
+---
+
+## Project structure (overview)
 
 ```
 poetryhub/
-├── assets/css/main.css          # Global styles + Tailwind
-├── components/
-│   ├── AppNav.vue               # Sticky navigation bar
-│   ├── AppFooter.vue
-│   ├── PoetryCard.vue           # Poem card (grid/list)
-│   ├── PoetryViewer.vue         # Full reader + carousel mode
-│   ├── AuthorCard.vue           # Author card
-│   ├── SearchBar.vue            # Debounced search input
-│   ├── TagBadge.vue             # Clickable/linked tag pill
-│   └── PaginationNav.vue        # Page number navigation
-├── composables/
-│   ├── usePoems.ts              # Fetch + paginate poems
-│   ├── useSearch.ts             # Debounced full-text search
-│   ├── useFilters.ts            # URL-synced filter state
-│   ├── useFavorites.ts          # localStorage favorites
-│   └── useAdmin.ts             # Admin session
-├── layouts/
-│   ├── default.vue              # Public layout (nav + footer)
-│   └── admin.vue                # Admin sidebar layout
-├── middleware/admin.ts          # Client-side admin route guard
-├── pages/
-│   ├── index.vue                # Homepage
-│   ├── poems/index.vue          # Poem grid + filters
-│   ├── poems/[slug].vue         # Poem reader
-│   ├── authors/index.vue        # Authors list
-│   ├── authors/[slug].vue       # Author profile
-│   ├── search.vue               # Search page
-│   ├── daily.vue                # Daily poem
-│   ├── favorites.vue            # Saved poems
-│   └── admin/
-│       ├── login.vue
-│       ├── index.vue            # Dashboard
-│       ├── poems/               # CRUD
-│       ├── authors/             # CRUD
-│       └── import.vue           # Bulk import UI
-├── prisma/schema.prisma         # DB schema
-├── scripts/
-│   ├── import-poems.ts          # CLI importer (PoetryDB)
-│   └── seed.ts                  # Admin + tags seed
-└── server/
-    ├── api/
-    │   ├── poems/               # GET, POST, PUT, DELETE, random, daily
-    │   ├── authors/             # GET, POST, PUT, DELETE
-    │   ├── tags/                # GET, POST
-    │   ├── import/              # poetrydb.post.ts, bulk.post.ts
-    │   └── auth/                # login, logout, me
-    └── utils/
-        ├── prisma.ts            # Singleton Prisma client
-        ├── auth.ts              # JWT sign/verify/guard
-        └── slug.ts              # Slugify, excerpts, reading time
+├── pages/              # Routes: poems, authors, write, carousel-generator, account, admin
+├── components/         # PoetryCard, PoetryViewer, carousel, write editor, …
+├── composables/        # useAuth, usePoems, useFavorites, useCarouselGenerator, …
+├── stores/             # Pinia: write lyrics & projects
+├── lib/rhyme/          # Lexicon search, syllables, normalization
+├── server/api/         # Nitro REST handlers
+├── prisma/schema.prisma
+├── scripts/            # Import, seed, lexicon backfill CLIs
+└── docs/ARCHITECTURE.md
 ```
 
 ---
@@ -173,6 +208,8 @@ git add . && git commit -m "init" && git push
 | `ADMIN_EMAIL`         | Your admin email                   |
 | `ADMIN_PASSWORD`      | Strong password                    |
 | `NUXT_PUBLIC_APP_URL` | `https://your-app.vercel.app`      |
+| `NUXT_OAUTH_GOOGLE_*` | Optional Google OAuth              |
+| `ANTHROPIC_API_KEY`   | Optional AI insight & enrichment   |
 
 ### 4. Run seed on first deploy
 
@@ -185,15 +222,11 @@ DATABASE_URL="your-prod-url" npm run poems:import -- --count=100
 
 ---
 
-## Admin Panel
+## Admin panel
 
-Open `/admin` while signed in with an account that has access (e.g. Google login on `/login`, then visit `/admin`). Password-based admin JWT (`POST /api/auth/login`) remains available for tooling if configured; there is no separate `/admin/login` page.
+Open `/admin` while signed in with an account that has the **admin** role (e.g. seed admin, or Google login if promoted). Password-based admin JWT (`POST /api/auth/login`) remains available for tooling if configured.
 
----
-
-## Bulk Import JSON Format
-
-POST to `/api/import/bulk` or paste in Admin → Import:
+**Bulk import** — Admin → Import, or `POST /api/import/bulk`:
 
 ```json
 [
