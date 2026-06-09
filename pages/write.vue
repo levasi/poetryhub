@@ -62,13 +62,28 @@ function removeSearchQuery(index: number) {
 }
 
 let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null
+/** Bumped on each new search so stale in-flight responses cannot overwrite newer results. */
+let searchGeneration = 0
+
+function cancelScheduledSearch() {
+  if (searchDebounceTimer) {
+    clearTimeout(searchDebounceTimer)
+    searchDebounceTimer = null
+  }
+}
 
 function scheduleRunSearch() {
-  if (searchDebounceTimer) clearTimeout(searchDebounceTimer)
+  cancelScheduledSearch()
   searchDebounceTimer = setTimeout(() => {
     searchDebounceTimer = null
     void runSearch()
   }, 320)
+}
+
+/** Immediate search (button / Enter) — skip pending debounced run from typing. */
+function runSearchNow() {
+  cancelScheduledSearch()
+  void runSearch()
 }
 
 interface Hit {
@@ -120,9 +135,14 @@ const WORDS_LIMIT = 5000
 async function runSearch() {
   const terms = nonEmptySearchTerms()
   if (terms.length === 0) {
+    searchGeneration++
     results.value = []
+    loading.value = false
     return
   }
+
+  const gen = ++searchGeneration
+  const capturedMode = mode.value
   loading.value = true
   try {
     const seen = new Set<string>()
@@ -131,11 +151,11 @@ async function runSearch() {
       terms.map((query) => {
         const queryParams: Record<string, string | number> = {
           q: query,
-          mode: mode.value,
+          mode: capturedMode,
           limit: WORDS_LIMIT,
           strictDiacritics: STRICT_DIACRITICS ? 1 : 0,
         }
-        if (mode.value === 'contains') {
+        if (capturedMode === 'contains') {
           queryParams.useSyllablesInSearch = 0
         }
         return $fetch<{ results: Hit[] }>('/api/words', {
@@ -143,6 +163,7 @@ async function runSearch() {
         })
       })
     )
+    if (gen !== searchGeneration) return
     for (const res of responses) {
       for (const h of res.results) {
         if (!seen.has(h.id)) {
@@ -153,11 +174,12 @@ async function runSearch() {
     }
     results.value = merged
   } finally {
-    loading.value = false
+    if (gen === searchGeneration) loading.value = false
   }
 }
 
 watch(mode, () => {
+  cancelScheduledSearch()
   void runSearch()
 })
 
@@ -620,10 +642,8 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  if (searchDebounceTimer) {
-    clearTimeout(searchDebounceTimer)
-    searchDebounceTimer = null
-  }
+  cancelScheduledSearch()
+  searchGeneration++
   window.removeEventListener('resize', clampRightToContainer)
   document.removeEventListener('mousemove', onSplitResizeMove)
   document.removeEventListener('mouseup', endSplitResize)
@@ -661,7 +681,7 @@ onUnmounted(() => {
                   <input v-model="row.text" type="search" autocomplete="off" enterkeyhint="search"
                     :placeholder="placeholder"
                     class="min-w-0 flex-1 rounded-xl border border-edge bg-surface-raised px-3 py-2.5 text-base text-content shadow-inner outline-none ring-blue-500/20 transition placeholder:text-sm placeholder:text-content-soft focus:border-blue-500 focus:ring-2 sm:min-w-[10rem] sm:px-4 sm:py-3"
-                    @keydown.enter.prevent="runSearch" />
+                    @keydown.enter.prevent="runSearchNow" />
                   <button v-if="searchQueries.length > 1" type="button"
                     class="shrink-0 rounded-lg border border-edge-subtle px-2 py-2 text-content-muted hover:bg-surface-subtle sm:px-2.5"
                     :title="'Elimină câmpul ' + (i + 1)" @click="removeSearchQuery(i)">
@@ -677,7 +697,7 @@ onUnmounted(() => {
               </div>
               <button type="button"
                 class="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-brand-foreground shadow-sm transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/45 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-raised disabled:cursor-not-allowed disabled:opacity-50 lg:w-auto"
-                :disabled="loading" @click="runSearch">
+                :disabled="loading" @click="runSearchNow">
                 <Icon icon="heroicons:magnifying-glass" class="h-5 w-5 shrink-0" aria-hidden="true" />
                 {{ t('write.searchBtn') }}
               </button>
