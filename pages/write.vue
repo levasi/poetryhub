@@ -121,16 +121,44 @@ interface Hit {
 }
 
 const results = ref<Hit[]>([])
+const resultsHasMore = ref(false)
+const loadingMore = ref(false)
 
-/** Cuvinte afișate în ordinea: cele mai scurte înainte celor mai lungi; la egalitate, alfabetic (ro). */
-const resultsSortedByWordLength = computed(() => {
-  return [...results.value].sort((a, b) => {
-    const la = a.word.length
-    const lb = b.word.length
-    if (la !== lb) return la - lb
-    return a.word.localeCompare(b.word, 'ro')
+const RESULTS_PAGE_SIZE = 200
+
+interface WordsSearchResponse {
+  results: Hit[]
+  total: number
+  hasMore: boolean
+  offset: number
+  limit: number
+}
+
+function buildWordsQuery(terms: string[], offset: number): Record<string, string | number | string[]> {
+  const queryParams: Record<string, string | number | string[]> = {
+    q: terms.length === 1 ? terms[0]! : terms,
+    mode: mode.value,
+    limit: RESULTS_PAGE_SIZE,
+    offset,
+    strictDiacritics: STRICT_DIACRITICS ? 1 : 0,
+  }
+  if (mode.value === 'contains') {
+    queryParams.useSyllablesInSearch = 0
+  }
+  return queryParams
+}
+
+async function fetchWordsPage(
+  terms: string[],
+  offset: number,
+  gen: number,
+): Promise<WordsSearchResponse | null> {
+  const res = await $fetch<WordsSearchResponse>('/api/words', {
+    query: buildWordsQuery(terms, offset),
   })
-})
+  if (gen !== searchGeneration) return null
+  return res
+}
 
 const placeholder = computed(() => {
   switch (mode.value) {
@@ -153,52 +181,48 @@ const placeholder = computed(() => {
   }
 })
 
-/** Aliniat cu plafonul din `server/api/words.get.ts` (max 5000). */
-const WORDS_LIMIT = 5000
-
 async function runSearch() {
   const terms = searchableTerms()
   if (terms.length === 0) {
     searchGeneration++
     results.value = []
+    resultsHasMore.value = false
     loading.value = false
     return
   }
 
   const gen = ++searchGeneration
-  const capturedMode = mode.value
   loading.value = true
   try {
-    const seen = new Set<string>()
-    const merged: Hit[] = []
-    const responses = await Promise.all(
-      terms.map((query) => {
-        const queryParams: Record<string, string | number> = {
-          q: query,
-          mode: capturedMode,
-          limit: WORDS_LIMIT,
-          strictDiacritics: STRICT_DIACRITICS ? 1 : 0,
-        }
-        if (capturedMode === 'contains') {
-          queryParams.useSyllablesInSearch = 0
-        }
-        return $fetch<{ results: Hit[] }>('/api/words', {
-          query: queryParams,
-        })
-      })
-    )
-    if (gen !== searchGeneration) return
-    for (const res of responses) {
-      for (const h of res.results) {
-        if (!seen.has(h.id)) {
-          seen.add(h.id)
-          merged.push(h)
-        }
-      }
-    }
-    results.value = merged
+    const res = await fetchWordsPage(terms, 0, gen)
+    if (!res) return
+    results.value = res.results
+    resultsHasMore.value = res.hasMore
   } finally {
     if (gen === searchGeneration) loading.value = false
+  }
+}
+
+async function loadMoreResults() {
+  if (loadingMore.value || loading.value || !resultsHasMore.value) return
+  const terms = searchableTerms()
+  if (!terms.length) return
+
+  const gen = searchGeneration
+  loadingMore.value = true
+  try {
+    const res = await fetchWordsPage(terms, results.value.length, gen)
+    if (!res) return
+    const seen = new Set(results.value.map((r) => r.id))
+    for (const h of res.results) {
+      if (!seen.has(h.id)) {
+        seen.add(h.id)
+        results.value.push(h)
+      }
+    }
+    resultsHasMore.value = res.hasMore
+  } finally {
+    if (gen === searchGeneration) loadingMore.value = false
   }
 }
 
@@ -691,42 +715,24 @@ onUnmounted(() => {
             <div class="mt-4">
               <label class="sr-only">Căutare</label>
               <div class="flex flex-wrap items-center gap-2">
-                <div
-                  v-for="(row, i) in searchQueries"
-                  :key="row.id"
-                  class="relative shrink-0"
-                >
+                <div v-for="(row, i) in searchQueries" :key="row.id" class="relative shrink-0">
                   <label class="sr-only">Cuvânt căutat {{ i + 1 }}</label>
-                  <input
-                    :ref="(el) => setSearchInputRef(i, el)"
-                    v-model="row.text"
-                    type="search"
-                    autocomplete="off"
-                    enterkeyhint="search"
-                    :placeholder="placeholder"
+                  <input :ref="(el) => setSearchInputRef(i, el)" v-model="row.text" type="text" inputmode="search"
+                    autocomplete="off" enterkeyhint="search" :placeholder="placeholder"
                     class="w-[9.5rem] max-w-full rounded-xl border border-edge bg-surface-raised py-2 pl-3 text-sm text-content shadow-inner outline-none ring-blue-500/20 transition placeholder:text-xs placeholder:text-content-soft focus:border-blue-500 focus:ring-2 sm:w-[10.5rem] sm:py-2.5 sm:text-base sm:placeholder:text-sm"
-                    :class="searchQueries.length > 1 ? 'pr-7 sm:pr-8' : 'pr-3 sm:pr-4'"
-                    @focus="activeSearchIndex = i"
-                    @keydown.enter.prevent="runSearch"
-                  />
-                  <button
-                    v-if="searchQueries.length > 1"
-                    type="button"
+                    :class="searchQueries.length > 1 ? 'pr-7 sm:pr-8' : 'pr-3 sm:pr-4'" @focus="activeSearchIndex = i"
+                    @keydown.enter.prevent="runSearch" />
+                  <button v-if="searchQueries.length > 1" type="button"
                     class="absolute right-1 top-1 inline-flex h-4 w-4 items-center justify-center rounded-full text-content-muted transition hover:bg-surface-subtle hover:text-content-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand/40 sm:right-1.5 sm:top-1.5 sm:h-[1.125rem] sm:w-[1.125rem]"
-                    :title="'Elimină câmpul ' + (i + 1)"
-                    :aria-label="'Elimină câmpul ' + (i + 1)"
-                    @click="removeSearchQuery(i)"
-                  >
+                    :title="'Elimină câmpul ' + (i + 1)" :aria-label="'Elimină câmpul ' + (i + 1)"
+                    @click="removeSearchQuery(i)">
                     <Icon icon="heroicons:x-mark" class="h-3 w-3 shrink-0" aria-hidden="true" />
                   </button>
                 </div>
-                <button
-                  type="button"
+                <button type="button"
                   class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-dashed border-brand/45 bg-brand-soft/30 text-brand transition hover:border-brand hover:bg-brand-soft/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35"
-                  title="Adaugă alt cuvânt de căutare"
-                  aria-label="Adaugă alt cuvânt de căutare"
-                  @click="addSearchQuery"
-                >
+                  title="Adaugă alt cuvânt de căutare" aria-label="Adaugă alt cuvânt de căutare"
+                  @click="addSearchQuery">
                   <Icon icon="heroicons:plus" class="h-5 w-5 shrink-0 text-current" aria-hidden="true" />
                 </button>
               </div>
@@ -759,7 +765,7 @@ onUnmounted(() => {
               <span v-if="loading" class="font-normal text-content-soft">— se încarcă…</span>
             </p>
             <ul v-if="results.length" class="flex flex-wrap content-start gap-2 rounded-xl">
-              <li v-for="r in resultsSortedByWordLength" :key="r.id" class="min-w-0 max-w-full">
+              <li v-for="r in results" :key="r.id" class="min-w-0 max-w-full">
                 <div
                   class="group relative inline-flex max-w-full min-w-0 items-center gap-0.5 rounded-lg bg-surface-subtle/50 p-1 transition hover:border-blue-200 hover:bg-blue-50/80">
                   <button type="button" class="flex min-w-0 max-w-[12rem] items-center justify-center rounded-md"
@@ -778,7 +784,14 @@ onUnmounted(() => {
                 </div>
               </li>
             </ul>
-            <p v-else-if="!loading"
+            <div v-if="results.length && resultsHasMore && !loading" class="mt-3 flex justify-center">
+              <button type="button"
+                class="w-full max-w-xs rounded-xl border border-edge-subtle bg-surface-subtle px-4 py-2.5 text-sm font-medium text-content-secondary transition hover:border-edge hover:bg-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                :disabled="loadingMore" @click="loadMoreResults">
+                {{ loadingMore ? t('write.loadingMoreResults') : t('write.loadMoreResults') }}
+              </button>
+            </div>
+            <p v-else-if="!loading && !results.length"
               class="rounded-xl border border-dashed border-edge-subtle px-4 py-8 text-center text-sm text-content-muted">
               Niciun rezultat. Schimbă modul sau textul căutat.
             </p>

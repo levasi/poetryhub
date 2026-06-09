@@ -1,14 +1,56 @@
-import { getCorpusSnapshot, loadWordCorpus, queryByMode, type SearchMode, type WordSearchOptions } from '../utils/wordCorpus'
-import { normForSearch } from '../../lib/rhyme/normalize'
+import {
+  loadWordCorpus,
+  searchLexiconPaged,
+  type SearchMode,
+  type WordSearchOptions,
+} from '../utils/wordCorpus'
 
 const MODES: SearchMode[] = ['fuzzy', 'starts', 'ends', 'contains', 'anagram', 'exact', 'synonyms', 'antonyms']
 
+function parseQueryTerms(raw: unknown): string[] {
+  const parts = Array.isArray(raw) ? raw : raw != null ? [raw] : []
+  const seen = new Set<string>()
+  const out: string[] = []
+  for (const item of parts) {
+    const term = String(item).trim()
+    if (!term || seen.has(term)) continue
+    seen.add(term)
+    out.push(term)
+  }
+  return out
+}
+
+function mapWord(w: {
+  id: string
+  word: string
+  baseForm: string
+  type: string
+  syllables: string
+  syllableCount: number
+  definition: string | null
+  synonyms: string[]
+  antonyms: string[]
+}) {
+  return {
+    id: w.id,
+    word: w.word,
+    baseForm: w.baseForm,
+    type: w.type,
+    syllables: w.syllables,
+    syllableCount: w.syllableCount,
+    definition: w.definition,
+    synonyms: w.synonyms,
+    antonyms: w.antonyms,
+  }
+}
+
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
-  const q = query.q?.toString() ?? ''
+  const terms = parseQueryTerms(query.q)
   const rawMode = query.mode?.toString() ?? 'fuzzy'
   const mode = (MODES.includes(rawMode as SearchMode) ? rawMode : 'fuzzy') as SearchMode
   const limit = Math.min(5000, Math.max(1, Number(query.limit) || 500))
+  const offset = Math.max(0, Number(query.offset) || 0)
 
   const rawStrict = query.strictDiacritics?.toString().toLowerCase()
   const strictDiacritics = rawStrict === '1' || rawStrict === 'true'
@@ -41,55 +83,19 @@ export default defineEventHandler(async (event) => {
 
   try {
     await loadWordCorpus()
-    const results = (() => {
-      if (mode !== 'synonyms' && mode !== 'antonyms') {
-        return queryByMode(mode, q, limit, wordSearchOptions)
-      }
+    if (!terms.length) {
+      return { mode, query: terms, offset, limit, total: 0, hasMore: false, results: [] }
+    }
 
-      // Relationship lookup must resolve the queried base word(s) only.
-      // Do not broaden with "contains"/fuzzy here, otherwise synonym/antonym modes
-      // will leak results from unrelated words.
-      const needle = q.trim()
-      if (!needle) return []
-      const needleNorm = normForSearch(needle, strictDiacritics)
-      const corpus = getCorpusSnapshot()
-      const bases = corpus.filter((w) => normForSearch(w.word, strictDiacritics) === needleNorm)
-      if (!bases.length) return []
-
-      // Normalize lexicon words the same way we matched the base, so relation tokens
-      // are matched consistently even when diacritics folding is enabled.
-      const byNorm = new Map(corpus.map((w) => [normForSearch(w.word, strictDiacritics), w] as const))
-
-      const out = []
-      const seen = new Set<string>()
-      for (const base of bases) {
-        const rel = mode === 'synonyms' ? base.synonyms : base.antonyms
-        if (!rel?.length) continue
-        for (const raw of rel) {
-          const k = normForSearch(raw, strictDiacritics)
-          if (!k || seen.has(k)) continue
-          seen.add(k)
-          const hit = byNorm.get(k)
-          if (hit) out.push(hit)
-          if (out.length >= limit) return out
-        }
-      }
-      return out
-    })()
+    const { results, total, hasMore } = searchLexiconPaged(mode, terms, offset, limit, wordSearchOptions)
     return {
       mode,
-      query: q,
-      results: results.map((w) => ({
-        id: w.id,
-        word: w.word,
-        baseForm: w.baseForm,
-        type: w.type,
-        syllables: w.syllables,
-        syllableCount: w.syllableCount,
-        definition: w.definition,
-        synonyms: w.synonyms,
-        antonyms: w.antonyms,
-      })),
+      query: terms,
+      offset,
+      limit,
+      total,
+      hasMore,
+      results: results.map(mapWord),
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)

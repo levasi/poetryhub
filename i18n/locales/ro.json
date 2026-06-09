@@ -29,6 +29,8 @@
     "searchBtn": "Caută",
     "diacriticsAria": "Diacritice românești",
     "insertDiacritic": "Inserează {char}",
+    "loadMoreResults": "Încarcă mai mult",
+    "loadingMoreResults": "Se încarcă…",
     "saveBtn": "Salvează",
     "saveTitle": "Salvează în cont",
     "saveDesc": "Salvează această poezie ca draft în contul tău (doar tu o vezi). O poți publica mai târziu.",

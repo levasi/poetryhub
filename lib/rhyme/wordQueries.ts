@@ -60,6 +60,16 @@ function minSubstringIndex(fw: string, matchers: string[]): number {
   return min === Infinity ? 999_999 : min
 }
 
+/** Ordine stabilă pentru UI: lungime crescătoare, apoi alfabetic (ro). */
+export function sortWordRecordsByLength<T extends { word: string }>(records: T[]): T[] {
+  return [...records].sort((a, b) => {
+    const la = a.word.length
+    const lb = b.word.length
+    if (la !== lb) return la - lb
+    return a.word.localeCompare(b.word, 'ro')
+  })
+}
+
 /** Rezultatele „Conține” nu sunt ordonate în corpus: sortăm după relevanță înainte de limită. */
 function sortContainsMatches(
   rows: WordRecord[],

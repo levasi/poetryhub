@@ -29,6 +29,8 @@
     "searchBtn": "Search",
     "diacriticsAria": "Romanian diacritics",
     "insertDiacritic": "Insert {char}",
+    "loadMoreResults": "Load more",
+    "loadingMoreResults": "Loading…",
     "saveBtn": "Save",
     "saveTitle": "Save to your account",
     "saveDesc": "Saves this poem draft to your account (only you can see it). You can publish later.",
