@@ -27,6 +27,8 @@
     "seoTitle": "Write — Romanian dictionary & rhymes — PoetryHub",
     "seoDesc": "Search words, syllables, and rhymes; draft lyrics with the PoetryHub lexicon tool.",
     "searchBtn": "Search",
+    "diacriticsAria": "Romanian diacritics",
+    "insertDiacritic": "Insert {char}",
     "saveBtn": "Save",
     "saveTitle": "Save to your account",
     "saveDesc": "Saves this poem draft to your account (only you can see it). You can publish later.",

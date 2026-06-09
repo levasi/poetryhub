@@ -45,12 +45,58 @@ interface SearchQueryRow {
 /** Unul sau mai multe câmpuri de căutare; rezultatele se unesc (fără duplicate). */
 const searchQueries = ref<SearchQueryRow[]>([{ id: ++nextSearchQueryId, text: '' }])
 
+const RO_DIACRITICS = ['ă', 'â', 'î', 'ș', 'ț'] as const
+
+const activeSearchIndex = ref(0)
+const searchInputEls = ref<(HTMLInputElement | null)[]>([])
+
+function setSearchInputRef(index: number, el: unknown) {
+  searchInputEls.value[index] = el instanceof HTMLInputElement ? el : null
+}
+
+function insertDiacritic(char: string) {
+  const index = activeSearchIndex.value
+  const row = searchQueries.value[index]
+  if (!row) return
+
+  const el = searchInputEls.value[index]
+  const start = el?.selectionStart ?? row.text.length
+  const end = el?.selectionEnd ?? row.text.length
+  row.text = row.text.slice(0, start) + char + row.text.slice(end)
+
+  nextTick(() => {
+    const input = searchInputEls.value[index]
+    if (!input) return
+    input.focus()
+    const pos = start + char.length
+    input.setSelectionRange(pos, pos)
+  })
+}
+
 function nonEmptySearchTerms(): string[] {
   return searchQueries.value.map((r) => r.text.trim()).filter(Boolean)
 }
 
+const MIN_SEARCH_LETTERS = 2
+
+function letterCount(s: string): number {
+  return [...s.normalize('NFC')].filter((ch) => /\p{L}/u.test(ch)).length
+}
+
+/** Terms with at least {@link MIN_SEARCH_LETTERS} letters — avoids noisy single-letter lookups. */
+function searchableTerms(): string[] {
+  return nonEmptySearchTerms().filter((term) => letterCount(term) >= MIN_SEARCH_LETTERS)
+}
+
+const canSearch = computed(() => searchableTerms().length > 0)
+
 function addSearchQuery() {
   searchQueries.value.push({ id: ++nextSearchQueryId, text: '' })
+  nextTick(() => {
+    const idx = searchQueries.value.length - 1
+    activeSearchIndex.value = idx
+    searchInputEls.value[idx]?.focus()
+  })
 }
 
 function removeSearchQuery(index: number) {
@@ -61,30 +107,8 @@ function removeSearchQuery(index: number) {
   searchQueries.value.splice(index, 1)
 }
 
-let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null
 /** Bumped on each new search so stale in-flight responses cannot overwrite newer results. */
 let searchGeneration = 0
-
-function cancelScheduledSearch() {
-  if (searchDebounceTimer) {
-    clearTimeout(searchDebounceTimer)
-    searchDebounceTimer = null
-  }
-}
-
-function scheduleRunSearch() {
-  cancelScheduledSearch()
-  searchDebounceTimer = setTimeout(() => {
-    searchDebounceTimer = null
-    void runSearch()
-  }, 320)
-}
-
-/** Immediate search (button / Enter) — skip pending debounced run from typing. */
-function runSearchNow() {
-  cancelScheduledSearch()
-  void runSearch()
-}
 
 interface Hit {
   id: string
@@ -133,7 +157,7 @@ const placeholder = computed(() => {
 const WORDS_LIMIT = 5000
 
 async function runSearch() {
-  const terms = nonEmptySearchTerms()
+  const terms = searchableTerms()
   if (terms.length === 0) {
     searchGeneration++
     results.value = []
@@ -177,13 +201,6 @@ async function runSearch() {
     if (gen === searchGeneration) loading.value = false
   }
 }
-
-watch(mode, () => {
-  cancelScheduledSearch()
-  void runSearch()
-})
-
-watch(searchQueries, () => scheduleRunSearch(), { deep: true })
 
 function pickWord(w: string) {
   lyrics.appendToActive(w)
@@ -642,7 +659,6 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  cancelScheduledSearch()
   searchGeneration++
   window.removeEventListener('resize', clampRightToContainer)
   document.removeEventListener('mousemove', onSplitResizeMove)
@@ -675,29 +691,58 @@ onUnmounted(() => {
             <div class="mt-4">
               <label class="sr-only">Căutare</label>
               <div class="flex flex-wrap items-center gap-2">
-                <div v-for="(row, i) in searchQueries" :key="row.id"
-                  class="flex min-w-0 max-w-[min(100%,20rem)] flex-[1_1_11rem] items-center gap-1.5 sm:flex-[1_1_13rem]">
+                <div
+                  v-for="(row, i) in searchQueries"
+                  :key="row.id"
+                  class="relative shrink-0"
+                >
                   <label class="sr-only">Cuvânt căutat {{ i + 1 }}</label>
-                  <input v-model="row.text" type="search" autocomplete="off" enterkeyhint="search"
+                  <input
+                    :ref="(el) => setSearchInputRef(i, el)"
+                    v-model="row.text"
+                    type="search"
+                    autocomplete="off"
+                    enterkeyhint="search"
                     :placeholder="placeholder"
-                    class="min-w-0 flex-1 rounded-xl border border-edge bg-surface-raised px-3 py-2.5 text-base text-content shadow-inner outline-none ring-blue-500/20 transition placeholder:text-sm placeholder:text-content-soft focus:border-blue-500 focus:ring-2 sm:min-w-[10rem] sm:px-4 sm:py-3"
-                    @keydown.enter.prevent="runSearchNow" />
-                  <button v-if="searchQueries.length > 1" type="button"
-                    class="shrink-0 rounded-lg border border-edge-subtle px-2 py-2 text-content-muted hover:bg-surface-subtle sm:px-2.5"
-                    :title="'Elimină câmpul ' + (i + 1)" @click="removeSearchQuery(i)">
-                    ×
+                    class="w-[9.5rem] max-w-full rounded-xl border border-edge bg-surface-raised py-2 pl-3 text-sm text-content shadow-inner outline-none ring-blue-500/20 transition placeholder:text-xs placeholder:text-content-soft focus:border-blue-500 focus:ring-2 sm:w-[10.5rem] sm:py-2.5 sm:text-base sm:placeholder:text-sm"
+                    :class="searchQueries.length > 1 ? 'pr-7 sm:pr-8' : 'pr-3 sm:pr-4'"
+                    @focus="activeSearchIndex = i"
+                    @keydown.enter.prevent="runSearch"
+                  />
+                  <button
+                    v-if="searchQueries.length > 1"
+                    type="button"
+                    class="absolute right-1 top-1 inline-flex h-4 w-4 items-center justify-center rounded-full text-content-muted transition hover:bg-surface-subtle hover:text-content-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand/40 sm:right-1.5 sm:top-1.5 sm:h-[1.125rem] sm:w-[1.125rem]"
+                    :title="'Elimină câmpul ' + (i + 1)"
+                    :aria-label="'Elimină câmpul ' + (i + 1)"
+                    @click="removeSearchQuery(i)"
+                  >
+                    <Icon icon="heroicons:x-mark" class="h-3 w-3 shrink-0" aria-hidden="true" />
                   </button>
                 </div>
-                <button type="button"
-                  class="inline-flex h-11 w-11 shrink-0 items-center justify-center self-center rounded-xl border border-dashed border-brand/45 bg-brand-soft/30 text-brand transition hover:border-brand hover:bg-brand-soft/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35"
-                  title="Adaugă alt cuvânt de căutare" aria-label="Adaugă alt cuvânt de căutare"
-                  @click="addSearchQuery">
-                  <Icon icon="heroicons:plus" class="h-6 w-6 shrink-0 text-current" aria-hidden="true" />
+                <button
+                  type="button"
+                  class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-dashed border-brand/45 bg-brand-soft/30 text-brand transition hover:border-brand hover:bg-brand-soft/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35"
+                  title="Adaugă alt cuvânt de căutare"
+                  aria-label="Adaugă alt cuvânt de căutare"
+                  @click="addSearchQuery"
+                >
+                  <Icon icon="heroicons:plus" class="h-5 w-5 shrink-0 text-current" aria-hidden="true" />
+                </button>
+              </div>
+              <div class="mt-2 flex flex-wrap items-center gap-1.5" role="group"
+                :aria-label="t('write.diacriticsAria')">
+                <button v-for="ch in RO_DIACRITICS" :key="ch" type="button"
+                  class="inline-flex min-h-[2.25rem] min-w-[2.25rem] items-center justify-center rounded-lg border border-edge-subtle bg-surface-subtle px-2.5 py-1 text-base font-medium text-content transition hover:border-edge hover:bg-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35"
+                  :title="t('write.insertDiacritic', { char: ch })"
+                  :aria-label="t('write.insertDiacritic', { char: ch })" @mousedown.prevent
+                  @click="insertDiacritic(ch)">
+                  {{ ch }}
                 </button>
               </div>
               <button type="button"
                 class="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-brand-foreground shadow-sm transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/45 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-raised disabled:cursor-not-allowed disabled:opacity-50 lg:w-auto"
-                :disabled="loading" @click="runSearchNow">
+                :disabled="loading || !canSearch" @click="runSearch">
                 <Icon icon="heroicons:magnifying-glass" class="h-5 w-5 shrink-0" aria-hidden="true" />
                 {{ t('write.searchBtn') }}
               </button>
