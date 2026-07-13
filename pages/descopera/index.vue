@@ -327,7 +327,7 @@ const staffPickPoems = computed(() => recent.value)
                     <p class="mt-1 text-sm text-content-secondary">
                       <span v-if="displayNationality(authorPage.author.nationality)">{{
                         displayNationality(authorPage.author.nationality)
-                        }}</span>
+                      }}</span>
                       <span
                         v-if="displayNationality(authorPage.author.nationality) && authorYearsLabel(authorPage.author)">
                         · </span>
