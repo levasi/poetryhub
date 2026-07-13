@@ -2,6 +2,7 @@
 import { prisma } from '~/server/utils/prisma'
 import { requireAdmin } from '~/server/utils/auth'
 import { slugify, uniqueSlug, estimateReadingTime, extractExcerpt } from '~/server/utils/slug'
+import { invalidateCatalogListCaches } from '~/server/utils/invalidatePublicCache'
 
 const POEMS = [
   // ─── Mihai Eminescu (1850–1889) ───────────────────────────────────────────
@@ -451,6 +452,8 @@ export default defineEventHandler(async (event) => {
       details: errors.length > 0 ? errors.join('\n') : null,
     },
   })
+
+  if (imported > 0) await invalidateCatalogListCaches()
 
   return { ok: true, imported, skipped, errors: errors.length, errorDetails: errors }
 })

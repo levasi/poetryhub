@@ -37,7 +37,7 @@ import { getFetchErrorDataCode, getFetchErrorStatus } from '~/utils/fetchApiErro
 import { isStaffRole } from '~/utils/roles'
 
 definePageMeta({
-  layout: 'default',
+  layout: 'carousel',
 })
 
 const { t, locale } = useI18n()

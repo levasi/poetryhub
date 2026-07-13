@@ -4,6 +4,11 @@ import { getCookie } from 'h3'
 import { prisma } from '~/server/utils/prisma'
 import { verifyAdminToken, getUserFromEvent, TOKEN_COOKIE } from '~/server/utils/auth'
 import { userCanEditPoem } from '~/server/utils/poemEditAuth'
+import {
+  invalidateAuthorDetailCaches,
+  invalidateCatalogListCaches,
+  invalidatePoemCaches,
+} from '~/server/utils/invalidatePublicCache'
 
 async function authorizeDeletePoem(
   event: H3Event,
@@ -27,7 +32,10 @@ async function authorizeDeletePoem(
 
 export default defineEventHandler(async (event) => {
   const slug = getRouterParam(event, 'slug')!
-  const existing = await prisma.poem.findUnique({ where: { slug } })
+  const existing = await prisma.poem.findUnique({
+    where: { slug },
+    select: { submittedByUserId: true, author: { select: { slug: true } } },
+  })
 
   if (!existing) {
     throw createError({ statusCode: 404, statusMessage: 'Poem not found' })
@@ -36,5 +44,11 @@ export default defineEventHandler(async (event) => {
   await authorizeDeletePoem(event, existing)
 
   await prisma.poem.delete({ where: { slug } })
+
+  await invalidatePoemCaches(slug)
+  await invalidateCatalogListCaches()
+  const authorSlug = existing.author?.slug
+  if (authorSlug) await invalidateAuthorDetailCaches(authorSlug)
+
   return { ok: true }
 })

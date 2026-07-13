@@ -2,7 +2,7 @@
 import { z } from 'zod'
 import { prisma } from '~/server/utils/prisma'
 import { requireAdmin } from '~/server/utils/auth'
-import { invalidateAuthorDetailCaches, invalidatePoemCaches } from '~/server/utils/invalidatePublicCache'
+import { invalidateAuthorDetailCaches, invalidateCatalogListCaches, invalidatePoemCaches } from '~/server/utils/invalidatePublicCache'
 import { estimateReadingTime, extractExcerpt } from '~/server/utils/slug'
 
 const schema = z.object({
@@ -60,6 +60,7 @@ export default defineEventHandler(async (event) => {
   })
 
   await invalidatePoemCaches(slug)
+  await invalidateCatalogListCaches()
 
   const newSlug = poem.author?.slug
   const oldSlug = existing.author?.slug

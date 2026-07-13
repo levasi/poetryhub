@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { prisma } from '~/server/utils/prisma'
 import { requireAdmin } from '~/server/utils/auth'
 import { slugify, uniqueSlug } from '~/server/utils/slug'
+import { invalidateAuthorsListCaches } from '~/server/utils/invalidatePublicCache'
 
 const schema = z.object({
   name:        z.string().min(1).max(200),
@@ -27,7 +28,9 @@ export default defineEventHandler(async (event) => {
   const existing = await prisma.author.findUnique({ where: { slug } })
   if (existing) slug = uniqueSlug(data.name)
 
-  return prisma.author.create({
+  const author = await prisma.author.create({
     data: { ...data, slug, imageUrl: data.imageUrl || null },
   })
+  await invalidateAuthorsListCaches()
+  return author
 })

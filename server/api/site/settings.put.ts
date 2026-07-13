@@ -2,6 +2,7 @@
 import { z } from 'zod'
 import { prisma } from '~/server/utils/prisma'
 import { requireAdmin } from '~/server/utils/auth'
+import { invalidateSiteSettingsCache } from '~/server/utils/invalidatePublicCache'
 
 const bodySchema = z.object({
   showLanguageSwitch: z.boolean(),
@@ -22,6 +23,8 @@ export default defineEventHandler(async (event) => {
     create: { id: 'singleton', showLanguageSwitch },
     update: { showLanguageSwitch },
   })
+
+  await invalidateSiteSettingsCache()
 
   return { showLanguageSwitch }
 })

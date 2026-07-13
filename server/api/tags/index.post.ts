@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { prisma } from '~/server/utils/prisma'
 import { requireAdmin } from '~/server/utils/auth'
 import { slugify } from '~/server/utils/slug'
+import { invalidateHomeCache, invalidateTagsListCaches } from '~/server/utils/invalidatePublicCache'
 
 const schema = z.object({
   name:     z.string().min(1).max(100),
@@ -19,9 +20,12 @@ export default defineEventHandler(async (event) => {
   const { name, category, color } = parsed.data
   const slug = slugify(name)
 
-  return prisma.tag.upsert({
+  const tag = await prisma.tag.upsert({
     where: { slug },
     update: { category, color },
     create: { name, slug, category, color },
   })
+  await invalidateTagsListCaches()
+  await invalidateHomeCache()
+  return tag
 })

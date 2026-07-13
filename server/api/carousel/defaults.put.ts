@@ -13,6 +13,7 @@ import {
   isCarouselSiteOwnerEmail,
   userCanManageCarouselDefaults,
 } from '~/utils/carouselDefaultsAdmin'
+import { invalidateCarouselDefaultsCache } from '~/server/utils/invalidatePublicCache'
 
 export default defineEventHandler(async (event) => {
   setHeader(event, 'cache-control', 'no-store')
@@ -61,6 +62,8 @@ export default defineEventHandler(async (event) => {
       updatedBy: tokenUser.email,
     },
   })
+
+  await invalidateCarouselDefaultsCache()
 
   return toStore
 })

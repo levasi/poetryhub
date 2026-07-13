@@ -7,6 +7,7 @@ import {
   ensurePoemCarouselFontFamily,
 } from '~/utils/poemCarouselFontSettings'
 import { isStaffRole } from '~/utils/roles'
+import { invalidatePoemCaches } from '~/server/utils/invalidatePublicCache'
 
 export default defineEventHandler(async (event) => {
   setHeader(event, 'cache-control', 'no-store')
@@ -46,6 +47,8 @@ export default defineEventHandler(async (event) => {
     where: { slug },
     data: { carouselFontSettings: json },
   })
+
+  await invalidatePoemCaches(slug)
 
   return toStore
 })

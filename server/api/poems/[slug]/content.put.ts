@@ -2,7 +2,7 @@
 import { z } from 'zod'
 import { prisma } from '~/server/utils/prisma'
 import { requireUser } from '~/server/utils/auth'
-import { invalidateAuthorDetailCaches, invalidatePoemCaches } from '~/server/utils/invalidatePublicCache'
+import { invalidateAuthorDetailCaches, invalidateCatalogListCaches, invalidatePoemCaches } from '~/server/utils/invalidatePublicCache'
 import { estimateReadingTime, extractExcerpt } from '~/server/utils/slug'
 import { isPoemEditorRole, isSiteOwnerEmail } from '~/utils/roles'
 
@@ -111,6 +111,7 @@ export default defineEventHandler(async (event) => {
   })
 
   await invalidatePoemCaches(slug)
+  await invalidateCatalogListCaches()
   const authorSlug = existing.author?.slug
   if (authorSlug) await invalidateAuthorDetailCaches(authorSlug)
 

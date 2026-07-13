@@ -5,9 +5,18 @@ import {
   parseCarouselSiteDefaults,
 } from '~/utils/carouselSiteDefaults'
 
-export default defineEventHandler(async (event) => {
-  setHeader(event, 'cache-control', 'no-store')
-  const row = await prisma.carouselSiteDefaults.findUnique({ where: { id: 'singleton' } })
-  const config = row?.config != null ? parseCarouselSiteDefaults(row.config) : getDefaultCarouselSiteDefaults()
-  return config
-})
+export default defineCachedEventHandler(
+  async () => {
+    const row = await prisma.carouselSiteDefaults.findUnique({ where: { id: 'singleton' } })
+    return row?.config != null
+      ? parseCarouselSiteDefaults(row.config)
+      : getDefaultCarouselSiteDefaults()
+  },
+  {
+    name: 'api-carousel-defaults',
+    maxAge: 300,
+    staleMaxAge: 600,
+    swr: true,
+    getKey: () => 'defaults',
+  },
+)

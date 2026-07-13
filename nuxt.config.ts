@@ -317,16 +317,29 @@ export default defineNuxtConfig({
     preset: 'vercel',
   },
 
-  /** Long cache for hashed build assets; public APIs use Nitro `defineCachedEventHandler` in server routes. */
+  /** Long cache for hashed build assets; public APIs use Nitro `defineCachedEventHandler` + CDN headers below. */
   routeRules: {
     '/_nuxt/**': { headers: { 'cache-control': 'public, max-age=31536000, immutable' } },
     '/favicon.svg': { headers: { 'cache-control': 'public, max-age=86400' } },
+    '/hero-banner.png': { headers: { 'cache-control': 'public, max-age=604800, immutable' } },
+    '/mark-luceafar.svg': { headers: { 'cache-control': 'public, max-age=604800, immutable' } },
+    '/_i18n/**': { headers: { 'cache-control': 'public, max-age=86400, s-maxage=86400' } },
+    '/api/home': { headers: { 'cache-control': 'public, max-age=60, s-maxage=60, stale-while-revalidate=120' } },
+    '/api/tags': { headers: { 'cache-control': 'public, max-age=300, s-maxage=300, stale-while-revalidate=600' } },
+    '/api/carousel/defaults': { headers: { 'cache-control': 'public, max-age=300, s-maxage=300, stale-while-revalidate=600' } },
+    '/api/site/settings': { headers: { 'cache-control': 'public, max-age=60, s-maxage=60, stale-while-revalidate=120' } },
+    '/api/poems': { headers: { 'cache-control': 'public, max-age=60, s-maxage=60, stale-while-revalidate=120' } },
+    '/api/poems/random': { headers: { 'cache-control': 'private, no-store' } },
+    '/api/poems/by-ids': { headers: { 'cache-control': 'private, no-store' } },
+    '/api/poems/**': { headers: { 'cache-control': 'public, max-age=60, s-maxage=60, stale-while-revalidate=120' } },
+    '/api/authors': { headers: { 'cache-control': 'public, max-age=60, s-maxage=60, stale-while-revalidate=120' } },
+    '/api/authors/random': { headers: { 'cache-control': 'private, no-store' } },
+    '/api/authors/**': { headers: { 'cache-control': 'public, max-age=60, s-maxage=60, stale-while-revalidate=120' } },
     '/admin/aspect': { redirect: { to: '/admin/setari', statusCode: 301 } },
   },
 
   // App-level meta
   app: {
-    pageTransition: { name: 'page' },
     head: {
       title: 'PoetryHub — Citește, descoperă și împărtășește poezie',
       htmlAttrs: { lang: 'ro', 'data-color-scheme': 'paper' },

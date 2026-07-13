@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { prisma } from '~/server/utils/prisma'
 import { requireAuthorCatalogEditor } from '~/server/utils/auth'
 import { slugify, uniqueSlug, estimateReadingTime, extractExcerpt } from '~/server/utils/slug'
+import { invalidateAuthorDetailCaches, invalidateCatalogListCaches } from '~/server/utils/invalidatePublicCache'
 
 const schema = z.object({
   title:    z.string().min(1).max(500),
@@ -91,6 +92,9 @@ export default defineEventHandler(async (event) => {
       poemTags: { include: { tag: true } },
     },
   })
+
+  await invalidateCatalogListCaches()
+  if (poem.author?.slug) await invalidateAuthorDetailCaches(poem.author.slug)
 
   return poem
 })

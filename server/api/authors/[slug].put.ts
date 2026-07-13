@@ -2,7 +2,7 @@
 import { z } from 'zod'
 import { prisma } from '~/server/utils/prisma'
 import { requireAuthorCatalogEditor } from '~/server/utils/auth'
-import { invalidateAuthorDetailCaches } from '~/server/utils/invalidatePublicCache'
+import { invalidateAuthorDetailCaches, invalidateAuthorsListCaches, invalidateHomeCache } from '~/server/utils/invalidatePublicCache'
 
 const MAX_IMAGE_URL_CHARS = 15_000_000
 
@@ -54,6 +54,8 @@ export default defineEventHandler(async (event) => {
   })
 
   await invalidateAuthorDetailCaches(slug)
+  await invalidateAuthorsListCaches()
+  await invalidateHomeCache()
 
   return updated
 })
