@@ -1,5 +1,5 @@
 /**
- * Instagram carousel (1080×1350, 4:5 portrait) — slide splitting, captions, PNG export helpers.
+ * Instagram carousel (1080×1440, 3:4 portrait) — slide splitting, captions, PNG export helpers.
  * Client-only: call export functions from onMounted or user gestures (uses html2canvas + JSZip).
  */
 
@@ -40,9 +40,34 @@ export interface SplitPoemOptions {
   maxLinesPerSlide?: number
 }
 
-/** Portrait feed size (4:5) */
+/** Default export size (3:4 carousel — recommended for Instagram feed). */
 export const CAROUSEL_WIDTH = 1080
-export const CAROUSEL_HEIGHT = 1350
+export const CAROUSEL_HEIGHT = 1440
+
+/** Instagram carousel canvas sizes (width always 1080px). */
+export const CAROUSEL_ASPECT_RATIO_IDS = ['3:4', '4:5', '1:1'] as const
+export type CarouselAspectRatioId = (typeof CAROUSEL_ASPECT_RATIO_IDS)[number]
+
+export interface CarouselAspectRatio {
+  id: CarouselAspectRatioId
+  /** i18n key under `carousel.aspectRatio.*` */
+  i18nKey: 'carousel' | 'portrait' | 'square'
+  width: number
+  height: number
+  cssRatio: string
+}
+
+export const CAROUSEL_ASPECT_RATIOS: readonly CarouselAspectRatio[] = [
+  { id: '3:4', i18nKey: 'carousel', width: 1080, height: 1440, cssRatio: '3 / 4' },
+  { id: '4:5', i18nKey: 'portrait', width: 1080, height: 1350, cssRatio: '4 / 5' },
+  { id: '1:1', i18nKey: 'square', width: 1080, height: 1080, cssRatio: '1 / 1' },
+]
+
+export const DEFAULT_CAROUSEL_ASPECT_RATIO_ID: CarouselAspectRatioId = '3:4'
+
+export function getCarouselAspectRatio(id: CarouselAspectRatioId): CarouselAspectRatio {
+  return CAROUSEL_ASPECT_RATIOS.find((r) => r.id === id) ?? CAROUSEL_ASPECT_RATIOS[0]!
+}
 
 /** @deprecated Use CAROUSEL_WIDTH — kept for older imports */
 export const CAROUSEL_SIZE = CAROUSEL_WIDTH
@@ -234,6 +259,8 @@ export interface ExportSlideToPngOptions {
   /** html2canvas scale; 2 = sharper but larger file (default 2 for retina) */
   scale?: number
   backgroundColor?: string | null
+  width?: number
+  height?: number
 }
 
 export async function elementToPngBlob(
@@ -244,9 +271,11 @@ export async function elementToPngBlob(
   const html2canvas = (await import('html2canvas')).default
   await document.fonts.ready
   const scale = opts?.scale ?? 2
+  const width = opts?.width ?? CAROUSEL_WIDTH
+  const height = opts?.height ?? CAROUSEL_HEIGHT
   const canvas = await html2canvas(el, {
-    width: CAROUSEL_WIDTH,
-    height: CAROUSEL_HEIGHT,
+    width,
+    height,
     scale,
     backgroundColor: opts?.backgroundColor ?? null,
     logging: false,
@@ -254,13 +283,13 @@ export async function elementToPngBlob(
     allowTaint: true,
   })
   const out = document.createElement('canvas')
-  out.width = CAROUSEL_WIDTH
-  out.height = CAROUSEL_HEIGHT
+  out.width = width
+  out.height = height
   const ctx = out.getContext('2d')
   if (!ctx) throw new Error('2d context')
   ctx.imageSmoothingEnabled = true
   ctx.imageSmoothingQuality = 'high'
-  ctx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, CAROUSEL_WIDTH, CAROUSEL_HEIGHT)
+  ctx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, width, height)
   return new Promise((resolve, reject) => {
     out.toBlob((b) => (b ? resolve(b) : reject(new Error('toBlob failed'))), 'image/png')
   })

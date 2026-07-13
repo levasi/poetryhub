@@ -7,6 +7,12 @@ const route = useRoute()
 
 await fetchMe()
 
+const mobileNavOpen = ref(false)
+
+watch(() => route.path, () => {
+  mobileNavOpen.value = false
+})
+
 const navItems = computed(() => [
   { label: t('admin.nav.dashboard'), to: '/admin', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
   { label: t('admin.nav.poems'), to: '/admin/poems', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
@@ -16,39 +22,54 @@ const navItems = computed(() => [
   { label: t('admin.nav.users'), to: '/admin/users', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
   { label: t('admin.nav.import'), to: '/admin/import', icon: 'M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12' },
 ])
+
+function isNavActive(item: { to: string }) {
+  if (item.to === '/admin') return route.path === '/admin'
+  return route.path.startsWith(item.to)
+}
 </script>
 
 <template>
   <div class="min-h-screen w-full bg-surface-page">
+    <!-- Mobile top bar -->
+    <header class="sticky top-0 z-40 flex items-center justify-between border-b border-edge-subtle bg-surface-raised/95 px-4 py-3 backdrop-blur-md md:hidden">
+      <AppLogo size="sm" />
+      <button
+        type="button"
+        class="ds-icon-btn"
+        :aria-label="t('nav.menu')"
+        @click="mobileNavOpen = true"
+      >
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+    </header>
+
     <div class="flex w-full">
-      <!-- Sidebar -->
       <aside class="sticky top-0 hidden h-screen w-56 shrink-0 flex-col border-r border-edge-subtle bg-surface-raised shadow-ds-nav md:flex">
-        <!-- Logo -->
-        <div class="border-b border-edge-subtle px-6 py-5">
-          <NuxtLink to="/" class="font-serif text-lg font-bold">
-            <span class="text-brand">Poetry</span><span class="text-content">Hub</span>
+        <div class="border-b border-edge-subtle px-5 py-5">
+          <NuxtLink to="/" class="block">
+            <AppLogo />
           </NuxtLink>
-          <p class="mt-0.5 text-ui-xs text-content-soft">{{ t('admin.panel') }}</p>
+          <p class="mt-1 text-ui-xs text-content-soft">{{ t('admin.panel') }}</p>
         </div>
 
-        <!-- Nav -->
         <nav class="flex-1 space-y-1 px-3 py-4">
           <NuxtLink
             v-for="item in navItems"
             :key="item.to"
             :to="item.to"
             class="flex items-center gap-3 rounded-ds-md px-3 py-2 text-sm text-content-muted transition-colors hover:bg-surface-subtle hover:text-content"
-            :class="{ 'bg-brand-soft/40 text-content': route.path === item.to || (item.to !== '/admin' && route.path.startsWith(item.to)) }"
-            :exact="item.to === '/admin'"
+            :class="{ 'bg-brand-tint text-content ring-1 ring-brand/25': isNavActive(item) }"
           >
-            <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" :d="item.icon" />
             </svg>
             {{ item.label }}
           </NuxtLink>
         </nav>
 
-        <!-- User footer -->
         <div class="border-t border-edge-subtle px-4 py-4">
           <p class="mb-2 truncate text-ui-xs text-content-soft">{{ user?.email }}</p>
           <button
@@ -61,10 +82,41 @@ const navItems = computed(() => [
         </div>
       </aside>
 
-      <!-- Main content -->
       <main class="min-h-screen flex-1 overflow-auto px-4 py-6 md:px-8 md:py-8 lg:px-10">
         <slot />
       </main>
     </div>
+
+    <DsSheet
+      v-model:open="mobileNavOpen"
+      :title="t('admin.panel')"
+      id-prefix="admin-nav"
+    >
+      <nav class="space-y-1">
+        <NuxtLink
+          v-for="item in navItems"
+          :key="item.to"
+          :to="item.to"
+          class="flex items-center gap-3 rounded-ds-md px-3 py-3 text-sm text-content-secondary transition-colors hover:bg-surface-subtle"
+          :class="{ 'bg-brand-tint text-content font-medium': isNavActive(item) }"
+          @click="mobileNavOpen = false"
+        >
+          <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" :d="item.icon" />
+          </svg>
+          {{ item.label }}
+        </NuxtLink>
+      </nav>
+      <div class="mt-6 border-t border-edge-subtle pt-4">
+        <p class="mb-2 truncate text-ui-xs text-content-soft">{{ user?.email }}</p>
+        <button
+          type="button"
+          class="ds-btn-secondary w-full"
+          @click="logout"
+        >
+          {{ t('admin.signOut') }}
+        </button>
+      </div>
+    </DsSheet>
   </div>
 </template>

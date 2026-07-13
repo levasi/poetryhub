@@ -33,6 +33,8 @@ const props = withDefaults(
     bodyFontWeight?: number | null
     /** Inline CSS weight for cover title; null = keep theme classes. */
     titleFontWeight?: number | null
+    canvasWidth?: number
+    canvasHeight?: number
   }>(),
   {
     authorNationality: '',
@@ -44,6 +46,8 @@ const props = withDefaults(
     fontFamily: () => READER_FONT_STACKS.literata,
     bodyFontWeight: null,
     titleFontWeight: null,
+    canvasWidth: CAROUSEL_WIDTH,
+    canvasHeight: CAROUSEL_HEIGHT,
   },
 )
 
@@ -75,23 +79,23 @@ function themeTokens(t: CarouselTheme): Tok {
     case 'minimal':
       return {
         rootClass:
-          'carousel-canvas template-minimal relative flex flex-col overflow-hidden bg-white text-ink-900 antialiased',
+          'carousel-canvas template-minimal relative flex flex-col overflow-hidden bg-white text-[#0f0f0a] antialiased',
         rootStyle: {},
         overlays: [],
         coverTitleMult: 68,
         coverDividerMult: 132,
-        avatarClass: 'rounded-full object-cover shadow-lg ring-4 ring-ink-200/90',
-        coverTitleClass: 'font-semibold leading-[1.12] text-ink-900',
-        coverWrittenClass: 'tabular-nums text-ink-500',
-        coverDividerClass: 'h-px bg-ink-300',
-        coverAuthorClass: 'font-medium tracking-wide text-ink-600',
-        coverMetaNatClass: 'text-ink-500',
-        coverMetaLifeClass: 'tabular-nums text-ink-500',
+        avatarClass: 'rounded-full object-cover shadow-lg ring-4 ring-[#d0d0c4]/90',
+        coverTitleClass: 'font-semibold leading-[1.12] text-[#0f0f0a]',
+        coverWrittenClass: 'tabular-nums text-[#666658]',
+        coverDividerClass: 'h-px bg-[#b0b0a0]',
+        coverAuthorClass: 'font-medium tracking-wide text-[#4a4a3e]',
+        coverMetaNatClass: 'text-[#666658]',
+        coverMetaLifeClass: 'tabular-nums text-[#666658]',
         bodyPad: 'px-2',
-        bodyOuterClass: 'flex h-full flex-col justify-center text-center text-ink-800',
+        bodyOuterClass: 'flex h-full flex-col justify-center text-center text-[#1e1e16]',
         bodyInnerClass: '',
         bodyBaseMult: 40,
-        verseMarkClass: 'bg-gold-200/80 text-ink-900',
+        verseMarkClass: 'bg-[#fcd47c]/80 text-[#0f0f0a]',
         ctaTheme: 'minimal',
         ctaPadClass: 'px-8',
       }
@@ -111,18 +115,18 @@ function themeTokens(t: CarouselTheme): Tok {
         ],
         coverTitleMult: 72,
         coverDividerMult: 136,
-        avatarClass: 'rounded-full object-cover shadow-xl ring-4 ring-gold-500/35',
-        coverTitleClass: 'font-semibold leading-[1.12] text-ink-50',
-        coverWrittenClass: 'tabular-nums text-ink-400',
-        coverDividerClass: 'h-px bg-gradient-to-r from-transparent via-gold-500/80 to-transparent',
-        coverAuthorClass: 'font-medium tracking-wide text-ink-300',
-        coverMetaNatClass: 'text-ink-400',
-        coverMetaLifeClass: 'tabular-nums text-ink-400',
+        avatarClass: 'rounded-full object-cover shadow-xl ring-4 ring-[#e8a800]/35',
+        coverTitleClass: 'font-semibold leading-[1.12] text-[#f5f5f0]',
+        coverWrittenClass: 'tabular-nums text-[#888878]',
+        coverDividerClass: 'h-px bg-gradient-to-r from-transparent via-[#e8a800]/80 to-transparent',
+        coverAuthorClass: 'font-medium tracking-wide text-[#b0b0a0]',
+        coverMetaNatClass: 'text-[#888878]',
+        coverMetaLifeClass: 'tabular-nums text-[#888878]',
         bodyPad: 'px-4',
-        bodyOuterClass: 'relative flex h-full flex-col justify-center text-center text-ink-100',
+        bodyOuterClass: 'relative flex h-full flex-col justify-center text-center text-[#e8e8df]',
         bodyInnerClass: 'text-balance',
         bodyBaseMult: 38,
-        verseMarkClass: 'bg-gold-500/25 text-gold-300',
+        verseMarkClass: 'bg-[#e8a800]/25 text-[#fcd47c]',
         ctaTheme: 'dark',
         ctaPadClass: 'px-10',
       }
@@ -267,7 +271,7 @@ function themeTokens(t: CarouselTheme): Tok {
           {
             key: 'sunset-bloom',
             class:
-              'pointer-events-none absolute -right-16 top-1/4 h-[420px] w-[420px] rounded-full bg-rose-400/25 blur-3xl',
+              'pointer-events-none absolute -right-16 top-1/4 h-[420px] w-[420px] rounded-full bg-[#fb7185]/25 blur-3xl',
           },
           {
             key: 'sunset-glow',
@@ -484,8 +488,8 @@ const THEMES_CTA_RELATIVE = new Set<CarouselTheme>([
 const ctaShellRelative = computed(() => THEMES_CTA_RELATIVE.has(props.theme))
 
 const canvasStyle = computed(() => ({
-  width: `${CAROUSEL_WIDTH}px`,
-  height: `${CAROUSEL_HEIGHT}px`,
+  width: `${props.canvasWidth}px`,
+  height: `${props.canvasHeight}px`,
   padding: '56px',
   boxSizing: 'border-box' as const,
   fontFamily: props.fontFamily,

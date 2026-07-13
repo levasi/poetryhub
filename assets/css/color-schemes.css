@@ -25,6 +25,9 @@
   --color-danger: 220 38 38;
   --color-danger-soft: 254 202 202;
   --color-danger-muted: 248 113 113;
+  --color-success: 22 122 61;
+  --color-success-soft: 209 235 213;
+  --color-brand-tint: 250 243 225;
   --color-poem-text: 45 45 38;
   --shadow-ds-nav: 0 1px 0 0 rgb(208 208 196 / 0.9);
   --shadow-ds-card:
@@ -57,6 +60,9 @@
   --color-danger: 252 100 100;
   --color-danger-soft: 120 40 40;
   --color-danger-muted: 252 165 165;
+  --color-success: 108 200 130;
+  --color-success-soft: 30 62 40;
+  --color-brand-tint: 40 34 22;
   --color-poem-text: 238 234 222;
   --shadow-ds-nav: 0 1px 0 0 rgb(0 0 0 / 0.45);
   --shadow-ds-card: 0 1px 2px rgb(0 0 0 / 0.45), 0 2px 10px -2px rgb(0 0 0 / 0.35);
@@ -87,6 +93,9 @@
   --color-danger: 185 50 45;
   --color-danger-soft: 240 200 195;
   --color-danger-muted: 220 100 90;
+  --color-success: 62 122 66;
+  --color-success-soft: 210 226 200;
+  --color-brand-tint: 240 228 200;
   --color-poem-text: 58 48 36;
   --shadow-ds-nav: 0 1px 0 0 rgb(120 100 70 / 0.35);
   --shadow-ds-card:
@@ -119,6 +128,9 @@
   --color-danger: 198 52 48;
   --color-danger-soft: 248 214 210;
   --color-danger-muted: 228 124 116;
+  --color-success: 58 122 70;
+  --color-success-soft: 214 230 208;
+  --color-brand-tint: 246 236 214;
   --color-poem-text: 40 36 30;
   --shadow-ds-nav: 0 1px 0 0 rgb(180 165 140 / 0.35);
   --shadow-ds-card:
@@ -155,6 +167,9 @@
   --color-danger: 175 48 42;
   --color-danger-soft: 240 210 205;
   --color-danger-muted: 215 95 88;
+  --color-success: 78 118 62;
+  --color-success-soft: 216 226 196;
+  --color-brand-tint: 240 228 204;
   --color-poem-text: 58 44 34;
   --shadow-ds-nav: 0 1px 0 0 rgb(100 80 55 / 0.22);
   --shadow-ds-card:
@@ -187,6 +202,9 @@
   --color-danger: 240 100 100;
   --color-danger-soft: 90 40 40;
   --color-danger-muted: 250 160 160;
+  --color-success: 130 200 140;
+  --color-success-soft: 28 58 40;
+  --color-brand-tint: 34 38 34;
   --color-poem-text: 235 230 218;
   --shadow-ds-nav: 0 1px 0 0 rgb(0 0 0 / 0.5);
   --shadow-ds-card: 0 2px 12px rgb(0 0 0 / 0.45), inset 0 1px 0 rgb(197 160 89 / 0.12);

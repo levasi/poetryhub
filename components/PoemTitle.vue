@@ -50,8 +50,8 @@ const wrapperClass = computed(() => (props.variant === 'pdp' ? 'mb-3' : ''))
       {{ title }}
     </component>
     <PoemCarouselIcon v-if="showCarousel" :slug="slug" :size="carouselIconSize" :class="iconClass" />
-    <button v-if="poemId" type="button" class="rounded-ds-md p-2 transition-colors hover:bg-rose-500/15"
-      :class="liked ? 'text-rose-600' : 'text-content-hint hover:text-rose-600'"
+    <button v-if="poemId" type="button" class="rounded-ds-md p-2 transition-colors"
+      :class="liked ? 'text-brand bg-brand-tint' : 'text-content-hint hover:bg-brand-tint hover:text-brand'"
       :aria-label="liked ? t('card.favoriteRemove') : t('card.favoriteAdd')" @click.prevent="poemId && toggle(poemId)">
       <svg class="h-4 w-4" viewBox="0 0 24 24" :fill="liked ? 'currentColor' : 'none'" stroke="currentColor"
         stroke-width="2">

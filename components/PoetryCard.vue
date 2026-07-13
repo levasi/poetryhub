@@ -36,6 +36,11 @@ const moodTag = computed(
   () => props.poem.poemTags?.find((pt) => pt.tag.category === 'mood')?.tag ?? null,
 )
 
+const displayTags = computed(() => {
+  const tags = props.poem.poemTags?.map((pt) => pt.tag) ?? []
+  return tags.slice(0, 2)
+})
+
 const moodLabel = computed(() => {
   const m = moodTag.value
   if (!m) return ''
@@ -191,14 +196,12 @@ watchEffect((onCleanup) => {
       <div class="min-w-0 flex-1">
         <div class="mb-1.5 flex items-baseline gap-2">
           <NuxtLink :to="poemHref" class="min-w-0 flex-1">
-            <h2
-              class="font-serif text-lg font-semibold leading-snug tracking-tight text-content transition-colors group-hover:text-brand">
+            <h2 class="font-typewriter text-lg font-semibold leading-snug tracking-[0.04em] text-content">
               {{ poem.title }}<span v-if="poem.writtenYear"
                 class="ml-1.5 font-sans text-xs font-normal tabular-nums text-content-muted">{{ poem.writtenYear
                 }}</span>
             </h2>
           </NuxtLink>
-          <PoemCarouselIcon :slug="poem.slug" size="sm" class="shrink-0" />
           <span v-if="showLangFlag" class="shrink-0 text-sm text-content-soft">{{ langFlag }}</span>
         </div>
 
@@ -209,8 +212,7 @@ watchEffect((onCleanup) => {
           <span>{{ author.name }}</span>
         </NuxtLink>
 
-        <p class="whitespace-pre-wrap leading-relaxed text-content-secondary"
-          :style="{ fontFamily: `'Literata', Georgia, serif`, fontSize: '16px' }">
+        <p class="poem-text whitespace-pre-wrap text-content-secondary">
           {{ previewLines }}
         </p>
         <NuxtLink :to="poemHref"
@@ -235,8 +237,8 @@ watchEffect((onCleanup) => {
                 d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3M8 21H5a2 2 0 01-2-2v-3m18 0v3a2 2 0 01-2 2h-3" />
             </svg>
           </button>
-          <button type="button" class="rounded-ds-md p-2 transition-colors hover:bg-rose-50"
-            :class="liked ? 'text-rose-600' : 'text-content-hint hover:text-rose-600'"
+          <button type="button" class="rounded-ds-md p-2 transition-colors"
+            :class="liked ? 'text-brand bg-brand-tint' : 'text-content-hint hover:bg-brand-tint hover:text-brand'"
             :aria-label="liked ? t('card.favoriteRemove') : t('card.favoriteAdd')" @click.prevent="toggle(poem.id)">
             <svg class="h-4 w-4" viewBox="0 0 24 24" :fill="liked ? 'currentColor' : 'none'" stroke="currentColor"
               stroke-width="2">
@@ -244,42 +246,43 @@ watchEffect((onCleanup) => {
                 d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
             </svg>
           </button>
+          <PoemCarouselIcon :slug="poem.slug" size="sm" class="shrink-0" />
         </div>
       </div>
     </article>
 
     <!-- Grid view (default) -->
     <article v-else
-      class="group relative flex flex-col overflow-hidden rounded-ds-lg bg-surface-raised transition-all duration-300 ease-out hover:-translate-y-1 hover:border-edge hover:shadow-ds-card-hover"
+      class="group relative flex flex-col overflow-hidden rounded-ds-lg border border-edge-subtle bg-surface-raised transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-edge hover:shadow-ds-card-hover"
       :class="layout === 'masonry' ? 'h-auto' : 'h-full'">
 
-      <div class="flex flex-col p-3">
+      <div class="flex flex-col p-4">
+        <!-- Eyebrow author -->
+        <NuxtLink v-if="author" :to="`/authors/${author.slug}`"
+          class="mb-3 inline-flex items-center gap-2 text-ui-xs font-semibold uppercase tracking-wider text-content-muted transition-colors hover:text-brand">
+          <img :src="authorAvatar" alt="" loading="lazy"
+            class="h-6 w-6 shrink-0 rounded-full object-cover ring-1 ring-edge-subtle">
+          <span class="truncate">{{ author.name }}</span>
+        </NuxtLink>
+
         <!-- Title -->
-        <div class="mb-2 flex items-start gap-2">
-          <NuxtLink :to="poemHref" class="block min-w-0 flex-1">
-            <h2
-              class="font-serif font-semibold leading-snug tracking-tight text-content transition-colors group-hover:text-brand"
+        <div class="mb-2">
+          <NuxtLink :to="poemHref" class="block min-w-0">
+            <h2 class="font-typewriter leading-snug tracking-[0.04em] text-content"
               :class="featured ? 'text-2xl md:text-[1.65rem]' : 'text-lg'">
               {{ poem.title }}<span v-if="poem.writtenYear"
                 class="ml-1.5 font-sans text-xs font-normal tabular-nums text-content-muted">{{ poem.writtenYear
                 }}</span>
             </h2>
           </NuxtLink>
-          <PoemCarouselIcon :slug="poem.slug" size="sm"
-            class="shrink-0 opacity-80 transition-opacity group-hover:opacity-100" />
         </div>
 
-        <!-- Author -->
-        <NuxtLink v-if="author" :to="`/authors/${author.slug}`"
-          class="mb-4 flex items-center gap-2.5 text-xs font-medium text-content-muted transition-colors hover:text-content-secondary">
-          <img :src="authorAvatar" alt="" loading="lazy"
-            class="shrink-0 rounded-full object-cover ring-1 ring-edge-subtle"
-            :class="featured ? 'h-9 w-9' : 'h-8 w-8'" />
-          <span class="truncate">{{ author.name }}</span>
-        </NuxtLink>
+        <!-- Tag chips -->
+        <div v-if="displayTags.length" class="mb-3 flex flex-wrap gap-1.5">
+          <TagBadge v-for="tag in displayTags" :key="tag.id" :name="tag.name" :slug="tag.slug" :color="tag.color" />
+        </div>
 
-        <p class="min-h-[4.5rem] flex-1 whitespace-pre-wrap leading-relaxed text-content-secondary"
-          :style="{ fontFamily: `'Literata', Georgia, serif`, fontSize: '16px' }">
+        <p class="poem-text min-h-[4.5rem] flex-1 whitespace-pre-wrap text-content-secondary">
           {{ previewLines }}
         </p>
 
@@ -305,8 +308,8 @@ watchEffect((onCleanup) => {
                     d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3M8 21H5a2 2 0 01-2-2v-3m18 0v3a2 2 0 01-2 2h-3" />
                 </svg>
               </button>
-              <button type="button" class="rounded-ds-md p-2 transition-colors hover:bg-rose-50"
-                :class="liked ? 'text-rose-600' : 'text-content-hint hover:text-rose-600'"
+              <button type="button" class="rounded-ds-md p-2 transition-colors"
+                :class="liked ? 'text-brand bg-brand-tint' : 'text-content-hint hover:bg-brand-tint hover:text-brand'"
                 :aria-label="liked ? t('card.favoriteRemove') : t('card.favoriteAdd')" @click.prevent="toggle(poem.id)">
                 <svg class="h-4 w-4" viewBox="0 0 24 24" :fill="liked ? 'currentColor' : 'none'" stroke="currentColor"
                   stroke-width="2">
@@ -314,6 +317,8 @@ watchEffect((onCleanup) => {
                     d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
               </button>
+              <PoemCarouselIcon :slug="poem.slug" size="sm"
+                class="shrink-0 opacity-80 transition-opacity group-hover:opacity-100" />
             </div>
           </div>
         </div>
@@ -345,10 +350,7 @@ watchEffect((onCleanup) => {
               <p v-if="readerAuthor" class="mt-1 truncate text-sm text-content-secondary">{{ readerAuthor.name }}</p>
             </div>
             <div class="flex shrink-0 items-center gap-0.5">
-              <CloseButton
-                :label="t('card.quickReadClose')"
-                @click="closeQuickRead"
-              />
+              <CloseButton :label="t('card.quickReadClose')" @click="closeQuickRead" />
             </div>
           </header>
 

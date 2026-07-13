@@ -1,473 +1,234 @@
 <script setup lang="ts">
-import { displayNationality } from '~/utils/nationality'
-import type { Poem } from '~/composables/usePoems'
 import { authorAvatarUrl } from '~/utils/authorAvatar'
-
-definePageMeta({
-  layout: 'fullwidth',
-})
-
-const { t, locale } = useI18n()
-const readerSettingsOpen = ref(false)
+import { useFavorites } from '~/composables/useFavorites'
+import type { Poem } from '~/composables/usePoems'
 
 const route = useRoute()
-const router = useRouter()
-
-const DB_NOTICE_DISMISSED_KEY = 'ph_home_db_notice_dismissed_v1'
-const dbNoticeDismissed = ref(false)
-
-onMounted(() => {
-  try {
-    dbNoticeDismissed.value = localStorage.getItem(DB_NOTICE_DISMISSED_KEY) === '1'
-  } catch {
-    // ignore
-  }
-})
-
-function dismissDbNotice() {
-  dbNoticeDismissed.value = true
-  try {
-    localStorage.setItem(DB_NOTICE_DISMISSED_KEY, '1')
-  } catch {
-    // ignore
-  }
+if (route.query.tag || route.query.author) {
+  await navigateTo({ path: '/descopera', query: route.query }, { redirectCode: 301 })
 }
 
-/** Home center column: show this author's poems when set (?author=slug). */
-const authorSlug = computed(() => {
-  const a = route.query.author
-  if (typeof a === 'string' && a.trim()) return a.trim()
-  if (Array.isArray(a) && a[0]) return String(a[0]).trim()
-  return null
-})
-
-const authorFeedPage = ref(1)
-/** When viewing ?author= — "works" (Lucrări) vs biography tab. */
-const authorTab = ref<'works' | 'bio'>('works')
-watch(authorSlug, () => {
-  authorFeedPage.value = 1
-  authorTab.value = 'works'
-})
-
-interface AuthorPagePayload {
-  author: {
-    id: string
-    name: string
-    slug: string
-    imageUrl: string | null
-    bio: string | null
-    nationality: string | null
-    birthYear: number | null
-    deathYear: number | null
-  }
-  works: { title: string; slug: string }[]
-  poems: {
-    data: Poem[]
-    meta: { page: number; limit: number; total: number; totalPages: number }
-  }
-}
-
-type AuthorPageData = AuthorPagePayload | { readonly idle: true }
-
-const { data: authorPage, pending: authorPending, error: authorError } = await useAsyncData(
-  'home-author-feed',
-  async (): Promise<AuthorPageData> => {
-    const slug = authorSlug.value
-    if (!slug) return { idle: true }
-    return $fetch<AuthorPagePayload>(`/api/authors/${encodeURIComponent(slug)}`, {
-      query: { limit: 12, page: authorFeedPage.value },
-    })
-  },
-  { watch: [authorSlug, authorFeedPage] },
-)
-
-const authorPoemsForCards = computed((): Poem[] => {
-  const page = authorPage.value
-  if (!page || 'idle' in page || !page.author) return []
-  const a = page.author
-  const authorMini = {
-    id: a.id,
-    name: a.name,
-    slug: a.slug,
-    imageUrl: a.imageUrl,
-    nationality: a.nationality ?? undefined,
-    birthYear: a.birthYear ?? undefined,
-    deathYear: a.deathYear ?? undefined,
-  }
-  return page.poems.data.map((p) => ({ ...p, author: authorMini }))
-})
-
-function clearHomeAuthor() {
-  router.push({ path: '/', query: {} })
-}
-
-function authorYearsLabel(a: AuthorPagePayload['author'] | null | undefined) {
-  if (!a) return ''
-  if (a.birthYear && a.deathYear) return t('authors.lifeSpan', { birth: a.birthYear, death: a.deathYear })
-  if (a.birthYear) return t('authors.born', { year: a.birthYear })
-  return ''
-}
+const { t } = useI18n()
+const { isLoggedIn } = useAuth()
+const { favoriteIdOrder } = useFavorites()
 
 useSeoMeta({
   title: computed(() => t('seo.homeTitle')),
   description: computed(() => t('seo.homeDesc')),
 })
 
-interface HomeTagRow {
+interface AuthorSpotlight {
   id: string
   name: string
   slug: string
-  category: string
-  color: string | null
+  imageUrl: string | null
+  _count: { poems: number }
 }
 
 interface HomePayload {
   featured: Poem[]
-  recent: Poem[]
-  moodTags: HomeTagRow[]
-  themeTags: HomeTagRow[]
+  spotlightAuthors: AuthorSpotlight[]
 }
 
-const { data: home, pending: homePending } = await useFetch<HomePayload>('/api/home')
+const { data: home } = await useFetch<HomePayload>('/api/home')
 
-/** Same seed for the whole SPA session until full reload — avoids reshuffling “For you” on every revisit to `/`. */
-const forYouSeed = useState<number>('home-for-you-seed', () => Date.now())
+const { data: poemStats } = await useFetch<{ meta: { total: number } }>('/api/poems', {
+  query: { limit: 1 },
+})
 
-type ForYouApiMeta = { limit: number; total: number; exclude: number; hasMore: boolean }
+const poemCount = computed(() => poemStats.value?.meta?.total ?? 0)
+const mostSavedPoems = computed(() => (home.value?.featured ?? []).slice(0, 3))
+const spotlightAuthors = computed(() => home.value?.spotlightAuthors ?? [])
 
-const nuxtApp = useNuxtApp()
-const { data: forYouRes, pending: forYouPending } = await useAsyncData(
-  'home-for-you',
-  () =>
-    $fetch<{ data: Poem[]; meta: ForYouApiMeta }>('/api/home/for-you', {
-      query: { limit: 5, seed: forYouSeed.value },
-    }),
-  {
-    /** Reuse Nitro payload when navigating back to home — no duplicate fetch + same poems. */
-    getCachedData(key) {
-      return nuxtApp.payload.data[key] ?? nuxtApp.static?.data[key]
-    },
-  },
-)
+const favoriteIdsForHome = computed(() => favoriteIdOrder.value.slice(0, 2).join(','))
 
-/** Persist list + meta across route changes so the feed does not flash empty or re-randomize. */
-const forYouPoems = useState<Poem[]>('home-for-you-poems', () => [])
-const forYouMeta = useState<ForYouApiMeta>('home-for-you-meta', () => ({
-  total: 0,
-  limit: 5,
-  exclude: 0,
-  hasMore: true,
-}))
-const forYouLoadingMore = ref(false)
+const { data: favoritesPayload } = await useFetch<{ data: Poem[] }>('/api/poems/by-ids', {
+  query: computed(() => ({ ids: favoriteIdsForHome.value })),
+  watch: [favoriteIdsForHome],
+})
 
-watch(
-  forYouRes,
-  (v) => {
-    if (!v?.data) return
-    forYouPoems.value = v.data
-    forYouMeta.value = v.meta
-  },
-  { immediate: true },
-)
+const homeFavorites = computed(() => {
+  const list = favoritesPayload.value?.data ?? []
+  const byId = new Map(list.map((p) => [p.id, p]))
+  return favoriteIdOrder.value
+    .slice(0, 2)
+    .map((id) => byId.get(id))
+    .filter((p): p is Poem => p != null)
+})
 
-async function loadMoreForYou() {
-  if (forYouLoadingMore.value) return
-  if (!forYouMeta.value.hasMore) return
-  forYouLoadingMore.value = true
+const showFavoritesSection = computed(() => homeFavorites.value.length > 0)
+
+const randomLoading = ref(false)
+
+async function openRandomPoem() {
+  if (randomLoading.value) return
+  randomLoading.value = true
   try {
-    const exclude = forYouPoems.value.map((p) => p.id).join(',')
-    const res = await $fetch<{ data: Poem[]; meta: { limit: number; total: number; exclude: number; hasMore: boolean } }>(
-      '/api/home/for-you',
-      { query: { limit: 5, seed: Date.now(), exclude } },
-    )
-    const seen = new Set(forYouPoems.value.map((p) => p.id))
-    for (const p of res.data) {
-      if (!seen.has(p.id)) {
-        seen.add(p.id)
-        forYouPoems.value.push(p)
-      }
+    const poem = await $fetch<Poem>('/api/poems/random')
+    const authorSlug = poem.author?.slug
+    if (authorSlug) {
+      await navigateTo({ path: `/authors/${authorSlug}`, query: { poem: poem.slug } })
+    } else {
+      await navigateTo(`/poems/${poem.slug}`)
     }
-    forYouMeta.value = res.meta
-  } finally {
-    forYouLoadingMore.value = false
-  }
-}
-
-const feedTab = ref<'foryou' | 'featured'>('foryou')
-
-const canLoadMoreForYou = computed(() => forYouMeta.value.hasMore && !authorSlug.value)
-
-const featured = computed(() => home.value?.featured ?? [])
-const recent = computed(() => home.value?.recent ?? [])
-
-function formatDate(iso: string) {
-  try {
-    return new Intl.DateTimeFormat(locale.value === 'ro' ? 'ro' : 'en', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    }).format(new Date(iso))
   } catch {
-    return ''
+    await navigateTo('/descopera')
+  } finally {
+    randomLoading.value = false
   }
 }
 </script>
 
 <template>
   <div class="animate-fade-in">
-    <ReaderSettingsSidebar v-model:open="readerSettingsOpen" id-prefix="home" />
+    <!-- Hero -->
+    <section class="mx-auto max-w-content px-0 pt-6 md:pt-10">
+      <div class="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(280px,420px)] lg:gap-12 xl:gap-16">
+        <div class="text-center lg:text-left">
+          <DsFleuron class="mx-auto mb-6 lg:mx-0" />
+          <h1 class="font-serif text-display-sm font-semibold tracking-tight text-content">
+            <span class="block">{{ t('home.heroLine1') }}</span>
+            <span class="mt-1 block text-brand">{{ t('home.heroLine2') }}</span>
+          </h1>
+          <p class="mx-auto mt-5 max-w-reading text-base leading-relaxed text-content-secondary md:text-lg lg:mx-0">
+            {{ t('home.subtitle') }}
+          </p>
+          <p v-if="poemCount > 0" class="mt-3 text-ui-sm font-medium text-content-muted">
+            {{ t('home.heroPoemCount', { n: poemCount }) }}
+          </p>
 
-    <div class="w-full min-w-0 pb-20 pt-2 md:pt-4">
-      <div
-        class="grid grid-cols-1 gap-12 lg:gap-10 xl:grid-cols-[minmax(200px,260px)_minmax(0,1fr)_minmax(280px,380px)] xl:gap-12 2xl:gap-16">
-        <!-- Left: authors -->
-        <aside class="order-2 min-w-0 xl:order-1 xl:max-w-[320px]">
-          <div class="sticky top-28 flex flex-col gap-10" :aria-label="t('home.leftRailAria')">
-            <HomeAuthorsColumn />
+          <div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4 lg:justify-start">
+            <NuxtLink to="/descopera" class="ds-btn-primary min-w-[12rem] justify-center">
+              {{ t('home.explorePoems') }}
+            </NuxtLink>
+            <button type="button" class="ds-btn-secondary min-w-[12rem] justify-center" :disabled="randomLoading"
+              :aria-busy="randomLoading" @click="openRandomPoem">
+              <span v-if="randomLoading"
+                class="h-4 w-4 animate-spin rounded-full border-2 border-edge-subtle border-t-brand"
+                aria-hidden="true" />
+              {{ randomLoading ? t('home.loadingMore') : t('home.randomPoem') }}
+            </button>
           </div>
-        </aside>
-        <!-- Center feed -->
-        <main class="order-1 min-w-0 xl:order-2 xl:min-w-0">
-          <div class="mx-auto w-full max-w-none">
-            <!-- Author poems (from left column selection) — profile above tabs; sticky Lucrări | Biografie -->
-            <template v-if="authorSlug">
-              <div v-if="authorPending" class="flex min-h-[16rem] items-center justify-center py-16">
-                <span class="h-9 w-9 animate-spin rounded-full border-2 border-edge-subtle border-t-brand"
-                  aria-hidden="true" />
-              </div>
+        </div>
 
-              <div v-else-if="authorError" class="py-16 text-center">
-                <p class="text-content-muted">{{ t('authors.notFound') }}</p>
-                <button type="button" class="mt-4 text-sm font-medium text-brand underline-offset-2 hover:underline"
-                  @click="clearHomeAuthor">
-                  {{ t('home.backToFeed') }}
-                </button>
-              </div>
-
-              <template v-else-if="authorPage && !('idle' in authorPage)">
-                <button type="button"
-                  class="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-content-secondary transition hover:text-content"
-                  @click="clearHomeAuthor">
-                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
-                    aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-                  </svg>
-                  {{ t('home.backToFeed') }}
-                </button>
-
-                <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
-                  <img :src="authorAvatarUrl(authorPage.author)" :alt="authorPage.author.name" width="80" height="80"
-                    loading="lazy" class="h-20 w-20 shrink-0 rounded-full object-cover ring-2 ring-gold-300/60">
-                  <div class="min-w-0">
-                    <h2 class="font-serif text-2xl font-bold text-content sm:text-3xl">
-                      {{ authorPage.author.name }}
-                    </h2>
-                    <p class="mt-1 text-sm text-content-secondary">
-                      <span v-if="displayNationality(authorPage.author.nationality)">{{
-                        displayNationality(authorPage.author.nationality)
-                      }}</span>
-                      <span
-                        v-if="displayNationality(authorPage.author.nationality) && authorYearsLabel(authorPage.author)">
-                        · </span>
-                      <span>{{ authorYearsLabel(authorPage.author) }}</span>
-                    </p>
-                    <p class="mt-2 text-sm text-content-muted">
-                      {{ t('authors.poemCount', authorPage.poems.meta.total) }}
-                    </p>
-                    <NuxtLink :to="`/authors/${authorPage.author.slug}`"
-                      class="mt-2 inline-block text-sm font-medium text-brand transition hover:text-brand-hover">
-                      {{ t('home.viewFullProfile') }}
-                    </NuxtLink>
-                  </div>
-                </div>
-
-                <div
-                  class="sticky z-10 -mx-1 mb-8 flex flex-wrap items-end gap-4 border-b border-edge-subtle bg-surface-page/90 px-1 pb-0 pt-1 backdrop-blur-md top-[3.25rem] md:top-16">
-                  <div class="flex gap-8" role="tablist" :aria-label="t('home.authorTabsAria')">
-                    <button type="button" role="tab" :aria-selected="authorTab === 'works'"
-                      class="relative pb-3 text-sm transition-colors" :class="authorTab === 'works'
-                        ? 'font-medium text-content after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-content'
-                        : 'text-content-muted hover:text-content-secondary'
-                        " @click="authorTab = 'works'">
-                      {{ t('home.authorTabWorks') }}
-                    </button>
-                    <button type="button" role="tab" :aria-selected="authorTab === 'bio'"
-                      class="relative pb-3 text-sm transition-colors" :class="authorTab === 'bio'
-                        ? 'font-medium text-content after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-content'
-                        : 'text-content-muted hover:text-content-secondary'
-                        " @click="authorTab = 'bio'">
-                      {{ t('authors.biography') }}
-                    </button>
-                  </div>
-                </div>
-
-                <!-- Lucrări / Works: poem grid -->
-                <div v-show="authorTab === 'works'" role="tabpanel">
-                  <div v-if="authorPoemsForCards.length" class="home-poem-masonry" role="list">
-                    <div v-for="poem in authorPoemsForCards" :key="poem.id" class="home-poem-masonry-wrap"
-                      role="listitem">
-                      <PoetryCard :poem="poem" layout="masonry" :quick-read-list="authorPoemsForCards" />
-                    </div>
-                  </div>
-                  <p v-else class="py-12 text-center text-content-muted">
-                    {{ t('authors.noPoemsYet') }}
-                  </p>
-
-                  <div v-if="(authorPage.poems.meta.totalPages ?? 1) > 1" class="mt-10">
-                    <PaginationNav :page="authorFeedPage" :total-pages="authorPage.poems.meta.totalPages"
-                      @update:page="(p) => { authorFeedPage = p }" />
-                  </div>
-                </div>
-
-                <!-- Biography -->
-                <div v-show="authorTab === 'bio'" role="tabpanel">
-                  <section class="pt-2">
-                    <p v-if="authorPage.author.bio"
-                      class="max-w-3xl whitespace-pre-wrap text-base leading-relaxed text-content-secondary">
-                      {{ authorPage.author.bio }}
-                    </p>
-                    <p v-else class="max-w-3xl text-sm italic text-content-muted">{{ t('authors.bioUnavailable') }}</p>
-                  </section>
-                </div>
-              </template>
-            </template>
-
-            <!-- Default feed: For you / Featured -->
-            <template v-else>
-              <Alert v-if="!dbNoticeDismissed" variant="info" class="mb-6">
-                <template #icon>
-                  <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
-                    aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </template>
-                <AlertDescription>
-                  {{ t('home.dbNotice') }}
-                </AlertDescription>
-                <AlertAction>
-                  <CloseButton :label="t('home.dismissDbNotice')" @click="dismissDbNotice" />
-                </AlertAction>
-              </Alert>
-              <!-- Tabs (Medium-style) -->
-              <div
-                class="sticky z-10 -mx-1 mb-8 flex flex-wrap items-end gap-4 border-b border-edge-subtle bg-surface-page/90 px-1 pb-0 pt-1 backdrop-blur-md top-[3.25rem] md:top-16">
-                <div class="flex gap-8" role="tablist" :aria-label="t('home.feedTabsAria')">
-                  <button type="button" role="tab" :aria-selected="feedTab === 'foryou'"
-                    class="relative pb-3 text-sm transition-colors" :class="feedTab === 'foryou'
-                      ? 'font-medium text-content after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-content'
-                      : 'text-content-muted hover:text-content-secondary'
-                      " @click="feedTab = 'foryou'">
-                    {{ t('home.tabForYou') }}
-                  </button>
-                  <button type="button" role="tab" :aria-selected="feedTab === 'featured'"
-                    class="relative pb-3 text-sm transition-colors" :class="feedTab === 'featured'
-                      ? 'font-medium text-content after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-content'
-                      : 'text-content-muted hover:text-content-secondary'
-                      " @click="feedTab = 'featured'">
-                    {{ t('home.tabFeatured') }}
-                  </button>
-                </div>
-              </div>
-
-              <div v-if="homePending" class="flex min-h-[16rem] items-center justify-center py-16">
-                <span class="h-9 w-9 animate-spin rounded-full border-2 border-edge-subtle border-t-brand"
-                  aria-hidden="true" />
-              </div>
-
-              <template v-else>
-                <!-- For you -->
-                <div v-show="feedTab === 'foryou'">
-                  <div v-if="forYouPending && !forYouPoems.length"
-                    class="flex min-h-[16rem] items-center justify-center py-16">
-                    <span class="h-9 w-9 animate-spin rounded-full border-2 border-edge-subtle border-t-brand"
-                      aria-hidden="true" />
-                  </div>
-
-                  <template v-else-if="!forYouPoems.length">
-                    <p class="py-16 text-center font-serif text-lg text-content-muted">
-                      {{ t('home.emptyLibrary') }}
-                    </p>
-                  </template>
-
-                  <template v-else>
-                    <div class="home-poem-masonry" role="list">
-                      <div v-for="poem in forYouPoems" :key="poem.id" class="home-poem-masonry-wrap" role="listitem">
-                        <PoetryCard :poem="poem" layout="masonry" :quick-read-list="forYouPoems" />
-                      </div>
-                    </div>
-                    <div v-if="canLoadMoreForYou" class="mt-10 flex justify-center">
-                      <button type="button"
-                        class="inline-flex min-w-[12rem] items-center justify-center gap-2 rounded-full border border-edge bg-surface-raised px-6 py-2.5 text-sm font-medium text-content-secondary transition hover:border-edge-strong hover:text-content disabled:cursor-not-allowed disabled:opacity-60"
-                        :disabled="forYouLoadingMore" :aria-busy="forYouLoadingMore" @click="loadMoreForYou">
-                        <span v-if="forYouLoadingMore"
-                          class="h-4 w-4 animate-spin rounded-full border-2 border-edge-subtle border-t-brand"
-                          aria-hidden="true" />
-                        {{ forYouLoadingMore ? t('home.loadingMore') : t('home.loadMoreForYou') }}
-                      </button>
-                    </div>
-                  </template>
-                </div>
-
-                <!-- Featured -->
-                <div v-show="feedTab === 'featured'" role="tabpanel">
-                  <p v-if="!featured.length" class="py-12 text-center text-content-muted">
-                    {{ t('home.featuredEmpty') }}
-                  </p>
-                  <div v-else class="home-poem-masonry" role="list">
-                    <div v-for="poem in featured" :key="poem.id" class="home-poem-masonry-wrap" role="listitem">
-                      <PoetryCard :poem="poem" layout="masonry" :quick-read-list="featured" />
-                    </div>
-                  </div>
-                </div>
-              </template>
-            </template>
+        <figure class="mx-auto w-full max-w-md lg:max-w-none">
+          <div class="overflow-hidden rounded-ds-xl border border-edge-subtle shadow-ds-card">
+            <img src="/hero-banner.png" :alt="t('home.heroBannerAlt')" width="1200" height="800" fetchpriority="high"
+              class="aspect-[4/3] w-full object-cover">
           </div>
-        </main>
-
-        <!-- Right rail: staff picks + topics -->
-        <aside class="order-3 min-w-0 xl:max-w-[320px]">
-          <div class="sticky top-28 flex flex-col gap-10">
-            <div>
-              <h2 class="mb-4 text-sm font-semibold uppercase tracking-wider text-content">
-                {{ t('home.staffPicksTitle') }}
-              </h2>
-              <div class="flex flex-col border-t border-edge-subtle">
-                <template v-if="recent.length">
-                  <NuxtLink v-for="poem in recent.slice(0, 6)" :key="poem.id"
-                    :to="{ path: `/authors/${poem.author.slug}`, query: { poem: poem.slug } }"
-                    class="group border-b border-edge-subtle py-4 first:pt-3">
-                    <p
-                      class="font-serif text-[15px] font-semibold leading-snug text-content group-hover:text-brand line-clamp-2">
-                      {{ poem.title }}
-                    </p>
-                    <p class="mt-1.5 text-[13px] text-content-muted">
-                      {{ poem.author.name }}
-                    </p>
-                  </NuxtLink>
-                </template>
-                <p v-else class="py-6 text-sm text-content-muted">
-                  {{ t('home.emptyLibrary') }}
-                </p>
-              </div>
-              <NuxtLink v-if="recent.length" to="/"
-                class="mt-3 inline-block text-sm font-medium text-content-muted hover:text-brand">
-                {{ t('home.allPoemsLink') }}
-              </NuxtLink>
-            </div>
-          </div>
-        </aside>
+        </figure>
       </div>
+      <div class="ds-masthead-rule mx-auto mt-10 max-w-reading lg:mt-12" />
+    </section>
 
-      <section v-if="!authorSlug && !featured.length && !recent.length && !homePending && !forYouPoems.length"
-        class="mx-auto max-w-content py-10 text-center text-sm text-content-soft">
-        <p>
-          {{ t('home.emptyHintBefore') }}
-          <NuxtLink to="/admin"
-            class="font-medium underline decoration-edge-strong underline-offset-2 hover:text-content">
-            {{ t('home.emptyHintLink') }}
+    <div class="mx-auto max-w-content">
+      <!-- Most saved -->
+      <section v-if="mostSavedPoems.length" class="py-16 md:py-20">
+        <div class="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 class="section-title">
+              {{ t('home.mostSaved') }}
+            </h2>
+            <p class="mt-2 max-w-reading text-sm text-content-muted">
+              {{ t('home.mostSavedLead') }}
+            </p>
+          </div>
+          <NuxtLink to="/descopera" class="ds-link shrink-0 text-sm font-medium">
+            {{ t('home.seeAll') }}
           </NuxtLink>
-          {{ t('home.emptyHintAfter') }}
+        </div>
+        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <PoetryCard v-for="poem in mostSavedPoems" :key="poem.id" :poem="poem" :quick-read-list="mostSavedPoems" />
+        </div>
+      </section>
+
+      <!-- Authors spotlight -->
+      <section v-if="spotlightAuthors.length" class="border-t border-edge-subtle py-16 md:py-20">
+        <div class="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <h2 class="section-title">
+            {{ t('home.authorsSpotlight') }}
+          </h2>
+          <NuxtLink to="/descopera" class="ds-link shrink-0 text-sm font-medium">
+            {{ t('home.allAuthors') }}
+          </NuxtLink>
+        </div>
+        <div class="-mx-1 flex gap-3 overflow-x-auto pb-1 [scrollbar-width:thin]">
+          <NuxtLink v-for="author in spotlightAuthors" :key="author.id" :to="`/authors/${author.slug}`"
+            class="inline-flex min-h-[2.75rem] w-[7.5rem] shrink-0 flex-col items-center gap-2 rounded-ds-lg border border-edge-subtle bg-surface-raised p-3 text-center transition hover:border-edge hover:shadow-ds-card">
+            <img :src="authorAvatarUrl(author)" :alt="author.name" width="56" height="56" loading="lazy"
+              class="h-14 w-14 rounded-full object-cover ring-2 ring-edge-subtle">
+            <span class="line-clamp-2 font-serif text-sm font-medium leading-tight text-content">
+              {{ author.name }}
+            </span>
+            <span class="text-ui-xs text-content-muted">
+              {{ t('authors.poemCount', author._count.poems) }}
+            </span>
+          </NuxtLink>
+        </div>
+      </section>
+
+      <!-- Continue from favorites -->
+      <section v-if="showFavoritesSection" class="border-t border-edge-subtle py-16 md:py-20">
+        <div class="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <h2 class="section-title">
+            {{ t('home.continueFavorites') }}
+          </h2>
+          <NuxtLink to="/favorites" class="ds-link shrink-0 text-sm font-medium">
+            {{ t('home.sidebarLikedAll') }}
+          </NuxtLink>
+        </div>
+        <div class="grid gap-6 sm:grid-cols-2">
+          <PoetryCard v-for="poem in homeFavorites" :key="poem.id" :poem="poem" :quick-read-list="homeFavorites" />
+        </div>
+      </section>
+
+      <!-- Tools -->
+      <section class="border-t border-edge-subtle py-16 md:py-20">
+        <h2 class="section-title mb-8 text-center">
+          {{ t('home.toolsTitle') }}
+        </h2>
+        <div class="grid gap-6 md:grid-cols-3">
+          <NuxtLink to="/write" class="ds-card group flex flex-col gap-3 p-6 transition hover:shadow-ds-card-hover">
+            <p class="ds-eyebrow">
+              {{ t('nav.write') }}
+            </p>
+            <p class="font-serif text-xl font-semibold text-content transition group-hover:text-brand">
+              {{ t('home.toolWriteTitle') }}
+            </p>
+            <p class="text-sm leading-relaxed text-content-secondary">
+              {{ t('home.toolWriteLead') }}
+            </p>
+          </NuxtLink>
+          <NuxtLink to="/descopera" class="ds-card group flex flex-col gap-3 p-6 transition hover:shadow-ds-card-hover">
+            <p class="ds-eyebrow">
+              {{ t('nav.discover') }}
+            </p>
+            <p class="font-serif text-xl font-semibold text-content transition group-hover:text-brand">
+              {{ t('home.toolDiscoverTitle') }}
+            </p>
+            <p class="text-sm leading-relaxed text-content-secondary">
+              {{ t('home.toolDiscoverLead') }}
+            </p>
+          </NuxtLink>
+          <NuxtLink to="/carousel-generator"
+            class="ds-card group flex flex-col gap-3 p-6 transition hover:shadow-ds-card-hover">
+            <p class="ds-eyebrow">
+              {{ t('nav.carousel') }}
+            </p>
+            <p class="font-serif text-xl font-semibold text-content transition group-hover:text-brand">
+              {{ t('home.toolCarouselTitle') }}
+            </p>
+            <p class="text-sm leading-relaxed text-content-secondary">
+              {{ t('home.toolCarouselLead') }}
+            </p>
+          </NuxtLink>
+        </div>
+        <p v-if="!isLoggedIn && !showFavoritesSection" class="mt-8 text-center text-sm text-content-muted">
+          {{ t('favorites.hint') }}
+          <NuxtLink to="/login"
+            class="font-medium text-brand underline decoration-brand/40 underline-offset-2 hover:text-brand-hover">
+            {{ t('favorites.signInToSync') }}
+          </NuxtLink>
         </p>
       </section>
     </div>

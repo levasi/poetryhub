@@ -30,19 +30,24 @@ const useRouterLink = computed(() => {
 <template>
   <component
     :is="useRouterLink ? 'NuxtLink' : 'span'"
-    :to="useRouterLink ? `/?tag=${slug}` : undefined"
-    class="inline-flex items-center rounded-full px-3 py-0.5 text-xs font-medium tracking-wide transition-colors"
+    :to="useRouterLink ? `/descopera?tag=${slug}` : undefined"
     :class="[
       clickable || useRouterLink
         ? 'cursor-pointer hover:opacity-90'
         : 'cursor-default',
       active
-        ? 'bg-amber-100 text-amber-900 ring-1 ring-amber-400/60'
-        : 'border border-edge-subtle bg-surface-raised text-content-secondary shadow-ds-card',
+        ? 'gap-1 border-brand/40 bg-brand-tint text-content ring-1 ring-brand/30'
+        : 'border border-edge-subtle bg-surface-subtle text-content-muted',
+      'inline-flex items-center rounded-full px-2.5 py-1 text-ui-xs font-medium tracking-wide transition-colors',
     ]"
     :style="color && !active ? `background-color:${color}22;color:${color};border-color:${color}55` : ''"
     @click="$emit('click')"
   >
+    <span
+      v-if="active"
+      class="text-brand"
+      aria-hidden="true"
+    >✦</span>
     {{ displayName }}
   </component>
 </template>

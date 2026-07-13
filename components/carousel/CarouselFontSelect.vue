@@ -28,7 +28,7 @@ function onChange(e: Event) {
 
 <template>
   <select
-    class="w-full rounded-xl border border-ink-200 bg-white px-4 py-2.5 text-ink-900 outline-none focus:border-gold-500"
+    class="ds-input w-full appearance-none px-4 py-2.5 text-center"
     :value="props.modelValue"
     @change="onChange"
   >
@@ -42,3 +42,13 @@ function onChange(e: Event) {
     </option>
   </select>
 </template>
+
+<style scoped>
+select {
+  background-image: none;
+}
+
+select::-ms-expand {
+  display: none;
+}
+</style>

@@ -340,6 +340,12 @@ const publishMsg = ref<{ ok: boolean; text: string; slug?: string; authorSlug?: 
 const saveLoading = ref(false)
 const saveMsg = ref<{ ok: boolean; text: string } | null>(null)
 
+const draftStatusText = computed(() => {
+  if (saveLoading.value) return t('write.savingDraft')
+  if (saveMsg.value?.ok) return saveMsg.value.text
+  return null
+})
+
 const draftId = ref<string | null>(null)
 const DRAFT_ID_KEY = 'poetryhub-write-draft-id-v1'
 
@@ -688,7 +694,12 @@ onUnmounted(() => {
 
 <template>
   <div class="flex min-w-0 flex-1 flex-col" aria-label="Lucru: dicționar, versuri">
-    <WriteToolsBar />
+    <WriteToolsBar
+      :draft-status="draftStatusText"
+      :save-loading="saveLoading"
+      @save="saveNowDirect"
+      @publish="openPublish"
+    />
     <div ref="splitContainerRef" class="flex min-h-0 min-w-0 flex-1 flex-col lg:flex-row pb-8">
       <!-- Stânga (desktop): căutare + rezultate; pe mobil order: versuri → căutare → rezultate (contents + order) -->
       <div
@@ -713,7 +724,7 @@ onUnmounted(() => {
                   <label class="sr-only">Cuvânt căutat {{ i + 1 }}</label>
                   <input :ref="(el) => setSearchInputRef(i, el)" v-model="row.text" type="text" inputmode="search"
                     autocomplete="off" enterkeyhint="search" :placeholder="placeholder"
-                    class="w-[9.5rem] max-w-full rounded-xl border border-edge bg-surface-raised py-2 pl-3 text-sm text-content shadow-inner outline-none ring-blue-500/20 transition placeholder:text-xs placeholder:text-content-soft focus:border-blue-500 focus:ring-2 sm:w-[10.5rem] sm:py-2.5 sm:text-base sm:placeholder:text-sm"
+                    class="w-[9.5rem] max-w-full rounded-xl border border-edge bg-surface-raised py-2 pl-3 text-sm text-content shadow-inner outline-none ring-brand/20 transition placeholder:text-xs placeholder:text-content-soft focus:border-brand focus:ring-2 sm:w-[10.5rem] sm:py-2.5 sm:text-base sm:placeholder:text-sm"
                     :class="searchQueries.length > 1 ? 'pr-7 sm:pr-8' : 'pr-3 sm:pr-4'" @focus="activeSearchIndex = i"
                     @keydown.enter.prevent="runSearch" />
                   <button v-if="searchQueries.length > 1" type="button"
@@ -751,13 +762,13 @@ onUnmounted(() => {
             <ul v-if="results.length" class="flex flex-wrap content-start gap-2 rounded-xl">
               <li v-for="r in results" :key="r.id" class="min-w-0 max-w-full">
                 <div
-                  class="group relative inline-flex max-w-full min-w-0 items-center gap-0.5 rounded-lg bg-surface-subtle/50 p-1 transition hover:border-blue-200 hover:bg-blue-50/80">
+                  class="group relative inline-flex max-w-full min-w-0 items-center gap-0.5 rounded-lg border border-transparent bg-surface-subtle/50 p-1 transition hover:border-brand/30 hover:bg-brand-tint">
                   <button type="button" class="flex min-w-0 max-w-[12rem] items-center justify-center rounded-md"
                     :title="'Definiție: ' + r.word" @click="openWordDefinition(r, $event)">
                     <span class="min-w-0 truncate text-sm font-semibold leading-tight text-content">{{ r.word }}</span>
                   </button>
                   <button type="button"
-                    class="shrink-0 rounded-md bg-surface-raised p-1 text-sm font-semibold leading-none text-blue-700 shadow-sm hover:border-blue-400 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-40"
+                    class="shrink-0 rounded-md bg-surface-raised p-1 text-sm font-semibold leading-none text-brand shadow-sm hover:border-brand/40 hover:bg-brand-tint disabled:cursor-not-allowed disabled:opacity-40"
                     :title="projects.isWordSaved(r.word)
                       ? 'Deja în cuvinte salvate'
                       : 'Salvează cuvântul în proiect'
@@ -808,25 +819,6 @@ onUnmounted(() => {
             <div class="h-48 animate-pulse rounded-xl bg-surface-subtle" aria-hidden="true" />
           </template>
         </ClientOnly>
-        <div class="mt-2 shrink-0 flex gap-2 sm:grid-cols-2">
-          <button type="button" class="ds-btn-secondary w-full gap-2 shadow-ds-card" :disabled="saveLoading"
-            @click="saveNowDirect">
-            <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round"
-                d="M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z" />
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 9h6M9 13h6M9 17h4" />
-            </svg>
-            {{ saveLoading ? t('write.savingDraft') : t('write.saveBtn') }}
-          </button>
-
-          <button type="button" class="ds-btn-primary w-full gap-2 shadow-ds-card" @click="openPublish">
-            <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round"
-                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-            </svg>
-            {{ t('write.publishBtn') }}
-          </button>
-        </div>
       </section>
     </div>
 

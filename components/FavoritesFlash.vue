@@ -13,13 +13,13 @@ const { favoriteOpError, dismissFavoriteError } = useFavorites()
     >
       <div
         v-if="favoriteOpError"
-        class="fixed bottom-6 left-1/2 z-[100] flex max-w-md -translate-x-1/2 items-center gap-3 rounded-ds-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900 shadow-lg"
+        class="ds-banner ds-banner-danger fixed bottom-6 left-1/2 z-[100] flex max-w-md -translate-x-1/2 items-center gap-3 shadow-ds-popover"
         role="alert"
       >
         <p class="flex-1">{{ favoriteOpError }}</p>
         <button
           type="button"
-          class="shrink-0 font-medium text-rose-800 underline decoration-rose-400 underline-offset-2 hover:text-rose-950"
+          class="shrink-0 font-medium text-danger underline decoration-danger/40 underline-offset-2 hover:text-content"
           @click="dismissFavoriteError"
         >
           {{ t('favorites.dismissError') }}

@@ -42,7 +42,7 @@ const poetryClass = computed(() => {
   switch (props.theme) {
     case 'minimal':
     case 'dark':
-      return 'text-gold-400'
+      return 'text-[#f8c44a]'
     case 'gradient':
       return 'text-amber-200'
     case 'neon':
@@ -60,14 +60,14 @@ const poetryClass = computed(() => {
     case 'cosmos':
       return 'text-violet-300'
     default:
-      return 'text-gold-400'
+      return 'text-[#f8c44a]'
   }
 })
 
 const hubClass = computed(() => {
   switch (props.theme) {
     case 'minimal':
-      return 'text-ink-900'
+      return 'text-[#0f0f0a]'
     case 'parchment':
       return 'text-amber-950'
     case 'editorial':
@@ -80,13 +80,13 @@ const hubClass = computed(() => {
 const plainClass = computed(() => {
   switch (props.theme) {
     case 'minimal':
-      return 'text-ink-900'
+      return 'text-[#0f0f0a]'
     case 'parchment':
       return 'text-amber-950'
     case 'editorial':
       return 'text-zinc-900'
     case 'dark':
-      return 'text-ink-50'
+      return 'text-[#f5f5f0]'
     case 'gradient':
       return 'text-white'
     case 'neon':

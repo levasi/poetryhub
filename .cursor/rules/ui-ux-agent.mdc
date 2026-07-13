@@ -36,7 +36,7 @@ Source of truth: **`tailwind.config.ts`** + **`assets/css/main.css`**.
 | `brand`, `brand-hover`, `brand-soft`, `brand-foreground` | Gold CTA / accents |
 | `danger`, `danger-soft` | Destructive / errors |
 
-Legacy **`ink`** / **`gold`** scales remain available for existing markup.
+Legacy **`ink`** / **`gold`** / **`rose`** scales are retired — use semantic tokens only.
 
 ### Other tokens
 

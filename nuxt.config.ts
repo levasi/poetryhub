@@ -326,6 +326,7 @@ export default defineNuxtConfig({
 
   // App-level meta
   app: {
+    pageTransition: { name: 'page' },
     head: {
       title: 'PoetryHub — Citește, descoperă și împărtășește poezie',
       htmlAttrs: { lang: 'ro', 'data-color-scheme': 'paper' },
@@ -350,7 +351,8 @@ export default defineNuxtConfig({
           rel: 'stylesheet',
           href:
             'https://fonts.googleapis.com/css2'
-            + '?family=Crimson+Pro:ital,wght@0,400;0,600;1,400'
+            + '?family=Courier+Prime:ital,wght@0,400;0,700;1,400'
+            + '&family=Crimson+Pro:ital,wght@0,400;0,600;1,400'
             + '&family=EB+Garamond:ital,wght@0,400;0,600;1,400'
             + '&family=Inter:wght@400;500;600'
             + '&family=JetBrains+Mono:wght@400'

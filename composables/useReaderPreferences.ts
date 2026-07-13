@@ -2,6 +2,7 @@ import type { AuthUser } from '~/composables/useAuth'
 
 /** Keys stored in `User.poemFontFamily` and localStorage. */
 export type ReaderFontKey =
+  | 'typewriter'
   | 'playfair'
   | 'georgia'
   | 'inter'
@@ -47,6 +48,7 @@ function clampLetterSpacingEm(n: number): number {
 
 /** CSS font-family stacks (Google fonts loaded in nuxt.config). */
 export const READER_FONT_STACKS: Record<ReaderFontKey, string> = {
+  typewriter: "'Courier Prime', Courier, monospace",
   playfair: "'Playfair Display', Georgia, 'Times New Roman', serif",
   georgia: "Georgia, 'Times New Roman', serif",
   inter: "'Inter', system-ui, sans-serif",
@@ -65,6 +67,7 @@ export const READER_FONT_STACKS: Record<ReaderFontKey, string> = {
 
 /** i18n keys under `viewer.*` for each font option label. */
 export const READER_FONT_I18N_KEYS: Record<ReaderFontKey, string> = {
+  typewriter: 'viewer.fontTypewriter',
   playfair: 'viewer.fontPlayfair',
   georgia: 'viewer.fontGeorgia',
   inter: 'viewer.fontInter',
@@ -83,6 +86,7 @@ export const READER_FONT_I18N_KEYS: Record<ReaderFontKey, string> = {
 
 /** Tooltip (title) copy for fonts with editorial blurbs — see i18n `viewer.fontDesc*`. */
 export const READER_FONT_DESC_I18N_KEYS: Partial<Record<ReaderFontKey, string>> = {
+  typewriter: 'viewer.fontDescTypewriter',
   georgia: 'viewer.fontDescGeorgia',
   'eb-garamond': 'viewer.fontDescGaramond',
   verdana: 'viewer.fontDescVerdana',
@@ -116,6 +120,7 @@ function prefsFromUser(u: AuthUser | null): {
 
 /** Order in the font dropdown — curated serifs/sans, then remaining library faces. */
 export const READER_FONT_OPTIONS_ORDER = [
+  'typewriter',
   'georgia',
   'eb-garamond',
   'verdana',
@@ -136,7 +141,7 @@ export function useReaderPreferences() {
   const { user, isLoggedIn } = useAuth()
 
   /** Shared across PoetryViewer, poem cards, etc. so one source of truth. */
-  const fontKey = useState<ReaderFontKey>('reader-pref-font', () => 'playfair')
+  const fontKey = useState<ReaderFontKey>('reader-pref-font', () => 'typewriter')
   const fontSizePx = useState<number>('reader-pref-size', () => 16)
   const lineHeight = useState<number>('reader-pref-line-height', () => READER_LINE_HEIGHT_DEFAULT)
   const letterSpacingEm = useState<number>('reader-pref-letter-spacing', () => READER_LETTER_SPACING_DEFAULT)

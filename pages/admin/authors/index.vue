@@ -37,8 +37,8 @@ async function deleteAuthor(slug: string) {
 <template>
   <div>
     <div class="mb-6 flex items-center justify-between">
-      <h1 class="font-serif text-2xl font-bold text-ink-900">{{ t('admin.authors.title') }}</h1>
-      <NuxtLink to="/admin/authors/new" class="rounded-lg bg-gold-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-gold-700">
+      <h1 class="font-serif text-2xl font-bold text-content">{{ t('admin.authors.title') }}</h1>
+      <NuxtLink to="/admin/authors/new" class="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-hover">
         {{ t('admin.authors.new') }}
       </NuxtLink>
     </div>
@@ -47,24 +47,24 @@ async function deleteAuthor(slug: string) {
       <SearchBar v-model="search" :placeholder="t('admin.authors.searchPlaceholder')" />
     </div>
 
-    <div class="overflow-hidden rounded-xl border border-ink-200 bg-white shadow-sm">
+    <div class="overflow-hidden rounded-xl border border-edge-subtle bg-surface-raised shadow-sm">
       <table class="w-full text-sm">
-        <thead class="border-b border-ink-200 bg-ink-50">
+        <thead class="border-b border-edge-subtle bg-surface-subtle">
           <tr>
-            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-ink-500">{{ t('admin.authors.colName') }}</th>
-            <th class="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-ink-500 md:table-cell">{{ t('admin.authors.colNationality') }}</th>
-            <th class="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-ink-500 sm:table-cell">{{ t('admin.authors.colPoems') }}</th>
-            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-ink-500">{{ t('admin.authors.colActions') }}</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-content-muted">{{ t('admin.authors.colName') }}</th>
+            <th class="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-content-muted md:table-cell">{{ t('admin.authors.colNationality') }}</th>
+            <th class="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-content-muted sm:table-cell">{{ t('admin.authors.colPoems') }}</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-content-muted">{{ t('admin.authors.colActions') }}</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-ink-100 bg-white">
-          <tr v-for="author in authors" :key="author.id" class="hover:bg-ink-50">
-            <td class="px-4 py-3 font-medium text-ink-900">{{ author.name }}</td>
-            <td class="hidden px-4 py-3 text-ink-600 md:table-cell">{{ author.nationality ?? '—' }}</td>
-            <td class="hidden px-4 py-3 text-ink-600 sm:table-cell">{{ author._count?.poems ?? 0 }}</td>
+        <tbody class="divide-y divide-edge-subtle bg-surface-raised">
+          <tr v-for="author in authors" :key="author.id" class="hover:bg-surface-subtle">
+            <td class="px-4 py-3 font-medium text-content">{{ author.name }}</td>
+            <td class="hidden px-4 py-3 text-content-muted md:table-cell">{{ author.nationality ?? '—' }}</td>
+            <td class="hidden px-4 py-3 text-content-muted sm:table-cell">{{ author._count?.poems ?? 0 }}</td>
             <td class="px-4 py-3">
               <div class="flex gap-2">
-                <NuxtLink :to="`/admin/authors/${author.slug}`" class="rounded px-2 py-1 text-xs text-ink-600 hover:bg-ink-100 hover:text-ink-900">{{ t('admin.authors.edit') }}</NuxtLink>
+                <NuxtLink :to="`/admin/authors/${author.slug}`" class="rounded px-2 py-1 text-xs text-content-muted hover:bg-surface-subtle hover:text-content">{{ t('admin.authors.edit') }}</NuxtLink>
                 <button
                   type="button"
                   class="rounded px-2 py-1 text-xs text-red-700 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
@@ -78,7 +78,7 @@ async function deleteAuthor(slug: string) {
           </tr>
         </tbody>
       </table>
-      <div v-if="!authors.length" class="py-10 text-center text-sm text-ink-500">{{ t('admin.authors.none') }}</div>
+      <div v-if="!authors.length" class="py-10 text-center text-sm text-content-muted">{{ t('admin.authors.none') }}</div>
     </div>
 
     <div v-if="totalPages > 1" class="mt-6">

@@ -13,18 +13,12 @@ export const poemListInclude = {
 } as const
 
 export async function getHomePagePayload() {
-  const [featured, recent, moodTags, themeTags] = await Promise.all([
-    /** “Cele mai apreciate”: poems with at least one favorite (♡), most liked first. */
+  const [featured, moodTags, themeTags, spotlightAuthors] = await Promise.all([
+    /** Poems with at least one favorite (♡), most liked first. */
     prisma.poem.findMany({
       where: { language: 'ro', favorites: { some: {} } },
       take: 36,
       orderBy: [{ favorites: { _count: 'desc' } }, { publishedAt: 'desc' }],
-      include: poemListInclude,
-    }),
-    prisma.poem.findMany({
-      where: { language: 'ro' },
-      take: 8,
-      orderBy: { publishedAt: 'desc' },
       include: poemListInclude,
     }),
     prisma.tag.findMany({
@@ -37,7 +31,19 @@ export async function getHomePagePayload() {
       orderBy: { name: 'asc' },
       include: { _count: { select: { poemTags: true } } },
     }),
+    prisma.author.findMany({
+      where: { poems: { some: { language: 'ro' } } },
+      take: 12,
+      orderBy: { poems: { _count: 'desc' } },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        imageUrl: true,
+        _count: { select: { poems: true } },
+      },
+    }),
   ])
 
-  return { featured, recent, moodTags, themeTags }
+  return { featured, moodTags, themeTags, spotlightAuthors }
 }

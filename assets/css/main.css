@@ -21,14 +21,17 @@
     width: 8px;
     height: 8px;
   }
+
   ::-webkit-scrollbar-track {
     @apply bg-surface-subtle;
   }
+
   ::-webkit-scrollbar-thumb {
     @apply rounded-full bg-edge-strong;
   }
+
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-ink-400;
+    @apply bg-content-hint;
   }
 
   :focus-visible {
@@ -59,8 +62,8 @@
 /* ── Design-system component patterns (compose with @apply) ─────────────── */
 @layer components {
   .poem-text {
-    @apply font-serif text-[1.1875rem] leading-[1.9] text-content;
-    letter-spacing: 0.02em;
+    @apply font-typewriter text-[0.9rem] leading-[1.4] text-content;
+    letter-spacing: 0.04em;
   }
 
   .field-label {
@@ -118,7 +121,7 @@
   }
 
   .ds-masthead-title {
-    @apply font-serif text-[clamp(2rem,5vw,3.25rem)] font-semibold leading-[1.08] tracking-tight text-content;
+    @apply font-serif text-[clamp(2rem, 5vw, 3.25rem)] font-semibold leading-[1.08] tracking-tight text-content;
   }
 
   .ds-masthead-lead {
@@ -136,16 +139,36 @@
     column-gap: 1rem;
     column-fill: balance;
   }
+
   @media (min-width: 640px) {
     .home-poem-masonry {
       column-count: 2;
     }
   }
+
   @media (min-width: 1024px) {
     .home-poem-masonry {
+      column-count: 2;
+    }
+  }
+
+  /** For-you feed on /descopera — three columns on large screens. */
+  .home-poem-masonry--cols-3 {
+    column-count: 1;
+  }
+
+  @media (min-width: 640px) {
+    .home-poem-masonry--cols-3 {
+      column-count: 2;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .home-poem-masonry--cols-3 {
       column-count: 3;
     }
   }
+
   .home-poem-masonry-wrap {
     display: inline-block;
     width: 100%;
@@ -168,13 +191,73 @@
   .ds-section-heading-center {
     @apply relative mx-auto inline-block pb-3 text-center font-serif text-2xl font-semibold tracking-tight text-content after:absolute after:bottom-0 after:left-1/2 after:h-[3px] after:w-12 after:-translate-x-1/2 after:rounded-full after:bg-brand/55 md:text-[1.75rem];
   }
+
+  /** Editorial underline tabs */
+  .ds-tabs {
+    @apply flex gap-6 border-b border-edge-subtle;
+  }
+
+  .ds-tab {
+    @apply -mb-px inline-flex min-h-[2.75rem] items-center border-b-2 border-transparent pb-3 text-ui-sm font-medium text-content-muted transition-colors hover:text-content;
+  }
+
+  .ds-tab-active {
+    @apply border-brand font-semibold text-content;
+  }
+
+  /** Left-accent banner (errors, success, info) */
+  .ds-banner {
+    @apply flex gap-3 rounded-ds-md border-l-2 p-4 text-ui-sm;
+  }
+
+  .ds-banner-danger {
+    @apply border-danger bg-danger-soft/40 text-content-secondary;
+  }
+
+  .ds-banner-success {
+    @apply border-success bg-success-soft/40 text-content-secondary;
+  }
+
+  .ds-banner-info {
+    @apply border-brand bg-brand-tint text-content-secondary;
+  }
+
+  /** Loading skeleton — text-shaped lines */
+  .ds-skeleton {
+    @apply animate-pulse-soft rounded-ds-sm bg-surface-subtle;
+  }
+
+  /** Empty state container */
+  .ds-empty {
+    @apply flex flex-col items-center px-4 py-16 text-center;
+  }
+
+  /** Poem title in reader */
+  .poem-title {
+    @apply text-center font-serif text-[clamp(1.75rem, 4vw, 2.5rem)] font-semibold tracking-tight text-content;
+  }
+
+  /** Sheet / drawer panel */
+  .ds-sheet-panel {
+    @apply flex max-h-[85dvh] flex-col bg-surface-overlay shadow-ds-popover;
+  }
+
+  .ds-sheet-panel-mobile {
+    @apply rounded-t-ds-xl border-t border-edge-subtle;
+  }
+
+  .ds-sheet-panel-desktop {
+    @apply h-full max-h-none w-[380px] max-w-[90vw] border-l border-edge-subtle;
+  }
 }
 
 /* Poem body — comfortable measure (theme-aware via --color-poem-text) */
+.poem-body,
 .poem-body p {
-  font-family: 'Playfair Display', Georgia, serif;
-  font-size: 1.2rem;
-  line-height: 1.95;
+  font-family: 'Courier Prime', Courier, monospace;
+  font-size: 1.0625rem;
+  line-height: 1.85;
+  letter-spacing: 0.04em;
   color: rgb(var(--color-poem-text));
   white-space: pre-wrap;
 }
@@ -186,6 +269,7 @@
     opacity 0.25s ease,
     transform 0.25s ease;
 }
+
 .page-enter-from,
 .page-leave-to {
   opacity: 0;
@@ -193,10 +277,12 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .page-enter-active,
   .page-leave-active {
     transition: opacity 0.15s ease;
   }
+
   .page-enter-from,
   .page-leave-to {
     transform: none;

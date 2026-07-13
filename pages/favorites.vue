@@ -47,8 +47,8 @@ const favorites = computed(() => {
       </button>
     </div>
 
-    <div v-if="pending && count > 0" class="flex min-h-[8rem] items-center justify-center">
-      <span class="h-9 w-9 animate-spin rounded-full border-2 border-edge-subtle border-t-brand" aria-hidden="true" />
+    <div v-if="pending && count > 0" class="space-y-6 py-8">
+      <DsSkeleton v-for="n in 3" :key="n" :lines="4" />
     </div>
 
     <div v-else-if="count > 0 && favorites.length" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -59,14 +59,14 @@ const favorites = computed(() => {
       <p class="text-sm text-content-muted">{{ t('favorites.missingFromCatalog') }}</p>
     </div>
 
-    <div v-else class="py-24 text-center">
-      <svg class="mx-auto mb-4 h-12 w-12 text-content-soft" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-      </svg>
-      <p class="font-serif text-lg text-content-muted">{{ t('favorites.empty') }}</p>
-      <NuxtLink to="/" class="mt-3 inline-block text-sm text-content-muted underline hover:text-content">
-        {{ t('favorites.hint') }}
+    <DsEmpty
+      v-else
+      :title="t('favorites.emptyTitle')"
+      :description="t('favorites.emptyDescription')"
+    >
+      <NuxtLink to="/descopera" class="ds-btn-primary">
+        {{ t('favorites.discoverCta') }}
       </NuxtLink>
-    </div>
+    </DsEmpty>
   </div>
 </template>

@@ -145,7 +145,7 @@ const roleDisplayName = computed(() => {
 
 const roleBadgeClass = computed(() => {
   const r = accountRole.value
-  if (r === 'admin') return 'bg-gold-100 text-gold-800 ring-1 ring-gold-200/80'
+  if (r === 'admin') return 'bg-brand-tint text-content ring-1 ring-brand/30'
   if (r === 'moderator') return 'bg-violet-100 text-violet-800 ring-1 ring-violet-200/80'
   return 'bg-surface-subtle text-content-secondary ring-1 ring-edge-subtle'
 })
@@ -399,6 +399,13 @@ onMounted(() => {
         </div>
   
         <div class="space-y-5">
+          <div>
+            <label class="mb-2 block text-xs font-medium uppercase tracking-widest text-content-secondary">
+              {{ t('nav.readingTheme') }}
+            </label>
+            <ColorSchemeSwatches variant="swatches" />
+          </div>
+
           <div>
             <label class="mb-1.5 block text-xs font-medium uppercase tracking-widest text-content-secondary">{{
               t('viewer.font') }}</label>

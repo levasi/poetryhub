@@ -105,8 +105,8 @@ async function onDeleteUser(u: AdminUser) {
 <template>
   <div>
     <div class="mb-6 flex items-center justify-between">
-      <h1 class="font-serif text-2xl font-bold text-ink-900">{{ t('admin.users.title') }}</h1>
-      <span class="text-sm text-ink-500">{{ data?.meta.total ?? 0 }} total</span>
+      <h1 class="font-serif text-2xl font-bold text-content">{{ t('admin.users.title') }}</h1>
+      <span class="text-sm text-content-muted">{{ data?.meta.total ?? 0 }} total</span>
     </div>
 
     <Transition name="fade-down">
@@ -123,41 +123,41 @@ async function onDeleteUser(u: AdminUser) {
       <SearchBar v-model="search" :placeholder="t('admin.users.searchPlaceholder')" />
     </div>
 
-    <div class="overflow-hidden rounded-xl border border-ink-200 bg-white shadow-sm">
+    <div class="overflow-hidden rounded-xl border border-edge-subtle bg-surface-raised shadow-sm">
       <table class="w-full text-sm">
-        <thead class="border-b border-ink-200 bg-ink-50">
+        <thead class="border-b border-edge-subtle bg-surface-subtle">
           <tr>
-            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-ink-500">
+            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-content-muted">
               {{ t('admin.users.colName') }}
             </th>
-            <th class="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-ink-500 md:table-cell">
+            <th class="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-content-muted md:table-cell">
               {{ t('admin.users.colEmail') }}
             </th>
-            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-ink-500">
+            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-content-muted">
               {{ t('admin.users.colRole') }}
             </th>
-            <th class="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-ink-500 lg:table-cell">
+            <th class="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-content-muted lg:table-cell">
               {{ t('admin.users.colJoined') }}
             </th>
-            <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-widest text-ink-500">
+            <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-widest text-content-muted">
               {{ t('admin.users.colActions') }}
             </th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-ink-100 bg-white">
-          <tr v-for="u in users" :key="u.id" class="hover:bg-ink-50">
+        <tbody class="divide-y divide-edge-subtle bg-surface-raised">
+          <tr v-for="u in users" :key="u.id" class="hover:bg-surface-subtle">
             <td class="px-4 py-3">
               <div class="flex items-center gap-2.5">
-                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gold-100 text-xs font-bold text-gold-700">
+                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-tint text-xs font-bold text-brand">
                   {{ (u.name || u.email).slice(0, 2).toUpperCase() }}
                 </span>
                 <div>
-                  <p class="font-medium text-ink-900">{{ u.name || '—' }}</p>
-                  <p class="text-xs text-ink-500 md:hidden">{{ u.email }}</p>
+                  <p class="font-medium text-content">{{ u.name || '—' }}</p>
+                  <p class="text-xs text-content-muted md:hidden">{{ u.email }}</p>
                 </div>
               </div>
             </td>
-            <td class="hidden px-4 py-3 text-ink-600 md:table-cell">{{ u.email }}</td>
+            <td class="hidden px-4 py-3 text-content-muted md:table-cell">{{ u.email }}</td>
             <td class="px-4 py-3">
               <select
                 :value="u.role"
@@ -177,11 +177,11 @@ async function onDeleteUser(u: AdminUser) {
                 <option value="moderator">{{ t('admin.users.roleLabels.moderator') }}</option>
                 <option value="admin">{{ t('admin.users.roleLabels.admin') }}</option>
               </select>
-              <p v-if="isOwnerAccount(u.email)" class="mt-1 text-[10px] text-ink-400">
+              <p v-if="isOwnerAccount(u.email)" class="mt-1 text-[10px] text-content-soft">
                 {{ t('admin.users.ownerNote') }}
               </p>
             </td>
-            <td class="hidden px-4 py-3 text-ink-500 lg:table-cell">{{ formatDate(u.createdAt) }}</td>
+            <td class="hidden px-4 py-3 text-content-muted lg:table-cell">{{ formatDate(u.createdAt) }}</td>
             <td class="px-4 py-3 text-right">
               <button
                 type="button"
@@ -208,7 +208,7 @@ async function onDeleteUser(u: AdminUser) {
         </tbody>
       </table>
 
-      <div v-if="!users.length" class="py-10 text-center text-sm text-ink-500">
+      <div v-if="!users.length" class="py-10 text-center text-sm text-content-muted">
         {{ t('admin.users.none') }}
       </div>
     </div>

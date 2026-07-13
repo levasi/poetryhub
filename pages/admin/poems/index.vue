@@ -45,10 +45,10 @@ async function deletePoem(slug: string) {
   <div>
     <!-- Header -->
     <div class="mb-6 flex items-center justify-between">
-      <h1 class="font-serif text-2xl font-bold text-ink-900">{{ t('admin.poems.title') }}</h1>
+      <h1 class="font-serif text-2xl font-bold text-content">{{ t('admin.poems.title') }}</h1>
       <NuxtLink
         to="/admin/poems/new"
-        class="rounded-lg bg-gold-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-gold-700"
+        class="ds-btn-primary px-4 py-2 text-sm"
       >
         {{ t('admin.poems.new') }}
       </NuxtLink>
@@ -60,31 +60,31 @@ async function deletePoem(slug: string) {
     </div>
 
     <!-- Table -->
-    <div class="overflow-hidden rounded-xl border border-ink-200 bg-white shadow-sm">
+    <div class="overflow-hidden rounded-xl border border-edge-subtle bg-surface-raised shadow-sm">
       <table class="w-full text-sm">
-        <thead class="border-b border-ink-200 bg-ink-50">
+        <thead class="border-b border-edge-subtle bg-surface-subtle">
           <tr>
-            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-ink-500">{{ t('admin.poems.colTitle') }}</th>
-            <th class="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-ink-500 md:table-cell">{{ t('admin.poems.colAuthor') }}</th>
-            <th class="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-ink-500 lg:table-cell">{{ t('admin.poems.colTags') }}</th>
-            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-ink-500">{{ t('admin.poems.colActions') }}</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-content-muted">{{ t('admin.poems.colTitle') }}</th>
+            <th class="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-content-muted md:table-cell">{{ t('admin.poems.colAuthor') }}</th>
+            <th class="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-content-muted lg:table-cell">{{ t('admin.poems.colTags') }}</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-content-muted">{{ t('admin.poems.colActions') }}</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-ink-100 bg-white">
-          <tr v-for="poem in poems" :key="poem.id" class="hover:bg-ink-50">
-            <td class="max-w-[280px] truncate px-4 py-3 font-medium text-ink-900">
+        <tbody class="divide-y divide-edge-subtle bg-surface-raised">
+          <tr v-for="poem in poems" :key="poem.id" class="hover:bg-surface-subtle">
+            <td class="max-w-[280px] truncate px-4 py-3 font-medium text-content">
               <div class="flex items-center gap-2">
-                <span v-if="poem.featured" class="h-1.5 w-1.5 shrink-0 rounded-full bg-gold-500" :title="t('admin.poems.featuredTitle')" />
+                <span v-if="poem.featured" class="h-1.5 w-1.5 shrink-0 rounded-full bg-brand" :title="t('admin.poems.featuredTitle')" />
                 <span class="truncate">{{ poem.title }}</span>
               </div>
             </td>
-            <td class="hidden px-4 py-3 text-ink-600 md:table-cell">{{ poem.author.name }}</td>
+            <td class="hidden px-4 py-3 text-content-muted md:table-cell">{{ poem.author.name }}</td>
             <td class="hidden px-4 py-3 lg:table-cell">
               <div class="flex flex-wrap gap-1">
                 <span
                   v-for="pt in poem.poemTags?.slice(0, 3)"
                   :key="pt.tag.id"
-                  class="rounded-full bg-ink-100 px-2 py-0.5 text-xs text-ink-600"
+                  class="rounded-full bg-surface-subtle px-2 py-0.5 text-xs text-content-muted"
                 >
                   {{ labelForTag(pt.tag.slug, pt.tag.name) }}
                 </span>
@@ -94,7 +94,7 @@ async function deletePoem(slug: string) {
               <div class="flex items-center gap-2">
                 <NuxtLink
                   :to="`/admin/poems/${poem.slug}`"
-                  class="rounded px-2 py-1 text-xs text-ink-600 hover:bg-ink-100 hover:text-ink-900"
+                  class="rounded px-2 py-1 text-xs text-content-muted hover:bg-surface-subtle hover:text-content"
                 >
                   {{ t('admin.poems.edit') }}
                 </NuxtLink>
@@ -103,7 +103,7 @@ async function deletePoem(slug: string) {
                     ? { path: `/authors/${poem.author.slug}`, query: { poem: poem.slug } }
                     : `/poems/${poem.slug}`"
                   target="_blank"
-                  class="rounded px-2 py-1 text-xs text-ink-500 hover:bg-ink-100 hover:text-ink-800"
+                  class="rounded px-2 py-1 text-xs text-content-muted hover:bg-surface-subtle hover:text-content"
                 >
                   {{ t('admin.poems.view') }}
                 </NuxtLink>
@@ -121,7 +121,7 @@ async function deletePoem(slug: string) {
         </tbody>
       </table>
 
-      <div v-if="!poems.length" class="py-10 text-center text-sm text-ink-500">
+      <div v-if="!poems.length" class="py-10 text-center text-sm text-content-muted">
         {{ t('admin.poems.none') }}
       </div>
     </div>

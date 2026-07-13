@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { CarouselTheme, SlideVariant } from '~/composables/useCarouselGenerator'
+import { CAROUSEL_HEIGHT, CAROUSEL_WIDTH } from '~/composables/useCarouselGenerator'
 import { READER_FONT_STACKS } from '~/composables/useReaderPreferences'
 import CarouselInstaTemplate from './CarouselInstaTemplate.vue'
 
@@ -32,6 +33,8 @@ withDefaults(
     bodyFontWeight?: number | null
     /** Cover title weight override; null = theme default. */
     titleFontWeight?: number | null
+    canvasWidth?: number
+    canvasHeight?: number
   }>(),
   {
     authorNationality: '',
@@ -42,15 +45,33 @@ withDefaults(
     fontFamily: () => READER_FONT_STACKS.literata,
     bodyFontWeight: null,
     titleFontWeight: null,
+    canvasWidth: CAROUSEL_WIDTH,
+    canvasHeight: CAROUSEL_HEIGHT,
   },
 )
 </script>
 
 <template>
-  <CarouselInstaTemplate :theme="theme" :variant="variant" :title="title" :author="author"
-    :author-nationality="authorNationality" :author-lifespan="authorLifespan" :written-year-line="writtenYearLine"
-    :avatar-url="avatarUrl" :lines="lines" :cta-text="ctaText" :font-scale-body="fontScaleBody"
-    :title-scale="titleScale" :keywords="keywords" :body-font-size-scale="bodyFontSizeScale"
-    :body-line-height="bodyLineHeight" :font-family="fontFamily" :body-font-weight="bodyFontWeight"
-    :title-font-weight="titleFontWeight" />
+  <CarouselInstaTemplate
+    :theme="theme"
+    :variant="variant"
+    :title="title"
+    :author="author"
+    :author-nationality="authorNationality"
+    :author-lifespan="authorLifespan"
+    :written-year-line="writtenYearLine"
+    :avatar-url="avatarUrl"
+    :lines="lines"
+    :cta-text="ctaText"
+    :font-scale-body="fontScaleBody"
+    :title-scale="titleScale"
+    :keywords="keywords"
+    :body-font-size-scale="bodyFontSizeScale"
+    :body-line-height="bodyLineHeight"
+    :font-family="fontFamily"
+    :body-font-weight="bodyFontWeight"
+    :title-font-weight="titleFontWeight"
+    :canvas-width="canvasWidth"
+    :canvas-height="canvasHeight"
+  />
 </template>

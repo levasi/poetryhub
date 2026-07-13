@@ -2,7 +2,18 @@
 import { Icon } from '@iconify/vue'
 import { storeToRefs } from 'pinia'
 
-/** Heroicons (Iconify) — folosim același set ca restul aplicației */
+const props = withDefaults(
+  defineProps<{
+    /** Short status line shown next to actions (e.g. draft saved). */
+    draftStatus?: string | null
+    saveLoading?: boolean
+  }>(),
+  { draftStatus: null, saveLoading: false },
+)
+
+const emit = defineEmits<{ save: []; publish: [] }>()
+
+const { t } = useI18n()
 const icons = {
   folder: 'heroicons:folder',
   chevronDown: 'heroicons:chevron-down',
@@ -128,27 +139,6 @@ watch([newProjectModalOpen, deleteModalOpen], ([openNew, openDel]) => {
   document.body.style.overflow = openNew || openDel ? 'hidden' : ''
 })
 
-const saveBusy = ref(false)
-const saveFeedback = ref<string | null>(null)
-let saveFeedbackTimer: ReturnType<typeof setTimeout> | null = null
-
-async function onSaveClick() {
-  if (saveBusy.value) return
-  saveBusy.value = true
-  saveFeedback.value = null
-  try {
-    const r = await projectStore.saveNow()
-    saveFeedback.value = r.ok ? 'Salvat' : 'Eroare la salvare'
-  } finally {
-    saveBusy.value = false
-    if (saveFeedbackTimer) clearTimeout(saveFeedbackTimer)
-    saveFeedbackTimer = setTimeout(() => {
-      saveFeedback.value = null
-      saveFeedbackTimer = null
-    }, 2200)
-  }
-}
-
 onMounted(() => {
   document.addEventListener('pointerdown', onDocPointerDown)
   document.addEventListener('keydown', onGlobalKeydown)
@@ -157,16 +147,18 @@ onUnmounted(() => {
   document.removeEventListener('pointerdown', onDocPointerDown)
   document.removeEventListener('keydown', onGlobalKeydown)
   if (import.meta.client) document.body.style.overflow = ''
-  if (saveFeedbackTimer) clearTimeout(saveFeedbackTimer)
 })
 </script>
 
 <template>
-  <div class="shrink-0 py-4 backdrop-blur-sm" aria-label="Instrumente">
-    <div class="flex w-full min-w-0 items-center justify-between gap-3">
+  <div
+    class="shrink-0 border-b border-edge-subtle py-3 backdrop-blur-sm md:py-4"
+    aria-label="Instrumente"
+  >
+    <div class="flex w-full min-w-0 flex-wrap items-center justify-between gap-3">
       <div ref="rootRef" class="relative min-w-0">
         <button type="button"
-          class="flex min-w-[10.5rem] max-w-[min(100%,16rem)] items-center gap-2 rounded-xl bg-surface-raised px-3 py-2 text-left shadow-sm ring-black/5 transition hover:border-edge hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:ring-offset-2"
+          class="flex min-w-[10.5rem] max-w-[min(100%,16rem)] items-center gap-2 rounded-xl border border-edge-subtle bg-surface-raised px-3 py-2 text-left shadow-ds-card transition hover:border-edge focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-2"
           :aria-expanded="dropdownOpen" aria-haspopup="listbox" @click.stop="toggleDropdown">
           <span
             class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface-subtle text-content-muted"
@@ -209,7 +201,7 @@ onUnmounted(() => {
                 </span>
                 <label class="sr-only">Caută proiecte</label>
                 <input v-model="projectSearch" type="search" placeholder="Filtră după nume…" autocomplete="off"
-                  class="w-full rounded-xl border border-edge-subtle bg-surface-subtle/80 py-2 pl-9 pr-3 text-sm text-content outline-none ring-blue-500/20 transition placeholder:text-content-soft focus:border-blue-500 focus:bg-surface-overlay focus:ring-2"
+                  class="w-full rounded-xl border border-edge-subtle bg-surface-subtle/80 py-2 pl-9 pr-3 text-sm text-content outline-none ring-brand/20 transition placeholder:text-content-soft focus:border-brand focus:bg-surface-overlay focus:ring-2"
                   @keydown.escape="dropdownOpen = false" />
               </div>
             </div>
@@ -220,15 +212,15 @@ onUnmounted(() => {
                 <div
                   class="flex min-w-0 items-stretch gap-0.5 rounded-xl border border-transparent px-1 py-0.5 transition-colors"
                   :class="isActiveProject(p)
-                    ? 'border-blue-200/80 bg-blue-50/90 shadow-sm shadow-blue-900/5'
+                    ? 'border-brand/35 bg-brand-tint shadow-sm'
                     : 'hover:border-edge-subtle/80 hover:bg-surface-subtle'
                     ">
                   <button type="button"
                     class="flex min-w-0 flex-1 items-center gap-2 rounded-lg py-2 pl-2 pr-1 text-left text-sm text-content-secondary transition"
-                    :class="isActiveProject(p) ? 'font-semibold text-blue-950' : 'font-medium'" role="option"
+                    :class="isActiveProject(p) ? 'font-semibold text-content' : 'font-medium'" role="option"
                     :aria-selected="isActiveProject(p)" @click="selectProject(p.id)">
                     <span v-if="isActiveProject(p)"
-                      class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm"
+                      class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand text-brand-foreground shadow-sm"
                       aria-hidden="true">
                       <Icon :icon="icons.check" class="h-3 w-3 shrink-0" />
                     </span>
@@ -254,6 +246,42 @@ onUnmounted(() => {
             </ul>
           </div>
         </Transition>
+      </div>
+
+      <div class="flex shrink-0 flex-wrap items-center gap-2 sm:gap-3">
+        <p
+          v-if="props.draftStatus"
+          class="hidden max-w-[12rem] truncate text-ui-sm text-content-muted sm:block"
+          role="status"
+          aria-live="polite"
+        >
+          {{ props.draftStatus }}
+        </p>
+        <button
+          type="button"
+          class="ds-btn-secondary gap-2 px-4 py-2 text-sm shadow-ds-card"
+          :disabled="props.saveLoading"
+          @click="emit('save')"
+        >
+          <Icon
+            icon="heroicons:document-arrow-down"
+            class="h-4 w-4 shrink-0"
+            aria-hidden="true"
+          />
+          {{ props.saveLoading ? t('write.savingDraft') : t('write.saveBtn') }}
+        </button>
+        <button
+          type="button"
+          class="ds-btn-primary gap-2 px-4 py-2 text-sm shadow-ds-card"
+          @click="emit('publish')"
+        >
+          <Icon
+            icon="heroicons:arrow-up-tray"
+            class="h-4 w-4 shrink-0"
+            aria-hidden="true"
+          />
+          {{ t('write.publishBtn') }}
+        </button>
       </div>
     </div>
   </div>
@@ -295,7 +323,7 @@ onUnmounted(() => {
         <label for="new-project-name"
           class="mt-4 block text-xs font-medium uppercase tracking-wide text-content-muted">Nume</label>
         <input id="new-project-name" ref="newProjectInputRef" v-model="newProjectNameDraft" type="text"
-          class="mt-1.5 w-full rounded-xl border border-edge-subtle px-3 py-2.5 text-sm text-content outline-none placeholder:text-content-soft focus:border-blue-500 focus:ring-2 focus:ring-blue-500/25"
+          class="mt-1.5 w-full rounded-xl border border-edge-subtle px-3 py-2.5 text-sm text-content outline-none placeholder:text-content-soft focus:border-brand focus:ring-2 focus:ring-brand/25"
           placeholder="ex. Versuri aprilie" autocomplete="off"
           @keydown.enter.prevent="canSubmitNewProject && confirmNewProject()" />
         <div class="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
@@ -305,7 +333,7 @@ onUnmounted(() => {
             Anulează
           </button>
           <button type="button"
-            class="rounded-xl border border-blue-600 bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 disabled:cursor-not-allowed disabled:border-edge-subtle disabled:bg-surface-subtle disabled:text-content-muted"
+            class="ds-btn-primary disabled:cursor-not-allowed disabled:opacity-50"
             :disabled="!canSubmitNewProject" @click="confirmNewProject">
             Adaugă proiectul
           </button>

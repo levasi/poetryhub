@@ -14,11 +14,13 @@ const props = withDefaults(
     autoPoemEdit?: boolean
     /** Show Save / Cancel next to poem fields; hide when parent provides a bottom bar. */
     showPoemEditToolbar?: boolean
+    /** Show bibliography control on mobile action bar. */
+    showBibliography?: boolean
   }>(),
-  { allowPoemEdit: false, autoPoemEdit: false, showPoemEditToolbar: true },
+  { allowPoemEdit: false, autoPoemEdit: false, showPoemEditToolbar: true, showBibliography: false },
 )
 
-const emit = defineEmits<{ updated: [poem: Poem] }>()
+const emit = defineEmits<{ updated: [poem: Poem]; bibliography: [] }>()
 
 const readerSettingsOpen = ref(false)
 
@@ -174,8 +176,20 @@ async function sharePoem() {
 
     <ReaderSettingsSidebar v-model:open="readerSettingsOpen" id-prefix="poem-pdp" />
 
+    <ReaderMobileActions
+      v-if="!editingPoem"
+      :poem="poem"
+      :liked="liked"
+      :copied="copied"
+      :show-bibliography="showBibliography"
+      @favorite="toggle(poem.id)"
+      @share="sharePoem"
+      @bibliography="emit('bibliography')"
+      @reader-settings="readerSettingsOpen = true"
+    />
+
     <!-- ── Standard reading view — reading measure matches poem column ─────── -->
-    <div class="animate-fade-in mx-auto w-full max-w-reading">
+    <div class="animate-fade-in mx-auto w-full max-w-reading pb-24 md:pb-0">
       <template v-if="allowPoemEdit && editingPoem">
         <div class="space-y-4">
           <div>
@@ -223,12 +237,12 @@ async function sharePoem() {
         </template>
       </PoemReader>
 
-      <!-- Actions bar -->
-      <div class="mt-12 flex w-full flex-wrap items-center gap-2 pt-8 md:mt-16 sm:gap-3">
+      <!-- Actions bar (desktop) -->
+      <div class="mt-12 hidden w-full flex-wrap items-center gap-2 pt-8 md:mt-16 md:flex sm:gap-3">
         <button class="flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm transition-all md:px-5"
           :class="liked
-            ? 'border-rose-300 bg-rose-50 text-rose-700 shadow-ds-card'
-            : 'border-edge-subtle bg-surface-raised text-content-secondary shadow-ds-card hover:border-rose-300/80 hover:text-rose-700'" @click="toggle(poem.id)">
+            ? 'border-brand/40 bg-brand-tint text-content shadow-ds-card'
+            : 'border-edge-subtle bg-surface-raised text-content-secondary shadow-ds-card hover:border-brand/40 hover:text-brand'" @click="toggle(poem.id)">
           <svg class="h-4 w-4" viewBox="0 0 24 24" :fill="liked ? 'currentColor' : 'none'" stroke="currentColor"
             stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round"
@@ -246,6 +260,12 @@ async function sharePoem() {
           </svg>
           {{ copied ? t('viewer.linkCopied') : t('viewer.sharePoem') }}
         </button>
+
+        <PoemCarouselIcon
+          :slug="poem.slug"
+          size="sm"
+          class="hidden md:inline-flex"
+        />
       </div>
     </div>
   </div>

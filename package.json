@@ -19,6 +19,7 @@
     "build-storybook": "storybook build -o storybook-static",
     "test": "vitest run",
     "test:watch": "vitest",
+    "check:legacy-tokens": "node scripts/check-legacy-tokens.mjs",
     "test:e2e": "playwright test",
     "test:all": "npm test && npm run test:e2e",
     "build:e2e": "prisma generate && NITRO_PRESET=node-server nuxt build",

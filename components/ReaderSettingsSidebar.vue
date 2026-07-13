@@ -141,6 +141,10 @@ watchEffect((onCleanup) => {
       <div class="mx-auto w-full max-w-content p-2">
         <!-- Controls (only when open) -->
         <div v-show="open" class="max-h-[calc(24rem-3.25rem)] overflow-y-auto">
+          <div class="mb-4 border-b border-edge-subtle pb-4">
+            <p class="mb-2 text-xs font-medium text-content-secondary">{{ t('nav.readingTheme') }}</p>
+            <ColorSchemeSwatches variant="compact" />
+          </div>
           <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <div class="sm:col-span-2 lg:col-span-1 flex items-end">
               <div

@@ -89,17 +89,17 @@ function formatResult(r: { imported: number; skipped: number; errors: number }) 
 
 <template>
   <div class="w-full">
-    <h1 class="mb-8 font-serif text-2xl font-bold text-ink-900">{{ t('admin.import.title') }}</h1>
+    <h1 class="mb-8 font-serif text-2xl font-bold text-content">{{ t('admin.import.title') }}</h1>
 
     <!-- ── PoetryDB ────────────────────────────────────────────────────────── -->
-    <section class="mb-8 rounded-xl border border-ink-200 bg-white p-6 shadow-sm">
-      <h2 class="mb-1 font-serif text-lg font-bold text-ink-900">{{ t('admin.import.poetryDbTitle') }}</h2>
-      <p class="mb-4 text-xs text-ink-600">{{ t('admin.import.poetryDbDesc') }}</p>
+    <section class="mb-8 rounded-xl border border-edge-subtle bg-surface-raised p-6 shadow-sm">
+      <h2 class="mb-1 font-serif text-lg font-bold text-content">{{ t('admin.import.poetryDbTitle') }}</h2>
+      <p class="mb-4 text-xs text-content-muted">{{ t('admin.import.poetryDbDesc') }}</p>
 
       <div class="mb-4 flex items-center gap-4">
-        <label class="text-xs text-ink-600">{{ t('admin.import.poemsToImport') }}</label>
+        <label class="text-xs text-content-muted">{{ t('admin.import.poemsToImport') }}</label>
         <input v-model.number="pdbCount" type="number" min="1" max="100"
-          class="w-20 rounded-lg border border-ink-200 bg-ink-50 px-3 py-1.5 text-sm text-ink-900 outline-none focus:border-gold-400 focus:ring-2 focus:ring-gold-300/40" />
+          class="w-20 rounded-lg border border-edge-subtle bg-surface-subtle px-3 py-1.5 text-sm text-content outline-none focus:border-brand focus:ring-2 focus:ring-brand/35" />
       </div>
 
       <button type="button" :disabled="pdbLoading"
@@ -118,9 +118,9 @@ function formatResult(r: { imported: number; skipped: number; errors: number }) 
     </section>
 
     <!-- ── Romanian Classics ───────────────────────────────────────────────── -->
-    <section class="mb-8 rounded-xl border border-ink-200 bg-white p-6 shadow-sm">
-      <h2 class="mb-1 font-serif text-lg font-bold text-ink-900">{{ t('admin.import.roTitle') }}</h2>
-      <p class="mb-4 text-xs text-ink-600">
+    <section class="mb-8 rounded-xl border border-edge-subtle bg-surface-raised p-6 shadow-sm">
+      <h2 class="mb-1 font-serif text-lg font-bold text-content">{{ t('admin.import.roTitle') }}</h2>
+      <p class="mb-4 text-xs text-content-muted">
         {{ t('admin.import.roDesc') }}
       </p>
 
@@ -139,14 +139,14 @@ function formatResult(r: { imported: number; skipped: number; errors: number }) 
     </section>
 
     <!-- ── Bulk JSON ───────────────────────────────────────────────────────── -->
-    <section class="rounded-xl border border-ink-200 bg-white p-6 shadow-sm">
-      <h2 class="mb-1 font-serif text-lg font-bold text-ink-900">{{ t('admin.import.jsonTitle') }}</h2>
-      <p class="mb-4 text-xs text-ink-600">
+    <section class="rounded-xl border border-edge-subtle bg-surface-raised p-6 shadow-sm">
+      <h2 class="mb-1 font-serif text-lg font-bold text-content">{{ t('admin.import.jsonTitle') }}</h2>
+      <p class="mb-4 text-xs text-content-muted">
         {{ t('admin.import.jsonDesc') }}
       </p>
 
       <textarea v-model="jsonText" rows="12"
-        class="mb-4 w-full rounded-lg border border-ink-200 bg-ink-50 px-3 py-2.5 font-mono text-xs text-ink-900 outline-none focus:border-gold-400 focus:ring-2 focus:ring-gold-300/40"
+        class="mb-4 w-full rounded-lg border border-edge-subtle bg-surface-subtle px-3 py-2.5 font-mono text-xs text-content outline-none focus:border-brand focus:ring-2 focus:ring-brand/35"
         :placeholder="jsonExample" />
 
       <button type="button" :disabled="jsonLoading || !jsonText.trim()"

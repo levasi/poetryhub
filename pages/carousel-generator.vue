@@ -1,19 +1,20 @@
 <script setup lang="ts">
-import type { CarouselTheme } from '~/composables/useCarouselGenerator'
+import type { CarouselAspectRatioId, CarouselTheme } from '~/composables/useCarouselGenerator'
 import { Icon } from '@iconify/vue'
 import {
   buildCarouselSlides,
   buildInstagramCaption,
+  CAROUSEL_ASPECT_RATIOS,
   CAROUSEL_THEME_IDS,
-  CAROUSEL_HEIGHT,
   CAROUSEL_LINES_PER_BODY_SLIDE,
-  CAROUSEL_WIDTH,
+  DEFAULT_CAROUSEL_ASPECT_RATIO_ID,
   downloadBlob,
   elementToPngBlob,
   blobsToZipDownload,
   fontScaleForBody,
   fontScaleForTitle,
   formatAuthorLifespan,
+  getCarouselAspectRatio,
   slideFilename,
   splitPoemIntoSlides,
 } from '~/composables/useCarouselGenerator'
@@ -21,6 +22,7 @@ import type { Poem } from '~/composables/usePoems'
 import type { ReaderFontKey } from '~/composables/useReaderPreferences'
 import { READER_FONT_STACKS } from '~/composables/useReaderPreferences'
 import CarouselFontSelect from '~/components/carousel/CarouselFontSelect.vue'
+import CarouselToolbarItem from '~/components/carousel/CarouselToolbarItem.vue'
 import { authorAvatarUrl } from '~/utils/authorAvatar'
 import type { CarouselSiteDefaultsPayload } from '~/utils/carouselSiteDefaults'
 import { CAROUSEL_FONT_WEIGHT_PRESETS } from '~/utils/carouselFontWeights'
@@ -29,6 +31,7 @@ import {
   parsePoemCarouselSettings,
   type PoemCarouselSettingsPayload,
 } from '~/utils/poemCarouselFontSettings'
+import type { UserInstaPostPayload } from '~/utils/userInstaPost'
 import { useAuth } from '~/composables/useAuth'
 import { getFetchErrorDataCode, getFetchErrorStatus } from '~/utils/fetchApiError'
 import { isStaffRole } from '~/utils/roles'
@@ -69,6 +72,13 @@ const authorDeathYear = ref('')
 const poemWrittenYear = ref('')
 const poemText = ref('')
 const theme = ref<CarouselTheme>('dark')
+const aspectRatioId = ref<CarouselAspectRatioId>(DEFAULT_CAROUSEL_ASPECT_RATIO_ID)
+const selectedAspectRatio = computed(() => getCarouselAspectRatio(aspectRatioId.value))
+const carouselWidth = computed(() => selectedAspectRatio.value.width)
+const carouselHeight = computed(() => selectedAspectRatio.value.height)
+const carouselExportSizeLabel = computed(
+  () => `${carouselWidth.value}×${carouselHeight.value}`,
+)
 const ctaText = ref('')
 const keywordInput = ref('')
 const keywords = computed(() =>
@@ -144,6 +154,8 @@ function applyPoemCarouselSettings(p: PoemCarouselSettingsPayload) {
 
 /** Slug of the poem loaded from the library (route or search); used to save per-poem carousel. */
 const loadedPoemSlug = ref<string | null>(null)
+/** Saved Insta post id in the signed-in user's account (`?saved=`). */
+const savedInstaPostId = ref<string | null>(null)
 /** True when DB has saved carousel JSON for this poem — site defaults must not overwrite it. */
 const poemCarouselOverridesFromDb = ref(false)
 
@@ -186,17 +198,14 @@ watch(
 /** Set from GET /api/poems/:slug when a library poem is loaded; `null` = catalog poem with no submitter. */
 const loadedPoemSubmittedByUserId = ref<string | null | undefined>(undefined)
 
-/** Insta carousel save UI is only for administrators and moderators. */
+/** Insta carousel staff save to catalog poem (administrators and moderators). */
 const showCarouselStaffSaveCard = computed(() => isStaffRole(user.value?.role))
 
-const carouselSaveNeedsLibraryPoem = computed(
-  () => showCarouselStaffSaveCard.value && !loadedPoemSlug.value,
-)
-
 const carouselSaveFabTitle = computed(() => {
-  if (savingCurrentPoemCarousel.value) return t('carousel.savingCurrentPoemCarousel')
-  if (carouselSaveNeedsLibraryPoem.value) return t('carousel.poemSaveNeedPoemHint')
-  return t('carousel.saveCurrentPoemCarousel')
+  if (savingCurrentPoemCarousel.value) return t('carousel.savingInstaPost')
+  if (!isLoggedIn.value) return t('carousel.poemSaveLoginHint')
+  if (!title.value.trim() || !poemText.value.trim()) return t('carousel.needTitleBody')
+  return savedInstaPostId.value ? t('carousel.updateInstaPost') : t('carousel.saveInstaPost')
 })
 
 /** Reader URL on the author profile when this page was opened with a catalog poem (`?slug=`). */
@@ -285,26 +294,79 @@ async function saveCatalogPoemContent() {
   }
 }
 
-async function saveCurrentPoemCarousel() {
+function buildInstaPostSaveBody(): UserInstaPostPayload {
+  return {
+    title: title.value.trim(),
+    authorName: author.value.trim() || t('carousel.unknownAuthor'),
+    poemText: poemText.value.trim(),
+    poemSlug: loadedPoemSlug.value,
+    aspectRatioId: aspectRatioId.value,
+    ctaText: ctaText.value.trim() || undefined,
+    poemWrittenYear: poemWrittenYear.value.trim() || null,
+    authorNationality: authorNationality.value.trim() || null,
+    authorBirthYear: authorBirthYear.value.trim() || null,
+    authorDeathYear: authorDeathYear.value.trim() || null,
+    theme: theme.value,
+    carouselFontKey: carouselFontKey.value as UserInstaPostPayload['carouselFontKey'],
+    linesPerSlide: linesPerSlide.value,
+    bodyFontSizeScale: bodyFontSizeScale.value,
+    bodyLineHeight: bodyLineHeight.value,
+    bodyFontWeight: bodyFontWeight.value,
+    titleFontWeight: titleFontWeight.value,
+    keywordInput: keywordInput.value,
+  }
+}
+
+async function saveStaffPoemCarouselSettings() {
   const slug = loadedPoemSlug.value
   if (!slug || !showCarouselStaffSaveCard.value) return
+  await $fetch<PoemCarouselSettingsPayload>(`/api/poems/${encodeURIComponent(slug)}/carousel-font`, {
+    method: 'PUT',
+    credentials: 'include',
+    body: {
+      theme: theme.value,
+      carouselFontKey: carouselFontKey.value as UserInstaPostPayload['carouselFontKey'],
+      linesPerSlide: linesPerSlide.value,
+      bodyFontSizeScale: bodyFontSizeScale.value,
+      bodyLineHeight: bodyLineHeight.value,
+      bodyFontWeight: bodyFontWeight.value,
+      titleFontWeight: titleFontWeight.value,
+      keywordInput: keywordInput.value,
+    },
+  })
+  poemCarouselOverridesFromDb.value = true
+}
+
+async function saveInstaPostToAccount() {
+  if (!isLoggedIn.value) {
+    await navigateTo(`/login?redirect=${encodeURIComponent(route.fullPath)}`)
+    return
+  }
+  const body = buildInstaPostSaveBody()
+  if (!body.title || !body.poemText) {
+    alert(t('carousel.needTitleBody'))
+    return
+  }
   savingCurrentPoemCarousel.value = true
   try {
-    await $fetch<PoemCarouselSettingsPayload>(`/api/poems/${encodeURIComponent(slug)}/carousel-font`, {
-      method: 'PUT',
-      credentials: 'include',
-      body: {
-        theme: theme.value,
-        carouselFontKey: carouselFontKey.value,
-        linesPerSlide: linesPerSlide.value,
-        bodyFontSizeScale: bodyFontSizeScale.value,
-        bodyLineHeight: bodyLineHeight.value,
-        bodyFontWeight: bodyFontWeight.value,
-        titleFontWeight: titleFontWeight.value,
-        keywordInput: keywordInput.value,
-      },
-    })
-    poemCarouselOverridesFromDb.value = true
+    if (savedInstaPostId.value) {
+      await $fetch(`/api/user/insta-posts/${encodeURIComponent(savedInstaPostId.value)}`, {
+        method: 'PUT',
+        credentials: 'include',
+        body,
+      })
+    } else {
+      const res = await $fetch<{ id: string }>('/api/user/insta-posts', {
+        method: 'POST',
+        credentials: 'include',
+        body,
+      })
+      savedInstaPostId.value = res.id
+      await router.replace({ query: { ...route.query, saved: res.id } })
+    }
+    if (showCarouselStaffSaveCard.value && loadedPoemSlug.value) {
+      await saveStaffPoemCarouselSettings()
+    }
     if (currentPoemCarouselThumbsHideTimer) clearTimeout(currentPoemCarouselThumbsHideTimer)
     showCurrentPoemCarouselThumbsUp.value = false
     await nextTick()
@@ -322,9 +384,7 @@ async function saveCurrentPoemCarousel() {
     const msg =
       code === 401
         ? t('carousel.defaultsSaveError401')
-        : code === 403
-          ? t('carousel.defaultsSaveError403')
-          : t('carousel.poemCarouselSaveError')
+        : t('carousel.instaPostSaveError')
     alert(msg)
   } finally {
     savingCurrentPoemCarousel.value = false
@@ -339,9 +399,12 @@ const slideModels = computed(() => buildCarouselSlides(poemText.value, slideSpli
 const currentIndex = ref(0)
 const maxIndex = computed(() => Math.max(0, slideModels.value.length - 1))
 
-watch(slideModels, () => {
-  if (currentIndex.value > maxIndex.value) currentIndex.value = maxIndex.value
-})
+watch(
+  () => slideModels.value.length,
+  () => {
+    if (currentIndex.value > maxIndex.value) currentIndex.value = maxIndex.value
+  },
+)
 
 /** Set when a poem is loaded from the library so we use DB author photo + slug. */
 const authorAvatarFromPoem = ref<{ slug: string; name: string; imageUrl?: string | null } | null>(null)
@@ -427,6 +490,8 @@ function slidePropsFor(index: number) {
     fontFamily: carouselFontFamily.value,
     bodyFontWeight: bodyFontWeight.value,
     titleFontWeight: titleFontWeight.value,
+    canvasWidth: carouselWidth.value,
+    canvasHeight: carouselHeight.value,
   }
   const splitOpts = { linesPerSlide: slideSplitOpts.value.maxLinesPerSlide }
   if (model.kind === 'cover') {
@@ -461,8 +526,20 @@ const bodySlideCount = computed(() => splitPoemIntoSlides(poemText.value, slideS
 const previewFrameRef = ref<HTMLElement | null>(null)
 const previewFrameWidth = ref(420)
 
+let previewResizeRaf: number | null = null
+
 function updatePreviewFrameWidth() {
-  previewFrameWidth.value = previewFrameRef.value?.clientWidth ?? 420
+  const w = previewFrameRef.value?.clientWidth ?? 0
+  const next = w > 0 ? w : 420
+  if (previewFrameWidth.value !== next) previewFrameWidth.value = next
+}
+
+function schedulePreviewFrameWidthUpdate() {
+  if (previewResizeRaf != null) return
+  previewResizeRaf = requestAnimationFrame(() => {
+    previewResizeRaf = null
+    updatePreviewFrameWidth()
+  })
 }
 
 let previewResizeObserver: ResizeObserver | null = null
@@ -472,71 +549,130 @@ watch(
   (el) => {
     previewResizeObserver?.disconnect()
     previewResizeObserver = null
+    if (previewResizeRaf != null) {
+      cancelAnimationFrame(previewResizeRaf)
+      previewResizeRaf = null
+    }
     if (!el) return
     updatePreviewFrameWidth()
-    previewResizeObserver = new ResizeObserver(updatePreviewFrameWidth)
+    previewResizeObserver = new ResizeObserver(schedulePreviewFrameWidthUpdate)
     previewResizeObserver.observe(el)
   },
   { flush: 'post' },
 )
 
-const previewFullscreenRef = ref<HTMLElement | null>(null)
-const isPreviewFullscreen = ref(false)
+const isPreviewModalOpen = ref(false)
+const previewModalRef = ref<HTMLElement | null>(null)
+const previewModalFrameRef = ref<HTMLElement | null>(null)
+const previewModalFrameWidth = ref(420)
 
-function syncPreviewFullscreenState() {
-  const el = previewFullscreenRef.value
-  const fs =
-    document.fullscreenElement ??
-    (document as Document & { webkitFullscreenElement?: Element | null }).webkitFullscreenElement
-  isPreviewFullscreen.value = Boolean(el && fs === el)
+let previewModalResizeRaf: number | null = null
+let previewModalResizeObserver: ResizeObserver | null = null
+
+function updatePreviewModalFrameWidth() {
+  const w = previewModalFrameRef.value?.clientWidth ?? 0
+  const next = w > 0 ? w : 420
+  if (previewModalFrameWidth.value !== next) previewModalFrameWidth.value = next
 }
 
-function requestElementFullscreen(el: HTMLElement) {
-  const anyEl = el as HTMLElement & { webkitRequestFullscreen?: () => Promise<void> }
-  return el.requestFullscreen?.() ?? anyEl.webkitRequestFullscreen?.() ?? Promise.resolve()
+function schedulePreviewModalFrameWidthUpdate() {
+  if (previewModalResizeRaf != null) return
+  previewModalResizeRaf = requestAnimationFrame(() => {
+    previewModalResizeRaf = null
+    updatePreviewModalFrameWidth()
+  })
 }
 
-function exitDocumentFullscreen() {
-  const d = document as Document & { webkitExitFullscreen?: () => Promise<void> }
-  return document.exitFullscreen?.() ?? d.webkitExitFullscreen?.() ?? Promise.resolve()
+function openPreviewModal() {
+  isPreviewModalOpen.value = true
+  nextTick(() => previewModalRef.value?.focus())
 }
 
-async function togglePreviewFullscreen() {
-  const el = previewFullscreenRef.value
-  if (!el) return
-  try {
-    if (isPreviewFullscreen.value) {
-      await exitDocumentFullscreen()
-    } else {
-      await requestElementFullscreen(el)
-    }
-  } catch (e) {
-    console.error(e)
+function closePreviewModal() {
+  isPreviewModalOpen.value = false
+}
+
+function onPreviewModalKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape') {
+    event.preventDefault()
+    closePreviewModal()
   }
 }
 
+watch(isPreviewModalOpen, (open) => {
+  if (!import.meta.client) return
+  document.body.style.overflow = open ? 'hidden' : ''
+})
+
+watch(
+  () => previewModalFrameRef.value,
+  (el) => {
+    previewModalResizeObserver?.disconnect()
+    previewModalResizeObserver = null
+    if (previewModalResizeRaf != null) {
+      cancelAnimationFrame(previewModalResizeRaf)
+      previewModalResizeRaf = null
+    }
+    if (!el) return
+    updatePreviewModalFrameWidth()
+    previewModalResizeObserver = new ResizeObserver(schedulePreviewModalFrameWidthUpdate)
+    previewModalResizeObserver.observe(el)
+  },
+  { flush: 'post' },
+)
+
 onMounted(() => {
-  document.addEventListener('fullscreenchange', syncPreviewFullscreenState)
-  document.addEventListener('webkitfullscreenchange', syncPreviewFullscreenState)
   document.addEventListener('click', closeKeywordsHelpOnDocumentClick)
   void fetchMe()
 })
 
 onUnmounted(() => {
   previewResizeObserver?.disconnect()
+  previewModalResizeObserver?.disconnect()
+  if (previewResizeRaf != null) cancelAnimationFrame(previewResizeRaf)
+  if (previewModalResizeRaf != null) cancelAnimationFrame(previewModalResizeRaf)
   if (catalogPoemContentSavedHideTimer) clearTimeout(catalogPoemContentSavedHideTimer)
   if (currentPoemCarouselThumbsHideTimer) clearTimeout(currentPoemCarouselThumbsHideTimer)
   document.removeEventListener('click', closeKeywordsHelpOnDocumentClick)
-  document.removeEventListener('fullscreenchange', syncPreviewFullscreenState)
-  document.removeEventListener('webkitfullscreenchange', syncPreviewFullscreenState)
-  const el = previewFullscreenRef.value
-  const fs =
-    document.fullscreenElement ??
-    (document as Document & { webkitFullscreenElement?: Element | null }).webkitFullscreenElement
-  if (el && fs === el) void exitDocumentFullscreen()
+  if (import.meta.client) document.body.style.overflow = ''
 })
 
-const previewScale = computed(() => previewFrameWidth.value / CAROUSEL_WIDTH)
+const previewScale = computed(() => {
+  const w = previewFrameWidth.value
+  return (w > 0 ? w : 420) / carouselWidth.value
+})
+
+const previewModalScale = computed(() => {
+  const w = previewModalFrameWidth.value
+  return (w > 0 ? w : 420) / carouselWidth.value
+})
+
+const previewInnerStyle = computed(() => {
+  const r = selectedAspectRatio.value
+  const [wR, hR] = r.cssRatio.split('/').map((part) => parseFloat(part.trim()))
+  const maxHeight = 'calc(100dvh - 15rem)'
+  return {
+    aspectRatio: r.cssRatio,
+    width: `min(100%, 26.25rem, calc(${maxHeight} * ${wR} / ${hR}))`,
+    maxHeight,
+  }
+})
+
+const previewModalInnerStyle = computed(() => {
+  const r = selectedAspectRatio.value
+  return {
+    aspectRatio: r.cssRatio,
+    height: '100%',
+    width: 'auto',
+    maxWidth: '100%',
+    maxHeight: '100%',
+  }
+})
+
+const exportCanvasSize = computed(() => ({
+  width: carouselWidth.value,
+  height: carouselHeight.value,
+}))
 
 const exporting = ref(false)
 const exportIndex = ref(0)
@@ -565,7 +701,7 @@ async function exportZip() {
       await document.fonts.ready
       const el = getCaptureRoot()
       if (!el) throw new Error('capture root')
-      const blob = await elementToPngBlob(el, { scale: 2 })
+      const blob = await elementToPngBlob(el, { scale: 2, ...exportCanvasSize.value })
       files.push({ name: slideFilename(title.value, i), blob })
     }
     const zipName = `${title.value.replace(/\s+/g, '-').slice(0, 40) || 'poem'}-insta-post.zip`
@@ -579,14 +715,25 @@ async function exportZip() {
 }
 
 async function exportCurrentPng() {
-  const el = document.querySelector('.carousel-preview-inner .carousel-canvas') as HTMLElement | null
-  if (!el) return
+  if (!poemText.value.trim() || !title.value.trim()) {
+    alert(t('carousel.needTitleBody'))
+    return
+  }
+  exporting.value = true
+  exportIndex.value = currentIndex.value
   try {
-    const blob = await elementToPngBlob(el, { scale: 2 })
+    await nextTick()
+    await new Promise<void>((r) => requestAnimationFrame(() => r()))
+    await document.fonts.ready
+    const el = getCaptureRoot()
+    if (!el) throw new Error('capture root')
+    const blob = await elementToPngBlob(el, { scale: 2, ...exportCanvasSize.value })
     await downloadBlob(blob, slideFilename(title.value || 'poem', currentIndex.value))
   } catch (e) {
     console.error(e)
     alert(t('carousel.exportError'))
+  } finally {
+    exporting.value = false
   }
 }
 
@@ -603,7 +750,51 @@ function copyCaption() {
   void navigator.clipboard.writeText(captionText.value)
 }
 
+async function loadFromSavedInstaPost(id: string) {
+  try {
+    const row = await $fetch<UserInstaPostPayload & { id: string; poemSlug?: string | null }>(
+      `/api/user/insta-posts/${encodeURIComponent(id)}`,
+      { credentials: 'include' },
+    )
+    skipCarouselSampleLoad.value = true
+    savedInstaPostId.value = row.id
+    title.value = row.title
+    author.value = row.authorName
+    poemText.value = row.poemText
+    poemWrittenYear.value = row.poemWrittenYear || ''
+    authorNationality.value = row.authorNationality || ''
+    authorBirthYear.value = row.authorBirthYear || ''
+    authorDeathYear.value = row.authorDeathYear || ''
+    aspectRatioId.value = row.aspectRatioId
+    if (row.ctaText) ctaText.value = row.ctaText
+    applyPoemCarouselSettings(row)
+    loadedPoemSlug.value = row.poemSlug || null
+    loadedPoemSubmittedByUserId.value = undefined
+    authorAvatarFromPoem.value = null
+    if (row.poemSlug) {
+      try {
+        const full = await $fetch<Poem>(`/api/poems/${row.poemSlug}`)
+        authorAvatarFromPoem.value = {
+          slug: full.author.slug,
+          name: full.author.name,
+          imageUrl: full.author.imageUrl,
+        }
+        applyAuthorMetaFromApi(full.author)
+        loadedPoemSubmittedByUserId.value = full.submittedByUserId ?? null
+      } catch {
+        /* keep saved author text */
+      }
+    }
+    poemCarouselOverridesFromDb.value = true
+    currentIndex.value = 0
+  } catch (e) {
+    console.error(e)
+    savedInstaPostId.value = null
+  }
+}
+
 async function loadFromSlug(slug: string) {
+  savedInstaPostId.value = null
   try {
     const full = await $fetch<Poem>(`/api/poems/${slug}`)
     loadedPoemSlug.value = full.slug
@@ -647,6 +838,7 @@ function manualAuthorDefault() {
 
 function loadSample() {
   loadedPoemSlug.value = null
+  savedInstaPostId.value = null
   loadedPoemSubmittedByUserId.value = undefined
   poemCarouselOverridesFromDb.value = false
   title.value = t('carousel.sampleTitle')
@@ -662,8 +854,13 @@ function loadSample() {
 }
 
 watch(
-  () => route.query.slug,
-  async (slug) => {
+  () => [route.query.saved, route.query.slug] as const,
+  async ([saved, slug]) => {
+    if (typeof saved === 'string' && saved.trim()) {
+      await loadFromSavedInstaPost(saved.trim())
+      return
+    }
+    savedInstaPostId.value = null
     if (typeof slug === 'string' && slug.trim()) {
       await loadFromSlug(slug.trim())
       return
@@ -692,6 +889,7 @@ watch(
 
 async function switchToOwnPoem() {
   skipCarouselSampleLoad.value = true
+  savedInstaPostId.value = null
   title.value = ''
   author.value = user.value?.name?.trim() || ''
   authorNationality.value = ''
@@ -706,6 +904,7 @@ async function switchToOwnPoem() {
 
   const q = { ...route.query } as Record<string, string | string[] | null | undefined>
   delete q.slug
+  delete q.saved
   await router.replace({ path: route.path, query: q as typeof route.query })
 
   if (siteDefaults.value) applyCarouselSiteDefaults(siteDefaults.value)
@@ -728,122 +927,160 @@ function onTouchEnd(e: TouchEvent) {
 </script>
 
 <template>
-  <div class="w-full min-w-0 pb-16 pt-2 md:pt-4">
-    <button v-if="showCarouselStaffSaveCard" type="button"
-      class="fixed right-3 top-1/2 z-[45] flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-edge-subtle bg-surface-raised/95 text-content-muted shadow-ds-card backdrop-blur-sm transition md:right-6 disabled:cursor-not-allowed disabled:opacity-45 [&:not(:disabled)]:hover:border-brand-soft [&:not(:disabled)]:hover:text-brand-hover"
-      :disabled="savingCurrentPoemCarousel || !loadedPoemSlug" :title="carouselSaveFabTitle"
-      :aria-label="carouselSaveFabTitle" @click="saveCurrentPoemCarousel">
-      <span v-if="savingCurrentPoemCarousel"
-        class="h-5 w-5 animate-spin rounded-full border-2 border-edge-subtle border-t-brand" aria-hidden="true" />
-      <Icon v-else icon="heroicons:bookmark-square" class="h-5 w-5 shrink-0" aria-hidden="true" />
-    </button>
+  <div class="w-full min-w-0 pb-24 pt-2 md:pb-16 md:pt-4">
+    <header class="mb-4 max-w-reading">
+      <p class="ds-eyebrow mb-2">{{ t('carousel.seoTitle') }}</p>
+      <h1 class="font-serif text-2xl font-semibold tracking-tight text-content md:text-3xl">
+        {{ t('carousel.title') }}
+      </h1>
+      <p class="mt-2 text-sm leading-relaxed text-content-secondary">
+        {{ t('carousel.subtitle') }}
+      </p>
+    </header>
 
-    <Transition name="defaults-thumbs">
-      <div v-if="showCurrentPoemCarouselThumbsUp && showCarouselStaffSaveCard"
-        class="pointer-events-none fixed right-[3.75rem] top-1/2 z-[44] flex -translate-y-1/2 flex-col items-center md:right-[5.25rem]"
-        role="status" aria-live="polite">
-        <span class="sr-only">{{ t('carousel.poemCarouselSaved') }}</span>
-        <svg class="defaults-save-thumbs-icon h-12 w-12 text-emerald-600" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M7 10v12" />
-          <path
-            d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88Z" />
-        </svg>
+    <!-- Tools bar: poem source + save/export actions -->
+    <div class="mb-8 border-b border-edge-subtle py-3 md:py-4" aria-label="Instrumente post Insta">
+      <div class="flex w-full min-w-0 flex-wrap items-center justify-between gap-3">
+        <div class="flex min-w-0 flex-wrap items-center gap-2">
+          <span
+            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-subtle text-content-muted"
+            aria-hidden="true">
+            <Icon :icon="loadedPoemSlug ? 'heroicons:book-open' : 'heroicons:pencil-square'" class="h-4 w-4 shrink-0" />
+          </span>
+          <span class="min-w-0 max-w-[16rem]">
+            <span class="block truncate text-sm font-semibold leading-tight text-content">
+              {{ loadedPoemSlug ? (title || t('carousel.untitled')) : t('carousel.sectionManualPoem') }}
+            </span>
+            <span class="mt-0.5 block text-[10px] font-medium uppercase tracking-wide text-content-soft">
+              {{ loadedPoemSlug ? t('carousel.sourceLibrary') : t('carousel.sourceOwn') }}
+            </span>
+          </span>
+          <NuxtLink v-if="seePoemPageLocation" :to="seePoemPageLocation" class="ds-link ml-1 text-sm underline">
+            {{ t('carousel.seePoem') }}
+          </NuxtLink>
+          <button v-if="loadedPoemSlug" type="button" class="ds-btn-secondary ml-1 px-3 py-1.5 text-xs"
+            @click="switchToOwnPoem">
+            {{ t('carousel.writeOwnPoem') }}
+          </button>
+        </div>
+
+        <div class="flex shrink-0 flex-wrap items-center gap-2 sm:gap-3">
+          <Transition name="carousel-saved-flash">
+            <span v-if="showCurrentPoemCarouselThumbsUp"
+              class="inline-flex items-center gap-1 text-sm font-medium text-success" role="status" aria-live="polite">
+              <Icon icon="heroicons:check-circle" class="h-4 w-4 shrink-0" aria-hidden="true" />
+              {{ t('carousel.savedShort') }}
+              <span class="sr-only">{{ t('carousel.instaPostSaved') }}</span>
+            </span>
+          </Transition>
+          <button type="button" class="ds-btn-secondary gap-2 px-4 py-2 text-sm shadow-ds-card"
+            :disabled="savingCurrentPoemCarousel" :title="carouselSaveFabTitle"
+            :aria-label="carouselSaveFabTitle" @click="saveInstaPostToAccount">
+            <span v-if="savingCurrentPoemCarousel"
+              class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-edge-subtle border-t-brand"
+              aria-hidden="true" />
+            <Icon v-else icon="heroicons:bookmark-square" class="h-4 w-4 shrink-0" aria-hidden="true" />
+            {{ t('carousel.toolbarSave') }}
+          </button>
+          <button type="button" class="ds-btn-secondary hidden gap-2 px-4 py-2 text-sm shadow-ds-card md:inline-flex"
+            :disabled="exporting" :title="t('carousel.downloadCurrent')" @click="exportCurrentPng">
+            <Icon icon="heroicons:photo" class="h-4 w-4 shrink-0" aria-hidden="true" />
+            {{ t('carousel.downloadCurrentShort') }}
+          </button>
+          <button type="button" class="ds-btn-primary hidden gap-2 px-4 py-2 text-sm shadow-ds-card md:inline-flex"
+            :disabled="exporting" :title="t('carousel.exportHint', { size: carouselExportSizeLabel })"
+            @click="exportZip">
+            <Icon icon="heroicons:arrow-down-tray" class="h-4 w-4 shrink-0" aria-hidden="true" />
+            {{ exporting ? t('carousel.exporting') : t('carousel.downloadZipShort') }}
+          </button>
+        </div>
       </div>
-    </Transition>
+    </div>
 
-    <!-- Full-width: left 4/7, right 3/7 from md -->
-    <div class="grid grid-cols-1 gap-10 md:grid-cols-7 md:items-start md:gap-8 lg:gap-10">
-      <!-- Left (4 columns): Controls -->
-      <div class="min-w-0 space-y-6 md:col-span-4">
-        <section class="rounded-xl border border-edge-subtle bg-surface-raised p-6 shadow-ds-card">
-          <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
-            <h3 class="min-w-0 flex-1 font-serif text-base font-semibold text-content">
-              {{ t('carousel.sectionInstagramPostSettings') }}
-            </h3>
-            <button v-if="loadedPoemSlug" type="button"
-              class="shrink-0 rounded-xl border border-edge px-4 py-2 text-sm font-medium text-content-secondary transition hover:border-edge-strong hover:bg-surface-subtle hover:text-content"
-              @click="switchToOwnPoem">
-              {{ t('carousel.writeOwnPoem') }}
-            </button>
-          </div>
-
-          <div v-if="showTitleAndPoemFields" class="mb-6 space-y-4 border-b border-edge-subtle pb-6">
-            <h4 class="font-serif text-sm font-semibold text-content">{{
-              showManualPoemFields ? t('carousel.sectionManualPoem') : t('carousel.sectionCatalogPoemEdit')
-              }}</h4>
-            <p v-if="canEditCatalogTitleAndPoem && !showManualPoemFields"
-              class="text-xs leading-relaxed text-content-muted">
-              {{ t('carousel.catalogPoemEditHint') }}
-            </p>
-            <div>
-              <label class="field-label" for="carousel-written-year">{{ t('carousel.fieldPoemWrittenYear') }}</label>
-              <input id="carousel-written-year" v-model="poemWrittenYear" type="text" inputmode="numeric" maxlength="12"
-                class="w-full max-w-xs rounded-xl border border-edge-subtle px-4 py-2.5 text-sm tabular-nums outline-none focus:border-gold-500"
-                :placeholder="t('carousel.phPoemWrittenYear')" autocomplete="off" />
-              <p class="mt-1 text-xs text-content-muted">{{ t('carousel.writtenYearHint') }}</p>
-            </div>
+    <!-- Desktop: poem | settings | preview; mobile: preview first, then stacked controls -->
+    <div class="grid grid-cols-1 gap-10 lg:grid-cols-3 lg:items-start lg:gap-8 xl:gap-10">
+      <!-- Column 1: Poem content -->
+      <div class="order-2 min-w-0 space-y-6 lg:order-none">
+        <section v-if="showTitleAndPoemFields" class="ds-card p-5 md:p-6">
+          <p class="ds-eyebrow">
+            {{ showManualPoemFields ? t('carousel.sectionManualPoem') : t('carousel.sectionCatalogPoemEdit') }}
+          </p>
+          <p v-if="canEditCatalogTitleAndPoem && !showManualPoemFields"
+            class="mb-4 text-xs leading-relaxed text-content-muted">
+            {{ t('carousel.catalogPoemEditHint') }}
+          </p>
+          <div class="space-y-4">
             <div v-if="showManualPoemFields">
               <label class="field-label" for="carousel-manual-author">{{ t('carousel.fieldAuthor') }}</label>
-              <input id="carousel-manual-author" v-model="author" type="text"
-                class="w-full rounded-xl border border-edge-subtle px-4 py-2.5 text-sm outline-none focus:border-gold-500"
+              <input id="carousel-manual-author" v-model="author" type="text" class="ds-input"
                 :placeholder="t('carousel.phAuthor')" autocomplete="off" />
             </div>
             <div>
               <label class="field-label" for="carousel-manual-title">{{ t('carousel.fieldTitle') }}</label>
-              <input id="carousel-manual-title" v-model="title" type="text"
-                class="w-full rounded-xl border border-edge-subtle px-4 py-2.5 text-sm outline-none focus:border-gold-500"
+              <input id="carousel-manual-title" v-model="title" type="text" class="ds-input"
                 :placeholder="t('carousel.phTitle')" autocomplete="off" />
             </div>
             <div>
               <label class="field-label" for="carousel-manual-poem">{{ t('carousel.fieldPoem') }}</label>
               <textarea id="carousel-manual-poem" v-model="poemText" rows="12"
-                class="min-h-[12rem] w-full resize-y rounded-xl border border-edge-subtle px-4 py-2.5 font-serif text-sm leading-relaxed outline-none focus:border-gold-500"
-                :placeholder="t('carousel.phPoem')" spellcheck="true" />
+                class="ds-input min-h-[12rem] resize-y font-serif leading-relaxed" :placeholder="t('carousel.phPoem')"
+                spellcheck="true" />
+            </div>
+            <div>
+              <label class="field-label" for="carousel-written-year">{{ t('carousel.fieldPoemWrittenYear') }}</label>
+              <input id="carousel-written-year" v-model="poemWrittenYear" type="text" inputmode="numeric" maxlength="12"
+                class="ds-input max-w-xs tabular-nums" :placeholder="t('carousel.phPoemWrittenYear')"
+                autocomplete="off" />
+              <p class="mt-1.5 text-xs leading-relaxed text-content-muted">{{ t('carousel.writtenYearHint') }}</p>
             </div>
             <div v-if="canEditCatalogTitleAndPoem && loadedPoemSlug" class="flex flex-wrap items-center gap-3 pt-1">
-              <button type="button"
-                class="inline-flex items-center gap-2 rounded-xl border border-edge-strong bg-surface-subtle px-4 py-2 text-sm font-medium text-content transition hover:bg-surface-overlay disabled:opacity-50"
-                :disabled="savingCatalogPoemContent" @click="saveCatalogPoemContent">
+              <button type="button" class="ds-btn-secondary gap-2" :disabled="savingCatalogPoemContent"
+                @click="saveCatalogPoemContent">
                 <span v-if="savingCatalogPoemContent"
-                  class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-edge-subtle border-t-gold-500"
+                  class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-edge-subtle border-t-brand"
                   aria-hidden="true" />
                 {{ savingCatalogPoemContent ? t('carousel.savingCatalogPoemContent') :
                   t('carousel.saveCatalogPoemContent')
                 }}
               </button>
-              <span v-if="catalogPoemContentJustSaved" class="text-sm font-medium text-emerald-600" role="status">{{
+              <span v-if="catalogPoemContentJustSaved" class="text-sm font-medium text-success" role="status">{{
                 t('carousel.catalogPoemContentSaved') }}</span>
             </div>
           </div>
+        </section>
+      </div>
+
+      <!-- Column 2: Style, typography, caption -->
+      <div class="order-3 min-w-0 space-y-6 lg:order-none">
+        <!-- Style: font, theme, keyword highlights -->
+        <section class="ds-card p-5 md:p-6">
+          <p class="ds-eyebrow">
+            {{ t('carousel.sectionInstagramPostSettings') }}
+          </p>
 
           <label class="field-label">{{ t('carousel.fieldFont') }}</label>
           <div class="mb-2 flex items-center gap-2">
-            <button type="button"
-              class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-edge-subtle bg-surface-subtle text-content-secondary transition hover:border-edge hover:bg-surface-raised disabled:opacity-50"
-              :disabled="carouselFontKeys.length < 2" aria-label="Font anterior" title="Font anterior"
-              @click="prevCarouselFont">
+            <button type="button" class="ds-icon-btn shrink-0 rounded-ds-md" :disabled="carouselFontKeys.length < 2"
+              aria-label="Font anterior" title="Font anterior" @click="prevCarouselFont">
               <Icon icon="heroicons:chevron-left" class="h-5 w-5" aria-hidden="true" />
             </button>
             <CarouselFontSelect v-model="carouselFontKey" class="min-w-0 flex-1" />
-            <button type="button"
-              class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-edge-subtle bg-surface-subtle text-content-secondary transition hover:border-edge hover:bg-surface-raised disabled:opacity-50"
-              :disabled="carouselFontKeys.length < 2" aria-label="Font următor" title="Font următor"
-              @click="nextCarouselFont">
+            <button type="button" class="ds-icon-btn shrink-0 rounded-ds-md" :disabled="carouselFontKeys.length < 2"
+              aria-label="Font următor" title="Font următor" @click="nextCarouselFont">
               <Icon icon="heroicons:chevron-right" class="h-5 w-5" aria-hidden="true" />
             </button>
           </div>
-          <p class="mb-4 text-xs leading-relaxed text-content-muted">
+          <p class="mb-5 text-xs leading-relaxed text-content-muted">
             {{ t('carousel.fontCarouselHint') }}
           </p>
 
           <label class="field-label">{{ t('carousel.fieldTheme') }}</label>
-          <div class="mb-4 flex flex-wrap gap-2">
+          <div class="mb-5 flex flex-wrap gap-2">
             <button v-for="th in CAROUSEL_THEME_IDS" :key="th" type="button"
               class="rounded-full border px-4 py-1.5 text-sm transition" :class="theme === th
-                ? 'border-gold-500 bg-gold-500 text-white'
-                : 'border-edge-subtle bg-surface-subtle text-content-secondary hover:border-edge'
-                " @click="theme = th">
+                ? 'border-brand bg-brand font-medium text-brand-foreground'
+                : 'border-edge-subtle bg-surface-subtle text-content-secondary hover:border-edge hover:text-content'
+                " :aria-pressed="theme === th" @click="theme = th">
               {{ t(`carousel.theme.${th}`) }}
             </button>
           </div>
@@ -851,7 +1088,7 @@ function onTouchEnd(e: TouchEvent) {
           <div ref="keywordsHelpWrapRef" class="relative mb-1">
             <div class="flex items-baseline gap-1.5">
               <label class="field-label mb-0 flex-1" for="carousel-keyword-input">{{ t('carousel.fieldKeywords')
-              }}</label>
+                }}</label>
               <button id="carousel-keywords-help-trigger" type="button"
                 class="inline-flex shrink-0 rounded-full p-0.5 text-content-soft transition hover:bg-surface-subtle hover:text-content-secondary"
                 :aria-expanded="keywordsHelpOpen" aria-controls="carousel-keywords-help-panel"
@@ -865,276 +1102,335 @@ function onTouchEnd(e: TouchEvent) {
             </div>
             <Transition name="carousel-kw-help">
               <div v-show="keywordsHelpOpen" id="carousel-keywords-help-panel"
-                class="absolute left-0 right-0 top-full z-30 mt-1.5 rounded-xl border border-edge-subtle bg-surface-raised p-3 text-xs leading-relaxed text-content-muted shadow-lg"
+                class="absolute left-0 right-0 top-full z-30 mt-1.5 rounded-ds-md border border-edge-subtle bg-surface-overlay p-3 text-xs leading-relaxed text-content-muted shadow-ds-popover"
                 role="region" @click.stop>
                 {{ t('carousel.keywordsHelp') }}
               </div>
             </Transition>
           </div>
-          <input id="carousel-keyword-input" v-model="keywordInput" type="text"
-            class="mb-4 w-full rounded-xl border border-edge-subtle px-4 py-2.5 text-sm outline-none focus:border-gold-500"
+          <input id="carousel-keyword-input" v-model="keywordInput" type="text" class="ds-input"
             :placeholder="t('carousel.phKeywords')" />
-
-          <div class="mt-6 border-t border-edge-subtle pt-6">
-            <h3 class="mb-3 font-serif text-base font-semibold text-content">
-              {{ t('carousel.sectionTypography') }}
-            </h3>
-
-            <label class="field-label">{{ t('carousel.fieldLinesPerSlide') }}</label>
-            <div class="mb-4 flex items-center gap-3">
-              <input v-model.number="linesPerSlide" type="range" min="4" max="16" step="1"
-                class="h-2 flex-1 cursor-pointer accent-gold-600" />
-              <span class="w-10 text-right text-sm tabular-nums text-content-secondary">{{ linesPerSlide }}</span>
-            </div>
-
-            <label class="field-label">{{ t('carousel.fieldBodyFontSize') }}</label>
-            <div class="mb-4 flex items-center gap-3">
-              <input v-model.number="bodyFontSizeScale" type="range" min="0.7" max="2" step="0.05"
-                class="h-2 flex-1 cursor-pointer accent-gold-600" />
-              <span class="w-12 text-right text-sm tabular-nums text-content-secondary">{{ Math.round(bodyFontSizeScale
-                * 100)
-                }}%</span>
-            </div>
-
-            <label class="field-label">{{ t('carousel.fieldLineHeight') }}</label>
-            <div class="mb-4 flex items-center gap-3">
-              <input v-model.number="bodyLineHeight" type="range" min="1.15" max="2.25" step="0.05"
-                class="h-2 flex-1 cursor-pointer accent-gold-600" />
-              <span class="w-12 text-right text-sm tabular-nums text-content-secondary">{{ bodyLineHeight.toFixed(2)
-                }}</span>
-            </div>
-
-            <label class="field-label" for="carousel-body-font-weight">{{ t('carousel.fieldBodyFontWeight') }}</label>
-            <select id="carousel-body-font-weight"
-              class="mb-4 w-full rounded-xl border border-edge-subtle bg-surface-raised px-4 py-2.5 text-sm outline-none focus:border-gold-500"
-              :value="bodyFontWeight ?? ''"
-              @change="bodyFontWeight = ($event.target as HTMLSelectElement).value === '' ? null : Number(($event.target as HTMLSelectElement).value)">
-              <option value="">{{ t('carousel.fontWeightDefault') }}</option>
-              <option v-for="w in CAROUSEL_FONT_WEIGHT_PRESETS" :key="w" :value="w">{{ t(`carousel.fontWeight.${w}`)
-                }}</option>
-            </select>
-
-            <label class="field-label" for="carousel-title-font-weight">{{ t('carousel.fieldTitleFontWeight') }}</label>
-            <select id="carousel-title-font-weight"
-              class="mb-4 w-full rounded-xl border border-edge-subtle bg-surface-raised px-4 py-2.5 text-sm outline-none focus:border-gold-500"
-              :value="titleFontWeight ?? ''"
-              @change="titleFontWeight = ($event.target as HTMLSelectElement).value === '' ? null : Number(($event.target as HTMLSelectElement).value)">
-              <option value="">{{ t('carousel.fontWeightDefault') }}</option>
-              <option v-for="w in CAROUSEL_FONT_WEIGHT_PRESETS" :key="w" :value="w">{{ t(`carousel.fontWeight.${w}`)
-                }}</option>
-            </select>
-          </div>
         </section>
 
-        <section class="rounded-xl border border-edge-subtle bg-surface-overlay p-6 text-content shadow-ds-card">
-          <h2 class="mb-3 font-serif text-lg font-semibold">
-            {{ t('carousel.sectionExport') }}
-          </h2>
-          <p class="mb-4 text-sm text-content-muted">
-            {{ t('carousel.exportHint') }}
+        <!-- Verse layout / typography -->
+        <section class="ds-card p-5 md:p-6">
+          <p class="ds-eyebrow">
+            {{ t('carousel.sectionTypography') }}
           </p>
-          <div class="flex flex-wrap items-center gap-3">
-            <NuxtLink v-if="seePoemPageLocation" :to="seePoemPageLocation"
-              class="inline-flex items-center justify-center rounded-xl border border-edge bg-surface-raised px-5 py-2.5 text-sm font-medium text-content-secondary shadow-sm transition hover:border-edge-strong hover:bg-surface-subtle hover:text-content"
-              :aria-label="t('carousel.seePoem')">
-              {{ t('carousel.seePoem') }}
-            </NuxtLink>
-            <button type="button"
-              class="rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-brand-foreground shadow hover:bg-brand-hover disabled:opacity-50"
-              :disabled="exporting" @click="exportZip">
-              {{ exporting ? t('carousel.exporting') : t('carousel.downloadZip') }}
-            </button>
-            <button type="button"
-              class="rounded-xl border border-edge px-5 py-2.5 text-sm font-medium text-content-secondary hover:bg-surface-subtle"
-              @click="exportCurrentPng">
-              {{ t('carousel.downloadCurrent') }}
-            </button>
+
+          <label class="field-label">{{ t('carousel.fieldLinesPerSlide') }}</label>
+          <div class="mb-4 flex items-center gap-3">
+            <input v-model.number="linesPerSlide" type="range" min="4" max="16" step="1"
+              class="h-2 flex-1 cursor-pointer accent-brand" />
+            <span class="w-10 text-right text-sm tabular-nums text-content-secondary">{{ linesPerSlide }}</span>
+          </div>
+
+          <label class="field-label">{{ t('carousel.fieldBodyFontSize') }}</label>
+          <div class="mb-4 flex items-center gap-3">
+            <input v-model.number="bodyFontSizeScale" type="range" min="0.7" max="2" step="0.05"
+              class="h-2 flex-1 cursor-pointer accent-brand" />
+            <span class="w-12 text-right text-sm tabular-nums text-content-secondary">{{ Math.round(bodyFontSizeScale
+              * 100)
+            }}%</span>
+          </div>
+
+          <label class="field-label">{{ t('carousel.fieldLineHeight') }}</label>
+          <div class="mb-4 flex items-center gap-3">
+            <input v-model.number="bodyLineHeight" type="range" min="1.15" max="2.25" step="0.05"
+              class="h-2 flex-1 cursor-pointer accent-brand" />
+            <span class="w-12 text-right text-sm tabular-nums text-content-secondary">{{ bodyLineHeight.toFixed(2)
+            }}</span>
+          </div>
+
+          <div class="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label class="field-label" for="carousel-body-font-weight">{{ t('carousel.fieldBodyFontWeight') }}</label>
+              <select id="carousel-body-font-weight" class="ds-input" :value="bodyFontWeight ?? ''"
+                @change="bodyFontWeight = ($event.target as HTMLSelectElement).value === '' ? null : Number(($event.target as HTMLSelectElement).value)">
+                <option value="">{{ t('carousel.fontWeightDefault') }}</option>
+                <option v-for="w in CAROUSEL_FONT_WEIGHT_PRESETS" :key="w" :value="w">{{ t(`carousel.fontWeight.${w}`)
+                }}</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="carousel-title-font-weight">{{ t('carousel.fieldTitleFontWeight')
+                }}</label>
+              <select id="carousel-title-font-weight" class="ds-input" :value="titleFontWeight ?? ''"
+                @change="titleFontWeight = ($event.target as HTMLSelectElement).value === '' ? null : Number(($event.target as HTMLSelectElement).value)">
+                <option value="">{{ t('carousel.fontWeightDefault') }}</option>
+                <option v-for="w in CAROUSEL_FONT_WEIGHT_PRESETS" :key="w" :value="w">{{ t(`carousel.fontWeight.${w}`)
+                }}</option>
+              </select>
+            </div>
           </div>
         </section>
 
-        <section class="rounded-xl border border-edge-subtle bg-surface-raised p-6 shadow-ds-card">
-          <div class="flex items-center justify-between gap-2">
-            <h2 class="font-serif text-lg font-semibold text-content">
+        <!-- Instagram caption -->
+        <section class="ds-card p-5 md:p-6">
+          <div class="flex items-baseline justify-between gap-2">
+            <p class="ds-eyebrow mb-0">
               {{ t('carousel.sectionCaption') }}
-            </h2>
-            <button type="button" class="text-sm font-medium text-brand hover:underline" @click="copyCaption">
+            </p>
+            <button type="button"
+              class="inline-flex items-center gap-1.5 text-sm font-medium text-brand transition hover:text-brand-hover hover:underline"
+              @click="copyCaption">
+              <Icon icon="heroicons:clipboard-document" class="h-4 w-4 shrink-0" aria-hidden="true" />
               {{ t('carousel.copyCaption') }}
             </button>
           </div>
           <pre
-            class="mt-3 max-h-40 overflow-y-auto whitespace-pre-wrap rounded-lg bg-surface-subtle p-4 font-sans text-xs text-content-secondary">{{
+            class="mt-3 max-h-40 overflow-y-auto whitespace-pre-wrap rounded-ds-md bg-surface-subtle p-4 font-sans text-xs leading-relaxed text-content-secondary">{{
               captionText }}</pre>
+          <p class="mt-3 text-xs leading-relaxed text-content-muted">
+            {{ t('carousel.exportHint', { size: carouselExportSizeLabel }) }}
+          </p>
         </section>
       </div>
 
-      <!-- Right (3 columns): Preview — carousel then controls below -->
-      <div class="w-full md:col-span-3 md:sticky md:top-24 md:self-start">
-        <div ref="previewFullscreenRef" class="carousel-preview-shell flex flex-col">
-          <div class="carousel-preview-fs-header mb-3 flex shrink-0 items-center justify-between gap-2">
-            <span class="text-xs font-medium uppercase tracking-wider text-content-muted">
-              {{ t('carousel.preview') }} · {{ t('carousel.dimensions') }}
-            </span>
-            <div class="flex items-center gap-2">
-              <span class="text-sm text-content-muted tabular-nums">
-                {{ currentIndex + 1 }} / {{ slideModels.length }}
-              </span>
-              <button type="button"
-                class="rounded-lg border border-edge-subtle bg-surface-raised p-1.5 text-content-muted shadow-ds-card transition hover:border-brand hover:text-content"
-                :aria-pressed="isPreviewFullscreen"
-                :aria-label="isPreviewFullscreen ? t('carousel.exitFullScreen') : t('carousel.enterFullScreen')"
-                :title="isPreviewFullscreen ? t('carousel.exitFullScreen') : t('carousel.enterFullScreen')"
-                @click="togglePreviewFullscreen">
-                <!-- Enter fullscreen -->
-                <svg v-if="!isPreviewFullscreen" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                  stroke-width="2" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M4 8V4m0 0h4M4 16v4m0 0h4m8-16h4m0 0v4m0 4v4m0 4h-4m-8 0H4" />
-                </svg>
-                <!-- Exit fullscreen -->
-                <svg v-else class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
-                  aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" />
+      <!-- Column 3: Preview -->
+      <div
+        class="order-1 w-full rounded-ds-lg border border-edge-subtle bg-surface-subtle p-4 md:p-5 lg:order-none lg:sticky lg:top-24 lg:self-start">
+        <div class="flex flex-col gap-4">
+          <div class="flex min-w-0 items-start gap-2 sm:gap-3">
+            <aside
+              class="carousel-preview-toolbar flex shrink-0 flex-col items-center gap-1 overflow-visible rounded-ds-md border border-edge-subtle bg-surface-raised p-1 shadow-ds-card"
+              :aria-label="t('carousel.previewToolbar')">
+              <CarouselToolbarItem v-for="ratio in CAROUSEL_ASPECT_RATIOS" :key="ratio.id"
+                :label="t(`carousel.aspectRatio.${ratio.i18nKey}.label`)"
+                :hint="t(`carousel.aspectRatio.${ratio.i18nKey}.hint`, { size: `${ratio.width}×${ratio.height}` })"
+                placement="right">
+                <button type="button"
+                  class="flex h-9 min-w-9 cursor-pointer items-center justify-center rounded-ds-md border px-1.5 text-[10px] font-medium leading-none tabular-nums transition"
+                  :class="aspectRatioId === ratio.id
+                    ? 'border-brand bg-brand/10 text-brand'
+                    : 'border-transparent text-content-muted hover:border-edge-subtle hover:bg-surface-subtle hover:text-content'"
+                  :aria-pressed="aspectRatioId === ratio.id"
+                  :aria-label="t(`carousel.aspectRatio.${ratio.i18nKey}.label`)"
+                  @click="aspectRatioId = ratio.id">
+                  {{ ratio.id }}
+                </button>
+              </CarouselToolbarItem>
+            </aside>
+
+            <div class="flex min-w-0 flex-1 justify-center">
+              <div ref="previewFrameRef"
+                class="carousel-preview-inner relative mx-auto overflow-hidden rounded-xl border border-edge-subtle bg-black shadow-lg"
+                :style="previewInnerStyle" @touchstart.passive="onTouchStart" @touchend.passive="onTouchEnd">
+                <div v-if="currentSlideProps" class="absolute left-1/2 top-1/2" :style="{
+                  width: `${carouselWidth}px`,
+                  height: `${carouselHeight}px`,
+                  transform: `translate(-50%, -50%) scale(${previewScale})`,
+                }">
+                  <Transition name="carousel-preview" mode="out-in">
+                    <div
+                      :key="`${aspectRatioId}-${currentIndex}-${theme}-${title}-${poemText.length}-${bodyFontWeight}-${titleFontWeight}`"
+                      class="h-full w-full">
+                      <CarouselSlide v-bind="currentSlideProps" />
+                    </div>
+                  </Transition>
+                </div>
+              </div>
+            </div>
+
+            <aside
+              class="carousel-preview-toolbar flex shrink-0 flex-col items-center gap-1 overflow-visible rounded-ds-md border border-edge-subtle bg-surface-raised p-1 shadow-ds-card"
+              :aria-label="t('carousel.previewExportToolbar')">
+              <CarouselToolbarItem :label="t('carousel.enterFullScreen')" :hint="t('carousel.toolbarFullScreenHint')"
+                placement="left">
+                <button type="button" class="ds-icon-btn shrink-0 cursor-pointer rounded-ds-md"
+                  :aria-label="t('carousel.enterFullScreen')" @click="openPreviewModal">
+                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
+                    aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M4 8V4m0 0h4M4 16v4m0 0h4m8-16h4m0 0v4m0 4v4m0 4h-4m-8 0H4" />
+                  </svg>
+                </button>
+              </CarouselToolbarItem>
+              <CarouselToolbarItem :label="t('carousel.downloadCurrent')"
+                :hint="t('carousel.toolbarExportPngHint', { size: carouselExportSizeLabel })" placement="left">
+                <button type="button" class="ds-icon-btn shrink-0 cursor-pointer rounded-ds-md" :disabled="exporting"
+                  :aria-label="t('carousel.downloadCurrent')" @click="exportCurrentPng">
+                  <Icon icon="heroicons:photo" class="h-4 w-4 shrink-0" aria-hidden="true" />
+                </button>
+              </CarouselToolbarItem>
+              <CarouselToolbarItem :label="exporting ? t('carousel.exporting') : t('carousel.downloadZip')"
+                :hint="t('carousel.toolbarExportZipHint')" placement="left">
+                <button type="button" class="ds-icon-btn shrink-0 cursor-pointer rounded-ds-md" :disabled="exporting"
+                  :aria-label="exporting ? t('carousel.exporting') : t('carousel.downloadZipShort')" @click="exportZip">
+                  <Icon icon="heroicons:arrow-down-tray" class="h-4 w-4 shrink-0" aria-hidden="true" />
+                </button>
+              </CarouselToolbarItem>
+            </aside>
+          </div>
+
+          <div class="flex flex-col items-center gap-3">
+            <div class="flex items-center justify-center gap-3">
+              <button type="button" class="ds-icon-btn disabled:cursor-not-allowed disabled:opacity-40"
+                :disabled="currentIndex <= 0" :aria-label="t('carousel.prev')" @click="currentIndex--">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
-            </div>
-          </div>
-
-          <div :class="[
-            isPreviewFullscreen
-              ? 'carousel-preview-fs-body flex min-h-0 flex-1 flex-col overflow-hidden'
-              : '',
-          ]">
-            <div :class="isPreviewFullscreen
-              ? 'carousel-preview-fs-grid grid min-h-0 flex-1 grid-cols-1 grid-rows-1 gap-4 overflow-hidden sm:grid-cols-[minmax(0,19rem)_1fr] sm:items-stretch sm:gap-6'
-              : 'flex flex-col gap-4'">
-              <!-- Fullscreen: settings column (left on sm+); hidden when not fullscreen -->
-              <div v-if="isPreviewFullscreen"
-                class="carousel-fullscreen-fonts order-2 min-h-0 max-h-full overflow-y-auto rounded-xl border border-edge-subtle/80 bg-surface-raised/95 p-4 shadow-ds-card backdrop-blur-sm sm:order-none sm:max-h-none">
-                <p class="mb-3 text-xs font-semibold uppercase tracking-wider text-content-muted">
-                  {{ t('carousel.fullscreenFontSettings') }}
-                </p>
-                <label class="field-label">{{ t('carousel.fieldFont') }}</label>
-                <div class="mb-4 flex items-center gap-2">
-                  <button type="button"
-                    class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-edge-subtle bg-surface-subtle text-content-secondary transition hover:border-edge hover:bg-surface-raised disabled:opacity-50"
-                    :disabled="carouselFontKeys.length < 2" aria-label="Font anterior" title="Font anterior"
-                    @click="prevCarouselFont">
-                    <Icon icon="heroicons:chevron-left" class="h-5 w-5" aria-hidden="true" />
-                  </button>
-                  <CarouselFontSelect v-model="carouselFontKey" class="min-w-0 flex-1" />
-                  <button type="button"
-                    class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-edge-subtle bg-surface-subtle text-content-secondary transition hover:border-edge hover:bg-surface-raised disabled:opacity-50"
-                    :disabled="carouselFontKeys.length < 2" aria-label="Font următor" title="Font următor"
-                    @click="nextCarouselFont">
-                    <Icon icon="heroicons:chevron-right" class="h-5 w-5" aria-hidden="true" />
-                  </button>
-                </div>
-
-                <label class="field-label">{{ t('carousel.fieldLinesPerSlide') }}</label>
-                <div class="mb-3 flex items-center gap-3">
-                  <input v-model.number="linesPerSlide" type="range" min="4" max="16" step="1"
-                    class="h-2 flex-1 cursor-pointer accent-gold-600" />
-                  <span class="w-10 text-right text-sm tabular-nums text-content-secondary">{{ linesPerSlide }}</span>
-                </div>
-
-                <label class="field-label">{{ t('carousel.fieldBodyFontSize') }}</label>
-                <div class="mb-3 flex items-center gap-3">
-                  <input v-model.number="bodyFontSizeScale" type="range" min="0.7" max="2" step="0.05"
-                    class="h-2 flex-1 cursor-pointer accent-gold-600" />
-                  <span class="w-12 text-right text-sm tabular-nums text-content-secondary">{{
-                    Math.round(bodyFontSizeScale * 100)
-                    }}%</span>
-                </div>
-
-                <label class="field-label">{{ t('carousel.fieldLineHeight') }}</label>
-                <div class="mb-3 flex items-center gap-3">
-                  <input v-model.number="bodyLineHeight" type="range" min="1.15" max="2.25" step="0.05"
-                    class="h-2 flex-1 cursor-pointer accent-gold-600" />
-                  <span class="w-12 text-right text-sm tabular-nums text-content-secondary">{{ bodyLineHeight.toFixed(2)
-                    }}</span>
-                </div>
-
-                <label class="field-label" for="carousel-fs-body-font-weight">{{ t('carousel.fieldBodyFontWeight')
-                  }}</label>
-                <select id="carousel-fs-body-font-weight"
-                  class="mb-3 w-full rounded-xl border border-edge-subtle bg-surface-raised px-3 py-2 text-sm outline-none focus:border-gold-500"
-                  :value="bodyFontWeight ?? ''"
-                  @change="bodyFontWeight = ($event.target as HTMLSelectElement).value === '' ? null : Number(($event.target as HTMLSelectElement).value)">
-                  <option value="">{{ t('carousel.fontWeightDefault') }}</option>
-                  <option v-for="w in CAROUSEL_FONT_WEIGHT_PRESETS" :key="w" :value="w">{{ t(`carousel.fontWeight.${w}`)
-                    }}</option>
-                </select>
-
-                <label class="field-label" for="carousel-fs-title-font-weight">{{ t('carousel.fieldTitleFontWeight')
-                  }}</label>
-                <select id="carousel-fs-title-font-weight"
-                  class="mb-4 w-full rounded-xl border border-edge-subtle bg-surface-raised px-3 py-2 text-sm outline-none focus:border-gold-500"
-                  :value="titleFontWeight ?? ''"
-                  @change="titleFontWeight = ($event.target as HTMLSelectElement).value === '' ? null : Number(($event.target as HTMLSelectElement).value)">
-                  <option value="">{{ t('carousel.fontWeightDefault') }}</option>
-                  <option v-for="w in CAROUSEL_FONT_WEIGHT_PRESETS" :key="w" :value="w">{{ t(`carousel.fontWeight.${w}`)
-                    }}</option>
-                </select>
-
+              <div class="flex gap-1.5">
+                <button v-for="(_, i) in slideModels" :key="i" type="button" class="h-2 w-2 rounded-full transition"
+                  :class="i === currentIndex ? 'bg-brand w-5' : 'bg-content-muted/40 hover:bg-content-muted/70'"
+                  :aria-label="t('carousel.goSlide', { n: i + 1 })" @click="currentIndex = i" />
               </div>
-
-              <!-- Preview + nav (right column when fullscreen; full width when not) -->
-              <div class="order-1 flex min-w-0 flex-col gap-4 sm:order-none"
-                :class="isPreviewFullscreen ? 'min-h-0 flex-1 overflow-hidden' : ''">
-                <div class="flex justify-center"
-                  :class="isPreviewFullscreen ? 'carousel-fs-preview-stage min-h-0 w-full flex-1 items-center' : ''">
-                  <div ref="previewFrameRef"
-                    class="carousel-preview-inner relative mx-auto overflow-hidden rounded-xl border border-edge-subtle bg-black shadow-lg"
-                    @touchstart.passive="onTouchStart" @touchend.passive="onTouchEnd">
-                    <div v-if="currentSlideProps" class="absolute left-1/2 top-1/2" :style="{
-                      width: `${CAROUSEL_WIDTH}px`,
-                      height: `${CAROUSEL_HEIGHT}px`,
-                      transform: `translate(-50%, -50%) scale(${previewScale})`,
-                    }">
-                      <Transition name="carousel-preview" mode="out-in">
-                        <div
-                          :key="`${currentIndex}-${theme}-${title}-${poemText.length}-${bodyFontWeight}-${titleFontWeight}`"
-                          class="h-full w-full">
-                          <CarouselSlide v-bind="currentSlideProps" />
-                        </div>
-                      </Transition>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="flex flex-col items-center gap-3" :class="isPreviewFullscreen ? 'shrink-0' : ''">
-                  <div class="flex items-center justify-center gap-3">
-                    <button type="button"
-                      class="rounded-full border border-edge-subtle bg-surface-raised p-2 text-content-secondary hover:bg-surface-subtle"
-                      :disabled="currentIndex <= 0" :aria-label="t('carousel.prev')" @click="currentIndex--">
-                      <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-                      </svg>
-                    </button>
-                    <div class="flex gap-1.5">
-                      <button v-for="(_, i) in slideModels" :key="i" type="button"
-                        class="h-2 w-2 rounded-full transition"
-                        :class="i === currentIndex ? 'bg-gold-500 w-5' : 'bg-content-muted/40'"
-                        :aria-label="t('carousel.goSlide', { n: i + 1 })" @click="currentIndex = i" />
-                    </div>
-                    <button type="button"
-                      class="rounded-full border border-edge-subtle bg-surface-raised p-2 text-content-secondary hover:bg-surface-subtle"
-                      :disabled="currentIndex >= maxIndex" :aria-label="t('carousel.next')" @click="currentIndex++">
-                      <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-                      </svg>
-                    </button>
-                  </div>
-
-                  <p class="text-center text-xs text-content-muted">
-                    {{ t('carousel.splitInfo', { n: bodySlideCount }) }}
-                  </p>
-                </div>
-              </div>
+              <button type="button" class="ds-icon-btn disabled:cursor-not-allowed disabled:opacity-40"
+                :disabled="currentIndex >= maxIndex" :aria-label="t('carousel.next')" @click="currentIndex++">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+              <p class="text-center text-sm text-content-muted tabular-nums">
+                {{ currentIndex + 1 }} / {{ slideModels.length }}
+              </p>
             </div>
+
+            <p class="text-center text-xs text-content-muted">
+              {{ t('carousel.splitInfo', { n: bodySlideCount }) }}
+            </p>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Enlarged preview modal -->
+    <Teleport to="body">
+      <div v-if="isPreviewModalOpen"
+        class="fixed inset-0 z-[100] flex items-center justify-center p-[2.5vh]">
+        <button type="button" class="absolute inset-0 bg-content/40 backdrop-blur-sm"
+          :aria-label="t('carousel.exitFullScreen')" @click="closePreviewModal" />
+
+        <div ref="previewModalRef" role="dialog" aria-modal="true" :aria-label="t('carousel.preview')" tabindex="-1"
+          class="relative z-10 flex h-[95vh] max-h-[95vh] w-full max-w-4xl min-h-0 flex-col gap-4 rounded-ds-xl border border-edge-subtle bg-surface-raised p-4 shadow-ds-popover outline-none sm:gap-5 sm:p-6"
+          @keydown="onPreviewModalKeydown" @click.stop>
+          <div class="flex shrink-0 items-center justify-between gap-3">
+            <h2 class="font-serif text-lg font-semibold tracking-tight text-content">
+              {{ t('carousel.preview') }}
+            </h2>
+            <CloseButton :label="t('carousel.exitFullScreen')" @click="closePreviewModal" />
+          </div>
+
+          <div class="flex min-h-0 flex-1 items-start gap-2 sm:gap-3">
+            <aside
+              class="carousel-preview-toolbar flex shrink-0 flex-col items-center gap-1 overflow-visible rounded-ds-md border border-edge-subtle bg-surface-raised p-1 shadow-ds-card"
+              :aria-label="t('carousel.previewToolbar')">
+              <CarouselToolbarItem v-for="ratio in CAROUSEL_ASPECT_RATIOS" :key="`modal-ratio-${ratio.id}`"
+                :label="t(`carousel.aspectRatio.${ratio.i18nKey}.label`)"
+                :hint="t(`carousel.aspectRatio.${ratio.i18nKey}.hint`, { size: `${ratio.width}×${ratio.height}` })"
+                placement="right">
+                <button type="button"
+                  class="flex h-9 min-w-9 cursor-pointer items-center justify-center rounded-ds-md border px-1.5 text-[10px] font-medium leading-none tabular-nums transition"
+                  :class="aspectRatioId === ratio.id
+                    ? 'border-brand bg-brand/10 text-brand'
+                    : 'border-transparent text-content-muted hover:border-edge-subtle hover:bg-surface-subtle hover:text-content'"
+                  :aria-pressed="aspectRatioId === ratio.id"
+                  :aria-label="t(`carousel.aspectRatio.${ratio.i18nKey}.label`)"
+                  @click="aspectRatioId = ratio.id">
+                  {{ ratio.id }}
+                </button>
+              </CarouselToolbarItem>
+            </aside>
+
+            <div class="flex min-h-0 min-w-0 flex-1 self-stretch items-center justify-center">
+              <div ref="previewModalFrameRef"
+                class="carousel-preview-inner relative mx-auto h-full max-h-full w-full max-w-full overflow-hidden rounded-xl border border-edge-subtle bg-black shadow-lg"
+                :style="previewModalInnerStyle" @touchstart.passive="onTouchStart" @touchend.passive="onTouchEnd">
+                <div v-if="currentSlideProps" class="absolute left-1/2 top-1/2" :style="{
+                  width: `${carouselWidth}px`,
+                  height: `${carouselHeight}px`,
+                  transform: `translate(-50%, -50%) scale(${previewModalScale})`,
+                }">
+                  <Transition name="carousel-preview" mode="out-in">
+                    <div
+                      :key="`modal-${aspectRatioId}-${currentIndex}-${theme}-${title}-${poemText.length}-${bodyFontWeight}-${titleFontWeight}`"
+                      class="h-full w-full">
+                      <CarouselSlide v-bind="currentSlideProps" />
+                    </div>
+                  </Transition>
+                </div>
+              </div>
+            </div>
+
+            <aside
+              class="carousel-preview-toolbar flex shrink-0 flex-col items-center gap-1 overflow-visible rounded-ds-md border border-edge-subtle bg-surface-raised p-1 shadow-ds-card"
+              :aria-label="t('carousel.previewExportToolbar')">
+              <CarouselToolbarItem :label="t('carousel.exitFullScreen')" :hint="t('carousel.toolbarFullScreenExitHint')"
+                placement="left">
+                <button type="button" class="ds-icon-btn shrink-0 cursor-pointer rounded-ds-md"
+                  :aria-label="t('carousel.exitFullScreen')" @click="closePreviewModal">
+                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
+                    aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" />
+                  </svg>
+                </button>
+              </CarouselToolbarItem>
+              <CarouselToolbarItem :label="t('carousel.downloadCurrent')"
+                :hint="t('carousel.toolbarExportPngHint', { size: carouselExportSizeLabel })" placement="left">
+                <button type="button" class="ds-icon-btn shrink-0 cursor-pointer rounded-ds-md" :disabled="exporting"
+                  :aria-label="t('carousel.downloadCurrent')" @click="exportCurrentPng">
+                  <Icon icon="heroicons:photo" class="h-4 w-4 shrink-0" aria-hidden="true" />
+                </button>
+              </CarouselToolbarItem>
+              <CarouselToolbarItem :label="exporting ? t('carousel.exporting') : t('carousel.downloadZip')"
+                :hint="t('carousel.toolbarExportZipHint')" placement="left">
+                <button type="button" class="ds-icon-btn shrink-0 cursor-pointer rounded-ds-md" :disabled="exporting"
+                  :aria-label="exporting ? t('carousel.exporting') : t('carousel.downloadZipShort')" @click="exportZip">
+                  <Icon icon="heroicons:arrow-down-tray" class="h-4 w-4 shrink-0" aria-hidden="true" />
+                </button>
+              </CarouselToolbarItem>
+            </aside>
+          </div>
+
+          <div class="flex shrink-0 flex-col items-center gap-3">
+            <div class="flex flex-wrap items-center justify-center gap-3">
+              <button type="button" class="ds-icon-btn disabled:cursor-not-allowed disabled:opacity-40"
+                :disabled="currentIndex <= 0" :aria-label="t('carousel.prev')" @click="currentIndex--">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <div class="flex gap-1.5">
+                <button v-for="(_, i) in slideModels" :key="`modal-dot-${i}`" type="button"
+                  class="h-2 w-2 rounded-full transition"
+                  :class="i === currentIndex ? 'bg-brand w-5' : 'bg-content-muted/40 hover:bg-content-muted/70'"
+                  :aria-label="t('carousel.goSlide', { n: i + 1 })" @click="currentIndex = i" />
+              </div>
+              <button type="button" class="ds-icon-btn disabled:cursor-not-allowed disabled:opacity-40"
+                :disabled="currentIndex >= maxIndex" :aria-label="t('carousel.next')" @click="currentIndex++">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+              <p class="text-center text-sm text-content-muted tabular-nums">
+                {{ currentIndex + 1 }} / {{ slideModels.length }}
+              </p>
+            </div>
+
+            <p class="text-center text-xs text-content-muted">
+              {{ t('carousel.splitInfo', { n: bodySlideCount }) }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- Mobile export bar (desktop actions live in the tools bar) -->
+    <div
+      class="fixed inset-x-0 bottom-0 z-40 border-t border-edge-subtle bg-surface-raised/95 px-4 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-3 shadow-ds-popover backdrop-blur-md md:hidden">
+      <div class="mx-auto flex w-full max-w-md items-center gap-2">
+        <button type="button" class="ds-btn-secondary flex-1 gap-2 px-3 py-2.5 text-sm" :disabled="exporting"
+          @click="exportCurrentPng">
+          <Icon icon="heroicons:photo" class="h-4 w-4 shrink-0" aria-hidden="true" />
+          {{ exporting ? t('carousel.exporting') : t('carousel.downloadCurrentShort') }}
+        </button>
+        <button type="button" class="ds-btn-primary flex-1 gap-2 px-3 py-2.5 text-sm" :disabled="exporting"
+          @click="exportZip">
+          <Icon icon="heroicons:arrow-down-tray" class="h-4 w-4 shrink-0" aria-hidden="true" />
+          {{ exporting ? t('carousel.exporting') : t('carousel.downloadZipShort') }}
+        </button>
       </div>
     </div>
 
@@ -1142,7 +1438,7 @@ function onTouchEnd(e: TouchEvent) {
     <Teleport to="body">
       <div v-if="exporting && slidePropsFor(exportIndex)"
         class="pointer-events-none fixed -left-[9999px] top-0 z-[100] overflow-hidden"
-        :style="{ width: `${CAROUSEL_WIDTH}px`, height: `${CAROUSEL_HEIGHT}px` }" aria-hidden="true">
+        :style="{ width: `${carouselWidth}px`, height: `${carouselHeight}px` }" aria-hidden="true">
         <CarouselSlide ref="captureRef" v-bind="slidePropsFor(exportIndex)!" />
       </div>
     </Teleport>
@@ -1165,110 +1461,31 @@ function onTouchEnd(e: TouchEvent) {
   transform: scale(1.02);
 }
 
-.defaults-thumbs-enter-active {
-  animation: defaults-thumbs-in 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+.carousel-saved-flash-enter-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
-.defaults-thumbs-leave-active {
+.carousel-saved-flash-leave-active {
   transition: opacity 0.35s ease;
 }
 
-.defaults-thumbs-leave-to {
+.carousel-saved-flash-enter-from {
+  opacity: 0;
+  transform: translateX(4px);
+}
+
+.carousel-saved-flash-leave-to {
   opacity: 0;
 }
 
-@keyframes defaults-thumbs-in {
-  0% {
-    opacity: 0;
-    transform: translateY(8px) scale(0.4) rotate(-18deg);
-  }
-
-  55% {
-    opacity: 1;
-    transform: translateY(0) scale(1.12) rotate(8deg);
-  }
-
-  80% {
-    transform: scale(0.96) rotate(-2deg);
-  }
-
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1) rotate(0deg);
-  }
-}
-
-.defaults-save-thumbs-icon {
-  filter: drop-shadow(0 2px 6px rgb(0 0 0 / 0.12));
-}
-
-/* 4:5 preview — cap height to the viewport minus chrome (nav, sticky offset, shell header, padding). */
+/* Preview frame sizing is driven inline from the selected Instagram aspect ratio. */
 .carousel-preview-inner {
-  aspect-ratio: 4 / 5;
-  width: min(100%, 26.25rem, calc((100dvh - 15rem) * 4 / 5));
-  max-height: calc(100dvh - 15rem);
-}
-
-.carousel-preview-shell:fullscreen,
-.carousel-preview-shell:-webkit-full-screen {
-  display: flex;
-  flex-direction: column;
-  width: 100vw;
-  height: 100dvh;
-  max-height: 100dvh;
-  overflow: hidden;
-  border-radius: 0;
-  border: none;
-  box-shadow: none;
-}
-
-.carousel-preview-shell:fullscreen .carousel-preview-fs-body,
-.carousel-preview-shell:-webkit-full-screen .carousel-preview-fs-body {
-  flex: 1 1 0%;
-  min-height: 0;
-  overflow: hidden;
-}
-
-/* One row fills available height so the preview column can shrink-wrap the stage. */
-.carousel-preview-shell:fullscreen .carousel-preview-fs-grid,
-.carousel-preview-shell:-webkit-full-screen .carousel-preview-fs-grid {
-  grid-template-rows: minmax(0, 1fr);
-}
-
-/* Flex column: preview stage grows; arrows stay below inside the column. */
-.carousel-preview-shell:fullscreen .carousel-fs-preview-stage,
-.carousel-preview-shell:-webkit-full-screen .carousel-fs-preview-stage {
-  display: flex;
-  flex: 1 1 0%;
-  min-height: 0;
-  align-items: center;
-  justify-content: center;
-}
-
-/*
- * Explicit 4:5 size in fullscreen: width:auto + max-height:100% often collapses to 0.
- * Use viewport-based caps (~70dvh leaves room for header + arrows) and optional column width on sm+.
- */
-.carousel-preview-shell:fullscreen .carousel-preview-inner,
-.carousel-preview-shell:-webkit-full-screen .carousel-preview-inner {
   box-sizing: border-box;
-  width: min(100%, calc(70dvh * 4 / 5));
-  max-height: min(70dvh, calc(100dvh - 10rem));
-  aspect-ratio: 4 / 5;
+}
+
+.carousel-preview-toolbar {
   height: auto;
-}
-
-@media (min-width: 640px) {
-
-  .carousel-preview-shell:fullscreen .carousel-preview-inner,
-  .carousel-preview-shell:-webkit-full-screen .carousel-preview-inner {
-    width: min(100%, calc(100vw - 22rem), calc(70dvh * 4 / 5));
-  }
-}
-
-/* Scroll when typography block is tall (e.g. fullscreen left column). */
-.carousel-fullscreen-fonts {
-  overflow-y: auto;
+  align-self: flex-start;
 }
 
 .carousel-kw-help-enter-active,

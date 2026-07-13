@@ -184,7 +184,7 @@ export const IconButtonFavorites: Story = {
     template: `
       <button
         type="button"
-        class="ds-icon-btn border-rose-200/80 text-content-muted hover:border-rose-300 hover:text-rose-600"
+        class="ds-icon-btn border-edge-subtle text-content-muted hover:border-brand/40 hover:bg-brand-tint hover:text-brand"
         aria-label="Favorite"
       >
         ${heartIcon}
@@ -225,7 +225,7 @@ export const AllVariants: Story = {
           </button>
           <button
             type="button"
-            class="ds-icon-btn border-rose-200/80 text-content-muted hover:border-rose-300 hover:text-rose-600"
+            class="ds-icon-btn border-edge-subtle text-content-muted hover:border-brand/40 hover:bg-brand-tint hover:text-brand"
             aria-label="Favorite"
           >
             ${heartIcon}

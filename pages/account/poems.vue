@@ -206,7 +206,7 @@ async function claimPoem() {
         </p>
         <div class="flex gap-2">
           <input v-model="claimSlug" type="text"
-            class="min-w-0 flex-1 rounded-xl border border-edge-subtle bg-surface-raised px-4 py-2.5 text-sm outline-none focus:border-gold-500"
+            class="min-w-0 flex-1 rounded-xl border border-edge-subtle bg-surface-raised px-4 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/25"
             :placeholder="t('account.poemsClaimPlaceholder')" autocomplete="off" @keydown.enter.prevent="claimPoem" />
           <button type="button"
             class="rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-brand-foreground shadow hover:bg-brand-hover disabled:opacity-50"

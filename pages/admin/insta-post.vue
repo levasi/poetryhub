@@ -138,7 +138,7 @@ async function save() {
           {{ t('admin.instaPost.sectionCarouselDefaults') }}
         </h2>
 
-        <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-ink-500">{{
+        <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-content-muted">{{
           t('carousel.fieldTheme')
         }}</label>
         <div class="mb-6 flex flex-wrap gap-2">
@@ -149,8 +149,8 @@ async function save() {
             class="rounded-full border px-4 py-1.5 text-sm transition"
             :class="
               theme === th
-                ? 'border-gold-500 bg-gold-500 text-white'
-                : 'border-ink-200 bg-white text-ink-700 hover:border-ink-300'
+                ? 'border-brand bg-brand text-white'
+                : 'border-edge-subtle bg-surface-raised text-content-secondary hover:border-edge'
             "
             @click="theme = th"
           >
@@ -158,12 +158,12 @@ async function save() {
           </button>
         </div>
 
-        <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-ink-500">{{
+        <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-content-muted">{{
           t('carousel.fieldFont')
         }}</label>
         <CarouselFontSelect v-model="carouselFontKey" class="mb-6 max-w-md" />
 
-        <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-ink-500">{{
+        <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-content-muted">{{
           t('carousel.fieldLinesPerSlide')
         }}</label>
         <div class="mb-6 flex max-w-md items-center gap-3">
@@ -173,12 +173,12 @@ async function save() {
             min="4"
             max="16"
             step="1"
-            class="h-2 flex-1 cursor-pointer accent-gold-600"
+            class="h-2 flex-1 cursor-pointer accent-brand"
           />
-          <span class="w-10 text-right text-sm tabular-nums text-ink-600">{{ linesPerSlide }}</span>
+          <span class="w-10 text-right text-sm tabular-nums text-content-muted">{{ linesPerSlide }}</span>
         </div>
 
-        <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-ink-500">{{
+        <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-content-muted">{{
           t('carousel.fieldBodyFontSize')
         }}</label>
         <div class="mb-6 flex max-w-md items-center gap-3">
@@ -188,13 +188,13 @@ async function save() {
             min="0.7"
             max="2"
             step="0.05"
-            class="h-2 flex-1 cursor-pointer accent-gold-600"
+            class="h-2 flex-1 cursor-pointer accent-brand"
           />
-          <span class="w-12 text-right text-sm tabular-nums text-ink-600">{{ Math.round(bodyFontSizeScale * 100)
+          <span class="w-12 text-right text-sm tabular-nums text-content-muted">{{ Math.round(bodyFontSizeScale * 100)
           }}%</span>
         </div>
 
-        <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-ink-500">{{
+        <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-content-muted">{{
           t('carousel.fieldLineHeight')
         }}</label>
         <div class="mb-6 flex max-w-md items-center gap-3">
@@ -204,17 +204,17 @@ async function save() {
             min="1.15"
             max="2.25"
             step="0.05"
-            class="h-2 flex-1 cursor-pointer accent-gold-600"
+            class="h-2 flex-1 cursor-pointer accent-brand"
           />
-          <span class="w-12 text-right text-sm tabular-nums text-ink-600">{{ bodyLineHeight.toFixed(2) }}</span>
+          <span class="w-12 text-right text-sm tabular-nums text-content-muted">{{ bodyLineHeight.toFixed(2) }}</span>
         </div>
 
-        <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-ink-500" for="insta-body-weight">{{
+        <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-content-muted" for="insta-body-weight">{{
           t('carousel.fieldBodyFontWeight')
         }}</label>
         <select
           id="insta-body-weight"
-          class="mb-6 max-w-md w-full rounded-ds-md border border-ink-200 bg-white px-3 py-2 text-sm text-ink-900 outline-none focus:border-gold-500"
+          class="mb-6 max-w-md w-full rounded-ds-md border border-edge-subtle bg-surface-raised px-3 py-2 text-sm text-content outline-none focus:border-brand"
           :value="bodyFontWeight ?? ''"
           @change="
             bodyFontWeight =
@@ -229,12 +229,12 @@ async function save() {
           </option>
         </select>
 
-        <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-ink-500" for="insta-title-weight">{{
+        <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-content-muted" for="insta-title-weight">{{
           t('carousel.fieldTitleFontWeight')
         }}</label>
         <select
           id="insta-title-weight"
-          class="mb-6 max-w-md w-full rounded-ds-md border border-ink-200 bg-white px-3 py-2 text-sm text-ink-900 outline-none focus:border-gold-500"
+          class="mb-6 max-w-md w-full rounded-ds-md border border-edge-subtle bg-surface-raised px-3 py-2 text-sm text-content outline-none focus:border-brand"
           :value="titleFontWeight ?? ''"
           @change="
             titleFontWeight =
@@ -249,7 +249,7 @@ async function save() {
           </option>
         </select>
 
-        <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-ink-500" for="insta-keywords">{{
+        <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-content-muted" for="insta-keywords">{{
           t('carousel.fieldKeywords')
         }}</label>
         <input
@@ -257,10 +257,10 @@ async function save() {
           v-model="keywordLocal"
           type="text"
           maxlength="2000"
-          class="mb-2 w-full max-w-lg rounded-ds-md border border-ink-200 bg-white px-3 py-2 text-sm text-ink-900 outline-none focus:border-gold-500"
+          class="mb-2 w-full max-w-lg rounded-ds-md border border-edge-subtle bg-surface-raised px-3 py-2 text-sm text-content outline-none focus:border-brand"
           :placeholder="t('carousel.phKeywords')"
         />
-        <p class="mb-6 max-w-reading text-xs text-ink-500">{{ t('carousel.keywordsHelp') }}</p>
+        <p class="mb-6 max-w-reading text-xs text-content-muted">{{ t('carousel.keywordsHelp') }}</p>
       </div>
 
       <div class="border-t border-edge-subtle pt-8">
