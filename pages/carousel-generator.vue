@@ -975,8 +975,8 @@ function onTouchEnd(e: TouchEvent) {
             </span>
           </Transition>
           <button type="button" class="ds-btn-secondary gap-2 px-4 py-2 text-sm shadow-ds-card"
-            :disabled="savingCurrentPoemCarousel" :title="carouselSaveFabTitle"
-            :aria-label="carouselSaveFabTitle" @click="saveInstaPostToAccount">
+            :disabled="savingCurrentPoemCarousel" :title="carouselSaveFabTitle" :aria-label="carouselSaveFabTitle"
+            @click="saveInstaPostToAccount">
             <span v-if="savingCurrentPoemCarousel"
               class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-edge-subtle border-t-brand"
               aria-hidden="true" />
@@ -1089,7 +1089,7 @@ function onTouchEnd(e: TouchEvent) {
           <div ref="keywordsHelpWrapRef" class="relative mb-1">
             <div class="flex items-baseline gap-1.5">
               <label class="field-label mb-0 flex-1" for="carousel-keyword-input">{{ t('carousel.fieldKeywords')
-                }}</label>
+              }}</label>
               <button id="carousel-keywords-help-trigger" type="button"
                 class="inline-flex shrink-0 rounded-full p-0.5 text-content-soft transition hover:bg-surface-subtle hover:text-content-secondary"
                 :aria-expanded="keywordsHelpOpen" aria-controls="carousel-keywords-help-panel"
@@ -1132,7 +1132,7 @@ function onTouchEnd(e: TouchEvent) {
               class="h-2 flex-1 cursor-pointer accent-brand" />
             <span class="w-12 text-right text-sm tabular-nums text-content-secondary">{{ Math.round(bodyFontSizeScale
               * 100)
-            }}%</span>
+              }}%</span>
           </div>
 
           <label class="field-label">{{ t('carousel.fieldLineHeight') }}</label>
@@ -1140,7 +1140,7 @@ function onTouchEnd(e: TouchEvent) {
             <input v-model.number="bodyLineHeight" type="range" min="1.15" max="2.25" step="0.05"
               class="h-2 flex-1 cursor-pointer accent-brand" />
             <span class="w-12 text-right text-sm tabular-nums text-content-secondary">{{ bodyLineHeight.toFixed(2)
-            }}</span>
+              }}</span>
           </div>
 
           <div class="grid gap-4 sm:grid-cols-2">
@@ -1150,17 +1150,17 @@ function onTouchEnd(e: TouchEvent) {
                 @change="bodyFontWeight = ($event.target as HTMLSelectElement).value === '' ? null : Number(($event.target as HTMLSelectElement).value)">
                 <option value="">{{ t('carousel.fontWeightDefault') }}</option>
                 <option v-for="w in CAROUSEL_FONT_WEIGHT_PRESETS" :key="w" :value="w">{{ t(`carousel.fontWeight.${w}`)
-                }}</option>
+                  }}</option>
               </select>
             </div>
             <div>
               <label class="field-label" for="carousel-title-font-weight">{{ t('carousel.fieldTitleFontWeight')
-                }}</label>
+              }}</label>
               <select id="carousel-title-font-weight" class="ds-input" :value="titleFontWeight ?? ''"
                 @change="titleFontWeight = ($event.target as HTMLSelectElement).value === '' ? null : Number(($event.target as HTMLSelectElement).value)">
                 <option value="">{{ t('carousel.fontWeightDefault') }}</option>
                 <option v-for="w in CAROUSEL_FONT_WEIGHT_PRESETS" :key="w" :value="w">{{ t(`carousel.fontWeight.${w}`)
-                }}</option>
+                  }}</option>
               </select>
             </div>
           </div>
@@ -1206,8 +1206,7 @@ function onTouchEnd(e: TouchEvent) {
                     ? 'border-brand bg-brand/10 text-brand'
                     : 'border-transparent text-content-muted hover:border-edge-subtle hover:bg-surface-subtle hover:text-content'"
                   :aria-pressed="aspectRatioId === ratio.id"
-                  :aria-label="t(`carousel.aspectRatio.${ratio.i18nKey}.label`)"
-                  @click="aspectRatioId = ratio.id">
+                  :aria-label="t(`carousel.aspectRatio.${ratio.i18nKey}.label`)" @click="aspectRatioId = ratio.id">
                   {{ ratio.id }}
                 </button>
               </CarouselToolbarItem>
@@ -1298,8 +1297,7 @@ function onTouchEnd(e: TouchEvent) {
 
     <!-- Enlarged preview modal -->
     <Teleport to="body">
-      <div v-if="isPreviewModalOpen"
-        class="fixed inset-0 z-[100] flex items-center justify-center p-[2.5vh]">
+      <div v-if="isPreviewModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center p-[2.5vh]">
         <button type="button" class="absolute inset-0 bg-content/40 backdrop-blur-sm"
           :aria-label="t('carousel.exitFullScreen')" @click="closePreviewModal" />
 
@@ -1327,8 +1325,7 @@ function onTouchEnd(e: TouchEvent) {
                     ? 'border-brand bg-brand/10 text-brand'
                     : 'border-transparent text-content-muted hover:border-edge-subtle hover:bg-surface-subtle hover:text-content'"
                   :aria-pressed="aspectRatioId === ratio.id"
-                  :aria-label="t(`carousel.aspectRatio.${ratio.i18nKey}.label`)"
-                  @click="aspectRatioId = ratio.id">
+                  :aria-label="t(`carousel.aspectRatio.${ratio.i18nKey}.label`)" @click="aspectRatioId = ratio.id">
                   {{ ratio.id }}
                 </button>
               </CarouselToolbarItem>

@@ -694,13 +694,10 @@ onUnmounted(() => {
 
 <template>
   <div class="flex min-w-0 flex-1 flex-col" aria-label="Lucru: dicționar, versuri">
-    <WriteToolsBar
-      :draft-status="draftStatusText"
-      :save-loading="saveLoading"
-      @save="saveNowDirect"
-      @publish="openPublish"
-    />
-    <div ref="splitContainerRef" class="flex min-h-0 min-w-0 flex-1 flex-col pb-[max(2rem,env(safe-area-inset-bottom,0px))] lg:flex-row">
+    <WriteToolsBar :draft-status="draftStatusText" :save-loading="saveLoading" @save="saveNowDirect"
+      @publish="openPublish" />
+    <div ref="splitContainerRef"
+      class="flex min-h-0 min-w-0 flex-1 flex-col pb-[max(2rem,env(safe-area-inset-bottom,0px))] lg:flex-row">
       <!-- Stânga (desktop): căutare + rezultate; pe mobil order: versuri → căutare → rezultate (contents + order) -->
       <div
         class="contents min-h-0 min-w-0 lg:order-1 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col lg:gap-4 sm:pr-4 sm:pb-6">
@@ -741,12 +738,8 @@ onUnmounted(() => {
                   <Icon icon="heroicons:plus" class="h-5 w-5 shrink-0 text-current" aria-hidden="true" />
                 </button>
               </div>
-              <WriteSearchActions
-                :can-search="canSearch"
-                :loading="loading"
-                @search="runSearch"
-                @insert-diacritic="insertDiacritic"
-              />
+              <WriteSearchActions :can-search="canSearch" :loading="loading" @search="runSearch"
+                @insert-diacritic="insertDiacritic" />
             </div>
           </div>
         </div>
@@ -978,11 +971,7 @@ onUnmounted(() => {
         <h2 id="word-def-tooltip-title" class="font-display text-base font-semibold text-content">
           {{ defPop.hit.word }}
         </h2>
-        <CloseButton
-          class="-mt-1 -mr-1"
-          :label="t('a11y.close')"
-          @click="closeWordDefinition"
-        />
+        <CloseButton class="-mt-1 -mr-1" :label="t('a11y.close')" @click="closeWordDefinition" />
       </div>
 
       <div class="mt-3 text-sm leading-relaxed text-content-secondary">
