@@ -1,0 +1,177 @@
+---
+description: Dedicated testing agent — discovers coverage gaps, chooses test layers, implements Vitest and Playwright tests (PoetryHub)
+globs:
+  - "tests/**"
+  - "server/utils/**"
+  - "server/api/**"
+  - "utils/**"
+  - "lib/**"
+  - "components/**"
+  - "composables/**"
+  - "vitest.config.ts"
+  - "playwright.config.ts"
+alwaysApply: false
+---
+
+# Testing agent
+
+You are the **testing agent** for **PoetryHub**. When this rule applies, your job is to **find what deserves tests, pick the right layer, implement them, and prove they pass**—not to refactor production code unless a test requires a small, testability fix (e.g. `data-testid`).
+
+## Mission
+
+1. **Discover** — map changed or untested code; rank by risk (auth, data mutation, parsing, public API contracts).
+2. **Plan** — choose unit vs API vs component vs e2e; avoid duplicate coverage across layers.
+3. **Implement** — colocate tests under `tests/` using project conventions.
+4. **Verify** — run targeted tests, then `npm test` and/or `npm run test:e2e` when scope warrants it.
+
+## Stack (do not fight it)
+
+| Layer | Tool | Location | Command |
+|-------|------|----------|---------|
+| Unit (pure logic) | Vitest + `node` env | `tests/unit/**` | `npm test` |
+| API handlers | Vitest + `h3` `createEvent` + mocks | `tests/api/**` | `npm test` |
+| Vue components | Vitest + `@nuxt/test-utils` `mountSuspended` | `tests/components/**` | `npm test` |
+| E2E smoke / flows | Playwright | `tests/e2e/**` | `npm run test:e2e` |
+| Config | `vitest.config.ts`, `playwright.config.ts` | repo root | — |
+| Fixtures | shared test data | `tests/fixtures/**` | — |
+
+Default Vitest environment is **nuxt** (see `vitest.config.ts`). Use `// @vitest-environment node` at the top of files that test server handlers or pure TS without Vue.
+
+## Where to test (decision matrix)
+
+| Code | Prefer | Why |
+|------|--------|-----|
+| `lib/**`, `utils/**` pure functions | **Unit** (`tests/unit/...`) | Fast, no I/O, table-driven cases |
+| `server/utils/**` (slug, diacritics, corpus) | **Unit** | Same; mock Prisma/FS only when needed |
+| `server/api/**` handlers | **API** (`tests/api/...`) | Assert status, query parsing, response shape; mock DB/corpus |
+| `components/**` props/emits/UI rules | **Component** (`tests/components/...`) | `mountSuspended`, `data-testid`, emitted events |
+| Critical user journeys (write search, nav) | **E2E** (`tests/e2e/...`) | Real build + browser; keep smoke small |
+| Composables with heavy Nuxt coupling | **Component** or thin unit extract | Prefer testing via component that uses composable |
+| Prisma queries inline in handlers | **API** with mocked `prisma` | Do not hit real DB in unit/API tests |
+| Auth / admin / payments | **API** + selective **E2E** | Status codes, forbidden paths, no secret leakage |
+
+**Skip or defer**: one-off scripts in `scripts/`, generated `.output/`, Storybook-only visual checks (see `storybook-agent`), trivial getters with no logic.
+
+## Discovery workflow
+
+When asked to add tests or improve coverage:
+
+1. **Read the source** — exports, branches, error paths, edge cases (empty input, Romanian diacritics, pagination).
+2. **Grep for existing tests** — `tests/**/*<name>*.test.ts` or `*.spec.ts`; extend before creating duplicates.
+3. **List gaps** — output a short plan:
+
+   ```
+   Target: server/api/words.get.ts
+   - [unit] already covered via wordCorpus tests
+   - [api] missing: invalid limit, max offset — add tests/api/words.get.test.ts cases
+   - [e2e] smoke already hits GET /api/words
+   ```
+
+4. **Prioritize**: validation & auth → parsing/normalization → happy path → edge cases.
+5. **Implement** highest-value gaps first; stop when meaningful coverage is achieved (not 100% line coverage for its own sake).
+
+## File layout
+
+Mirror source paths under `tests/`:
+
+```
+server/utils/slug.ts          → tests/unit/server/slug.test.ts
+utils/writeSearch.ts          → tests/unit/utils/writeSearch.test.ts
+lib/rhyme/rhymeEngine.ts      → tests/unit/lib/rhyme/rhymeEngine.test.ts
+server/api/words.get.ts       → tests/api/words.get.test.ts
+components/PaginationNav.vue    → tests/components/PaginationNav.test.ts
+```
+
+Shared fixtures → `tests/fixtures/` (see `lexicon.ts`).
+
+## Implementation patterns
+
+### Pure unit test
+
+```ts
+// @vitest-environment node
+import { describe, expect, it } from 'vitest'
+import { myFn } from '~/utils/myFn'
+
+describe('myFn', () => {
+  it('handles empty input', () => {
+    expect(myFn('')).toEqual([])
+  })
+})
+```
+
+### API handler test
+
+Follow `tests/api/words.get.test.ts`:
+
+- `vi.mock` server utils / prisma at module boundary
+- `createEvent` from `h3` with query string on `event.node.req.url`
+- Stub Nitro globals: `getQuery`, `createError`, `defineEventHandler`
+- Dynamic `import()` handler after mocks
+- Assert response objects and mock call args (not implementation details)
+
+### Component test
+
+Follow `tests/components/PaginationNav.test.ts` and `WriteSearchActions.test.ts`:
+
+- `mountSuspended(Component, { props })` from `@nuxt/test-utils/runtime`
+- Prefer `data-testid` selectors when present
+- `trigger('click')` + `wrapper.emitted('eventName')`
+- Test disabled/hidden/loading states
+
+### E2E test
+
+Follow `tests/e2e/smoke.spec.ts`:
+
+- `page.goto`, `getByRole`, `getByTestId`
+- Use `request` fixture for JSON API checks
+- Keep tests independent; avoid relying on seeded DB content unless CI seeds it
+- E2E runs **production build** via `playwright.config.ts` webServer (`npm run build:e2e`)
+
+## Romanian / domain specifics
+
+- Use **diacritic** cases in search/normalize tests (`ă`, `î`, `ș`, `ț`).
+- Lexicon/rhyme tests: use `tests/fixtures/lexicon.ts` or minimal inline `WordRecord` objects.
+- Write UI: search requires **≥2 letters** (`canSearch` / `write-search-btn` disabled state).
+
+## Running tests
+
+```bash
+# All unit + component + API
+npm test
+
+# Watch mode while iterating
+npm run test:watch
+
+# Single file
+npx vitest run tests/unit/utils/writeSearch.test.ts
+
+# E2E (builds app first — slow)
+npm run test:e2e
+
+# Single e2e file
+npx playwright test tests/e2e/smoke.spec.ts
+```
+
+CI (`.github/workflows/ci.yml`): `npm test` then `npm run test:e2e` with Postgres + env vars. Do not require local Postgres for unit/API tests.
+
+## Anti-patterns
+
+- Hitting production DB or external APIs in unit/component tests.
+- Giant e2e tests that duplicate API contract tests.
+- Testing Nuxt auto-import wiring instead of behavior.
+- Snapshotting entire pages without stable selectors.
+- Adding tests with no assertions or only `toBeTruthy()` on complex objects.
+- Committing `.output/`, `playwright-report/`, or `test-results/`.
+- Changing production behavior solely to make tests pass without user approval.
+
+## Output style
+
+When reporting work:
+
+1. **Coverage plan** (what you chose to test and why).
+2. **Files added/changed** under `tests/`.
+3. **Commands run** and pass/fail summary.
+4. **Remaining gaps** (optional, concise) if you intentionally deferred low-value cases.
+
+Match existing test style: `describe` + `it`, no unnecessary comments, TypeScript throughout.

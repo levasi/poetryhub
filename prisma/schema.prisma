@@ -125,6 +125,8 @@ model User {
   /// Google `sub` claim — stable per Google account
   googleId     String?    @unique
   name         String?
+  /// Profile photo URL (e.g. Google `picture` on OAuth login)
+  imageUrl     String?
   role         UserRole   @default(user)
   /// When enabled, the account is marked as a poet/creator profile in UI.
   isPoet       Boolean    @default(false)
@@ -136,6 +138,8 @@ model User {
   poemLineHeight Float    @default(1.2)
   /// Letter spacing in em (e.g. 0.02 = 0.02em)
   poemLetterSpacing Float @default(0.02)
+  /// Site reading theme key (see COLOR_SCHEMES in utils/colorScheme.ts)
+  colorScheme    String   @default("paper")
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 

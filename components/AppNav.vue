@@ -95,9 +95,17 @@ const { showLanguageSwitch } = useSiteSettings()
 
         <div v-else ref="userMenuRef" class="relative">
           <button type="button"
-            class="flex min-h-[2.25rem] items-center gap-2 rounded-full border border-edge-subtle bg-surface-raised px-3 py-1.5 text-sm text-content-secondary transition hover:border-edge"
+            class="flex min-h-[2.25rem] items-center gap-2 rounded-full border border-edge-subtle bg-surface-raised p-1 text-sm text-content-secondary transition hover:border-edge"
             @click="userMenuOpen = !userMenuOpen">
+            <img
+              v-if="user?.imageUrl"
+              :src="user.imageUrl"
+              :alt="displayName"
+              referrerpolicy="no-referrer"
+              class="h-6 w-6 rounded-full object-cover"
+            />
             <span
+              v-else
               class="flex h-6 w-6 items-center justify-center rounded-full bg-brand text-xs font-bold text-brand-foreground">
               {{ initials }}
             </span>
@@ -156,11 +164,9 @@ const { showLanguageSwitch } = useSiteSettings()
 
       <!-- Mobile: menu above language/settings -->
       <div class="flex flex-col items-end gap-2 md:hidden">
-        <button
-          type="button"
+        <button type="button"
           class="flex min-h-[2.75rem] min-w-[2.75rem] items-center justify-center bg-surface-raised p-2 text-content-muted"
-          :aria-expanded="mobileOpen"
-          :aria-label="mobileOpen ? t('a11y.closeMenu') : t('a11y.openMenu')"
+          :aria-expanded="mobileOpen" :aria-label="mobileOpen ? t('a11y.closeMenu') : t('a11y.openMenu')"
           @click="mobileOpen = !mobileOpen">
           <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path v-if="!mobileOpen" stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />

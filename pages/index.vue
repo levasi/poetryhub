@@ -67,11 +67,13 @@ interface AuthorPagePayload {
   }
 }
 
+type AuthorPageData = AuthorPagePayload | { readonly idle: true }
+
 const { data: authorPage, pending: authorPending, error: authorError } = await useAsyncData(
   'home-author-feed',
-  async () => {
+  async (): Promise<AuthorPageData> => {
     const slug = authorSlug.value
-    if (!slug) return null
+    if (!slug) return { idle: true }
     return $fetch<AuthorPagePayload>(`/api/authors/${encodeURIComponent(slug)}`, {
       query: { limit: 12, page: authorFeedPage.value },
     })
@@ -81,7 +83,7 @@ const { data: authorPage, pending: authorPending, error: authorError } = await u
 
 const authorPoemsForCards = computed((): Poem[] => {
   const page = authorPage.value
-  if (!page?.author) return []
+  if (!page || 'idle' in page || !page.author) return []
   const a = page.author
   const authorMini = {
     id: a.id,
@@ -242,7 +244,7 @@ function formatDate(iso: string) {
                 </button>
               </div>
 
-              <template v-else-if="authorPage">
+              <template v-else-if="authorPage && !('idle' in authorPage)">
                 <button type="button"
                   class="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-content-secondary transition hover:text-content"
                   @click="clearHomeAuthor">
@@ -332,20 +334,21 @@ function formatDate(iso: string) {
 
             <!-- Default feed: For you / Featured -->
             <template v-else>
-              <div v-if="!dbNoticeDismissed"
-                class="mb-6 flex items-start justify-between gap-4 rounded-xl border border-edge-subtle bg-surface-subtle/50 p-4 text-sm text-content-secondary">
-                <p class="min-w-0">
-                  {{ t('home.dbNotice') }}
-                </p>
-                <button type="button"
-                  class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-edge-subtle bg-surface-raised text-content-muted shadow-sm transition hover:border-edge hover:bg-surface-page hover:text-content"
-                  aria-label="Închide" title="Închide" @click="dismissDbNotice">
-                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
+              <Alert v-if="!dbNoticeDismissed" variant="info" class="mb-6">
+                <template #icon>
+                  <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
                     aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                </button>
-              </div>
+                </template>
+                <AlertDescription>
+                  {{ t('home.dbNotice') }}
+                </AlertDescription>
+                <AlertAction>
+                  <CloseButton :label="t('home.dismissDbNotice')" @click="dismissDbNotice" />
+                </AlertAction>
+              </Alert>
               <!-- Tabs (Medium-style) -->
               <div
                 class="sticky z-10 -mx-1 mb-8 flex flex-wrap items-end gap-4 border-b border-edge-subtle bg-surface-page/90 px-1 pb-0 pt-1 backdrop-blur-md top-[3.25rem] md:top-16">

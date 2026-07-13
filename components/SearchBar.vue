@@ -54,15 +54,11 @@ onMounted(() => {
     />
 
     <!-- Clear button -->
-    <button
+    <CloseButton
       v-if="value"
-      type="button"
-      class="absolute right-4 top-1/2 -translate-y-1/2 text-content-soft hover:text-content-secondary"
+      class="absolute right-3 top-1/2 -translate-y-1/2"
+      :label="t('search.clear')"
       @click="clear"
-    >
-      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-      </svg>
-    </button>
+    />
   </form>
 </template>

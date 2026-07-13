@@ -1,4 +1,7 @@
-export default defineNuxtPlugin(() => {
-  const { hydrate } = useColorScheme()
-  hydrate()
+export default defineNuxtPlugin({
+  name: 'color-scheme',
+  dependsOn: ['auth'],
+  setup() {
+    useColorScheme()
+  },
 })

@@ -2,6 +2,8 @@
 import type { SearchMode } from '~/lib/rhyme/wordQueries'
 import { Icon } from '@iconify/vue'
 import WriteLyricsEditor from '~/components/write/LyricsEditor.vue'
+import WriteSearchActions from '~/components/write/WriteSearchActions.vue'
+import { searchableTerms as pickSearchableTerms } from '~/utils/writeSearch'
 
 definePageMeta({
   layout: 'default',
@@ -45,8 +47,6 @@ interface SearchQueryRow {
 /** Unul sau mai multe câmpuri de căutare; rezultatele se unesc (fără duplicate). */
 const searchQueries = ref<SearchQueryRow[]>([{ id: ++nextSearchQueryId, text: '' }])
 
-const RO_DIACRITICS = ['ă', 'â', 'î', 'ș', 'ț'] as const
-
 const activeSearchIndex = ref(0)
 const searchInputEls = ref<(HTMLInputElement | null)[]>([])
 
@@ -77,15 +77,9 @@ function nonEmptySearchTerms(): string[] {
   return searchQueries.value.map((r) => r.text.trim()).filter(Boolean)
 }
 
-const MIN_SEARCH_LETTERS = 2
-
-function letterCount(s: string): number {
-  return [...s.normalize('NFC')].filter((ch) => /\p{L}/u.test(ch)).length
-}
-
-/** Terms with at least {@link MIN_SEARCH_LETTERS} letters — avoids noisy single-letter lookups. */
+/** Terms with at least 2 letters — avoids noisy single-letter lookups. */
 function searchableTerms(): string[] {
-  return nonEmptySearchTerms().filter((term) => letterCount(term) >= MIN_SEARCH_LETTERS)
+  return pickSearchableTerms(searchQueries.value)
 }
 
 const canSearch = computed(() => searchableTerms().length > 0)
@@ -736,22 +730,12 @@ onUnmounted(() => {
                   <Icon icon="heroicons:plus" class="h-5 w-5 shrink-0 text-current" aria-hidden="true" />
                 </button>
               </div>
-              <div class="mt-2 flex flex-wrap items-center gap-1.5" role="group"
-                :aria-label="t('write.diacriticsAria')">
-                <button v-for="ch in RO_DIACRITICS" :key="ch" type="button"
-                  class="inline-flex min-h-[2.25rem] min-w-[2.25rem] items-center justify-center rounded-lg border border-edge-subtle bg-surface-subtle px-2.5 py-1 text-base font-medium text-content transition hover:border-edge hover:bg-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35"
-                  :title="t('write.insertDiacritic', { char: ch })"
-                  :aria-label="t('write.insertDiacritic', { char: ch })" @mousedown.prevent
-                  @click="insertDiacritic(ch)">
-                  {{ ch }}
-                </button>
-              </div>
-              <button type="button"
-                class="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-brand-foreground shadow-sm transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/45 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-raised disabled:cursor-not-allowed disabled:opacity-50 lg:w-auto"
-                :disabled="loading || !canSearch" @click="runSearch">
-                <Icon icon="heroicons:magnifying-glass" class="h-5 w-5 shrink-0" aria-hidden="true" />
-                {{ t('write.searchBtn') }}
-              </button>
+              <WriteSearchActions
+                :can-search="canSearch"
+                :loading="loading"
+                @search="runSearch"
+                @insert-diacritic="insertDiacritic"
+              />
             </div>
           </div>
         </div>
@@ -854,13 +838,7 @@ onUnmounted(() => {
             class="relative z-10 w-full max-w-lg rounded-t-2xl border border-edge-subtle bg-surface-raised shadow-ds-popover sm:rounded-ds-xl">
             <div class="flex items-center justify-between border-b border-edge-subtle px-6 py-4">
               <h2 class="text-base font-semibold text-content">{{ t('write.publishTitle') }}</h2>
-              <button type="button"
-                class="rounded-lg p-1.5 text-content-soft hover:bg-surface-subtle hover:text-content-secondary"
-                @click="closePublish">
-                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+              <CloseButton :label="t('a11y.close')" @click="closePublish" />
             </div>
 
             <div class="max-h-[80vh] overflow-y-auto px-6 py-5">
@@ -972,14 +950,7 @@ onUnmounted(() => {
               <h2 id="poet-switch-title" class="text-base font-semibold text-content">
                 {{ t('write.poetSwitchTitle') }}
               </h2>
-              <button type="button"
-                class="rounded-lg p-1.5 text-content-soft hover:bg-surface-subtle hover:text-content-secondary"
-                @click="closePoetSwitch">
-                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
-                  aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+              <CloseButton :label="t('a11y.close')" @click="closePoetSwitch" />
             </div>
 
             <div class="px-6 py-5">
@@ -1015,14 +986,11 @@ onUnmounted(() => {
         <h2 id="word-def-tooltip-title" class="font-display text-base font-semibold text-content">
           {{ defPop.hit.word }}
         </h2>
-        <button type="button"
-          class="-mt-1 -mr-1 rounded-lg p-1.5 text-content-soft hover:bg-surface-subtle hover:text-content-secondary"
-          aria-label="Închide" @click="closeWordDefinition">
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
-            aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
+        <CloseButton
+          class="-mt-1 -mr-1"
+          :label="t('a11y.close')"
+          @click="closeWordDefinition"
+        />
       </div>
 
       <div class="mt-3 text-sm leading-relaxed text-content-secondary">

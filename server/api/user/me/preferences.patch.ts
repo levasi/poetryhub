@@ -2,6 +2,7 @@
 import { z } from 'zod'
 import { prisma } from '~/server/utils/prisma'
 import { requireUser } from '~/server/utils/auth'
+import { COLOR_SCHEMES } from '~/utils/colorScheme'
 
 const schema = z.object({
   poemFontFamily: z
@@ -25,6 +26,7 @@ const schema = z.object({
   poemFontSize: z.number().int().min(16).max(48).optional(),
   poemLineHeight: z.number().min(1).max(2.5).optional(),
   poemLetterSpacing: z.number().min(0).max(0.3).optional(),
+  colorScheme: z.enum(COLOR_SCHEMES).optional(),
 })
 
 export default defineEventHandler(async (event) => {
@@ -43,6 +45,7 @@ export default defineEventHandler(async (event) => {
       poemFontSize: u.poemFontSize,
       poemLineHeight: u.poemLineHeight,
       poemLetterSpacing: u.poemLetterSpacing,
+      colorScheme: u.colorScheme,
     }
   }
 
@@ -54,6 +57,7 @@ export default defineEventHandler(async (event) => {
       poemFontSize: true,
       poemLineHeight: true,
       poemLetterSpacing: true,
+      colorScheme: true,
     },
   })
 })

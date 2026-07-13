@@ -14,7 +14,7 @@ const preview: Preview = {
   decorators: [
     () => ({
       template:
-        '<div class="min-w-[16rem] bg-surface-page p-6 text-content" data-color-scheme="parchment"><story /></div>',
+        '<div class="min-w-[16rem] bg-surface-page p-6 text-content" data-color-scheme="paper"><story /></div>',
     }),
   ],
 }

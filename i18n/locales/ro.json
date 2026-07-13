@@ -220,6 +220,7 @@
     "sidebarLikedMissing": "Unele favorite nu mai sunt în bibliotecă.",
     "sidebarAuthorsHeading": "Autori",
     "dbNotice": "Baza de date cu poezii este în actualizare continuă. Orice inconsistență sau eroare va fi corectată — te rugăm sǎ o raportezi la e-mailul din footer.",
+    "dismissDbNotice": "Închide",
     "staffPicksTitle": "Recente",
     "topicsTitle": "Teme recomandate",
     "featuredEmpty": "Încă nu există poezii cu aprecieri. Apasă inima pe carduri pentru favorite — apar aici în ordinea popularității.",
@@ -320,6 +321,7 @@
   "search": {
     "title": "Căutare",
     "placeholder": "Caută poezii, autori, teme…",
+    "clear": "Șterge căutarea",
     "noResults": "Nu s-au găsit poezii pentru „{q}”",
     "tryBrowse": "Încearcă alte cuvinte sau răsfoiește după",
     "category": "categorie",
@@ -468,6 +470,7 @@
   "a11y": {
     "openMenu": "Deschide meniul",
     "closeMenu": "Închide meniul",
+    "close": "Închide",
     "closeFilters": "Închide filtrele",
     "poemNavigation": "Poezii alăturate în colecție"
   },

@@ -2,11 +2,7 @@
 import { COLOR_SCHEMES, type ColorSchemeId, useColorScheme } from '~/composables/useColorScheme'
 
 const { t } = useI18n()
-const { scheme, applyScheme, hydrate } = useColorScheme()
-
-onMounted(() => {
-  hydrate()
-})
+const { scheme, applyScheme } = useColorScheme()
 
 const labels: Record<ColorSchemeId, string> = {
   paper: 'colorScheme.paper',

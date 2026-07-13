@@ -1,17 +1,25 @@
-export const COLOR_SCHEMES = ['paper', 'ink', 'sepia', 'qi', 'historic', 'parchment'] as const
-export type ColorSchemeId = (typeof COLOR_SCHEMES)[number]
+import type { AuthUser } from '~/composables/useAuth'
+import {
+  COLOR_SCHEMES,
+  DEFAULT_COLOR_SCHEME,
+  isColorSchemeId,
+  type ColorSchemeId,
+} from '~/utils/colorScheme'
+
+export { COLOR_SCHEMES, isColorSchemeId, type ColorSchemeId } from '~/utils/colorScheme'
 
 const STORAGE_KEY = 'ph-color-scheme'
 
-export function isColorSchemeId(v: string): v is ColorSchemeId {
-  return (COLOR_SCHEMES as readonly string[]).includes(v)
+function schemeFromUser(u: AuthUser | null): ColorSchemeId | null {
+  if (!u?.colorScheme || !isColorSchemeId(u.colorScheme)) return null
+  return u.colorScheme
 }
 
 export function useColorScheme() {
-  const scheme = useState<ColorSchemeId>('color_scheme', () => 'parchment')
+  const { user, isLoggedIn } = useAuth()
+  const scheme = useState<ColorSchemeId>('color_scheme', () => DEFAULT_COLOR_SCHEME)
 
-  function applyScheme(id: ColorSchemeId) {
-    scheme.value = id
+  function applyToDom(id: ColorSchemeId) {
     if (!import.meta.client) return
     document.documentElement.setAttribute('data-color-scheme', id)
     try {
@@ -19,6 +27,12 @@ export function useColorScheme() {
     } catch {
       /* ignore quota / private mode */
     }
+  }
+
+  function applyScheme(id: ColorSchemeId) {
+    scheme.value = id
+    applyToDom(id)
+    scheduleSaveToAccount()
   }
 
   /** Sync Vue state from DOM (set by inline script before paint) or localStorage */
@@ -40,5 +54,48 @@ export function useColorScheme() {
     }
   }
 
-  return { scheme, applyScheme, hydrate }
+  function syncFromUserOrLocal() {
+    const fromUser = schemeFromUser(user.value)
+    if (fromUser) {
+      scheme.value = fromUser
+      applyToDom(fromUser)
+      return
+    }
+    hydrate()
+  }
+
+  let saveTimer: ReturnType<typeof setTimeout> | null = null
+  async function saveToAccount() {
+    if (!isLoggedIn.value) return
+    try {
+      await $fetch('/api/user/me/preferences', {
+        method: 'PATCH',
+        body: { colorScheme: scheme.value },
+      })
+      if (user.value) {
+        user.value = { ...user.value, colorScheme: scheme.value }
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function scheduleSaveToAccount() {
+    if (!isLoggedIn.value) return
+    if (saveTimer) clearTimeout(saveTimer)
+    saveTimer = setTimeout(() => {
+      saveTimer = null
+      void saveToAccount()
+    }, 450)
+  }
+
+  watch(
+    () => user.value,
+    () => {
+      syncFromUserOrLocal()
+    },
+    { immediate: true },
+  )
+
+  return { scheme, applyScheme, hydrate, syncFromUserOrLocal }
 }

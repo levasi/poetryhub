@@ -5,6 +5,8 @@ export interface AuthUser {
   id: string
   email: string
   name?: string
+  /** Profile photo (e.g. Google avatar after OAuth login) */
+  imageUrl?: string | null
   /** Set in DB; JWT refreshed on login */
   role?: Role
   /** User profile flag (DB: User.isPoet) */
@@ -14,6 +16,7 @@ export interface AuthUser {
   poemFontSize?: number
   poemLineHeight?: number
   poemLetterSpacing?: number
+  colorScheme?: string
   /** False for Google-only accounts until they set a password */
   hasPassword?: boolean
 }

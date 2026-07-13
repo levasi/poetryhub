@@ -10,6 +10,7 @@ export default defineEventHandler(async (event) => {
     id: row.id,
     email: row.email,
     name: row.name,
+    imageUrl: row.imageUrl,
     role: row.role,
     isPoet: row.isPoet,
     createdAt: row.createdAt,
@@ -18,5 +19,6 @@ export default defineEventHandler(async (event) => {
     poemFontSize: row.poemFontSize,
     poemLineHeight: row.poemLineHeight,
     poemLetterSpacing: row.poemLetterSpacing,
+    colorScheme: row.colorScheme,
   }
 })

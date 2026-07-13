@@ -345,13 +345,10 @@ watchEffect((onCleanup) => {
               <p v-if="readerAuthor" class="mt-1 truncate text-sm text-content-secondary">{{ readerAuthor.name }}</p>
             </div>
             <div class="flex shrink-0 items-center gap-0.5">
-              <button type="button"
-                class="rounded-ds-md p-2 text-content-muted transition-colors hover:bg-surface-subtle hover:text-content"
-                :aria-label="t('card.quickReadClose')" @click="closeQuickRead">
-                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+              <CloseButton
+                :label="t('card.quickReadClose')"
+                @click="closeQuickRead"
+              />
             </div>
           </header>
 

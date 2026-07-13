@@ -2,7 +2,21 @@
 import { defineNuxtModule } from '@nuxt/kit'
 import { defu } from 'defu'
 import { resolve } from 'node:path'
+import autoprefixer from 'autoprefixer'
+import tailwindcss from 'tailwindcss'
 import { CAROUSEL_DEFAULTS_ADMIN_EMAIL } from './utils/carouselDefaultsAdmin'
+
+const tailwindConfigPath = resolve(process.cwd(), 'tailwind.config.ts')
+
+function applyTailwindPostcss(config: { css?: { postcss?: unknown } }) {
+  config.css ??= {}
+  config.css.postcss = {
+    plugins: [
+      tailwindcss({ config: tailwindConfigPath }),
+      autoprefixer(),
+    ],
+  }
+}
 
 /** Nitro virtual imports are not real package exports; they must be bundled, not loaded by Node. */
 const BUNDLE_NOT_EXTERNAL = ['nitropack/runtime', 'nitro/runtime'] as const
@@ -187,8 +201,7 @@ export default defineNuxtConfig({
 
   // Keep current; bump occasionally per https://nuxt.com/docs/guide/going-further/features#compatibilitydate
   compatibilityDate: '2025-11-01',
-  // Opt in: NUXT_DEVTOOLS=true nuxt dev
-  devtools: { enabled: process.env.NUXT_DEVTOOLS === 'true' },
+  devtools: { enabled: true },
 
   // Nuxt marks `nitropack/runtime` as Rollup external for the SSR server chunk. Node then loads
   // nitropack/dist/runtime/internal/app.mjs directly, which imports #nitro-internal-virtual/* — those
@@ -196,10 +209,12 @@ export default defineNuxtConfig({
   // Bundling nitropack into the server output avoids raw runtime imports (common on Node 20–24).
   hooks: {
     'vite:extendConfig'(config, ctx) {
+      applyTailwindPostcss(config)
       if (!ctx.isServer) return
       patchServerViteConfig(config)
     },
     'vite:configResolved'(config, ctx) {
+      applyTailwindPostcss(config)
       if (!ctx.isServer) return
       patchServerViteConfig(config)
     },
@@ -243,8 +258,10 @@ export default defineNuxtConfig({
   },
 
   storybook: {
-    host: 'http://localhost',
+    host: 'http://127.0.0.1',
     port: 6006,
+    // Run Storybook standalone: `npm run storybook` (includes its own Nuxt context).
+    enabled: false,
   },
 
   i18n: {
@@ -261,7 +278,7 @@ export default defineNuxtConfig({
     detectBrowserLanguage: false,
   },
 
-  css: ['~/assets/css/main.css'],
+  // main.css is injected by @nuxtjs/tailwindcss via tailwindcss.cssPath
 
   // Runtime config — public values exposed to client, private to server only
   runtimeConfig: {
@@ -311,7 +328,7 @@ export default defineNuxtConfig({
   app: {
     head: {
       title: 'PoetryHub — Citește, descoperă și împărtășește poezie',
-      htmlAttrs: { lang: 'ro', 'data-color-scheme': 'parchment' },
+      htmlAttrs: { lang: 'ro', 'data-color-scheme': 'paper' },
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },

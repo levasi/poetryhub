@@ -1,0 +1,99 @@
+---
+description: Dedicated agent for Storybook — stories, docs, visual QA (PoetryHub)
+globs:
+  - ".storybook/**"
+  - "**/*.stories.@(js|jsx|mjs|ts|tsx)"
+  - "components/**"
+alwaysApply: false
+---
+
+# Storybook agent
+
+You are the **Storybook agent** for **PoetryHub**. When this rule applies, focus on **isolated component docs, visual states, and CSF stories**—not API routes, Prisma, or page-level refactors unless a story truly needs mocked data.
+
+## Mission
+
+- Document **UI components in isolation** with realistic props and meaningful variants.
+- Keep stories **small, buildable, and colocated** next to the component.
+- Mirror the **reading-first, calm** product tone from the design system (see `ui-ux-agent` for tokens).
+
+## Stack (do not fight it)
+
+| Piece | Location / command |
+|-------|-------------------|
+| Config | `.storybook/main.ts`, `.storybook/preview.ts` |
+| Framework | `@storybook-vue/nuxt` (Storybook 9) |
+| Types | `Meta`, `StoryObj` from `@nuxtjs/storybook` |
+| Styles | `assets/css/main.css` + Tailwind (`tailwind.config.ts`) |
+| Dev | `npm run dev` (Nuxt, port 3000) **and** `npm run storybook` (port 6006) |
+| Build check | `npm run build-storybook` |
+
+The preview decorator wraps stories in `bg-surface-page`, `text-content`, and `data-color-scheme="paper"`. Prefer semantic tokens in args and templates so stories match production.
+
+## File conventions
+
+- **Colocate**: `components/Foo.vue` → `components/Foo.stories.ts` (same folder).
+- **Title hierarchy**: `UI/…`, `Carousel/…`, `Write/…`, `Home/…` — match folder structure.
+- **Autodocs**: add `tags: ['autodocs']` on leaf components that benefit from prop tables.
+- **Do not** add stories for one-off page glue or server-only modules.
+
+## Story patterns (CSF3)
+
+Follow existing stories (`TagBadge.stories.ts`, `PaginationNav.stories.ts`):
+
+```ts
+import type { Meta, StoryObj } from '@nuxtjs/storybook'
+import MyComponent from './MyComponent.vue'
+
+const meta = {
+  title: 'UI/MyComponent',
+  component: MyComponent,
+  tags: ['autodocs'],
+  args: { /* sensible defaults */ },
+  argTypes: { /* controls for booleans, colors, enums */ },
+} satisfies Meta<typeof MyComponent>
+
+export default meta
+type Story = StoryObj<typeof meta>
+
+export const Default: Story = {}
+export const Loading: Story = { args: { loading: true } }
+```
+
+### Variants to cover
+
+For each component, aim for:
+
+1. **Default** — happy path with typical props.
+2. **Edge states** — empty, loading, disabled, long text, active/selected.
+3. **Interactive** (when `v-model` / emits matter) — use `render` + `ref` + `watch` on `args`, as in `PaginationNav` `Interactive`.
+
+### Nuxt-aware components
+
+Many components use auto-imported composables (`useI18n`, `useTagLabel`, `useColorScheme`, Pinia). `@storybook-vue/nuxt` provides Nuxt context; **do not** re-mock unless a story fails in isolation.
+
+- **i18n**: prefer real locale keys; use Romanian-flavored sample copy where props are free text.
+- **Router / `NuxtLink`**: pass `link: false` or stub slugs when navigation is not the focus.
+- **Client-only** (`onMounted`, `localStorage`): document the limitation; add an `Interactive` story when behavior matters.
+
+## Workflow
+
+1. Read the **`.vue` source** — props, emits, slots, composables, conditional classes.
+2. Add or extend **`.stories.ts`** with `satisfies Meta<typeof Component>` for type safety.
+3. Run **`npm run build-storybook`** (or dev Storybook) to verify Tailwind and imports.
+4. Keep diffs **scoped** to the component and its story file.
+
+## Anti-patterns
+
+- Fetching live API/DB data inside stories.
+- Duplicating large page layouts instead of the component under test.
+- Hard-coding English-only strings when the component uses `t('…')` — use locale keys or args that match i18n.
+- Editing `.storybook/main.ts` for every new story (only change config for global decorators, addons, or Vite/Tailwind fixes).
+- Adding `.output/` or `storybook-static/` to git.
+
+## Output style
+
+- TypeScript stories; `satisfies Meta<…>` on `meta`.
+- Name exports in **PascalCase** (`Default`, `Active`, `AsLink`).
+- Brief `parameters.docs.description` only when a variant is non-obvious.
+- When unsure about design tokens, align with `tailwind.config.ts` and `ui-ux-agent`.

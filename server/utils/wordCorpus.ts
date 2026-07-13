@@ -200,3 +200,12 @@ export function searchLexiconPaged(
     hasMore: safeOffset + safeLimit < all.length,
   }
 }
+
+/** Reset in-memory corpus — for unit tests only. */
+export function resetWordCorpusForTests(words: WordRecord[] | null = null) {
+  corpus = words
+  fuse = null
+  mergedSearchCache = null
+  loadedAt = words ? Date.now() : 0
+  loadInFlight = null
+}

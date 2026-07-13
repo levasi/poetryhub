@@ -74,25 +74,37 @@ export default defineEventHandler(async (event) => {
 
   const email = info.email.trim().toLowerCase()
 
+  const picture = info.picture?.trim() || null
+
   let user = await prisma.user.findUnique({ where: { googleId: info.sub } })
   if (!user) {
     const byEmail = await prisma.user.findUnique({ where: { email } })
     if (byEmail) {
       user = await prisma.user.update({
         where: { id: byEmail.id },
-        data: { googleId: info.sub },
+        data: {
+          googleId: info.sub,
+          ...(picture ? { imageUrl: picture } : {}),
+          ...(info.name && !byEmail.name ? { name: info.name } : {}),
+        },
       })
     } else {
       user = await prisma.user.create({
         data: {
           email,
           name: info.name ?? null,
+          imageUrl: picture,
           googleId: info.sub,
           passwordHash: null,
           role: UserRole.user,
         },
       })
     }
+  } else if (picture) {
+    user = await prisma.user.update({
+      where: { id: user.id },
+      data: { imageUrl: picture },
+    })
   }
 
   const token = await signUserToken({
