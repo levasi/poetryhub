@@ -16,6 +16,8 @@
     "dev:tools": "NUXT_DEVTOOLS=true nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build -o storybook-static",
     "postinstall": "nuxt prepare && node scripts/patch-nitropack-node-imports.mjs",
     "vercel:link": "bash scripts/vercel-cli.sh link",
     "env:pull:prod": "bash scripts/vercel-cli.sh env pull .env.local --environment=production --yes",
@@ -60,6 +62,9 @@
   },
   "devDependencies": {
     "@iconify-json/heroicons": "^1.2.3",
+    "@nuxtjs/storybook": "^9.0.1",
+    "@storybook/addon-docs": "~9.0.5",
+    "@storybook/addon-links": "~9.0.5",
     "@types/bcryptjs": "^2.4.6",
     "@types/google.maps": "^3.58.1",
     "@types/jszip": "^3.4.0",
@@ -67,6 +72,7 @@
     "better-sqlite3": "^11.7.0",
     "dotenv": "^16.4.5",
     "prisma": "^5.22.0",
+    "storybook": "~9.0.5",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"
   }

@@ -13,6 +13,8 @@ export default {
     './plugins/**/*.{js,ts}',
     './app.vue',
     './error.vue',
+    './components/**/*.stories.@(js|jsx|ts|tsx)',
+    './.storybook/**/*.{js,ts}',
   ],
   theme: {
     extend: {

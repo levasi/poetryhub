@@ -235,7 +235,17 @@ export default defineNuxtConfig({
     viteEnvironmentApi: false,
   },
 
-  modules: [poetryhubNitroRuntimeCache, '@pinia/nuxt', '@nuxtjs/tailwindcss', '@nuxtjs/i18n'],
+  modules: [poetryhubNitroRuntimeCache, '@pinia/nuxt', '@nuxtjs/tailwindcss', '@nuxtjs/i18n', '@nuxtjs/storybook'],
+
+  tailwindcss: {
+    configPath: 'tailwind.config.ts',
+    cssPath: '~/assets/css/main.css',
+  },
+
+  storybook: {
+    host: 'http://localhost',
+    port: 6006,
+  },
 
   i18n: {
     locales: [
