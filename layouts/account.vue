@@ -129,7 +129,5 @@ const displayName = computed(() => user.value?.name || user.value?.email?.split(
         <slot />
       </main>
     </div>
-
-    <AppFooter class="hidden md:block" />
   </div>
 </template>
