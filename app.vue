@@ -9,7 +9,7 @@ useHead({
 </script>
 
 <template>
-  <div class="min-h-screen w-full bg-surface-page text-content antialiased">
+  <div class="min-h-screen w-full min-w-0 overflow-x-clip bg-surface-page text-content antialiased">
     <PageLoadingOverlay />
     <NuxtLayout>
       <NuxtPage />

@@ -25,7 +25,7 @@ const favorites = computed(() => {
 </script>
 
 <template>
-  <div class="animate-fade-in">
+  <div class="animate-fade-in min-w-0">
     <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div>
         <h1 class="font-serif text-3xl font-bold text-content">{{ t('favorites.title') }}</h1>

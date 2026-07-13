@@ -118,7 +118,7 @@ watchEffect((onCleanup) => {
 
 <template>
   <Teleport to="body">
-    <aside ref="panelEl" class="fixed inset-x-0 bottom-0 z-[211] w-full transition-[max-height] duration-300 ease-out"
+    <aside ref="panelEl" class="fixed inset-x-0 bottom-0 z-[211] w-full pb-[env(safe-area-inset-bottom,0px)] transition-[max-height] duration-300 ease-out"
       :class="open
         ? 'bg-surface-overlay shadow-2xl ring-1 ring-edge-subtle/60'
         : 'bg-transparent shadow-none ring-0'" role="dialog" aria-modal="false" :aria-labelledby="id('title')"
@@ -138,7 +138,7 @@ watchEffect((onCleanup) => {
         </div>
       </div>
 
-      <div class="mx-auto w-full max-w-content p-2">
+      <div class="mx-auto w-full max-w-content p-4 md:p-2">
         <!-- Controls (only when open) -->
         <div v-show="open" class="max-h-[calc(24rem-3.25rem)] overflow-y-auto">
           <div class="mb-4 border-b border-edge-subtle pb-4">

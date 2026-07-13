@@ -2,6 +2,7 @@
 import { displayNationality } from '~/utils/nationality'
 import type { Poem } from '~/composables/usePoems'
 import { authorAvatarUrl } from '~/utils/authorAvatar'
+import { READER_SETTINGS_RAIL_CLEARANCE } from '~/utils/pageShell'
 
 definePageMeta({
   layout: 'fullwidth',
@@ -131,6 +132,9 @@ interface HomePayload {
 
 const { data: home, pending: homePending } = await useFetch<HomePayload>('/api/home')
 
+/** Poems per “Pentru tine” page (initial load + each “Încarcă mai multe”). */
+const FOR_YOU_PAGE_SIZE = 12
+
 /** Same seed for the whole SPA session until full reload — avoids reshuffling “For you” on every revisit to `/`. */
 const forYouSeed = useState<number>('home-for-you-seed', () => Date.now())
 
@@ -141,7 +145,7 @@ const { data: forYouRes, pending: forYouPending } = await useAsyncData(
   'home-for-you',
   () =>
     $fetch<{ data: Poem[]; meta: ForYouApiMeta }>('/api/home/for-you', {
-      query: { limit: 5, seed: forYouSeed.value },
+      query: { limit: FOR_YOU_PAGE_SIZE, seed: forYouSeed.value },
     }),
   {
     /** Reuse Nitro payload when navigating back to home — no duplicate fetch + same poems. */
@@ -155,7 +159,7 @@ const { data: forYouRes, pending: forYouPending } = await useAsyncData(
 const forYouPoems = useState<Poem[]>('home-for-you-poems', () => [])
 const forYouMeta = useState<ForYouApiMeta>('home-for-you-meta', () => ({
   total: 0,
-  limit: 5,
+  limit: FOR_YOU_PAGE_SIZE,
   exclude: 0,
   hasMore: true,
 }))
@@ -179,7 +183,7 @@ async function loadMoreForYou() {
     const exclude = forYouPoems.value.map((p) => p.id).join(',')
     const res = await $fetch<{ data: Poem[]; meta: { limit: number; total: number; exclude: number; hasMore: boolean } }>(
       '/api/home/for-you',
-      { query: { limit: 5, seed: Date.now(), exclude } },
+      { query: { limit: FOR_YOU_PAGE_SIZE, seed: Date.now(), exclude } },
     )
     const seen = new Set(forYouPoems.value.map((p) => p.id))
     for (const p of res.data) {
@@ -194,7 +198,69 @@ async function loadMoreForYou() {
   }
 }
 
-const feedTab = ref<'foryou' | 'staff'>('foryou')
+const feedTab = ref<'foryou' | 'newest' | 'staff'>('foryou')
+
+type PoemsListMeta = { page: number; limit: number; total: number; totalPages: number }
+
+const newestPage = ref(1)
+const newestPoems = useState<Poem[]>('discover-newest-poems', () => [])
+const newestMeta = useState<PoemsListMeta>('discover-newest-meta', () => ({
+  page: 1,
+  limit: 12,
+  total: 0,
+  totalPages: 1,
+}))
+const newestLoadingMore = ref(false)
+
+const { data: newestRes, pending: newestPending } = await useAsyncData(
+  'discover-newest',
+  () =>
+    $fetch<{ data: Poem[]; meta: PoemsListMeta }>('/api/poems', {
+      query: { limit: 12, page: 1 },
+    }),
+  {
+    getCachedData(key) {
+      return nuxtApp.payload.data[key] ?? nuxtApp.static?.data[key]
+    },
+  },
+)
+
+watch(
+  newestRes,
+  (v) => {
+    if (!v?.data) return
+    newestPoems.value = v.data
+    newestMeta.value = v.meta
+    newestPage.value = v.meta.page
+  },
+  { immediate: true },
+)
+
+async function loadMoreNewest() {
+  if (newestLoadingMore.value || newestPage.value >= newestMeta.value.totalPages) return
+  newestLoadingMore.value = true
+  try {
+    const nextPage = newestPage.value + 1
+    const res = await $fetch<{ data: Poem[]; meta: PoemsListMeta }>('/api/poems', {
+      query: { limit: newestMeta.value.limit, page: nextPage },
+    })
+    const seen = new Set(newestPoems.value.map((p) => p.id))
+    for (const p of res.data) {
+      if (!seen.has(p.id)) {
+        seen.add(p.id)
+        newestPoems.value.push(p)
+      }
+    }
+    newestMeta.value = res.meta
+    newestPage.value = nextPage
+  } finally {
+    newestLoadingMore.value = false
+  }
+}
+
+const canLoadMoreNewest = computed(
+  () => newestPage.value < newestMeta.value.totalPages && !authorSlug.value && !tagSlug.value,
+)
 
 /** Tag filter from ?tag=slug (links from poem tags / TagBadge). */
 const tagSlug = computed(() => {
@@ -240,10 +306,10 @@ const staffPickPoems = computed(() => recent.value)
 </script>
 
 <template>
-  <div class="animate-fade-in">
+  <div class="animate-fade-in min-w-0">
     <ReaderSettingsSidebar v-model:open="readerSettingsOpen" id-prefix="home" />
 
-    <div class="w-full min-w-0 pb-20 pt-2 md:pt-4">
+    <div class="w-full min-w-0 pt-2 md:pt-4" :class="READER_SETTINGS_RAIL_CLEARANCE">
       <!-- Mobile / tablet author shelf -->
       <div v-if="!authorSlug" class="mb-8 lg:hidden">
         <HomeAuthorsColumn variant="shelf" />
@@ -410,10 +476,14 @@ const staffPickPoems = computed(() => recent.value)
               </Alert>
 
               <div
-                class="sticky z-10 -mx-1 mb-8 bg-surface-page/90 px-1 pb-0 pt-1 backdrop-blur-md top-[3.25rem] md:top-16">
-                <DsTabs :label="t('home.feedTabsAria')">
+                class="sticky z-10 -mx-1 mb-8 overflow-x-auto bg-surface-page/90 px-1 pb-0 pt-1 backdrop-blur-md top-[3.25rem] md:top-16 [scrollbar-width:thin]"
+              >
+                <DsTabs :label="t('home.feedTabsAria')" class="min-w-max gap-4 sm:gap-6">
                   <DsTab :active="feedTab === 'foryou'" @click="feedTab = 'foryou'">
                     {{ t('home.tabForYou') }}
+                  </DsTab>
+                  <DsTab :active="feedTab === 'newest'" @click="feedTab = 'newest'">
+                    {{ t('home.tabNewest') }}
                   </DsTab>
                   <DsTab :active="feedTab === 'staff'" @click="feedTab = 'staff'">
                     {{ t('home.tabStaffPicks') }}
@@ -448,6 +518,39 @@ const staffPickPoems = computed(() => recent.value)
                           class="h-4 w-4 animate-spin rounded-full border-2 border-edge-subtle border-t-brand"
                           aria-hidden="true" />
                         {{ forYouLoadingMore ? t('home.loadingMore') : t('home.loadMoreForYou') }}
+                      </button>
+                    </div>
+                  </template>
+                </div>
+
+                <!-- Newest (by published date) -->
+                <div v-show="feedTab === 'newest'" role="tabpanel">
+                  <div v-if="newestPending && !newestPoems.length" class="space-y-6 py-8">
+                    <DsSkeleton v-for="n in 4" :key="n" :lines="4" />
+                  </div>
+
+                  <DsEmpty v-else-if="!newestPoems.length" :title="t('home.emptyLibrary')" />
+
+                  <template v-else>
+                    <div class="home-poem-masonry home-poem-masonry--cols-3" role="list">
+                      <div v-for="poem in newestPoems" :key="poem.id" class="home-poem-masonry-wrap" role="listitem">
+                        <PoetryCard :poem="poem" layout="masonry" :quick-read-list="newestPoems" />
+                      </div>
+                    </div>
+                    <div v-if="canLoadMoreNewest" class="mt-10 flex justify-center">
+                      <button
+                        type="button"
+                        class="inline-flex min-w-[12rem] items-center justify-center gap-2 rounded-full border border-edge bg-surface-raised px-6 py-2.5 text-sm font-medium text-content-secondary transition hover:border-edge-strong hover:text-content disabled:cursor-not-allowed disabled:opacity-60"
+                        :disabled="newestLoadingMore"
+                        :aria-busy="newestLoadingMore"
+                        @click="loadMoreNewest"
+                      >
+                        <span
+                          v-if="newestLoadingMore"
+                          class="h-4 w-4 animate-spin rounded-full border-2 border-edge-subtle border-t-brand"
+                          aria-hidden="true"
+                        />
+                        {{ newestLoadingMore ? t('home.loadingMore') : t('home.loadMoreForYou') }}
                       </button>
                     </div>
                   </template>

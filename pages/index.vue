@@ -17,6 +17,17 @@ useSeoMeta({
   description: computed(() => t('seo.homeDesc')),
 })
 
+useHead({
+  link: [
+    {
+      rel: 'preload',
+      as: 'image',
+      href: '/hero-banner.png',
+      media: '(max-width: 1023px)',
+    },
+  ],
+})
+
 interface AuthorSpotlight {
   id: string
   name: string
@@ -32,11 +43,6 @@ interface HomePayload {
 
 const { data: home } = await useFetch<HomePayload>('/api/home')
 
-const { data: poemStats } = await useFetch<{ meta: { total: number } }>('/api/poems', {
-  query: { limit: 1 },
-})
-
-const poemCount = computed(() => poemStats.value?.meta?.total ?? 0)
 const mostSavedPoems = computed(() => (home.value?.featured ?? []).slice(0, 3))
 const spotlightAuthors = computed(() => home.value?.spotlightAuthors ?? [])
 
@@ -80,56 +86,90 @@ async function openRandomPoem() {
 </script>
 
 <template>
-  <div class="animate-fade-in">
+  <div class="animate-fade-in min-w-0">
     <!-- Hero -->
-    <section class="mx-auto max-w-content px-0 pt-6 md:pt-10">
-      <div class="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(280px,420px)] lg:gap-12 xl:gap-16">
-        <div class="text-center lg:text-left">
-          <DsFleuron class="mx-auto mb-6 lg:mx-0" />
-          <h1 class="font-serif text-display-sm font-semibold tracking-tight text-content">
-            <span class="block">{{ t('home.heroLine1') }}</span>
-            <span class="mt-1 block text-brand">{{ t('home.heroLine2') }}</span>
-          </h1>
-          <p class="mx-auto mt-5 max-w-reading text-base leading-relaxed text-content-secondary md:text-lg lg:mx-0">
-            {{ t('home.subtitle') }}
-          </p>
-          <p v-if="poemCount > 0" class="mt-3 text-ui-sm font-medium text-content-muted">
-            {{ t('home.heroPoemCount', { n: poemCount }) }}
-          </p>
+    <section class="relative -mx-4 overflow-hidden md:-mx-8 lg:mx-auto lg:max-w-content lg:overflow-visible lg:px-0">
+      <div class="relative aspect-[4/3] w-full lg:aspect-auto lg:min-h-0 lg:static">
+        <!-- Mobile: banner as atmospheric background -->
+        <div
+          class="pointer-events-none absolute inset-0 bg-[url('/hero-banner.png')] bg-cover bg-[center_35%] bg-no-repeat lg:hidden"
+          role="img" :aria-label="t('home.heroBannerAlt')" />
+        <div
+          class="pointer-events-none absolute inset-0 bg-gradient-to-b from-surface-page/35 via-surface-page/20 to-surface-page/82 lg:hidden"
+          aria-hidden="true" />
 
-          <div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4 lg:justify-start">
-            <NuxtLink to="/descopera" class="ds-btn-primary min-w-[12rem] justify-center">
+        <div
+          class="relative flex h-full flex-col px-4 pb-5 md:px-8 md:pb-6 lg:grid lg:h-auto lg:grid-cols-[minmax(0,1fr)_minmax(280px,420px)] lg:items-center lg:gap-12 lg:px-0 lg:pb-0 lg:pt-10 xl:gap-16">
+          <!-- Desktop copy column -->
+          <div class="hidden text-left lg:block">
+            <DsFleuron class="mb-6 lg:mx-0" />
+            <h1 class="font-serif text-display-sm font-semibold tracking-tight text-content">
+              <span class="block">{{ t('home.heroLine1') }}</span>
+              <span class="mt-1 block text-brand">{{ t('home.heroLine2') }}</span>
+            </h1>
+            <p class="mt-5 max-w-reading text-base leading-relaxed text-content-secondary md:text-lg">
+              {{ t('home.subtitle') }}
+            </p>
+            <div class="mt-8 flex flex-row items-center justify-start gap-3">
+              <NuxtLink to="/descopera" class="ds-btn-primary min-w-[12rem] justify-center">
+                {{ t('home.explorePoems') }}
+              </NuxtLink>
+              <button type="button" class="ds-btn-secondary min-w-[12rem] justify-center" :disabled="randomLoading"
+                :aria-busy="randomLoading" @click="openRandomPoem">
+                <span v-if="randomLoading"
+                  class="h-4 w-4 animate-spin rounded-full border-2 border-edge-subtle border-t-brand"
+                  aria-hidden="true" />
+                {{ randomLoading ? t('home.loadingMore') : t('home.randomPoem') }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Mobile: CTAs pinned to bottom of banner -->
+          <div class="mt-auto flex flex-row items-stretch justify-center gap-2 pt-6 sm:gap-3 lg:hidden">
+            <NuxtLink to="/descopera"
+              class="ds-btn-primary min-w-0 flex-1 justify-center sm:min-w-[10.5rem] sm:flex-none">
               {{ t('home.explorePoems') }}
             </NuxtLink>
-            <button type="button" class="ds-btn-secondary min-w-[12rem] justify-center" :disabled="randomLoading"
-              :aria-busy="randomLoading" @click="openRandomPoem">
+            <button type="button" class="ds-btn-secondary min-w-0 flex-1 justify-center sm:min-w-[10.5rem] sm:flex-none"
+              :disabled="randomLoading" :aria-busy="randomLoading" @click="openRandomPoem">
               <span v-if="randomLoading"
                 class="h-4 w-4 animate-spin rounded-full border-2 border-edge-subtle border-t-brand"
                 aria-hidden="true" />
               {{ randomLoading ? t('home.loadingMore') : t('home.randomPoem') }}
             </button>
           </div>
-        </div>
 
-        <figure class="mx-auto w-full max-w-md lg:max-w-none">
-          <div class="overflow-hidden rounded-ds-xl border border-edge-subtle shadow-ds-card">
-            <img src="/hero-banner.png" :alt="t('home.heroBannerAlt')" width="1200" height="800" fetchpriority="high"
-              class="aspect-[4/3] w-full object-cover">
-          </div>
-        </figure>
+          <figure class="mx-auto hidden w-full max-w-md lg:block lg:max-w-none">
+            <div class="overflow-hidden rounded-ds-xl border border-edge-subtle shadow-ds-card">
+              <img src="/hero-banner.png" :alt="t('home.heroBannerAlt')" width="1200" height="800" fetchpriority="high"
+                class="aspect-[4/3] w-full object-cover">
+            </div>
+          </figure>
+        </div>
       </div>
-      <div class="ds-masthead-rule mx-auto mt-10 max-w-reading lg:mt-12" />
+      <div class="px-4 text-center md:px-8 lg:hidden">
+        <DsFleuron class="mx-auto mt-6" />
+        <h1 class="mt-6 font-serif text-display-sm font-semibold tracking-tight text-content">
+          <span class="block">{{ t('home.heroLine1') }}</span>
+          <span class="mt-1 block text-brand">{{ t('home.heroLine2') }}</span>
+        </h1>
+        <p
+          class="mx-auto mt-5 hidden max-w-reading text-base leading-relaxed text-content-secondary sm:block md:text-lg">
+          {{ t('home.subtitle') }}
+        </p>
+      </div>
+      <div class="hidden sm:block ds-masthead-rule mx-auto mt-10 max-w-reading lg:mt-12" />
     </section>
 
     <div class="mx-auto max-w-content">
       <!-- Most saved -->
-      <section v-if="mostSavedPoems.length" class="py-16 md:py-20">
+      <section v-if="mostSavedPoems.length" class="py-12 md:py-20">
         <div class="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 class="section-title">
               {{ t('home.mostSaved') }}
             </h2>
-            <p class="mt-2 max-w-reading text-sm text-content-muted">
+            <p class="hidden sm:block mt-2 max-w-reading text-sm text-content-muted">
               {{ t('home.mostSavedLead') }}
             </p>
           </div>
@@ -143,7 +183,7 @@ async function openRandomPoem() {
       </section>
 
       <!-- Authors spotlight -->
-      <section v-if="spotlightAuthors.length" class="border-t border-edge-subtle py-16 md:py-20">
+      <section v-if="spotlightAuthors.length" class="border-t border-edge-subtle py-12 md:py-20">
         <div class="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <h2 class="section-title">
             {{ t('home.authorsSpotlight') }}
@@ -168,7 +208,7 @@ async function openRandomPoem() {
       </section>
 
       <!-- Continue from favorites -->
-      <section v-if="showFavoritesSection" class="border-t border-edge-subtle py-16 md:py-20">
+      <section v-if="showFavoritesSection" class="border-t border-edge-subtle py-12 md:py-20">
         <div class="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <h2 class="section-title">
             {{ t('home.continueFavorites') }}
@@ -183,7 +223,7 @@ async function openRandomPoem() {
       </section>
 
       <!-- Tools -->
-      <section class="border-t border-edge-subtle py-16 md:py-20">
+      <section class="border-t border-edge-subtle py-12 md:py-20">
         <h2 class="section-title mb-8 text-center">
           {{ t('home.toolsTitle') }}
         </h2>

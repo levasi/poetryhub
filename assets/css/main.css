@@ -110,7 +110,7 @@
 
   /** Icon-only control in chrome */
   .ds-icon-btn {
-    @apply inline-flex min-h-[2.75rem] min-w-[2.75rem] items-center justify-center rounded-full border border-edge-subtle bg-surface-raised text-content-muted transition-colors hover:border-edge hover:text-content md:min-h-[2.25rem] md:min-w-[2.25rem];
+    @apply inline-flex items-center justify-center rounded-full bg-surface-raised text-content-muted transition-colors hover:border-edge hover:text-content md:min-h-[2.25rem] md:min-w-[2.25rem];
   }
 
   /**
@@ -251,6 +251,24 @@
   }
 }
 
+@layer utilities {
+  .pb-mobile-tab {
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .pb-reader-mobile {
+    padding-bottom: calc(7.5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .pb-reader-settings-rail {
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .pb-carousel-mobile {
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+
 /* Poem body — comfortable measure (theme-aware via --color-poem-text) */
 .poem-body,
 .poem-body p {
@@ -260,4 +278,13 @@
   letter-spacing: 0.04em;
   color: rgb(var(--color-poem-text));
   white-space: pre-wrap;
+}
+
+@media (max-width: 639px) {
+
+  .poem-body,
+  .poem-body p {
+    font-size: 1rem;
+    line-height: 1.8;
+  }
 }

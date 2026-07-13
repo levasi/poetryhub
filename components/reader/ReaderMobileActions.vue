@@ -20,7 +20,8 @@ const { t } = useI18n()
 
 <template>
   <div
-    class="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center p-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:hidden"
+    class="pointer-events-none fixed inset-x-0 z-40 flex justify-center p-4 md:hidden"
+    style="bottom: calc(3.25rem + env(safe-area-inset-bottom, 0px));"
   >
     <div
       class="pointer-events-auto inline-flex items-center gap-1 rounded-full border border-edge-subtle bg-surface-overlay/95 px-2 py-1.5 shadow-ds-popover backdrop-blur-md"

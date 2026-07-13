@@ -152,7 +152,7 @@ onUnmounted(() => {
 
 <template>
   <div
-    class="shrink-0 border-b border-edge-subtle py-3 backdrop-blur-sm md:py-4"
+    class="sticky top-0 z-30 shrink-0 border-b border-edge-subtle bg-surface-page/95 py-3 backdrop-blur-sm md:py-4"
     aria-label="Instrumente"
   >
     <div class="flex w-full min-w-0 flex-wrap items-center justify-between gap-3">

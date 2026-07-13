@@ -5,7 +5,7 @@ import { displayNationality } from '~/utils/nationality'
 import { SITE_OWNER_EMAIL } from '~/utils/roles'
 import { isPoemEditorRoleOrSiteOwner, normalizeRole } from '~/utils/roles'
 import type { Poem } from '~/composables/usePoems'
-import { PAGE_SHELL_INSET_CLASS } from '~/utils/pageShell'
+import { PAGE_SHELL_INSET_CLASS, AUTHOR_EDIT_BAR_CLEARANCE, READER_MOBILE_CLEARANCE } from '~/utils/pageShell'
 import { getFetchErrorDataCode, getFetchErrorMessage, getFetchErrorStatus } from '~/utils/fetchApiError'
 
 /** Matches GET /api/authors/:slug response shape. */
@@ -204,9 +204,14 @@ const canAddPoemFromBibliography = computed(() => {
 })
 
 function onPoemUpdated(updated: Poem) {
-  activePoem.value = updated
+  activePoem.value = {
+    ...updated,
+    navigation: activePoem.value?.navigation ?? updated.navigation,
+  }
   const entry = data.value?.works?.find((w) => w.slug === updated.slug)
   if (entry) entry.title = updated.title
+  authorFetchNonce.value += 1
+  void refresh()
 }
 
 /** Single edit mode for the whole author profile (triggered by floating edit FAB). */
@@ -347,9 +352,15 @@ function onAuthorEditFabClick() {
 /** Below PoetryViewer reading-settings cog when a poem is open; otherwise vertically centered. */
 const authorEditFabPositionClass = computed(() =>
   activePoem.value
-    ? 'top-[calc(50%+3.5rem)] -translate-y-1/2'
-    : 'top-1/2 -translate-y-1/2',
+    ? 'top-[calc(50%+3.5rem)] -translate-y-1/2 max-md:bottom-[calc(7.5rem+env(safe-area-inset-bottom,0px))] max-md:top-auto max-md:translate-y-0'
+    : 'top-1/2 -translate-y-1/2 max-md:bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] max-md:top-auto max-md:translate-y-0',
 )
+
+const authorPagePaddingClass = computed(() => {
+  if (authorEditMode.value) return AUTHOR_EDIT_BAR_CLEARANCE
+  if (activePoem.value) return READER_MOBILE_CLEARANCE
+  return 'pb-8 md:pb-0'
+})
 
 const poetryViewerRef = ref<{ savePoemEdit: () => Promise<void>; cancelPoemEdit: () => void } | null>(null)
 
@@ -579,7 +590,7 @@ async function submitNewPoemFromModal() {
 </script>
 
 <template>
-  <div class="animate-fade-in">
+  <div class="animate-fade-in min-w-0">
     <!-- Floating author edit (same style as poem reading settings; below it when a poem is open) -->
     <button v-if="canEditCatalog && author" type="button"
       class="fixed right-3 z-[44] flex h-11 w-11 items-center justify-center rounded-full border border-edge-subtle bg-surface-raised/95 text-content-secondary shadow-ds-card backdrop-blur-sm transition hover:border-brand/45 hover:text-brand md:right-6"
@@ -596,7 +607,7 @@ async function submitNewPoemFromModal() {
       </svg>
     </button>
 
-    <div v-if="author" class="w-full min-w-0 pt-2 md:pt-4" :class="authorEditMode ? 'pb-32 md:pb-36' : 'pb-20'">
+    <div v-if="author" class="w-full min-w-0 pt-2 md:pt-4" :class="authorPagePaddingClass">
       <!-- Author profile -->
       <div class="mb-12 flex flex-col items-start gap-6 sm:flex-row">
         <div class="shrink-0">
@@ -607,7 +618,7 @@ async function submitNewPoemFromModal() {
         <div class="min-w-0 flex-1">
           <template v-if="!authorEditMode">
             <div class="flex flex-wrap items-baseline gap-x-3 gap-y-2">
-              <h1 class="font-serif text-4xl font-bold text-content">{{ author.name }}</h1>
+              <h1 class="font-serif text-3xl font-bold text-content sm:text-4xl">{{ author.name }}</h1>
               <button v-if="isSiteOwner" type="button"
                 class="shrink-0 rounded-md border border-danger/40 px-2 py-0.5 text-xs font-medium text-danger transition hover:bg-danger/10 disabled:opacity-50"
                 :disabled="deletingAuthor" @click="deleteAuthor">

@@ -10,7 +10,7 @@ const { showLanguageSwitch } = useSiteSettings()
 </script>
 
 <template>
-  <div class="flex min-h-screen flex-col bg-surface-page lg:flex-row">
+  <div class="flex min-h-screen min-w-0 flex-col bg-surface-page lg:flex-row">
     <div
       class="border-b border-edge-subtle bg-[#0e0e0c] px-4 py-8 text-center lg:hidden"
     >
@@ -22,7 +22,7 @@ const { showLanguageSwitch } = useSiteSettings()
       </p>
     </div>
 
-    <div class="relative flex flex-1 items-center justify-center px-4 py-10 lg:max-w-lg lg:px-10 xl:max-w-xl">
+    <div class="relative flex flex-1 items-center justify-center px-4 py-10 pb-[max(2.5rem,env(safe-area-inset-bottom,0px))] pt-[max(2.5rem,env(safe-area-inset-top,0px))] lg:max-w-lg lg:px-10 lg:pb-10 lg:pt-10 xl:max-w-xl">
       <div class="absolute right-4 top-4 z-10">
         <LanguageSwitch v-if="showLanguageSwitch" />
       </div>
@@ -43,7 +43,7 @@ const { showLanguageSwitch } = useSiteSettings()
           </p>
         </div>
 
-        <div class="rounded-ds-lg border border-edge-subtle bg-surface-raised p-8 shadow-ds-card">
+        <div class="rounded-ds-lg border border-edge-subtle bg-surface-raised p-6 shadow-ds-card sm:p-8">
           <slot />
         </div>
 

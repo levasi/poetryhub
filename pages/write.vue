@@ -700,7 +700,7 @@ onUnmounted(() => {
       @save="saveNowDirect"
       @publish="openPublish"
     />
-    <div ref="splitContainerRef" class="flex min-h-0 min-w-0 flex-1 flex-col lg:flex-row pb-8">
+    <div ref="splitContainerRef" class="flex min-h-0 min-w-0 flex-1 flex-col pb-[max(2rem,env(safe-area-inset-bottom,0px))] lg:flex-row">
       <!-- Stânga (desktop): căutare + rezultate; pe mobil order: versuri → căutare → rezultate (contents + order) -->
       <div
         class="contents min-h-0 min-w-0 lg:order-1 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col lg:gap-4 sm:pr-4 sm:pb-6">

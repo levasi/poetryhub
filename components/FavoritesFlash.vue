@@ -13,7 +13,7 @@ const { favoriteOpError, dismissFavoriteError } = useFavorites()
     >
       <div
         v-if="favoriteOpError"
-        class="ds-banner ds-banner-danger fixed bottom-6 left-1/2 z-[100] flex max-w-md -translate-x-1/2 items-center gap-3 shadow-ds-popover"
+        class="ds-banner ds-banner-danger fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] left-1/2 z-[100] flex max-w-[min(100%-2rem,28rem)] -translate-x-1/2 items-center gap-3 shadow-ds-popover md:bottom-6 md:max-w-md"
         role="alert"
       >
         <p class="flex-1">{{ favoriteOpError }}</p>

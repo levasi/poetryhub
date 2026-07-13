@@ -2,6 +2,7 @@
 import type { Poem } from '~/composables/usePoems'
 import { useFavorites } from '~/composables/useFavorites'
 import { getFetchErrorDataCode, getFetchErrorMessage, getFetchErrorStatus } from '~/utils/fetchApiError'
+import { READER_MOBILE_CLEARANCE } from '~/utils/pageShell'
 
 const { t } = useI18n()
 
@@ -27,6 +28,7 @@ const readerSettingsOpen = ref(false)
 const { poemBodyStyle } = useReaderPreferences()
 
 const { toggle, isFavorite } = useFavorites()
+const { invalidatePublicCachesIfStaff } = usePublicCacheInvalidation()
 const liked = computed(() => isFavorite(props.poem.id))
 
 const editingPoem = ref(false)
@@ -106,11 +108,15 @@ async function savePoemEdit() {
 
   savingPoemEdit.value = true
   try {
-    await $fetch(`/api/poems/${encodeURIComponent(props.poem.slug)}/content`, {
-      method: 'PUT',
-      body,
-    })
-    const fresh = await $fetch<Poem>(`/api/poems/${encodeURIComponent(props.poem.slug)}`)
+    const res = await $fetch<{ ok: true; poem: Poem }>(
+      `/api/poems/${encodeURIComponent(props.poem.slug)}/content`,
+      { method: 'PUT', body },
+    )
+    const fresh = {
+      ...res.poem,
+      navigation: props.poem.navigation,
+    }
+    await invalidatePublicCachesIfStaff().catch(() => {})
     emit('updated', fresh)
     editingPoem.value = false
     titleDraft.value = fresh.title
@@ -189,7 +195,7 @@ async function sharePoem() {
     />
 
     <!-- ── Standard reading view — reading measure matches poem column ─────── -->
-    <div class="animate-fade-in mx-auto w-full max-w-reading pb-24 md:pb-0">
+    <div class="animate-fade-in mx-auto w-full max-w-reading md:pb-0" :class="READER_MOBILE_CLEARANCE">
       <template v-if="allowPoemEdit && editingPoem">
         <div class="space-y-4">
           <div>

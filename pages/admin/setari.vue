@@ -41,17 +41,14 @@ async function setLanguageSwitch(enabled: boolean) {
         {{ t('admin.settings.languageSwitchBody') }}
       </p>
       <label class="flex cursor-pointer items-start gap-3">
-        <input
-          type="checkbox"
-          class="mt-1 h-4 w-4 rounded border-edge text-brand focus:ring-brand/40"
-          :checked="siteSettings?.showLanguageSwitch === true"
-          :disabled="savingLang"
-          @change="setLanguageSwitch(($event.target as HTMLInputElement).checked)"
-        />
+        <input type="checkbox" class="mt-1 h-4 w-4 rounded border-edge text-brand focus:ring-brand/40"
+          :checked="siteSettings?.showLanguageSwitch === true" :disabled="savingLang"
+          @change="setLanguageSwitch(($event.target as HTMLInputElement).checked)" />
         <span class="text-sm text-content">{{ t('admin.settings.languageSwitchLabel') }}</span>
       </label>
       <p v-if="saveError" class="mt-3 text-sm text-danger">{{ saveError }}</p>
-      <p v-else-if="savingLang" class="mt-3 text-sm text-content-muted">{{ t('admin.settings.languageSwitchSaving') }}</p>
+      <p v-else-if="savingLang" class="mt-3 text-sm text-content-muted">{{ t('admin.settings.languageSwitchSaving') }}
+      </p>
     </section>
 
     <section class="mt-10 rounded-ds-lg border border-edge-subtle bg-surface-raised p-6 shadow-ds-card">

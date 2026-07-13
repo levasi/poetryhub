@@ -29,7 +29,7 @@ function mulberry32(seed: number) {
 
 export default defineEventHandler(async (event) => {
   const q = getQuery(event)
-  const limit = Math.min(50, Math.max(1, toInt(q.limit, 5)))
+  const limit = Math.min(50, Math.max(1, toInt(q.limit, 12)))
   const excludeIds = parseExcludeIds(q.exclude)
   const seed = toInt(q.seed, Date.now())
 

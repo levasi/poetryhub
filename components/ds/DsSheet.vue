@@ -68,7 +68,7 @@ onUnmounted(() => {
         role="dialog"
         aria-modal="true"
         :aria-labelledby="title ? titleId : undefined"
-        class="ds-sheet-panel relative z-10 w-full max-h-[85dvh] rounded-t-ds-xl border-t border-edge-subtle md:h-full md:max-h-none md:w-[380px] md:max-w-[90vw] md:rounded-none md:border-l md:border-t-0"
+        class="ds-sheet-panel relative z-10 w-full max-h-[85dvh] rounded-t-ds-xl border-t border-edge-subtle pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] md:h-full md:max-h-none md:w-[380px] md:max-w-[90vw] md:rounded-none md:border-l md:border-t-0 md:pb-0"
       >
         <div
           class="mx-auto mb-3 mt-2 h-1 w-10 rounded-full bg-edge-strong md:hidden"

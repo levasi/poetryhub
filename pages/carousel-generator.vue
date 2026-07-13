@@ -23,6 +23,7 @@ import type { ReaderFontKey } from '~/composables/useReaderPreferences'
 import { READER_FONT_STACKS } from '~/composables/useReaderPreferences'
 import CarouselFontSelect from '~/components/carousel/CarouselFontSelect.vue'
 import CarouselToolbarItem from '~/components/carousel/CarouselToolbarItem.vue'
+import { CAROUSEL_MOBILE_CLEARANCE } from '~/utils/pageShell'
 import { authorAvatarUrl } from '~/utils/authorAvatar'
 import type { CarouselSiteDefaultsPayload } from '~/utils/carouselSiteDefaults'
 import { CAROUSEL_FONT_WEIGHT_PRESETS } from '~/utils/carouselFontWeights'
@@ -927,7 +928,7 @@ function onTouchEnd(e: TouchEvent) {
 </script>
 
 <template>
-  <div class="w-full min-w-0 pb-24 pt-2 md:pb-16 md:pt-4">
+  <div class="w-full min-w-0 pt-2 md:pt-4" :class="CAROUSEL_MOBILE_CLEARANCE">
     <header class="mb-4 max-w-reading">
       <p class="ds-eyebrow mb-2">{{ t('carousel.seoTitle') }}</p>
       <h1 class="font-serif text-2xl font-semibold tracking-tight text-content md:text-3xl">

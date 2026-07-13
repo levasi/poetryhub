@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { MOBILE_TAB_BAR_CLEARANCE } from '~/utils/pageShell'
+
 const { t } = useI18n()
 const { user, logout } = useAuth()
 const route = useRoute()
@@ -46,12 +48,12 @@ const displayName = computed(() => user.value?.name || user.value?.email?.split(
 </script>
 
 <template>
-  <div class="flex min-h-screen w-full flex-col bg-surface-page">
+  <div class="flex min-h-screen w-full min-w-0 flex-col bg-surface-page">
     <FavoritesFlash />
     <AppNav />
 
     <!-- Full-width row: sidebar flush left, main fills the rest (page bodies use their own max-width). -->
-    <div class="flex w-full flex-1">
+    <div class="flex w-full min-w-0 flex-1">
       <!-- Sidebar (desktop) -->
       <aside
         class="sticky top-[3.25rem] z-10 hidden h-[calc(100vh-3.25rem)] w-60 shrink-0 flex-col border-r border-edge-subtle bg-surface-raised/90 shadow-[2px_0_12px_-4px_rgba(0,0,0,0.06)] backdrop-blur-sm supports-[backdrop-filter]:bg-surface-raised/80 md:top-16 md:flex md:h-[calc(100vh-4rem)] lg:w-64"
@@ -101,13 +103,13 @@ const displayName = computed(() => user.value?.name || user.value?.email?.split(
 
       <!-- Mobile tab bar -->
       <div
-        class="fixed bottom-0 left-0 right-0 z-30 flex border-t border-edge-subtle bg-surface-raised/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_24px_-8px_rgba(0,0,0,0.08)] backdrop-blur-md md:hidden"
+        class="fixed bottom-0 left-0 right-0 z-30 flex border-t border-edge-subtle bg-surface-raised/95 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_24px_-8px_rgba(0,0,0,0.08)] backdrop-blur-md md:hidden"
       >
         <NuxtLink
           v-for="item in navItems"
           :key="item.to"
           :to="item.to"
-          class="flex flex-1 flex-col items-center gap-1 py-3 text-[11px] font-medium text-content-muted transition"
+          class="flex flex-1 flex-col items-center gap-1 py-2 text-[10px] font-medium text-content-muted transition sm:text-[11px]"
           :class="navIsActive(item.to) ? 'text-brand' : ''"
         >
           <span
@@ -118,16 +120,16 @@ const displayName = computed(() => user.value?.name || user.value?.email?.split(
               <path stroke-linecap="round" stroke-linejoin="round" :d="item.icon" />
             </svg>
           </span>
-          {{ item.label }}
+          <span class="max-w-[5.5rem] truncate text-center">{{ item.label }}</span>
         </NuxtLink>
       </div>
 
       <!-- Main -->
-      <main class="min-h-[60vh] min-w-0 flex-1 px-4 pb-24 pt-8 md:px-8 md:pb-14 md:pt-10 lg:px-10">
+      <main class="min-h-[60vh] min-w-0 flex-1 px-4 pt-8 md:px-8 md:pt-10 lg:px-10" :class="MOBILE_TAB_BAR_CLEARANCE">
         <slot />
       </main>
     </div>
 
-    <AppFooter />
+    <AppFooter class="hidden md:block" />
   </div>
 </template>

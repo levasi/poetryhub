@@ -82,7 +82,7 @@ function isNavActive(item: { to: string }) {
         </div>
       </aside>
 
-      <main class="min-h-screen flex-1 overflow-auto px-4 py-6 md:px-8 md:py-8 lg:px-10">
+      <main class="min-h-screen min-w-0 flex-1 overflow-auto px-4 py-6 md:px-8 md:py-8 lg:px-10">
         <slot />
       </main>
     </div>

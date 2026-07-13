@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { MOBILE_TAB_BAR_CLEARANCE } from '~/utils/pageShell'
+
 const route = useRoute()
 const mobileNavOpen = ref(false)
 
@@ -8,11 +10,11 @@ watch(() => route.path, () => {
 </script>
 
 <template>
-  <div class="flex min-h-screen w-full flex-col bg-surface-page">
+  <div class="flex min-h-screen w-full min-w-0 flex-col bg-surface-page">
     <FavoritesFlash />
     <AppNav />
 
-    <div class="flex w-full flex-1">
+    <div class="flex w-full min-w-0 flex-1">
       <!-- Desktop sidebar -->
       <aside
         class="sticky top-[3.25rem] z-10 hidden h-[calc(100vh-3.25rem)] w-64 shrink-0 flex-col border-r border-edge-subtle bg-surface-raised/90 shadow-[2px_0_12px_-4px_rgba(0,0,0,0.06)] backdrop-blur-sm supports-[backdrop-filter]:bg-surface-raised/80 md:top-16 md:flex md:h-[calc(100vh-4rem)] lg:w-72"
@@ -36,10 +38,10 @@ watch(() => route.path, () => {
       </aside>
 
       <!-- Mobile nav trigger -->
-      <div class="fixed bottom-0 left-0 right-0 z-30 flex border-t border-edge-subtle bg-surface-raised/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_24px_-8px_rgba(0,0,0,0.08)] backdrop-blur-md md:hidden">
+      <div class="fixed bottom-0 left-0 right-0 z-30 flex border-t border-edge-subtle bg-surface-raised/95 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_24px_-8px_rgba(0,0,0,0.08)] backdrop-blur-md md:hidden">
         <button
           type="button"
-          class="flex flex-1 flex-col items-center gap-1 py-3 text-[11px] font-medium text-content-muted"
+          class="flex min-h-[3.25rem] flex-1 flex-col items-center justify-center gap-1 py-2 text-[11px] font-medium text-content-muted"
           @click="mobileNavOpen = true"
         >
           <span class="flex h-9 w-9 items-center justify-center rounded-full bg-brand-soft/40 text-brand">
@@ -51,7 +53,7 @@ watch(() => route.path, () => {
         </button>
       </div>
 
-      <main class="min-h-[60vh] min-w-0 flex-1 px-4 pb-24 pt-8 md:px-10 md:pb-14 md:pt-10 lg:px-12">
+      <main class="min-h-[60vh] min-w-0 flex-1 px-4 pt-8 md:px-10 md:pt-10 lg:px-12" :class="MOBILE_TAB_BAR_CLEARANCE">
         <slot />
       </main>
     </div>

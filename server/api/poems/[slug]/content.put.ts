@@ -2,6 +2,7 @@
 import { z } from 'zod'
 import { prisma } from '~/server/utils/prisma'
 import { requireUser } from '~/server/utils/auth'
+import { withResolvedAuthorPortrait } from '~/server/utils/authorPortrait'
 import { invalidateAuthorDetailCaches, invalidateCatalogListCaches, invalidatePoemCaches } from '~/server/utils/invalidatePublicCache'
 import { estimateReadingTime, extractExcerpt } from '~/server/utils/slug'
 import { isPoemEditorRole, isSiteOwnerEmail } from '~/utils/roles'
@@ -115,5 +116,17 @@ export default defineEventHandler(async (event) => {
   const authorSlug = existing.author?.slug
   if (authorSlug) await invalidateAuthorDetailCaches(authorSlug)
 
-  return { ok: true as const }
+  const poem = await prisma.poem.findUnique({
+    where: { slug },
+    include: {
+      author: true,
+      poemTags: { include: { tag: true } },
+    },
+  })
+  if (!poem) {
+    throw createError({ statusCode: 404, statusMessage: 'Poem not found' })
+  }
+  const author = await withResolvedAuthorPortrait(poem.author)
+
+  return { ok: true as const, poem: { ...poem, author } }
 })
