@@ -64,6 +64,9 @@ const homeFavorites = computed(() => {
 
 const showFavoritesSection = computed(() => homeFavorites.value.length > 0)
 
+const { query: searchQuery, results: searchResults, loading: searchLoading, error: searchError, searched, clear: clearSearch } = useSearch()
+const showSearchResults = computed(() => searched.value || searchLoading.value)
+
 const randomLoading = ref(false)
 
 async function openRandomPoem() {
@@ -162,6 +165,61 @@ async function openRandomPoem() {
     </section>
 
     <div class="mx-auto max-w-content">
+      <section class="pt-8 md:pt-10" :aria-label="t('nav.search')">
+        <SearchBar
+          v-model="searchQuery"
+          class="mx-auto max-w-xl"
+          @clear="clearSearch"
+        />
+      </section>
+
+      <!-- Search results -->
+      <section v-if="showSearchResults" class="py-10 md:py-14">
+        <p
+          v-if="searchError"
+          class="mb-4 text-sm text-danger"
+          role="alert"
+        >
+          {{ searchError }}
+        </p>
+
+        <div v-if="searchLoading" class="space-y-6 py-4">
+          <DsSkeleton v-for="n in 3" :key="n" :lines="4" />
+        </div>
+
+        <template v-else-if="searched">
+          <p
+            v-if="searchResults.length"
+            class="mb-4 text-sm text-content-muted"
+          >
+            {{ t('search.resultsLine', { count: searchResults.length, q: searchQuery.trim() }) }}
+          </p>
+
+          <div
+            v-if="searchResults.length"
+            class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+          >
+            <PoetryCard
+              v-for="poem in searchResults"
+              :key="poem.id"
+              :poem="poem"
+              :quick-read-list="searchResults"
+            />
+          </div>
+
+          <DsEmpty
+            v-else
+            :title="t('search.noResults', { q: searchQuery.trim() })"
+            :description="t('search.tryBrowse')"
+          >
+            <NuxtLink to="/descopera" class="ds-btn-primary">
+              {{ t('nav.discover') }}
+            </NuxtLink>
+          </DsEmpty>
+        </template>
+      </section>
+
+      <template v-else>
       <!-- Most saved -->
       <section v-if="mostSavedPoems.length" class="py-12 md:py-20">
         <div class="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -271,6 +329,7 @@ async function openRandomPoem() {
           </NuxtLink>
         </p>
       </section>
+      </template>
     </div>
   </div>
 </template>

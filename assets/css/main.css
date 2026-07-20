@@ -152,7 +152,7 @@
     }
   }
 
-  /** For-you feed on /descopera — three columns on large screens. */
+  /** Discover feeds (Pentru tine, etc.) — more columns on wider viewports. */
   .home-poem-masonry--cols-3 {
     column-count: 1;
   }
@@ -166,6 +166,18 @@
   @media (min-width: 1024px) {
     .home-poem-masonry--cols-3 {
       column-count: 3;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .home-poem-masonry--cols-3 {
+      column-count: 4;
+    }
+  }
+
+  @media (min-width: 1536px) {
+    .home-poem-masonry--cols-3 {
+      column-count: 5;
     }
   }
 

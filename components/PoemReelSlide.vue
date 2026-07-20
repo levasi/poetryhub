@@ -159,7 +159,12 @@ async function sharePoem() {
           </div>
         </NuxtLink>
         <h2 class="font-serif text-2xl font-semibold tracking-tight text-content">
-          {{ poem.title }}
+          <NuxtLink
+            :to="poemHref"
+            class="transition-colors hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+          >
+            {{ poem.title }}
+          </NuxtLink>
         </h2>
       </header>
 

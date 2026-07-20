@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Icon } from '@iconify/vue'
 import type { Poem } from '~/composables/usePoems'
 import { useFavorites } from '~/composables/useFavorites'
 
@@ -240,11 +241,11 @@ watchEffect((onCleanup) => {
           <button type="button" class="rounded-ds-md p-2 transition-colors"
             :class="liked ? 'text-brand bg-brand-tint' : 'text-content-hint hover:bg-brand-tint hover:text-brand'"
             :aria-label="liked ? t('card.favoriteRemove') : t('card.favoriteAdd')" @click.prevent="toggle(poem.id)">
-            <svg class="h-4 w-4" viewBox="0 0 24 24" :fill="liked ? 'currentColor' : 'none'" stroke="currentColor"
-              stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round"
-                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-            </svg>
+            <Icon
+              :icon="liked ? 'heroicons:heart-solid' : 'heroicons:heart'"
+              class="h-4 w-4"
+              aria-hidden="true"
+            />
           </button>
           <PoemCarouselIcon :slug="poem.slug" size="sm" class="shrink-0" />
         </div>
@@ -311,11 +312,11 @@ watchEffect((onCleanup) => {
               <button type="button" class="rounded-ds-md p-2 transition-colors"
                 :class="liked ? 'text-brand bg-brand-tint' : 'text-content-hint hover:bg-brand-tint hover:text-brand'"
                 :aria-label="liked ? t('card.favoriteRemove') : t('card.favoriteAdd')" @click.prevent="toggle(poem.id)">
-                <svg class="h-4 w-4" viewBox="0 0 24 24" :fill="liked ? 'currentColor' : 'none'" stroke="currentColor"
-                  stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                </svg>
+                <Icon
+                  :icon="liked ? 'heroicons:heart-solid' : 'heroicons:heart'"
+                  class="h-4 w-4"
+                  aria-hidden="true"
+                />
               </button>
               <PoemCarouselIcon :slug="poem.slug" size="sm"
                 class="shrink-0 opacity-80 transition-opacity group-hover:opacity-100" />

@@ -213,15 +213,6 @@ function mobileLinkClass(path: string) {
 
         <div>
           <p class="ds-eyebrow">
-            {{ t('nav.readingTheme') }}
-          </p>
-          <div class="mt-3">
-            <ColorSchemeSwatches variant="compact" />
-          </div>
-        </div>
-
-        <div>
-          <p class="ds-eyebrow">
             {{ t('nav.menuAccount') }}
           </p>
           <div class="mt-2 flex flex-col gap-1">

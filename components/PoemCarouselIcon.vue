@@ -4,7 +4,7 @@ import { simpleIconsInstagram } from '~/utils/iconify/simpleIconsInstagram'
 
 const SIZE_CLASSES = {
   xs: { box: 'h-6 w-6', icon: 'h-3 w-3' },
-  sm: { box: 'h-7 w-7', icon: 'h-3.5 w-3.5' },
+  sm: { box: 'h-7 w-7', icon: 'h-4 w-4' },
   md: { box: 'h-9 w-9', icon: 'h-4 w-4' },
   lg: { box: 'h-11 w-11', icon: 'h-5 w-5' },
 } as const

@@ -22,7 +22,7 @@ watch(query, (q) => {
 </script>
 
 <template>
-  <div class="animate-fade-in min-w-0">
+  <div class="animate-fade-in min-w-0 pt-5">
     <div class="mb-6">
       <h1 class="font-serif text-3xl font-bold text-content">
         {{ t('search.title') }}
@@ -32,18 +32,9 @@ watch(query, (q) => {
       </p>
     </div>
 
-    <SearchBar
-      v-model="query"
-      autofocus
-      class="mb-6"
-      @clear="clear"
-    />
+    <SearchBar v-model="query" autofocus class="mb-6" @clear="clear" />
 
-    <p
-      v-if="error"
-      class="mb-4 text-sm text-danger"
-      role="alert"
-    >
+    <p v-if="error" class="mb-4 text-sm text-danger" role="alert">
       {{ error }}
     </p>
 
@@ -52,30 +43,15 @@ watch(query, (q) => {
     </div>
 
     <template v-else-if="searched">
-      <p
-        v-if="results.length"
-        class="mb-4 text-sm text-content-muted"
-      >
+      <p v-if="results.length" class="mb-4 text-sm text-content-muted">
         {{ t('search.resultsLine', { count: results.length, q: query.trim() }) }}
       </p>
 
-      <div
-        v-if="results.length"
-        class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
-      >
-        <PoetryCard
-          v-for="poem in results"
-          :key="poem.id"
-          :poem="poem"
-          :quick-read-list="results"
-        />
+      <div v-if="results.length" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <PoetryCard v-for="poem in results" :key="poem.id" :poem="poem" :quick-read-list="results" />
       </div>
 
-      <DsEmpty
-        v-else
-        :title="t('search.noResults', { q: query.trim() })"
-        :description="t('search.tryBrowse')"
-      >
+      <DsEmpty v-else :title="t('search.noResults', { q: query.trim() })" :description="t('search.tryBrowse')">
         <NuxtLink to="/descopera" class="ds-btn-primary">
           {{ t('nav.discover') }}
         </NuxtLink>

@@ -64,6 +64,7 @@ function toggleSettings() {
 
       <button
         type="button"
+        data-mobile-settings-toggle
         class="flex min-h-[3rem] min-w-0 flex-1 flex-col items-center justify-center px-1 transition-colors"
         :class="settingsOpen ? 'text-brand' : 'text-content-muted'"
         :aria-label="t('nav.mobileSettings')"

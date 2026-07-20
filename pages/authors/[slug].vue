@@ -5,7 +5,7 @@ import { displayNationality } from '~/utils/nationality'
 import { SITE_OWNER_EMAIL } from '~/utils/roles'
 import { isPoemEditorRoleOrSiteOwner, normalizeRole } from '~/utils/roles'
 import type { Poem } from '~/composables/usePoems'
-import { PAGE_SHELL_INSET_CLASS, AUTHOR_EDIT_BAR_CLEARANCE, READER_MOBILE_CLEARANCE } from '~/utils/pageShell'
+import { PAGE_SHELL_INSET_CLASS, AUTHOR_EDIT_BAR_CLEARANCE } from '~/utils/pageShell'
 import { getFetchErrorDataCode, getFetchErrorMessage, getFetchErrorStatus } from '~/utils/fetchApiError'
 
 /** Matches GET /api/authors/:slug response shape. */
@@ -349,16 +349,19 @@ function onAuthorEditFabClick() {
   }
 }
 
-/** Below PoetryViewer reading-settings cog when a poem is open; otherwise vertically centered. */
+/** Above mobile tab bar when a poem is open; otherwise vertically centered. */
 const authorEditFabPositionClass = computed(() =>
   activePoem.value
-    ? 'top-[calc(50%+3.5rem)] -translate-y-1/2 max-md:bottom-[calc(10.75rem+env(safe-area-inset-bottom,0px))] max-md:top-auto max-md:translate-y-0'
-    : 'top-1/2 -translate-y-1/2 max-md:bottom-[calc(8.25rem+env(safe-area-inset-bottom,0px))] max-md:top-auto max-md:translate-y-0',
+    ? 'top-[calc(50%+3.5rem)] -translate-y-1/2 max-md:bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] max-md:top-auto max-md:translate-y-0'
+    : 'top-1/2 -translate-y-1/2 max-md:bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] max-md:top-auto max-md:translate-y-0',
 )
 
 const authorPagePaddingClass = computed(() => {
   if (authorEditMode.value) return AUTHOR_EDIT_BAR_CLEARANCE
-  if (activePoem.value) return READER_MOBILE_CLEARANCE
+  // Extra room so the last poem lines clear the fixed mobile tab bar (+ edit FAB).
+  if (activePoem.value) {
+    return 'pb-[calc(8rem+env(safe-area-inset-bottom,0px))] md:pb-20'
+  }
   return 'pb-8 md:pb-0'
 })
 
@@ -491,7 +494,6 @@ onBeforeUnmount(() => {
 })
 
 const addPoemModalOpen = ref(false)
-const bibliographySheetOpen = ref(false)
 const newPoemTitle = ref('')
 const newPoemContent = ref('')
 const creatingPoem = ref(false)
@@ -597,14 +599,18 @@ async function submitNewPoemFromModal() {
       :class="[authorEditFabPositionClass, authorEditMode ? 'border-brand/50 text-brand ring-2 ring-brand/25' : '']"
       :aria-label="authorEditMode ? t('authors.exitAuthorEdit') : t('authors.openAuthorEdit')"
       :disabled="savingEdits || deletingAuthor" @click="onAuthorEditFabClick">
-      <svg v-if="!authorEditMode" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"
-        stroke-width="1.75">
-        <path stroke-linecap="round" stroke-linejoin="round"
-          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-      </svg>
-      <svg v-else class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-      </svg>
+      <Icon
+        v-if="!authorEditMode"
+        icon="heroicons:pencil-square"
+        class="h-5 w-5"
+        aria-hidden="true"
+      />
+      <Icon
+        v-else
+        icon="heroicons:x-mark"
+        class="h-5 w-5"
+        aria-hidden="true"
+      />
     </button>
 
     <div v-if="author" class="w-full min-w-0 pt-2 md:pt-4" :class="authorPagePaddingClass">
@@ -742,22 +748,33 @@ async function submitNewPoemFromModal() {
           </button>
         </div>
 
-        <div class="grid gap-10 lg:grid-cols-[minmax(260px,340px)_minmax(0,1fr)] lg:items-start lg:gap-10 xl:gap-14">
-          <!-- Left: bibliography (desktop) -->
-          <div class="hidden min-h-0 flex-col lg:sticky lg:top-28 lg:flex lg:max-h-[calc(100vh-7rem)]">
-            <ul class="min-h-0 flex-1 space-y-1 overflow-y-auto pr-1 text-sm" role="listbox"
-              :aria-label="t('authors.worksListAria')">
-              <li v-if="!works.length && canAddPoemFromBibliography"
-                class="rounded-ds-md border border-dashed border-edge-subtle px-3 py-4 text-sm italic text-content-muted">
+        <div class="grid gap-6 lg:grid-cols-[minmax(260px,340px)_minmax(0,1fr)] lg:items-start lg:gap-10 xl:gap-14">
+          <!-- Bibliography navigation (in-page on all breakpoints) -->
+          <div
+            class="flex min-h-0 max-h-56 flex-col lg:sticky lg:top-28 lg:max-h-[calc(100vh-7rem)]"
+          >
+            <ul
+              class="min-h-0 flex-1 space-y-1 overflow-y-auto pr-1 text-sm"
+              role="listbox"
+              :aria-label="t('authors.worksListAria')"
+            >
+              <li
+                v-if="!works.length && canAddPoemFromBibliography"
+                class="rounded-ds-md border border-dashed border-edge-subtle px-3 py-4 text-sm italic text-content-muted"
+              >
                 {{ t('authors.bibliographyEmptyStaff') }}
               </li>
               <li v-for="w in works" :key="w.slug">
-                <button type="button" role="option"
+                <button
+                  type="button"
+                  role="option"
                   class="flex w-full items-center gap-2 rounded-ds-md border px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-page"
                   :class="selectedSlug === w.slug
                     ? 'border-brand/45 border-l-[3px] border-l-brand bg-brand-tint/50 text-content shadow-sm'
                     : 'border-transparent text-content-secondary hover:border-edge-subtle hover:bg-surface-subtle'"
-                  :aria-selected="selectedSlug === w.slug" @click="selectWork(w.slug)">
+                  :aria-selected="selectedSlug === w.slug"
+                  @click="selectWork(w.slug)"
+                >
                   <span class="min-w-0 flex-1 font-medium text-content">{{ w.title }}</span>
                   <PoemCarouselIcon :slug="w.slug" size="sm" class="shrink-0" />
                 </button>
@@ -765,9 +782,9 @@ async function submitNewPoemFromModal() {
             </ul>
           </div>
 
-          <!-- Right: active poem (scroll target for ?poem= deep links) -->
+          <!-- Active poem (scroll target for ?poem= deep links) -->
           <div ref="activePoemPanelRef" class="min-w-0 scroll-mt-24 md:scroll-mt-28">
-            <div class="rounded-ds-lg bg-surface-raised/40 px-3 py-6 shadow-ds-card sm:px-5 md:px-8 md:py-10">
+            <div class="rounded-ds-lg bg-surface-raised/40 px-3 pb-10 pt-6 shadow-ds-card sm:px-5 md:px-8 md:pb-12 md:pt-10">
               <div v-if="poemPending" class="flex min-h-[16rem] items-center justify-center py-12">
                 <span class="h-9 w-9 animate-spin rounded-full border-2 border-edge-subtle border-t-brand"
                   aria-hidden="true" />
@@ -779,9 +796,8 @@ async function submitNewPoemFromModal() {
                   :allow-poem-edit="canEditPoem && authorEditMode"
                   :auto-poem-edit="canEditPoem && authorEditMode"
                   :show-poem-edit-toolbar="false"
-                  :show-bibliography="works.length > 0"
+                  :show-mobile-actions="false"
                   @updated="onPoemUpdated"
-                  @bibliography="bibliographySheetOpen = true"
                 />
               </template>
               <p v-else-if="poemLoadFailed" class="text-center text-sm text-content-muted">
@@ -871,29 +887,5 @@ async function submitNewPoemFromModal() {
         </div>
       </div>
     </Teleport>
-
-    <DsSheet
-      v-model:open="bibliographySheetOpen"
-      :title="t('authors.bibliography')"
-      id-prefix="author-bibliography"
-    >
-      <ul class="space-y-1" role="listbox" :aria-label="t('authors.worksListAria')">
-        <li v-for="w in works" :key="w.slug">
-          <button
-            type="button"
-            role="option"
-            class="flex w-full items-center gap-2 rounded-ds-md border px-3 py-3 text-left transition-colors"
-            :class="selectedSlug === w.slug
-              ? 'border-brand/45 border-l-[3px] border-l-brand bg-brand-tint/50 text-content'
-              : 'border-transparent text-content-secondary hover:bg-surface-subtle'"
-            :aria-selected="selectedSlug === w.slug"
-            @click="selectWork(w.slug); bibliographySheetOpen = false"
-          >
-            <span class="min-w-0 flex-1 font-medium">{{ w.title }}</span>
-            <PoemCarouselIcon :slug="w.slug" size="sm" class="shrink-0" />
-          </button>
-        </li>
-      </ul>
-    </DsSheet>
   </div>
 </template>

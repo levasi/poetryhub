@@ -34,6 +34,8 @@ function close() {
   open.value = false
 }
 
+const panelEl = ref<HTMLElement | null>(null)
+
 watchEffect((onCleanup) => {
   if (!open.value) return
   const onEsc = (e: KeyboardEvent) => {
@@ -41,6 +43,26 @@ watchEffect((onCleanup) => {
   }
   document.addEventListener('keydown', onEsc)
   onCleanup(() => document.removeEventListener('keydown', onEsc))
+})
+
+watchEffect((onCleanup) => {
+  if (!open.value) return
+  const onPointerDown = (e: PointerEvent) => {
+    const target = e.target
+    if (!(target instanceof Node)) return
+    if (panelEl.value?.contains(target)) return
+    if (target instanceof Element && target.closest('[data-mobile-settings-toggle]')) return
+    close()
+  }
+  // Defer so the opening tap does not immediately close the sheet
+  let remove: (() => void) | undefined
+  const ready = nextTick(() => {
+    document.addEventListener('pointerdown', onPointerDown, true)
+    remove = () => document.removeEventListener('pointerdown', onPointerDown, true)
+  })
+  onCleanup(() => {
+    ready.then(() => remove?.())
+  })
 })
 </script>
 
@@ -57,6 +79,7 @@ watchEffect((onCleanup) => {
       <aside
         v-if="open"
         id="mobile-settings-sheet"
+        ref="panelEl"
         class="fixed inset-x-0 z-[40] rounded-t-2xl border-t border-edge-subtle bg-surface-overlay md:hidden"
         style="bottom: calc(3.25rem + env(safe-area-inset-bottom, 0px));"
         role="dialog"
