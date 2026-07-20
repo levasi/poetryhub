@@ -272,10 +272,6 @@
     padding-bottom: calc(10.75rem + env(safe-area-inset-bottom, 0px));
   }
 
-  .pb-reader-settings-rail {
-    padding-bottom: calc(7.75rem + env(safe-area-inset-bottom, 0px));
-  }
-
   .pb-carousel-mobile {
     padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
   }

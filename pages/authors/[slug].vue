@@ -216,6 +216,7 @@ function onPoemUpdated(updated: Poem) {
 
 /** Single edit mode for the whole author profile (triggered by floating edit FAB). */
 const authorEditMode = ref(false)
+const readingSettingsOpen = useState('reading-settings-open', () => false)
 const nameDraft = ref('')
 const ethnicityDraft = ref('')
 const bioDraft = ref('')
@@ -594,11 +595,15 @@ async function submitNewPoemFromModal() {
 <template>
   <div class="animate-fade-in min-w-0">
     <!-- Floating author edit (same style as poem reading settings; below it when a poem is open) -->
-    <button v-if="canEditCatalog && author" type="button"
+    <button
+      v-if="canEditCatalog && author && !readingSettingsOpen"
+      type="button"
       class="fixed right-3 z-[44] flex h-11 w-11 items-center justify-center rounded-full border border-edge-subtle bg-surface-raised/95 text-content-secondary shadow-ds-card backdrop-blur-sm transition hover:border-brand/45 hover:text-brand md:right-6"
       :class="[authorEditFabPositionClass, authorEditMode ? 'border-brand/50 text-brand ring-2 ring-brand/25' : '']"
       :aria-label="authorEditMode ? t('authors.exitAuthorEdit') : t('authors.openAuthorEdit')"
-      :disabled="savingEdits || deletingAuthor" @click="onAuthorEditFabClick">
+      :disabled="savingEdits || deletingAuthor"
+      @click="onAuthorEditFabClick"
+    >
       <Icon
         v-if="!authorEditMode"
         icon="heroicons:pencil-square"

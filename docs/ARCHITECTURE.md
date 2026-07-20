@@ -141,7 +141,7 @@ poetryhub/
 | `AppFooter.vue` | Footer with quote + links |
 | `PoetryCard.vue` | Poem preview card: excerpt, tags, favorite, quick-read |
 | `PoetryViewer.vue` | Full poem reader: body, actions bar (save, share, stanza view), slide mode |
-| `ReaderSettingsSidebar.vue` | Font/size/spacing customization drawer |
+| `ReaderSettingsPanel.vue` | Theme/font/size/spacing settings sheet (header + mobile tab bar) |
 | `PoemTitle.vue` | Reusable title with carousel icon link, `variant` prop |
 | `AuthorCard.vue` | Author preview: portrait, poem count, bio excerpt |
 | `Dice3D.vue` | 3D animated dice for homepage random poem |

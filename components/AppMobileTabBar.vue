@@ -3,7 +3,7 @@ import { Icon } from '@iconify/vue'
 
 const { t } = useI18n()
 const route = useRoute()
-const settingsOpen = useState('mobile-settings-open', () => false)
+const settingsOpen = useState('reading-settings-open', () => false)
 
 const items = computed(() => [
   {
@@ -41,7 +41,7 @@ function toggleSettings() {
 
 <template>
   <nav
-    class="fixed inset-x-0 bottom-0 z-[45] border-t border-edge-subtle bg-surface-raised/95 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1 shadow-[0_-2px_16px_-8px_rgba(0,0,0,0.08)] backdrop-blur-md md:hidden"
+    class="fixed inset-x-0 bottom-0 z-[70] border-t border-edge-subtle bg-surface-raised/95 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1 shadow-[0_-2px_16px_-8px_rgba(0,0,0,0.08)] backdrop-blur-md md:hidden"
     :aria-label="t('nav.mobileTabBarAria')"
   >
     <div class="mx-auto flex max-w-lg items-stretch justify-around">
@@ -64,13 +64,13 @@ function toggleSettings() {
 
       <button
         type="button"
-        data-mobile-settings-toggle
+        data-reading-settings-toggle
         class="flex min-h-[3rem] min-w-0 flex-1 flex-col items-center justify-center px-1 transition-colors"
         :class="settingsOpen ? 'text-brand' : 'text-content-muted'"
         :aria-label="t('nav.mobileSettings')"
         :aria-pressed="settingsOpen"
         :aria-expanded="settingsOpen"
-        aria-controls="mobile-settings-sheet"
+        aria-controls="reading-settings-panel"
         @click="toggleSettings"
       >
         <Icon
@@ -81,6 +81,4 @@ function toggleSettings() {
       </button>
     </div>
   </nav>
-
-  <AppMobileSettingsSheet />
 </template>

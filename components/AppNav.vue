@@ -257,7 +257,7 @@ function mobileLinkClass(path: string) {
     </DsSheet>
   </header>
   <ClientOnly>
-    <ReaderSettingsSidebar id-prefix="app" hide-on-mobile :show-rail-toggle="false" />
+    <ReaderSettingsPanel id-prefix="app" />
   </ClientOnly>
 </template>
 
