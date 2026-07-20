@@ -18,6 +18,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const { sideActionsVisible, toggleSideActions } = useReelChrome()
 
 const rootRef = ref<HTMLElement | null>(null)
 const slideRefs = ref<Record<number, SlideExpose | null>>({})
@@ -262,5 +263,27 @@ onBeforeUnmount(() => {
     >
       {{ t('home.loadingMore') }}
     </p>
+
+    <!-- Instagram-style more (⋮) — Citește only; toggles side actions -->
+    <button
+      v-if="poems.length"
+      type="button"
+      class="absolute bottom-3 right-1.5 z-30 flex h-11 w-11 items-center justify-center rounded-full text-content transition-colors"
+      :class="sideActionsVisible ? 'text-brand' : 'text-content'"
+      :aria-pressed="sideActionsVisible"
+      :aria-label="sideActionsVisible ? t('nav.reelActionsHide') : t('nav.reelActionsShow')"
+      @click.stop="toggleSideActions"
+    >
+      <svg
+        class="h-6 w-6"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="5" r="1.75" />
+        <circle cx="12" cy="12" r="1.75" />
+        <circle cx="12" cy="19" r="1.75" />
+      </svg>
+    </button>
   </div>
 </template>

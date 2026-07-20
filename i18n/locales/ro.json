@@ -20,7 +20,10 @@
     "menuWrite": "Scrie",
     "menuAccount": "Cont",
     "readingTheme": "Temă lectură",
-    "mobileTabBarAria": "Navigare principală"
+    "mobileTabBarAria": "Navigare principală",
+    "reelActions": "Acțiuni",
+    "reelActionsShow": "Arată acțiunile poemului",
+    "reelActionsHide": "Ascunde acțiunile poemului"
   },
   "colorScheme": {
     "paper": "Hârtie",

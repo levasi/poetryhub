@@ -20,7 +20,10 @@
     "menuWrite": "Write",
     "menuAccount": "Account",
     "readingTheme": "Reading theme",
-    "mobileTabBarAria": "Main navigation"
+    "mobileTabBarAria": "Main navigation",
+    "reelActions": "Actions",
+    "reelActionsShow": "Show poem actions",
+    "reelActionsHide": "Hide poem actions"
   },
   "colorScheme": {
     "paper": "Paper",

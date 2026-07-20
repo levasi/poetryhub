@@ -201,7 +201,7 @@ export default defineNuxtConfig({
 
   // Keep current; bump occasionally per https://nuxt.com/docs/guide/going-further/features#compatibilitydate
   compatibilityDate: '2025-11-01',
-  devtools: { enabled: true },
+  devtools: { enabled: false },
 
   // Nuxt marks `nitropack/runtime` as Rollup external for the SSR server chunk. Node then loads
   // nitropack/dist/runtime/internal/app.mjs directly, which imports #nitro-internal-virtual/* — those

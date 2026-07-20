@@ -10,6 +10,12 @@ const items = computed(() => [
     icon: 'home' as const,
   },
   {
+    to: '/search',
+    label: t('nav.search'),
+    match: (path: string) => path === '/search' || path.startsWith('/search/'),
+    icon: 'search' as const,
+  },
+  {
     to: '/descopera',
     label: t('nav.menuRead'),
     match: (path: string) =>
@@ -33,8 +39,8 @@ function isActive(item: (typeof items.value)[number]) {
         v-for="item in items"
         :key="item.to"
         :to="item.to"
-        class="flex min-h-[3rem] min-w-[4.5rem] flex-1 flex-col items-center justify-center gap-0.5 px-2 text-[10px] font-medium transition-colors"
-        :class="isActive(item) ? 'text-content' : 'text-content-muted'"
+        class="flex min-h-[3rem] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-1 text-[10px] font-medium transition-colors"
+        :class="isActive(item) ? 'text-brand' : 'text-content-muted'"
         :aria-current="isActive(item) ? 'page' : undefined"
       >
         <!-- Home -->
@@ -53,12 +59,28 @@ function isActive(item: (typeof items.value)[number]) {
             d="M3 10.5 12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9.5z"
           />
         </svg>
+        <!-- Search -->
+        <svg
+          v-else-if="item.icon === 'search'"
+          class="h-6 w-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          :stroke-width="isActive(item) ? 2.25 : 1.75"
+          aria-hidden="true"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+          />
+        </svg>
         <!-- Read -->
         <svg
           v-else
           class="h-6 w-6"
-          viewBox="0 0 24 24"
           fill="none"
+          viewBox="0 0 24 24"
           stroke="currentColor"
           :stroke-width="isActive(item) ? 2.25 : 1.75"
           aria-hidden="true"

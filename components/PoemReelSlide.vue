@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import gsap from 'gsap'
 import type { Poem } from '~/composables/usePoems'
 import { useFavorites } from '~/composables/useFavorites'
 import { authorAvatarUrl } from '~/utils/authorAvatar'
@@ -12,6 +13,7 @@ const props = defineProps<{
 const { t } = useI18n()
 const { poemBodyStyle } = useReaderPreferences()
 const { toggle, isFavorite } = useFavorites()
+const { sideActionsVisible } = useReelChrome()
 
 const liked = computed(() => isFavorite(props.poem.id))
 const author = computed(() => props.poem.author)
@@ -29,6 +31,8 @@ const authorHref = computed(() =>
 
 const copied = ref(false)
 const bodyRef = ref<HTMLElement | null>(null)
+const actionsRef = ref<HTMLElement | null>(null)
+let actionsTween: gsap.core.Tween | null = null
 
 function getScrollEdges() {
   const el = bodyRef.value
@@ -46,12 +50,76 @@ function resetScroll() {
 
 defineExpose({ getScrollEdges, resetScroll })
 
+function actionEls() {
+  const root = actionsRef.value
+  if (!root) return [] as HTMLElement[]
+  return gsap.utils.toArray<HTMLElement>(':scope > *', root)
+}
+
+function setActionsImmediate(visible: boolean) {
+  const els = actionEls()
+  if (!els.length) return
+  actionsTween?.kill()
+  gsap.set(els, {
+    autoAlpha: visible ? 1 : 0,
+    y: visible ? 0 : -24,
+  })
+}
+
+function animateActions(visible: boolean) {
+  const els = actionEls()
+  if (!els.length) return
+  actionsTween?.kill()
+
+  if (visible) {
+    // Top → bottom: first button drops in first
+    gsap.set(els, { autoAlpha: 0, y: -24 })
+    actionsTween = gsap.to(els, {
+      autoAlpha: 1,
+      y: 0,
+      duration: 0.38,
+      stagger: 0.08,
+      ease: 'power2.out',
+      overwrite: true,
+    })
+    return
+  }
+
+  // Top → bottom exit as well
+  actionsTween = gsap.to(els, {
+    autoAlpha: 0,
+    y: -24,
+    duration: 0.28,
+    stagger: 0.06,
+    ease: 'power2.in',
+    overwrite: true,
+  })
+}
+
 watch(
   () => props.active,
   (active) => {
     if (active) nextTick(() => resetScroll())
   },
 )
+
+watch(
+  sideActionsVisible,
+  (visible) => {
+    nextTick(() => {
+      if (props.active) animateActions(visible)
+      else setActionsImmediate(visible)
+    })
+  },
+)
+
+onMounted(() => {
+  nextTick(() => setActionsImmediate(sideActionsVisible.value))
+})
+
+onBeforeUnmount(() => {
+  actionsTween?.kill()
+})
 
 async function sharePoem() {
   const path = typeof poemHref.value === 'string'
@@ -75,30 +143,14 @@ async function sharePoem() {
 </script>
 
 <template>
-  <article
-    class="relative flex h-full w-full flex-col overflow-hidden bg-surface-page"
-    :aria-label="poem.title"
-  >
-    <div
-      ref="bodyRef"
-      class="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-5 pb-8 pt-5 pr-16"
-      style="scrollbar-width: thin; -webkit-overflow-scrolling: touch;"
-    >
+  <article class="relative flex h-full w-full flex-col overflow-hidden bg-surface-page" :aria-label="poem.title">
+    <div ref="bodyRef"
+      class="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-5 pb-8 pt-5"
+      style="scrollbar-width: thin; -webkit-overflow-scrolling: touch;">
       <header class="mb-5">
-        <NuxtLink
-          v-if="author"
-          :to="authorHref || undefined"
-          class="mb-4 flex items-center gap-3"
-        >
-          <img
-            v-if="avatarSrc"
-            :src="avatarSrc"
-            :alt="author.name"
-            width="40"
-            height="40"
-            class="h-10 w-10 rounded-full object-cover ring-2 ring-edge-subtle"
-            :loading="active ? 'eager' : 'lazy'"
-          >
+        <NuxtLink v-if="author" :to="authorHref || undefined" class="mb-4 flex items-center gap-3">
+          <img v-if="avatarSrc" :src="avatarSrc" :alt="author.name" width="40" height="40"
+            class="h-10 w-10 rounded-full object-cover ring-2 ring-edge-subtle" :loading="active ? 'eager' : 'lazy'">
           <div class="min-w-0">
             <p class="truncate font-serif text-sm font-semibold text-content">
               {{ author.name }}
@@ -110,92 +162,50 @@ async function sharePoem() {
         </h2>
       </header>
 
-      <div
-        class="whitespace-pre-wrap text-content"
-        :style="poemBodyStyle"
-      >
+      <div class="whitespace-pre-wrap text-content" :style="poemBodyStyle">
         {{ poem.content }}
       </div>
     </div>
 
-    <!-- Side actions (IG / TikTok style) -->
-    <div
-      class="pointer-events-none absolute inset-y-0 right-0 z-10 flex w-14 flex-col items-center justify-end gap-4 pb-8 pr-2"
-    >
-      <button
-        type="button"
-        class="pointer-events-auto flex flex-col items-center gap-1 text-content"
-        :aria-label="liked ? t('viewer.saved') : t('viewer.savePoem')"
-        @click="toggle(poem.id)"
-      >
+    <!-- Side actions (IG / TikTok style) — GSAP stagger on toggle; leave room for ⋮ -->
+    <div ref="actionsRef"
+      class="pointer-events-none absolute inset-y-0 right-0 z-10 flex w-14 flex-col items-center justify-end gap-4 pb-16 pr-2"
+      :aria-hidden="!sideActionsVisible">
+      <button type="button" class="pointer-events-auto flex flex-col items-center gap-1 text-content"
+        :tabindex="sideActionsVisible ? 0 : -1" :aria-label="liked ? t('viewer.saved') : t('viewer.savePoem')"
+        @click="toggle(poem.id)">
         <span
           class="flex h-11 w-11 items-center justify-center rounded-full bg-surface-raised/90 shadow-ds-card backdrop-blur-sm"
-          :class="liked ? 'text-brand' : 'text-content-secondary'"
-        >
-          <svg
-            class="h-6 w-6"
-            viewBox="0 0 24 24"
-            :fill="liked ? 'currentColor' : 'none'"
-            stroke="currentColor"
-            stroke-width="2"
-            aria-hidden="true"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-            />
+          :class="liked ? 'text-brand' : 'text-content-secondary'">
+          <svg class="h-6 w-6" viewBox="0 0 24 24" :fill="liked ? 'currentColor' : 'none'" stroke="currentColor"
+            stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
           </svg>
         </span>
       </button>
 
-      <button
-        type="button"
-        class="pointer-events-auto flex flex-col items-center gap-1 text-content"
-        :aria-label="copied ? t('viewer.linkCopied') : t('viewer.sharePoem')"
-        @click="sharePoem"
-      >
+      <button type="button" class="pointer-events-auto flex flex-col items-center gap-1 text-content"
+        :tabindex="sideActionsVisible ? 0 : -1" :aria-label="copied ? t('viewer.linkCopied') : t('viewer.sharePoem')"
+        @click="sharePoem">
         <span
-          class="flex h-11 w-11 items-center justify-center rounded-full bg-surface-raised/90 text-content-secondary shadow-ds-card backdrop-blur-sm"
-        >
-          <svg
-            class="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="2"
-            aria-hidden="true"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
-            />
+          class="flex h-11 w-11 items-center justify-center rounded-full bg-surface-raised/90 text-content-secondary shadow-ds-card backdrop-blur-sm">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
+            aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
           </svg>
         </span>
       </button>
 
-      <NuxtLink
-        :to="poemHref"
-        class="pointer-events-auto flex flex-col items-center gap-1 text-content"
-        :aria-label="t('home.continueReading')"
-      >
+      <NuxtLink :to="poemHref" class="pointer-events-auto flex flex-col items-center gap-1 text-content"
+        :tabindex="sideActionsVisible ? 0 : -1" :aria-label="t('home.continueReading')">
         <span
-          class="flex h-11 w-11 items-center justify-center rounded-full bg-surface-raised/90 text-content-secondary shadow-ds-card backdrop-blur-sm"
-        >
-          <svg
-            class="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="2"
-            aria-hidden="true"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
-            />
+          class="flex h-11 w-11 items-center justify-center rounded-full bg-surface-raised/90 text-content-secondary shadow-ds-card backdrop-blur-sm">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
+            aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
           </svg>
         </span>
       </NuxtLink>
