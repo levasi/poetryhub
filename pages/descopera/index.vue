@@ -2,15 +2,12 @@
 import { displayNationality } from '~/utils/nationality'
 import type { Poem } from '~/composables/usePoems'
 import { authorAvatarUrl } from '~/utils/authorAvatar'
-import { READER_SETTINGS_RAIL_CLEARANCE } from '~/utils/pageShell'
-
 definePageMeta({
   layout: 'fullwidth',
 })
 
 const { t } = useI18n()
 const { labelForTag } = useTagLabel()
-const readerSettingsOpen = ref(false)
 
 const route = useRoute()
 const router = useRouter()
@@ -328,18 +325,9 @@ const isDefaultFeed = computed(() => !authorSlug.value && !tagSlug.value)
       />
     </ClientOnly>
 
-    <ReaderSettingsSidebar
-      v-model:open="readerSettingsOpen"
-      id-prefix="home"
-      :hide-on-mobile="isDefaultFeed"
-    />
-
     <div
       class="w-full min-w-0 pt-2 md:pt-4"
-      :class="[
-        isDefaultFeed ? 'hidden md:block' : '',
-        READER_SETTINGS_RAIL_CLEARANCE,
-      ]"
+      :class="isDefaultFeed ? 'hidden md:block' : ''"
     >
       <!-- Mobile / tablet author shelf -->
       <div v-if="!authorSlug" class="mb-8 lg:hidden">

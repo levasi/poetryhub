@@ -9,10 +9,12 @@ const { showLanguageSwitch } = useSiteSettings()
 const mobileOpen = ref(false)
 const userMenuOpen = ref(false)
 const userMenuRef = ref<HTMLElement | null>(null)
+const readingSettingsOpen = useState('reading-settings-open', () => false)
 
 watch(() => route.path, () => {
   mobileOpen.value = false
   userMenuOpen.value = false
+  readingSettingsOpen.value = false
 })
 
 onMounted(() => document.addEventListener('click', onClickOutside))
@@ -93,15 +95,23 @@ function mobileLinkClass(path: string) {
           </svg>
         </NuxtLink>
 
-        <NuxtLink v-if="isStaff" to="/admin" class="ds-icon-btn"
-          :class="isActive('/admin') ? 'border-brand/40 text-brand' : ''" :aria-label="t('nav.admin')">
+        <button
+          type="button"
+          data-reading-settings-toggle
+          class="ds-icon-btn"
+          :class="readingSettingsOpen ? 'border-brand/40 text-brand' : ''"
+          :aria-label="readingSettingsOpen ? t('viewer.closeReadingSettings') : t('viewer.openReadingSettings')"
+          :aria-pressed="readingSettingsOpen"
+          :aria-expanded="readingSettingsOpen"
+          @click="readingSettingsOpen = !readingSettingsOpen"
+        >
           <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
             aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round"
               d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
             <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
-        </NuxtLink>
+        </button>
 
         <div v-if="!isLoggedIn" class="flex items-center gap-3">
           <NuxtLink to="/login" class="text-sm text-content-muted transition-colors hover:text-content">
@@ -135,12 +145,6 @@ function mobileLinkClass(path: string) {
               <NuxtLink v-if="isStaff" to="/admin" role="menuitem"
                 class="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-brand transition hover:bg-brand-tint hover:text-brand-hover"
                 @click="userMenuOpen = false">
-                <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
-                  aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
                 {{ t('nav.admin') }}
               </NuxtLink>
               <NuxtLink to="/account" role="menuitem"
@@ -252,6 +256,9 @@ function mobileLinkClass(path: string) {
       </div>
     </DsSheet>
   </header>
+  <ClientOnly>
+    <ReaderSettingsSidebar id-prefix="app" hide-on-mobile :show-rail-toggle="false" />
+  </ClientOnly>
 </template>
 
 <style scoped>

@@ -11,9 +11,9 @@ import {
 } from '~/composables/useReaderPreferences'
 
 const { t } = useI18n()
-const { isLoggedIn } = useAuth()
 
-const open = defineModel<boolean>('open', { default: false })
+/** Shared with AppNav / mobile tab bar consumers. */
+const open = useState('reading-settings-open', () => false)
 
 const props = withDefaults(
   defineProps<{
@@ -21,8 +21,10 @@ const props = withDefaults(
     idPrefix?: string
     /** Hide the floating rail under the `md` breakpoint (e.g. mobile reels feed). */
     hideOnMobile?: boolean
+    /** Bottom chevron control; off when the header settings button is the primary toggle. */
+    showRailToggle?: boolean
   }>(),
-  { idPrefix: 'reader', hideOnMobile: false },
+  { idPrefix: 'reader', hideOnMobile: false, showRailToggle: true },
 )
 
 const {
@@ -104,8 +106,9 @@ watchEffect((onCleanup) => {
   const stop = nextTick(() => {
     const onPointerDown = (e: PointerEvent) => {
       const el = panelEl.value
-      const t = e.target
-      if (!el || !(t instanceof Node) || el.contains(t)) return
+      const target = e.target
+      if (!el || !(target instanceof Node) || el.contains(target)) return
+      if (target instanceof Element && target.closest('[data-reading-settings-toggle]')) return
       open.value = false
     }
     document.addEventListener('pointerdown', onPointerDown, true)
@@ -121,6 +124,7 @@ watchEffect((onCleanup) => {
 <template>
   <Teleport to="body">
     <aside
+      v-show="open || showRailToggle"
       ref="panelEl"
       class="fixed inset-x-0 z-[211] w-full transition-[max-height,bottom] duration-300 ease-out max-md:bottom-[calc(3.25rem+env(safe-area-inset-bottom,0px))] md:bottom-0 md:pb-[env(safe-area-inset-bottom,0px)]"
       :class="[
@@ -133,15 +137,20 @@ watchEffect((onCleanup) => {
       aria-modal="false"
       :aria-labelledby="id('title')"
       @click.stop
-      :style="{ maxHeight: open ? '24rem' : '3.25rem' }"
+      :style="{ maxHeight: open ? '24rem' : (showRailToggle ? '3.25rem' : '0') }"
     >
       <!-- Pin to panel top edge: -top-full was relative to the tall inner wrapper when open, which shoved the control up the viewport -->
-      <div class="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-center px-2">
+      <div v-if="showRailToggle" class="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-center px-2">
         <div class="pointer-events-auto flex w-full max-w-content justify-end">
-          <button type="button"
+          <button
+            type="button"
+            data-reading-settings-toggle
             class="reader-settings-toggle inline-flex h-8 min-w-[2.75rem] -translate-y-full items-center justify-center rounded-ds-md bg-surface-overlay/95 text-content-secondary shadow-ds-card backdrop-blur-sm transition hover:border-edge hover:bg-surface-raised hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-overlay"
             :aria-label="open ? t('viewer.closeReadingSettings') : t('viewer.openReadingSettings')"
-            :aria-expanded="open" aria-haspopup="dialog" @click="open = !open">
+            :aria-expanded="open"
+            aria-haspopup="dialog"
+            @click="open = !open"
+          >
             <svg class="h-5 w-5 shrink-0 transition-transform duration-200" :class="open ? 'rotate-180' : ''"
               fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
