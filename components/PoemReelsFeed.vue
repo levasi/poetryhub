@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Poem } from '~/composables/usePoems'
+import { Icon } from '@iconify/vue'
 
 type SlideExpose = {
   getScrollEdges: () => { atTop: boolean; atBottom: boolean; canScroll: boolean }
@@ -274,16 +275,7 @@ onBeforeUnmount(() => {
       :aria-label="sideActionsVisible ? t('nav.reelActionsHide') : t('nav.reelActionsShow')"
       @click.stop="toggleSideActions"
     >
-      <svg
-        class="h-6 w-6"
-        viewBox="0 0 24 24"
-        fill="currentColor"
-        aria-hidden="true"
-      >
-        <circle cx="12" cy="5" r="1.75" />
-        <circle cx="12" cy="12" r="1.75" />
-        <circle cx="12" cy="19" r="1.75" />
-      </svg>
+      <Icon icon="heroicons:ellipsis-vertical" class="h-6 w-6" aria-hidden="true" />
     </button>
   </div>
 </template>

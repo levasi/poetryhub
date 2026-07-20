@@ -1,31 +1,41 @@
 <script setup lang="ts">
+import { Icon } from '@iconify/vue'
+
 const { t } = useI18n()
 const route = useRoute()
+const settingsOpen = useState('mobile-settings-open', () => false)
 
 const items = computed(() => [
   {
     to: '/',
     label: t('nav.home'),
     match: (path: string) => path === '/',
-    icon: 'home' as const,
+    icon: 'heroicons:home',
+    iconActive: 'heroicons:home-solid',
   },
   {
     to: '/search',
     label: t('nav.search'),
     match: (path: string) => path === '/search' || path.startsWith('/search/'),
-    icon: 'search' as const,
+    icon: 'heroicons:magnifying-glass',
+    iconActive: 'heroicons:magnifying-glass-solid',
   },
   {
     to: '/descopera',
     label: t('nav.menuRead'),
     match: (path: string) =>
       path === '/descopera' || path.startsWith('/authors/') || path.startsWith('/poems/'),
-    icon: 'read' as const,
+    icon: 'heroicons:book-open',
+    iconActive: 'heroicons:book-open-solid',
   },
 ])
 
 function isActive(item: (typeof items.value)[number]) {
   return item.match(route.path)
+}
+
+function toggleSettings() {
+  settingsOpen.value = !settingsOpen.value
 }
 </script>
 
@@ -39,60 +49,37 @@ function isActive(item: (typeof items.value)[number]) {
         v-for="item in items"
         :key="item.to"
         :to="item.to"
-        class="flex min-h-[3rem] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-1 text-[10px] font-medium transition-colors"
+        class="flex min-h-[3rem] min-w-0 flex-1 flex-col items-center justify-center px-1 transition-colors"
         :class="isActive(item) ? 'text-brand' : 'text-content-muted'"
         :aria-current="isActive(item) ? 'page' : undefined"
+        :aria-label="item.label"
+        @click="settingsOpen = false"
       >
-        <!-- Home -->
-        <svg
-          v-if="item.icon === 'home'"
+        <Icon
+          :icon="isActive(item) ? item.iconActive : item.icon"
           class="h-6 w-6"
-          viewBox="0 0 24 24"
-          :fill="isActive(item) ? 'currentColor' : 'none'"
-          stroke="currentColor"
-          stroke-width="1.75"
           aria-hidden="true"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M3 10.5 12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9.5z"
-          />
-        </svg>
-        <!-- Search -->
-        <svg
-          v-else-if="item.icon === 'search'"
-          class="h-6 w-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          :stroke-width="isActive(item) ? 2.25 : 1.75"
-          aria-hidden="true"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-          />
-        </svg>
-        <!-- Read -->
-        <svg
-          v-else
-          class="h-6 w-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          :stroke-width="isActive(item) ? 2.25 : 1.75"
-          aria-hidden="true"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-          />
-        </svg>
-        <span>{{ item.label }}</span>
+        />
       </NuxtLink>
+
+      <button
+        type="button"
+        class="flex min-h-[3rem] min-w-0 flex-1 flex-col items-center justify-center px-1 transition-colors"
+        :class="settingsOpen ? 'text-brand' : 'text-content-muted'"
+        :aria-label="t('nav.mobileSettings')"
+        :aria-pressed="settingsOpen"
+        :aria-expanded="settingsOpen"
+        aria-controls="mobile-settings-sheet"
+        @click="toggleSettings"
+      >
+        <Icon
+          :icon="settingsOpen ? 'heroicons:cog-6-tooth-solid' : 'heroicons:cog-6-tooth'"
+          class="h-6 w-6"
+          aria-hidden="true"
+        />
+      </button>
     </div>
   </nav>
+
+  <AppMobileSettingsSheet />
 </template>

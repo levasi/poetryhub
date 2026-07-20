@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import gsap from 'gsap'
+import { Icon } from '@iconify/vue'
 import type { Poem } from '~/composables/usePoems'
 import { useFavorites } from '~/composables/useFavorites'
 import { authorAvatarUrl } from '~/utils/authorAvatar'
@@ -177,11 +178,11 @@ async function sharePoem() {
         <span
           class="flex h-11 w-11 items-center justify-center rounded-full bg-surface-raised/90 shadow-ds-card backdrop-blur-sm"
           :class="liked ? 'text-brand' : 'text-content-secondary'">
-          <svg class="h-6 w-6" viewBox="0 0 24 24" :fill="liked ? 'currentColor' : 'none'" stroke="currentColor"
-            stroke-width="2" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-          </svg>
+          <Icon
+            :icon="liked ? 'heroicons:heart-solid' : 'heroicons:heart'"
+            class="h-6 w-6"
+            aria-hidden="true"
+          />
         </span>
       </button>
 
@@ -190,11 +191,7 @@ async function sharePoem() {
         @click="sharePoem">
         <span
           class="flex h-11 w-11 items-center justify-center rounded-full bg-surface-raised/90 text-content-secondary shadow-ds-card backdrop-blur-sm">
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
-            aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-          </svg>
+          <Icon icon="heroicons:share" class="h-5 w-5" aria-hidden="true" />
         </span>
       </button>
 
@@ -202,11 +199,7 @@ async function sharePoem() {
         :tabindex="sideActionsVisible ? 0 : -1" :aria-label="t('home.continueReading')">
         <span
           class="flex h-11 w-11 items-center justify-center rounded-full bg-surface-raised/90 text-content-secondary shadow-ds-card backdrop-blur-sm">
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
-            aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-          </svg>
+          <Icon icon="heroicons:arrow-top-right-on-square" class="h-5 w-5" aria-hidden="true" />
         </span>
       </NuxtLink>
     </div>
