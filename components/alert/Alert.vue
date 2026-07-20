@@ -56,20 +56,13 @@ const variantClass = computed(() => {
 </script>
 
 <template>
-  <div
-    role="alert"
-    data-slot="alert"
+  <div role="alert" data-slot="alert"
     class="relative grid w-full items-start gap-y-0.5 rounded-ds-lg border px-4 py-3 text-sm text-content has-[_[data-slot=alert-action]]:pe-14"
     :class="[
       hasIcon ? 'grid-cols-[1.25rem_minmax(0,1fr)] gap-x-3' : 'grid-cols-[minmax(0,1fr)]',
       variantClass,
-    ]"
-  >
-    <div
-      v-if="hasIcon"
-      data-slot="alert-icon"
-      class="col-start-1 row-start-1 pt-0.5 [&_svg]:size-4"
-    >
+    ]">
+    <div v-if="hasIcon" data-slot="alert-icon" class="col-start-1 row-start-1 pt-0.5 [&_svg]:size-4">
       <slot name="icon" />
     </div>
 
