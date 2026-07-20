@@ -185,6 +185,14 @@ watch(activeIndex, (i) => {
 })
 
 let ro: ResizeObserver | null = null
+let mobileMq: MediaQueryList | null = null
+
+/** Reels is `md:hidden` — never lock page scroll on desktop. */
+function syncBodyScrollLock() {
+  if (!import.meta.client) return
+  const mobile = window.matchMedia('(max-width: 767px)').matches
+  document.body.style.overflow = mobile ? 'hidden' : ''
+}
 
 onMounted(() => {
   measure()
@@ -197,11 +205,15 @@ onMounted(() => {
   root?.addEventListener('touchend', onTouchEnd, { passive: true })
   root?.addEventListener('touchcancel', onTouchEnd, { passive: true })
 
-  document.body.style.overflow = 'hidden'
+  mobileMq = window.matchMedia('(max-width: 767px)')
+  syncBodyScrollLock()
+  mobileMq.addEventListener('change', syncBodyScrollLock)
 })
 
 onBeforeUnmount(() => {
   ro?.disconnect()
+  mobileMq?.removeEventListener('change', syncBodyScrollLock)
+  mobileMq = null
   const root = rootRef.value
   root?.removeEventListener('touchstart', onTouchStart)
   root?.removeEventListener('touchmove', onTouchMove)

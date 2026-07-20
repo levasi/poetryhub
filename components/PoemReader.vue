@@ -122,6 +122,14 @@ const hasTitleAside = computed(() => !!slots.titleAside)
     <PoemTitle v-else-if="showTitle" :title="poem.title" :slug="poem.slug" :variant="titleVariant"
       :poem-id="poemIdForTitle" />
 
+    <p
+      v-if="showWrittenContext && writtenContextLine && variant !== 'modal'"
+      class="mt-2 text-sm text-content-muted"
+      :class="variant === 'banner' ? 'text-center md:text-left' : ''"
+    >
+      {{ writtenContextLine }}
+    </p>
+
     <NuxtLink v-if="showAuthor && author && variant === 'pdp'" :to="`/authors/${author.slug}`"
       class="group mt-2 mb-8 inline-flex max-w-full items-center gap-4 text-content-secondary transition-colors hover:text-brand">
       <img :src="authorAvatar" alt="" loading="lazy"
@@ -135,11 +143,6 @@ const hasTitleAside = computed(() => !!slots.titleAside)
       class="mt-2 inline-block text-sm text-content-muted transition hover:text-brand">
       — {{ author.name }}
     </NuxtLink>
-
-    <p v-if="showWrittenContext && writtenContextLine && variant !== 'modal'" class="mt-3 text-sm text-content-muted"
-      :class="variant === 'banner' ? 'text-center md:text-left' : ''">
-      {{ writtenContextLine }}
-    </p>
 
     <div v-if="showOrnamentResolved" class="my-10 flex items-center gap-4 md:my-12">
       <div class="h-px flex-1 bg-gradient-to-r from-transparent via-edge-strong/40 to-edge-subtle" />
