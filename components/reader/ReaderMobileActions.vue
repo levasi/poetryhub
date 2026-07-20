@@ -21,7 +21,7 @@ const { t } = useI18n()
 <template>
   <div
     class="pointer-events-none fixed inset-x-0 z-40 flex justify-center p-4 md:hidden"
-    style="bottom: calc(3.25rem + env(safe-area-inset-bottom, 0px));"
+    style="bottom: calc(6.5rem + env(safe-area-inset-bottom, 0px));"
   >
     <div
       class="pointer-events-auto inline-flex items-center gap-1 rounded-full border border-edge-subtle bg-surface-overlay/95 px-2 py-1.5 shadow-ds-popover backdrop-blur-md"

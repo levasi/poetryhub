@@ -352,8 +352,8 @@ function onAuthorEditFabClick() {
 /** Below PoetryViewer reading-settings cog when a poem is open; otherwise vertically centered. */
 const authorEditFabPositionClass = computed(() =>
   activePoem.value
-    ? 'top-[calc(50%+3.5rem)] -translate-y-1/2 max-md:bottom-[calc(7.5rem+env(safe-area-inset-bottom,0px))] max-md:top-auto max-md:translate-y-0'
-    : 'top-1/2 -translate-y-1/2 max-md:bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] max-md:top-auto max-md:translate-y-0',
+    ? 'top-[calc(50%+3.5rem)] -translate-y-1/2 max-md:bottom-[calc(10.75rem+env(safe-area-inset-bottom,0px))] max-md:top-auto max-md:translate-y-0'
+    : 'top-1/2 -translate-y-1/2 max-md:bottom-[calc(8.25rem+env(safe-area-inset-bottom,0px))] max-md:top-auto max-md:translate-y-0',
 )
 
 const authorPagePaddingClass = computed(() => {
@@ -803,7 +803,7 @@ async function submitNewPoemFromModal() {
 
     <!-- Unified save / discard — fixed to viewport -->
     <div v-if="authorEditMode && author"
-      class="fixed inset-x-0 bottom-0 z-[60] border-t border-edge-subtle bg-surface-raised/98 py-3 shadow-[0_-4px_24px_rgba(0,0,0,0.06)] backdrop-blur-md pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      class="fixed inset-x-0 z-[60] border-t border-edge-subtle bg-surface-raised/98 py-3 shadow-[0_-4px_24px_rgba(0,0,0,0.06)] backdrop-blur-md max-md:bottom-[calc(3.25rem+env(safe-area-inset-bottom,0px))] md:bottom-0 md:pb-[max(0.75rem,env(safe-area-inset-bottom))]">
       <div :class="[PAGE_SHELL_INSET_CLASS, 'flex flex-wrap items-center justify-center gap-2']">
         <button type="button"
           class="inline-flex min-h-[44px] min-w-[44px] flex-1 items-center justify-center rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-brand-foreground transition hover:bg-brand-hover disabled:opacity-50 sm:max-w-xs sm:flex-none"

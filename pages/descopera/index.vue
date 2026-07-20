@@ -169,8 +169,14 @@ watch(
   forYouRes,
   (v) => {
     if (!v?.data) return
-    forYouPoems.value = v.data
     forYouMeta.value = v.meta
+    // Don't wipe poems appended via “load more” when the cached first page re-emits.
+    if (!forYouPoems.value.length) {
+      forYouPoems.value = v.data
+      return
+    }
+    if (forYouPoems.value.length > v.data.length) return
+    forYouPoems.value = v.data
   },
   { immediate: true },
 )
@@ -303,13 +309,38 @@ const canLoadMoreForYou = computed(() => forYouMeta.value.hasMore && !authorSlug
 const featured = computed(() => home.value?.featured ?? [])
 const recent = computed(() => home.value?.recent ?? [])
 const staffPickPoems = computed(() => recent.value)
+
+/** Default discover feed (no author/tag) — mobile uses full-screen reels. */
+const isDefaultFeed = computed(() => !authorSlug.value && !tagSlug.value)
 </script>
 
 <template>
   <div class="animate-fade-in min-w-0">
-    <ReaderSettingsSidebar v-model:open="readerSettingsOpen" id-prefix="home" />
+    <!-- Mobile: TikTok / Reels-style poem feed -->
+    <ClientOnly>
+      <PoemReelsFeed
+        v-if="isDefaultFeed"
+        :poems="forYouPoems"
+        :pending="forYouPending"
+        :loading-more="forYouLoadingMore"
+        :has-more="canLoadMoreForYou"
+        @load-more="loadMoreForYou"
+      />
+    </ClientOnly>
 
-    <div class="w-full min-w-0 pt-2 md:pt-4" :class="READER_SETTINGS_RAIL_CLEARANCE">
+    <ReaderSettingsSidebar
+      v-model:open="readerSettingsOpen"
+      id-prefix="home"
+      :hide-on-mobile="isDefaultFeed"
+    />
+
+    <div
+      class="w-full min-w-0 pt-2 md:pt-4"
+      :class="[
+        isDefaultFeed ? 'hidden md:block' : '',
+        READER_SETTINGS_RAIL_CLEARANCE,
+      ]"
+    >
       <!-- Mobile / tablet author shelf -->
       <div v-if="!authorSlug" class="mb-8 lg:hidden">
         <HomeAuthorsColumn variant="shelf" />

@@ -3,7 +3,7 @@ import { PAGE_SHELL_INSET_CLASS } from '~/utils/pageShell'
 </script>
 
 <template>
-  <div class="flex min-h-screen w-full flex-col bg-surface-page">
+  <div class="flex min-h-screen w-full min-w-0 flex-col bg-surface-page">
     <FavoritesFlash />
     <AppNav />
     <main class="w-full min-w-0 flex-1">
@@ -11,6 +11,7 @@ import { PAGE_SHELL_INSET_CLASS } from '~/utils/pageShell'
         <slot />
       </div>
     </main>
-    <AppFooter />
+    <AppFooter class="hidden md:block" />
+    <AppMobileTabBar />
   </div>
 </template>

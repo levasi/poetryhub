@@ -257,11 +257,11 @@
   }
 
   .pb-reader-mobile {
-    padding-bottom: calc(7.5rem + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(10.75rem + env(safe-area-inset-bottom, 0px));
   }
 
   .pb-reader-settings-rail {
-    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(7.75rem + env(safe-area-inset-bottom, 0px));
   }
 
   .pb-carousel-mobile {

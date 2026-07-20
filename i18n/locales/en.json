@@ -19,7 +19,8 @@
     "menuRead": "Read",
     "menuWrite": "Write",
     "menuAccount": "Account",
-    "readingTheme": "Reading theme"
+    "readingTheme": "Reading theme",
+    "mobileTabBarAria": "Main navigation"
   },
   "colorScheme": {
     "paper": "Paper",
@@ -283,6 +284,8 @@
     "featuredEmpty": "No liked poems yet. Tap the heart on poem cards to save favorites — they count here.",
     "loadingMore": "Loading more poems",
     "loadMoreForYou": "Load more",
+    "reelsFeedAria": "Full-screen poem feed",
+    "reelsEnd": "You've reached the end",
     "continueReading": "Read on",
     "openSidebar": "Open navigation and authors",
     "closeSidebar": "Close sidebar",

@@ -17,5 +17,5 @@ export const READER_SETTINGS_RAIL_CLEARANCE = 'pb-reader-settings-rail md:pb-0'
 /** Carousel generator fixed export bar. */
 export const CAROUSEL_MOBILE_CLEARANCE = 'pb-carousel-mobile md:pb-16'
 
-/** Author profile unified edit bar (save / discard). */
-export const AUTHOR_EDIT_BAR_CLEARANCE = 'pb-mobile-tab md:pb-36'
+/** Author profile unified edit bar (save / discard), above mobile site tab bar. */
+export const AUTHOR_EDIT_BAR_CLEARANCE = 'pb-[calc(9rem+env(safe-area-inset-bottom,0px))] md:pb-36'

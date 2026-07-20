@@ -19,8 +19,10 @@ const props = withDefaults(
   defineProps<{
     /** Prefix for form control ids (must be unique per instance). */
     idPrefix?: string
+    /** Hide the floating rail under the `md` breakpoint (e.g. mobile reels feed). */
+    hideOnMobile?: boolean
   }>(),
-  { idPrefix: 'reader' },
+  { idPrefix: 'reader', hideOnMobile: false },
 )
 
 const {
@@ -118,11 +120,21 @@ watchEffect((onCleanup) => {
 
 <template>
   <Teleport to="body">
-    <aside ref="panelEl" class="fixed inset-x-0 bottom-0 z-[211] w-full pb-[env(safe-area-inset-bottom,0px)] transition-[max-height] duration-300 ease-out"
-      :class="open
-        ? 'bg-surface-overlay shadow-2xl ring-1 ring-edge-subtle/60'
-        : 'bg-transparent shadow-none ring-0'" role="dialog" aria-modal="false" :aria-labelledby="id('title')"
-      @click.stop :style="{ maxHeight: open ? '24rem' : '3.25rem' }">
+    <aside
+      ref="panelEl"
+      class="fixed inset-x-0 z-[211] w-full transition-[max-height,bottom] duration-300 ease-out max-md:bottom-[calc(3.25rem+env(safe-area-inset-bottom,0px))] md:bottom-0 md:pb-[env(safe-area-inset-bottom,0px)]"
+      :class="[
+        open
+          ? 'bg-surface-overlay shadow-2xl ring-1 ring-edge-subtle/60'
+          : 'bg-transparent shadow-none ring-0',
+        hideOnMobile ? 'max-md:hidden' : '',
+      ]"
+      role="dialog"
+      aria-modal="false"
+      :aria-labelledby="id('title')"
+      @click.stop
+      :style="{ maxHeight: open ? '24rem' : '3.25rem' }"
+    >
       <!-- Pin to panel top edge: -top-full was relative to the tall inner wrapper when open, which shoved the control up the viewport -->
       <div class="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-center px-2">
         <div class="pointer-events-auto flex w-full max-w-content justify-end">

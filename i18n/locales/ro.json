@@ -19,7 +19,8 @@
     "menuRead": "Citește",
     "menuWrite": "Scrie",
     "menuAccount": "Cont",
-    "readingTheme": "Temă lectură"
+    "readingTheme": "Temă lectură",
+    "mobileTabBarAria": "Navigare principală"
   },
   "colorScheme": {
     "paper": "Hârtie",
@@ -283,6 +284,8 @@
     "featuredEmpty": "Încă nu există poezii cu aprecieri. Apasă inima pe carduri pentru favorite — apar aici în ordinea popularității.",
     "loadingMore": "Se încarcă mai multe poezii",
     "loadMoreForYou": "Încarcă mai multe",
+    "reelsFeedAria": "Flux de poezii pe ecran întreg",
+    "reelsEnd": "Ai ajuns la capăt",
     "continueReading": "Citește",
     "openSidebar": "Deschide navigarea și autorii",
     "closeSidebar": "Închide panoul lateral",
