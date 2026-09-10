@@ -49,6 +49,7 @@
     "saveDesc": "Saves this poem draft to your account (only you can see it). You can publish later.",
     "savingDraft": "Saving…",
     "savedDraft": "Saved to your drafts.",
+    "untitledDraft": "Untitled",
     "saveDraftError": "Could not save. Try again.",
     "poetSwitchTitle": "Poet account enabled",
     "poetSwitchDesc": "You just saved your first poem draft. We can switch your account to a poet account so you can access “My Poems” and other creator features.",
@@ -71,7 +72,11 @@
     "publishError": "Could not publish. Try again.",
     "loginRequired": "You must be signed in to publish a poem.",
     "contentEmpty": "Write something before publishing.",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "addVerseBlock": "Add stanza",
+    "dragVerseBlock": "Drag to reorder",
+    "verseColumnsAria": "Number of columns",
+    "verseBlockLabel": "Stanza {n}"
   },
   "carousel": {
     "seoTitle": "Insta post — PoetryHub",

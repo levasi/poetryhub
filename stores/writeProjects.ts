@@ -9,6 +9,14 @@ export interface WriteProject {
   title: string
   lyrics: string
   savedWords: string[]
+  /** Linked `UserPoemDraft` id when saved to the account; null = local-only. */
+  draftId: string | null
+}
+
+export type RemoteDraftSummary = {
+  id: string
+  title: string
+  updatedAt?: string
 }
 
 function newId(): string {
@@ -46,12 +54,23 @@ function normalizeProjectsList(list: WriteProject[]): WriteProject[] {
     savedWords: Array.isArray(p.savedWords)
       ? p.savedWords.filter((x): x is string => typeof x === 'string')
       : [],
+    draftId:
+      typeof (p as WriteProject).draftId === 'string' && (p as WriteProject).draftId
+        ? (p as WriteProject).draftId
+        : null,
   }))
   return ensureUniqueProjectIds(mapped)
 }
 
 function defaultProject(): WriteProject {
-  return { id: DEFAULT_ID, name: 'Proiect', title: '', lyrics: '', savedWords: [] }
+  return {
+    id: DEFAULT_ID,
+    name: 'Proiect',
+    title: '',
+    lyrics: '',
+    savedWords: [],
+    draftId: null,
+  }
 }
 
 function loadLocal(): { projects: WriteProject[]; currentProjectId: string | null } {
@@ -83,6 +102,7 @@ function loadLocal(): { projects: WriteProject[]; currentProjectId: string | nul
 export const useWriteProjectsStore = defineStore('writeProjects', () => {
   const projects = ref<WriteProject[]>([])
   const currentProjectId = ref<string | null>(null)
+  const remoteSyncing = ref(false)
 
   const currentProject = computed(() =>
     projects.value.find((p) => p.id === currentProjectId.value) ?? null,
@@ -118,6 +138,64 @@ export const useWriteProjectsStore = defineStore('writeProjects', () => {
     watch([projects, currentProjectId], () => saveLocal(), { deep: true })
   }
 
+  /**
+   * Merge account drafts into the dropdown so every saved draft appears.
+   * Keeps unsaved local projects and preserves per-project savedWords.
+   */
+  async function syncRemoteDrafts(): Promise<void> {
+    if (!import.meta.client) return
+    remoteSyncing.value = true
+    try {
+      const res = await $fetch<{ data: RemoteDraftSummary[] }>('/api/user/drafts', {
+        credentials: 'include',
+        params: { page: 1, limit: 50 },
+      })
+      const remote = Array.isArray(res.data) ? res.data : []
+      const byDraftId = new Map(
+        projects.value
+          .filter((p) => p.draftId)
+          .map((p) => [p.draftId as string, p] as const),
+      )
+      const unsavedLocals = projects.value.filter((p) => !p.draftId)
+
+      const fromRemote: WriteProject[] = remote.map((d) => {
+        const existing = byDraftId.get(d.id)
+        const title = (d.title || '').trim() || 'Proiect'
+        if (existing) {
+          return {
+            ...existing,
+            name: title,
+            title: existing.title?.trim() ? existing.title : title,
+            draftId: d.id,
+          }
+        }
+        return {
+          id: d.id,
+          draftId: d.id,
+          name: title,
+          title,
+          lyrics: '',
+          savedWords: [],
+        }
+      })
+
+      // Prefer remote list order (updatedAt desc from API); keep unsaved locals on top.
+      const next = [...unsavedLocals, ...fromRemote]
+      projects.value = next.length > 0 ? next : [defaultProject()]
+
+      if (
+        !currentProjectId.value
+        || !projects.value.some((p) => p.id === currentProjectId.value)
+      ) {
+        currentProjectId.value = projects.value[0]!.id
+      }
+    } catch {
+      /* not logged in / network — keep local list */
+    } finally {
+      remoteSyncing.value = false
+    }
+  }
+
   /** For toolbar „Salvează”: persistă explicit (datele se salvează și la fiecare modificare). */
   async function saveNow(): Promise<{ ok: boolean }> {
     saveLocal()
@@ -128,12 +206,13 @@ export const useWriteProjectsStore = defineStore('writeProjects', () => {
     const base = name.trim() || 'Proiect'
     const p: WriteProject = {
       id: newId(),
+      draftId: null,
       name: base,
       title: base,
       lyrics: '',
       savedWords: [],
     }
-    projects.value.push(p)
+    projects.value.unshift(p)
     currentProjectId.value = p.id
   }
 
@@ -153,6 +232,19 @@ export const useWriteProjectsStore = defineStore('writeProjects', () => {
   function renameProject(id: string, name: string) {
     const p = projects.value.find((x) => x.id === id)
     if (p) p.name = name.trim() || p.name
+  }
+
+  function linkCurrentDraft(draftId: string) {
+    const p = currentProject.value
+    if (!p) return
+    p.draftId = draftId
+    // Prefer draft id as stable project id once synced.
+    if (p.id !== draftId) {
+      const oldId = p.id
+      p.id = draftId
+      if (currentProjectId.value === oldId) currentProjectId.value = draftId
+    }
+    p.name = (p.title || '').trim() || p.name || 'Proiect'
   }
 
   function setLyrics(text: string) {
@@ -217,10 +309,13 @@ export const useWriteProjectsStore = defineStore('writeProjects', () => {
     projects,
     currentProjectId,
     currentProject,
+    remoteSyncing,
     init,
+    syncRemoteDrafts,
     createProject,
     deleteProject,
     renameProject,
+    linkCurrentDraft,
     setTitle,
     setLyrics,
     appendToLyrics,

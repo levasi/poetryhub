@@ -49,6 +49,7 @@
     "saveDesc": "Salvează această poezie ca draft în contul tău (doar tu o vezi). O poți publica mai târziu.",
     "savingDraft": "Se salvează…",
     "savedDraft": "Salvată în drafturi.",
+    "untitledDraft": "Fără titlu",
     "saveDraftError": "Nu s-a putut salva. Încearcă din nou.",
     "poetSwitchTitle": "Cont de poet",
     "poetSwitchDesc": "Ai salvat primul tău draft. Putem activa contul de poet ca să ai acces la „Poeziile mele” și alte funcții pentru autori.",
@@ -71,7 +72,11 @@
     "publishError": "Nu s-a putut publica. Încearcă din nou.",
     "loginRequired": "Trebuie să fii autentificat pentru a publica o poezie.",
     "contentEmpty": "Scrie ceva înainte de a publica.",
-    "cancel": "Anulează"
+    "cancel": "Anulează",
+    "addVerseBlock": "Adaugă strofă",
+    "dragVerseBlock": "Trage pentru a reordona",
+    "verseColumnsAria": "Număr de coloane",
+    "verseBlockLabel": "Strofă {n}"
   },
   "carousel": {
     "seoTitle": "Post Insta — PoetryHub",

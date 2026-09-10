@@ -3,7 +3,9 @@ import type { SearchMode } from '~/lib/rhyme/wordQueries'
 import { Icon } from '@iconify/vue'
 import WriteLyricsEditor from '~/components/write/LyricsEditor.vue'
 import WriteSearchActions from '~/components/write/WriteSearchActions.vue'
+import { getFetchErrorStatus } from '~/utils/fetchApiError'
 import { searchableTerms as pickSearchableTerms } from '~/utils/writeSearch'
+import { toPublishablePoemContent } from '~/utils/writeVerseBlocks'
 
 definePageMeta({
   layout: 'default',
@@ -38,6 +40,18 @@ const loading = ref(false)
 /** Always treat diacritics as distinct in dictionary search (strict matching). */
 const STRICT_DIACRITICS = true
 
+const SEARCH_STATE_KEY = 'poetryhub-write-search-v1'
+const SEARCH_MODES = new Set<SearchMode>([
+  'fuzzy',
+  'starts',
+  'ends',
+  'contains',
+  'anagram',
+  'exact',
+  'synonyms',
+  'antonyms',
+])
+
 let nextSearchQueryId = 0
 interface SearchQueryRow {
   id: number
@@ -46,6 +60,48 @@ interface SearchQueryRow {
 
 /** Unul sau mai multe câmpuri de căutare; rezultatele se unesc (fără duplicate). */
 const searchQueries = ref<SearchQueryRow[]>([{ id: ++nextSearchQueryId, text: '' }])
+
+function persistSearchState() {
+  if (!import.meta.client) return
+  try {
+    const texts = searchQueries.value.map((r) => r.text)
+    localStorage.setItem(
+      SEARCH_STATE_KEY,
+      JSON.stringify({ mode: mode.value, queries: texts }),
+    )
+  } catch {
+    /* ignore */
+  }
+}
+
+function restoreSearchState(): boolean {
+  if (!import.meta.client) return false
+  try {
+    const raw = localStorage.getItem(SEARCH_STATE_KEY)
+    if (!raw) return false
+    const data = JSON.parse(raw) as { mode?: string; queries?: unknown }
+    if (typeof data.mode === 'string' && SEARCH_MODES.has(data.mode as SearchMode)) {
+      mode.value = data.mode as SearchMode
+    }
+    if (Array.isArray(data.queries)) {
+      const texts = data.queries
+        .filter((q): q is string => typeof q === 'string')
+        .map((q) => q)
+      if (texts.length > 0) {
+        searchQueries.value = texts.map((text) => ({
+          id: ++nextSearchQueryId,
+          text,
+        }))
+        return texts.some((t) => t.trim().length >= 2)
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  return false
+}
+
+watch([mode, searchQueries], () => persistSearchState(), { deep: true })
 
 const activeSearchIndex = ref(0)
 const searchInputEls = ref<(HTMLInputElement | null)[]>([])
@@ -339,6 +395,8 @@ const publishLoading = ref(false)
 const publishMsg = ref<{ ok: boolean; text: string; slug?: string; authorSlug?: string } | null>(null)
 const saveLoading = ref(false)
 const saveMsg = ref<{ ok: boolean; text: string } | null>(null)
+const saveToastVisible = ref(false)
+let saveToastTimer: ReturnType<typeof setTimeout> | null = null
 
 const draftStatusText = computed(() => {
   if (saveLoading.value) return t('write.savingDraft')
@@ -346,28 +404,31 @@ const draftStatusText = computed(() => {
   return null
 })
 
-const draftId = ref<string | null>(null)
-const DRAFT_ID_KEY = 'poetryhub-write-draft-id-v1'
-
-function loadDraftIdLocal() {
-  if (!import.meta.client) return
-  try {
-    const v = localStorage.getItem(DRAFT_ID_KEY)
-    draftId.value = v && v.trim() ? v.trim() : null
-  } catch {
-    draftId.value = null
-  }
+function showSaveToast(ok: boolean, text: string) {
+  saveMsg.value = { ok, text }
+  saveToastVisible.value = true
+  if (saveToastTimer) clearTimeout(saveToastTimer)
+  saveToastTimer = setTimeout(() => {
+    saveToastVisible.value = false
+    saveToastTimer = null
+  }, 2800)
 }
 
-function persistDraftIdLocal(id: string | null) {
-  if (!import.meta.client) return
-  try {
-    if (!id) localStorage.removeItem(DRAFT_ID_KEY)
-    else localStorage.setItem(DRAFT_ID_KEY, id)
-  } catch {
-    /* ignore */
+function dismissSaveToast() {
+  if (saveToastTimer) {
+    clearTimeout(saveToastTimer)
+    saveToastTimer = null
   }
+  saveToastVisible.value = false
 }
+
+/** Active server draft for the selected project (null = unsaved local). */
+const draftId = computed({
+  get: () => projects.currentProject?.draftId ?? null,
+  set: (id: string | null) => {
+    if (id) projects.linkCurrentDraft(id)
+  },
+})
 
 interface Tag { id: string; slug: string; name: string; category: string }
 const allTags = ref<Tag[]>([])
@@ -402,7 +463,7 @@ function closePublish() {
 async function saveNowDirect() {
   if (saveLoading.value) return
   if (!isLoggedIn.value) {
-    saveMsg.value = { ok: false, text: t('write.loginRequired') }
+    showSaveToast(false, t('write.loginRequired'))
     return
   }
   // Always reflect the latest editor state when saving.
@@ -418,7 +479,7 @@ function togglePublishTag(id: string) {
 }
 
 async function submitPublish() {
-  const content = lyrics.text.trim()
+  const content = toPublishablePoemContent(lyrics.text).trim()
   if (!content) {
     publishMsg.value = { ok: false, text: t('write.contentEmpty') }
     return
@@ -457,23 +518,43 @@ async function saveDraftInternal(): Promise<void> {
   if (!content) {
     throw new Error('empty content')
   }
-  const payload = {
-    title: (publishForm.title || lyrics.title).trim(),
-    authorName: publishForm.authorName.trim(),
-    language: publishForm.language,
-    content,
-  }
-  if (!payload.title || !payload.authorName) {
-    throw new Error('missing fields')
+
+  const title =
+    (publishForm.title || lyrics.title || projects.currentProject?.name || '').trim()
+    || t('write.untitledDraft')
+  const authorName =
+    (publishForm.authorName || user.value?.name || user.value?.email?.split('@')[0] || '').trim()
+  if (!authorName) {
+    throw new Error('missing author')
   }
 
-  if (draftId.value) {
-    await $fetch(`/api/user/drafts/${encodeURIComponent(draftId.value)}`, {
-      method: 'PUT',
-      credentials: 'include',
-      body: payload,
-    })
-    return
+  // Keep editor title in sync when we had to invent a fallback.
+  if (!(lyrics.title || '').trim()) {
+    lyrics.title = title
+  }
+  publishForm.title = title
+  publishForm.authorName = authorName
+
+  const payload = {
+    title,
+    authorName,
+    language: publishForm.language || 'ro',
+    content,
+  }
+
+  const existingId = draftId.value
+  if (existingId) {
+    try {
+      await $fetch(`/api/user/drafts/${encodeURIComponent(existingId)}`, {
+        method: 'PUT',
+        credentials: 'include',
+        body: payload,
+      })
+      return
+    } catch (err: unknown) {
+      // Stale draft id (deleted elsewhere) — create a fresh one.
+      if (getFetchErrorStatus(err) !== 404) throw err
+    }
   }
 
   const created = await $fetch<{ id: string }>('/api/user/drafts', {
@@ -481,8 +562,7 @@ async function saveDraftInternal(): Promise<void> {
     credentials: 'include',
     body: payload,
   })
-  draftId.value = created.id
-  persistDraftIdLocal(created.id)
+  projects.linkCurrentDraft(created.id)
 }
 
 // ── First-save poet switch modal ────────────────────────────────────────────
@@ -540,34 +620,36 @@ function closePoetSwitch() {
 async function submitSave() {
   const content = lyrics.text.trim()
   if (!content) {
-    saveMsg.value = { ok: false, text: t('write.contentEmpty') }
+    showSaveToast(false, t('write.contentEmpty'))
     return
   }
-  saveMsg.value = null
   saveLoading.value = true
   try {
     const wasNewDraft = !draftId.value
     await saveDraftInternal()
-    saveMsg.value = { ok: true, text: t('write.savedDraft') }
+    showSaveToast(true, t('write.savedDraft'))
     maybeOpenPoetSwitchModal(wasNewDraft)
-  } catch {
-    saveMsg.value = { ok: false, text: t('write.saveDraftError') }
+    if (isLoggedIn.value) await projects.syncRemoteDrafts()
+  } catch (err: unknown) {
+    const msg =
+      err instanceof Error && err.message === 'missing author'
+        ? t('write.loginRequired')
+        : t('write.saveDraftError')
+    showSaveToast(false, msg)
   } finally {
     saveLoading.value = false
   }
 }
 
-async function loadDraftFromRoute() {
-  const q = route.query.draft
-  const id = typeof q === 'string' ? q.trim() : Array.isArray(q) ? String(q[0] ?? '').trim() : ''
-  if (!id) return
+async function loadDraftById(id: string) {
   try {
     const d = await $fetch<{ id: string; title: string; authorName: string; language: string; content: string }>(
       `/api/user/drafts/${encodeURIComponent(id)}`,
       { credentials: 'include' },
     )
-    draftId.value = d.id
-    persistDraftIdLocal(d.id)
+    projects.linkCurrentDraft(d.id)
+    const match = projects.projects.find((p) => p.draftId === d.id)
+    if (match) projects.currentProjectId = match.id
     lyrics.title = d.title
     lyrics.text = d.content
     publishForm.title = d.title
@@ -578,9 +660,50 @@ async function loadDraftFromRoute() {
   }
 }
 
-onMounted(() => {
-  loadDraftIdLocal()
-  void loadDraftFromRoute()
+async function loadDraftFromRoute() {
+  const q = route.query.draft
+  const id = typeof q === 'string' ? q.trim() : Array.isArray(q) ? String(q[0] ?? '').trim() : ''
+  if (!id) return
+  await loadDraftById(id)
+}
+
+let suppressProjectWatch = false
+
+/** When switching projects, load remote draft body (local unsaved projects use store state). */
+watch(
+  () => projects.currentProjectId,
+  async (id, prev) => {
+    if (suppressProjectWatch || !id || id === prev) return
+    const p = projects.currentProject
+    if (!p?.draftId) {
+      publishForm.title = p?.title ?? ''
+      return
+    }
+    suppressProjectWatch = true
+    try {
+      await loadDraftById(p.draftId)
+    } finally {
+      suppressProjectWatch = false
+    }
+  },
+)
+
+onMounted(async () => {
+  suppressProjectWatch = true
+  try {
+    if (isLoggedIn.value) {
+      await projects.syncRemoteDrafts()
+    }
+    await loadDraftFromRoute()
+    const p = projects.currentProject
+    if (p?.draftId && !String(route.query.draft || '').trim()) {
+      await loadDraftById(p.draftId)
+    }
+  } finally {
+    suppressProjectWatch = false
+  }
+  const shouldRerunSearch = restoreSearchState()
+  if (shouldRerunSearch) void runSearch()
 })
 
 // ── Split panes (desktop) ───────────────────────────────────────────────────
@@ -689,6 +812,7 @@ onUnmounted(() => {
   document.removeEventListener('mouseup', endSplitResize)
   document.body.style.removeProperty('cursor')
   document.body.style.removeProperty('user-select')
+  if (saveToastTimer) clearTimeout(saveToastTimer)
 })
 </script>
 
@@ -696,6 +820,38 @@ onUnmounted(() => {
   <div class="flex min-w-0 flex-1 flex-col" aria-label="Lucru: dicționar, versuri">
     <WriteToolsBar :draft-status="draftStatusText" :save-loading="saveLoading" @save="saveNowDirect"
       @publish="openPublish" />
+
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition duration-200 ease-out"
+        enter-from-class="opacity-0 translate-y-2"
+        leave-active-class="transition duration-150 ease-in"
+        leave-to-class="opacity-0 translate-y-2"
+      >
+        <div
+          v-if="saveToastVisible && saveMsg"
+          class="ds-banner fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] left-1/2 z-[100] flex max-w-[min(100%-2rem,28rem)] -translate-x-1/2 items-center gap-3 shadow-ds-popover md:bottom-6 md:max-w-md"
+          :class="saveMsg.ok ? 'ds-banner-success' : 'ds-banner-danger'"
+          :role="saveMsg.ok ? 'status' : 'alert'"
+          aria-live="polite"
+        >
+          <Icon
+            :icon="saveMsg.ok ? 'heroicons:check-circle' : 'heroicons:exclamation-circle'"
+            class="size-5 shrink-0"
+            :class="saveMsg.ok ? 'text-success' : 'text-danger'"
+            aria-hidden="true"
+          />
+          <p class="min-w-0 flex-1 font-medium text-content">{{ saveMsg.text }}</p>
+          <button
+            type="button"
+            class="shrink-0 text-content-muted underline decoration-edge underline-offset-2 hover:text-content"
+            @click="dismissSaveToast"
+          >
+            {{ t('write.done') }}
+          </button>
+        </div>
+      </Transition>
+    </Teleport>
     <div ref="splitContainerRef"
       class="flex min-h-0 min-w-0 flex-1 flex-col pb-[max(2rem,env(safe-area-inset-bottom,0px))] lg:flex-row">
       <!-- Stânga (desktop): căutare + rezultate; pe mobil order: versuri → căutare → rezultate (contents + order) -->

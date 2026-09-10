@@ -69,9 +69,20 @@ function closeDeleteModal() {
   deleteTarget.value = null
 }
 
-function executeDelete() {
+async function executeDelete() {
   const p = deleteTarget.value
   if (!p) return
+  const full = projectStore.projects.find((x) => x.id === p.id)
+  if (full?.draftId) {
+    try {
+      await $fetch(`/api/user/drafts/${encodeURIComponent(full.draftId)}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      })
+    } catch {
+      /* still remove local */
+    }
+  }
   projectStore.deleteProject(p.id)
   projectSearch.value = ''
   closeDeleteModal()
@@ -115,6 +126,18 @@ function confirmNewProject() {
   closeNewProjectModal()
 }
 
+async function refreshRemoteProjects() {
+  try {
+    await projectStore.syncRemoteDrafts()
+  } catch {
+    /* ignore */
+  }
+}
+
+watch(dropdownOpen, (open) => {
+  if (open) void refreshRemoteProjects()
+})
+
 function onDocPointerDown(e: PointerEvent) {
   if (!dropdownOpen.value || !rootRef.value) return
   if (!rootRef.value.contains(e.target as Node)) {
@@ -151,10 +174,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div
-    class="sticky top-0 z-30 shrink-0 border-b border-edge-subtle bg-surface-page/95 py-3 backdrop-blur-sm md:py-4"
-    aria-label="Instrumente"
-  >
+  <div class="sticky top-0 z-30 shrink-0 bg-surface-page/95 py-3 backdrop-blur-sm md:py-4" aria-label="Instrumente">
     <div class="flex w-full min-w-0 flex-wrap items-center justify-between gap-3">
       <div ref="rootRef" class="relative min-w-0">
         <button type="button"
@@ -249,37 +269,17 @@ onUnmounted(() => {
       </div>
 
       <div class="flex shrink-0 flex-wrap items-center gap-2 sm:gap-3">
-        <p
-          v-if="props.draftStatus"
-          class="hidden max-w-[12rem] truncate text-ui-sm text-content-muted sm:block"
-          role="status"
-          aria-live="polite"
-        >
+        <p v-if="props.draftStatus" class="hidden max-w-[12rem] truncate text-ui-sm text-content-muted sm:block"
+          role="status" aria-live="polite">
           {{ props.draftStatus }}
         </p>
-        <button
-          type="button"
-          class="ds-btn-secondary gap-2 px-4 py-2 text-sm shadow-ds-card"
-          :disabled="props.saveLoading"
-          @click="emit('save')"
-        >
-          <Icon
-            icon="heroicons:document-arrow-down"
-            class="h-4 w-4 shrink-0"
-            aria-hidden="true"
-          />
+        <button type="button" class="ds-btn-secondary gap-2 px-4 py-2 text-sm shadow-ds-card"
+          :disabled="props.saveLoading" @click="emit('save')">
+          <Icon icon="heroicons:document-arrow-down" class="h-4 w-4 shrink-0" aria-hidden="true" />
           {{ props.saveLoading ? t('write.savingDraft') : t('write.saveBtn') }}
         </button>
-        <button
-          type="button"
-          class="ds-btn-primary gap-2 px-4 py-2 text-sm shadow-ds-card"
-          @click="emit('publish')"
-        >
-          <Icon
-            icon="heroicons:arrow-up-tray"
-            class="h-4 w-4 shrink-0"
-            aria-hidden="true"
-          />
+        <button type="button" class="ds-btn-primary gap-2 px-4 py-2 text-sm shadow-ds-card" @click="emit('publish')">
+          <Icon icon="heroicons:arrow-up-tray" class="h-4 w-4 shrink-0" aria-hidden="true" />
           {{ t('write.publishBtn') }}
         </button>
       </div>
@@ -332,8 +332,7 @@ onUnmounted(() => {
             @click="closeNewProjectModal">
             Anulează
           </button>
-          <button type="button"
-            class="ds-btn-primary disabled:cursor-not-allowed disabled:opacity-50"
+          <button type="button" class="ds-btn-primary disabled:cursor-not-allowed disabled:opacity-50"
             :disabled="!canSubmitNewProject" @click="confirmNewProject">
             Adaugă proiectul
           </button>
