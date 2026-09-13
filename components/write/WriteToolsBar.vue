@@ -221,7 +221,7 @@ onUnmounted(() => {
                 </span>
                 <label class="sr-only">Caută proiecte</label>
                 <input v-model="projectSearch" type="search" placeholder="Filtră după nume…" autocomplete="off"
-                  class="w-full rounded-xl border border-edge-subtle bg-surface-subtle/80 py-2 pl-9 pr-3 text-sm text-content outline-none ring-brand/20 transition placeholder:text-content-soft focus:border-brand focus:bg-surface-overlay focus:ring-2"
+                  class="w-full rounded-xl border border-edge-subtle bg-surface-subtle/80 py-2 pl-9 pr-3 text-base text-content outline-none ring-brand/20 transition placeholder:text-content-soft focus:border-brand focus:bg-surface-overlay focus:ring-2"
                   @keydown.escape="dropdownOpen = false" />
               </div>
             </div>
@@ -323,7 +323,7 @@ onUnmounted(() => {
         <label for="new-project-name"
           class="mt-4 block text-xs font-medium uppercase tracking-wide text-content-muted">Nume</label>
         <input id="new-project-name" ref="newProjectInputRef" v-model="newProjectNameDraft" type="text"
-          class="mt-1.5 w-full rounded-xl border border-edge-subtle px-3 py-2.5 text-sm text-content outline-none placeholder:text-content-soft focus:border-brand focus:ring-2 focus:ring-brand/25"
+          class="mt-1.5 w-full rounded-xl border border-edge-subtle px-3 py-2.5 text-base text-content outline-none placeholder:text-content-soft focus:border-brand focus:ring-2 focus:ring-brand/25"
           placeholder="ex. Versuri aprilie" autocomplete="off"
           @keydown.enter.prevent="canSubmitNewProject && confirmNewProject()" />
         <div class="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">

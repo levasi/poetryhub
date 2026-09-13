@@ -839,7 +839,7 @@ onUnmounted(() => {
         </div>
       </Transition>
     </Teleport>
-    <div ref="splitContainerRef" class="flex min-h-0 min-w-0 flex-1 flex-col lg:flex-row">
+    <div ref="splitContainerRef" class="flex min-h-0 min-w-0 flex-1 flex-col pb-mobile-tab md:pb-14 lg:flex-row">
       <!-- Stânga (desktop): căutare + rezultate; pe mobil order: versuri → căutare → rezultate (contents + order) -->
       <div
         class="contents min-h-0 min-w-0 lg:order-1 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col lg:gap-4 sm:pr-4 sm:pb-6">
@@ -863,7 +863,7 @@ onUnmounted(() => {
                   <label class="sr-only">Cuvânt căutat {{ i + 1 }}</label>
                   <input :ref="(el) => setSearchInputRef(i, el)" v-model="row.text" type="text" inputmode="search"
                     autocomplete="off" enterkeyhint="search" :placeholder="placeholder"
-                    class="w-[9.5rem] max-w-full rounded-xl border border-edge bg-surface-raised py-2 pl-3 text-sm text-content shadow-inner outline-none ring-brand/20 transition placeholder:text-xs placeholder:text-content-soft focus:border-brand focus:ring-2 sm:w-[10.5rem] sm:py-2.5 sm:text-base sm:placeholder:text-sm"
+                    class="w-[9.5rem] max-w-full rounded-xl border border-edge bg-surface-raised py-2 pl-3 text-base text-content shadow-inner outline-none ring-brand/20 transition placeholder:text-sm placeholder:text-content-soft focus:border-brand focus:ring-2 sm:w-[10.5rem] sm:py-2.5"
                     :class="searchQueries.length > 1 ? 'pr-7 sm:pr-8' : 'pr-3 sm:pr-4'" @focus="activeSearchIndex = i"
                     @keydown.enter.prevent="runSearch" />
                   <button v-if="searchQueries.length > 1" type="button"

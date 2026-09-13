@@ -424,7 +424,7 @@ onBeforeUnmount(() => {
         v-model="title"
         type="text"
         autocomplete="off"
-        class="my-2 w-full rounded-xl bg-surface-subtle/50 px-3 py-2 text-sm text-content outline-none focus:border-brand focus:ring-2 focus:ring-brand/25"
+        class="my-2 w-full rounded-xl bg-surface-subtle/50 px-3 py-2 text-base text-content outline-none focus:border-brand focus:ring-2 focus:ring-brand/25"
         placeholder="Titlul poeziei…"
       >
 
@@ -491,7 +491,7 @@ onBeforeUnmount(() => {
                 :ref="(el) => setTaRef(block.id, el)"
                 :value="block.text"
                 rows="2"
-                class="block min-w-0 flex-1 cursor-text overflow-hidden rounded-xl bg-surface-raised px-3 py-2 font-serif text-sm leading-relaxed text-content outline-none focus:border-brand focus:ring-2 focus:ring-brand/25"
+                class="block min-w-0 flex-1 cursor-text overflow-hidden rounded-xl bg-surface-raised px-3 py-2 font-serif text-base leading-relaxed text-content outline-none focus:border-brand focus:ring-2 focus:ring-brand/25"
                 placeholder="Scrie versuri aici…"
                 spellcheck="true"
                 @focus="activeBlockId = block.id"
