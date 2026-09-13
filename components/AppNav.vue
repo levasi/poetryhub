@@ -181,7 +181,7 @@ function mobileLinkClass(path: string) {
     </div>
 
     <DsSheet v-model:open="mobileOpen" :title="t('nav.menu')" id-prefix="mobile-nav">
-      <div class="space-y-6 pb-4">
+      <div class="space-y-6">
         <div>
           <p class="ds-eyebrow">
             {{ t('nav.menuRead') }}

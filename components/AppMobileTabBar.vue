@@ -4,6 +4,8 @@ import { Icon } from '@iconify/vue'
 const { t } = useI18n()
 const route = useRoute()
 const settingsOpen = useState('reading-settings-open', () => false)
+const { keyboardOpen } = useMobileKeyboard()
+trackMobileKeyboard()
 
 const items = computed(() => [
   {
@@ -41,6 +43,7 @@ function toggleSettings() {
 
 <template>
   <nav
+    v-show="!keyboardOpen"
     class="fixed inset-x-0 bottom-0 z-[70] border-t border-edge-subtle bg-surface-raised/95 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1 shadow-[0_-2px_16px_-8px_rgba(0,0,0,0.08)] backdrop-blur-md md:hidden"
     :aria-label="t('nav.mobileTabBarAria')"
   >

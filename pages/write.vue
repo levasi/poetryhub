@@ -839,7 +839,7 @@ onUnmounted(() => {
         </div>
       </Transition>
     </Teleport>
-    <div ref="splitContainerRef" class="flex min-h-0 min-w-0 flex-1 flex-col pb-mobile-tab md:pb-14 lg:flex-row">
+    <div ref="splitContainerRef" class="flex min-h-0 min-w-0 flex-1 flex-col lg:flex-row">
       <!-- Stânga (desktop): căutare + rezultate; pe mobil order: versuri → căutare → rezultate (contents + order) -->
       <div
         class="contents min-h-0 min-w-0 lg:order-1 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col lg:gap-4 sm:pr-4 sm:pb-6">
@@ -914,7 +914,7 @@ onUnmounted(() => {
                 </div>
               </li>
             </ul>
-            <div v-if="results.length && resultsHasMore && !loading" class="mt-3 mb-4 flex justify-center md:mb-0">
+            <div v-if="results.length && resultsHasMore && !loading" class="mt-3 flex justify-center">
               <button type="button"
                 class="w-full max-w-xs rounded-xl border border-edge-subtle bg-surface-subtle px-4 py-2.5 text-sm font-medium text-content-secondary transition hover:border-edge hover:bg-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                 :disabled="loadingMore" @click="loadMoreResults">
