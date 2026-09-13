@@ -822,38 +822,24 @@ onUnmounted(() => {
       @publish="openPublish" />
 
     <Teleport to="body">
-      <Transition
-        enter-active-class="transition duration-200 ease-out"
-        enter-from-class="opacity-0 translate-y-2"
-        leave-active-class="transition duration-150 ease-in"
-        leave-to-class="opacity-0 translate-y-2"
-      >
-        <div
-          v-if="saveToastVisible && saveMsg"
+      <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0 translate-y-2"
+        leave-active-class="transition duration-150 ease-in" leave-to-class="opacity-0 translate-y-2">
+        <div v-if="saveToastVisible && saveMsg"
           class="ds-banner fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] left-1/2 z-[100] flex max-w-[min(100%-2rem,28rem)] -translate-x-1/2 items-center gap-3 shadow-ds-popover md:bottom-6 md:max-w-md"
-          :class="saveMsg.ok ? 'ds-banner-success' : 'ds-banner-danger'"
-          :role="saveMsg.ok ? 'status' : 'alert'"
-          aria-live="polite"
-        >
-          <Icon
-            :icon="saveMsg.ok ? 'heroicons:check-circle' : 'heroicons:exclamation-circle'"
-            class="size-5 shrink-0"
-            :class="saveMsg.ok ? 'text-success' : 'text-danger'"
-            aria-hidden="true"
-          />
+          :class="saveMsg.ok ? 'ds-banner-success' : 'ds-banner-danger'" :role="saveMsg.ok ? 'status' : 'alert'"
+          aria-live="polite">
+          <Icon :icon="saveMsg.ok ? 'heroicons:check-circle' : 'heroicons:exclamation-circle'" class="size-5 shrink-0"
+            :class="saveMsg.ok ? 'text-success' : 'text-danger'" aria-hidden="true" />
           <p class="min-w-0 flex-1 font-medium text-content">{{ saveMsg.text }}</p>
-          <button
-            type="button"
+          <button type="button"
             class="shrink-0 text-content-muted underline decoration-edge underline-offset-2 hover:text-content"
-            @click="dismissSaveToast"
-          >
+            @click="dismissSaveToast">
             {{ t('write.done') }}
           </button>
         </div>
       </Transition>
     </Teleport>
-    <div ref="splitContainerRef"
-      class="flex min-h-0 min-w-0 flex-1 flex-col pb-[max(2rem,env(safe-area-inset-bottom,0px))] lg:flex-row">
+    <div ref="splitContainerRef" class="flex min-h-0 min-w-0 flex-1 flex-col lg:flex-row">
       <!-- Stânga (desktop): căutare + rezultate; pe mobil order: versuri → căutare → rezultate (contents + order) -->
       <div
         class="contents min-h-0 min-w-0 lg:order-1 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col lg:gap-4 sm:pr-4 sm:pb-6">
@@ -928,7 +914,7 @@ onUnmounted(() => {
                 </div>
               </li>
             </ul>
-            <div v-if="results.length && resultsHasMore && !loading" class="mt-3 flex justify-center">
+            <div v-if="results.length && resultsHasMore && !loading" class="mt-3 mb-4 flex justify-center md:mb-0">
               <button type="button"
                 class="w-full max-w-xs rounded-xl border border-edge-subtle bg-surface-subtle px-4 py-2.5 text-sm font-medium text-content-secondary transition hover:border-edge hover:bg-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                 :disabled="loadingMore" @click="loadMoreResults">

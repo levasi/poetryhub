@@ -174,7 +174,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="sticky top-0 z-30 shrink-0 bg-surface-page/95 py-3 backdrop-blur-sm md:py-4" aria-label="Instrumente">
+  <div class="shrink-0 py-3 md:py-4" aria-label="Instrumente">
     <div class="flex w-full min-w-0 flex-wrap items-center justify-between gap-3">
       <div ref="rootRef" class="relative min-w-0">
         <button type="button"
