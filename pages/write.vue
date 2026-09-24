@@ -231,6 +231,11 @@ const placeholder = computed(() => {
   }
 })
 
+function selectSearchMode(id: SearchMode) {
+  mode.value = id
+  void runSearch()
+}
+
 async function runSearch() {
   const terms = searchableTerms()
   if (terms.length === 0) {
@@ -851,7 +856,7 @@ onUnmounted(() => {
                 class="rounded-lg border px-3 py-1.5 text-xs font-medium transition" :class="mode === m.id
                   ? 'border-brand bg-brand-soft/40 text-content shadow-sm'
                   : 'border-edge-subtle bg-surface-subtle text-content-secondary hover:border-edge'
-                  " @click="mode = m.id">
+                  " @click="selectSearchMode(m.id)">
                 {{ m.label }}
               </button>
             </div>
