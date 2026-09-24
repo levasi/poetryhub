@@ -864,18 +864,22 @@ onUnmounted(() => {
             <div class="mt-4">
               <label class="sr-only">Căutare</label>
               <div class="flex flex-wrap items-center gap-2">
-                <div v-for="(row, i) in searchQueries" :key="row.id" class="relative shrink-0">
+                <div
+                  v-for="(row, i) in searchQueries"
+                  :key="row.id"
+                  class="group relative w-[9.5rem] max-w-full shrink-0 overflow-hidden rounded-xl border border-edge bg-surface-raised shadow-inner ring-brand/20 transition focus-within:border-brand focus-within:ring-2 sm:w-[10.5rem]"
+                >
                   <label class="sr-only">Cuvânt căutat {{ i + 1 }}</label>
                   <input :ref="(el) => setSearchInputRef(i, el)" v-model="row.text" type="text" inputmode="search"
                     autocomplete="off" enterkeyhint="search" :placeholder="placeholder"
-                    class="w-[9.5rem] max-w-full rounded-xl border border-edge bg-surface-raised py-2 pl-3 text-base text-content shadow-inner outline-none ring-brand/20 transition placeholder:text-sm placeholder:text-content-soft focus:border-brand focus:ring-2 sm:w-[10.5rem] sm:py-2.5"
+                    class="w-full bg-transparent py-2 pl-3 text-base text-content outline-none placeholder:text-sm placeholder:text-content-soft sm:py-2.5"
                     :class="searchQueries.length > 1 ? 'pr-7 sm:pr-8' : 'pr-3 sm:pr-4'" @focus="activeSearchIndex = i"
                     @keydown.enter.prevent="runSearch" />
                   <button v-if="searchQueries.length > 1" type="button"
-                    class="absolute right-1 top-1 inline-flex h-4 w-4 items-center justify-center rounded-full text-content-muted transition hover:bg-surface-subtle hover:text-content-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand/40 sm:right-1.5 sm:top-1.5 sm:h-[1.125rem] sm:w-[1.125rem]"
+                    class="absolute inset-y-0 right-0 flex w-7 translate-x-full items-center justify-center bg-surface-subtle text-content-muted transition duration-200 ease-out hover:bg-edge-subtle hover:text-content-secondary focus-visible:translate-x-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-brand/40 group-hover:translate-x-0 group-focus-within:translate-x-0 sm:w-8"
                     :title="'Elimină câmpul ' + (i + 1)" :aria-label="'Elimină câmpul ' + (i + 1)"
                     @click="removeSearchQuery(i)">
-                    <Icon icon="heroicons:x-mark" class="h-3 w-3 shrink-0" aria-hidden="true" />
+                    <Icon icon="heroicons:x-mark" class="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                   </button>
                 </div>
                 <button type="button"
