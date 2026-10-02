@@ -456,14 +456,6 @@ function showSaveToast(ok: boolean, text: string) {
   }, 2800)
 }
 
-function dismissSaveToast() {
-  if (saveToastTimer) {
-    clearTimeout(saveToastTimer)
-    saveToastTimer = null
-  }
-  saveToastVisible.value = false
-}
-
 /** Active server draft for the selected project (null = unsaved local). */
 const draftId = computed({
   get: () => projects.currentProject?.draftId ?? null,
@@ -955,9 +947,6 @@ onUnmounted(() => {
             aria-hidden="true"
           />
           <p class="write-split__toast-text">{{ saveMsg.text }}</p>
-          <button type="button" class="write-split__toast-dismiss" @click="dismissSaveToast">
-            {{ t('write.done') }}
-          </button>
         </div>
       </Transition>
     </Teleport>

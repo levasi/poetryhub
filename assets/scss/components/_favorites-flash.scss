@@ -10,7 +10,12 @@
   transform: translateX(-50%);
   align-items: center;
   gap: 0.75rem;
+  opacity: 1;
   box-shadow: var(--shadow-ds-popover);
+
+  &.ds-banner-danger {
+    background-color: ph-rgb(danger-soft);
+  }
 
   @media (min-width: $bp-md) {
     bottom: 1.5rem;

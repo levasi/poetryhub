@@ -516,7 +516,16 @@
   transform: translateX(-50%);
   align-items: center;
   gap: 0.75rem;
+  opacity: 1;
   box-shadow: var(--shadow-ds-popover);
+
+  &.ds-banner-success {
+    background-color: ph-rgb(success-soft);
+  }
+
+  &.ds-banner-danger {
+    background-color: ph-rgb(danger-soft);
+  }
 
   @media (min-width: $bp-md) {
     bottom: 1.5rem;
@@ -543,18 +552,6 @@
   flex: 1 1 0%;
   font-weight: 500;
   color: ph-rgb(content);
-}
-
-.write-split__toast-dismiss {
-  flex-shrink: 0;
-  color: ph-rgb(content-muted);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  text-decoration-color: ph-rgb(edge);
-
-  &:hover {
-    color: ph-rgb(content);
-  }
 }
 
 .write-split__container {
