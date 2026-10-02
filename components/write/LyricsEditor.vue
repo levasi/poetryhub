@@ -576,42 +576,22 @@ onBeforeUnmount(() => {
       <label for="lyrics-title" class="write-editor__label">
         Titlu
       </label>
-      <input
-        id="lyrics-title"
-        v-model="title"
-        type="text"
-        autocomplete="off"
-        class="write-editor__title-input"
-        placeholder="Titlul poeziei…"
-      >
+      <input id="lyrics-title" v-model="title" type="text" autocomplete="off" class="write-editor__title-input"
+        placeholder="Titlul poeziei…">
 
       <div class="write-editor__toolbar">
         <label class="write-editor__label">
           Versuri
         </label>
         <div class="write-editor__toolbar-actions">
-          <div
-            class="write-editor__columns"
-            role="group"
-            :aria-label="t('write.verseColumnsAria')"
-          >
-            <button
-              v-for="n in COLUMN_OPTIONS"
-              :key="n"
-              type="button"
-              class="write-editor__column-btn"
-              :class="{ 'write-editor__column-btn--active': columns === n }"
-              :aria-pressed="columns === n"
-              @click="columns = n"
-            >
+          <div class="write-editor__columns" role="group" :aria-label="t('write.verseColumnsAria')">
+            <button v-for="n in COLUMN_OPTIONS" :key="n" type="button" class="write-editor__column-btn"
+              :class="{ 'write-editor__column-btn--active': columns === n }" :aria-pressed="columns === n"
+              @click="columns = n">
               {{ n }}
             </button>
           </div>
-          <button
-            type="button"
-            class="write-editor__add-block"
-            @click="addBlock()"
-          >
+          <button type="button" class="write-editor__add-block" @click="addBlock()">
             <Icon icon="heroicons:plus" class="write-editor__add-icon" aria-hidden="true" />
             {{ t('write.addVerseBlock') }}
           </button>
@@ -619,115 +599,60 @@ onBeforeUnmount(() => {
       </div>
 
       <ClientOnly>
-        <div
-          ref="listRef"
-          class="write-editor__list"
-          :class="{ 'write-editor__list--dragging': !!draggingId }"
-        >
-          <div
-            v-for="(stack, colIndex) in columnStacks"
-            :key="colIndex"
-            :ref="(el) => setColRef(colIndex, el)"
-            class="write-editor__column"
-            :class="{ 'write-editor__column--drop-target': !!draggingId }"
-          >
-            <div
-              class="write-editor__insert-bar"
-              :class="{ 'write-editor__insert-bar--idle': !!draggingId }"
-            >
-              <button
-                type="button"
-                class="write-editor__insert-bar-btn"
-                :disabled="!!draggingId"
-                :title="t('write.insertVerseBlock')"
-                :aria-label="t('write.insertVerseBlock')"
-                @click="addBlockAtColumnStart(colIndex)"
-              >
+        <div ref="listRef" class="write-editor__list" :class="{ 'write-editor__list--dragging': !!draggingId }">
+          <div v-for="(stack, colIndex) in columnStacks" :key="colIndex" :ref="(el) => setColRef(colIndex, el)"
+            class="write-editor__column" :class="{ 'write-editor__column--drop-target': !!draggingId }">
+            <div class="write-editor__insert-bar" :class="{ 'write-editor__insert-bar--idle': !!draggingId }">
+              <button type="button" class="write-editor__insert-bar-btn" :disabled="!!draggingId"
+                :title="t('write.insertVerseBlock')" :aria-label="t('write.insertVerseBlock')"
+                @click="addBlockAtColumnStart(colIndex)">
                 <Icon icon="heroicons:plus" class="write-editor__insert-icon" aria-hidden="true" />
               </button>
             </div>
             <template v-for="block in stack" :key="block.id">
               <div class="write-editor__card-wrap">
-                <div
-                  :ref="(el) => setCardRef(block.id, el)"
-                  class="write-editor__card"
-                  :class="{
-                    'write-editor__card--active': activeBlockId === block.id,
-                    'write-editor__card--dragging': draggingId === block.id,
-                  }"
-                >
-                  <textarea
-                    :id="`lyrics-block-${block.id}`"
-                    :ref="(el) => setTaRef(block.id, el)"
-                    :value="block.text"
-                    rows="2"
-                    class="write-editor__textarea"
-                    placeholder="Scrie versuri aici…"
-                    spellcheck="true"
+                <div :ref="(el) => setCardRef(block.id, el)" class="write-editor__card" :class="{
+                  'write-editor__card--active': activeBlockId === block.id,
+                  'write-editor__card--dragging': draggingId === block.id,
+                }">
+                  <textarea :id="`lyrics-block-${block.id}`" :ref="(el) => setTaRef(block.id, el)" :value="block.text"
+                    rows="2" class="write-editor__textarea" placeholder="Scrie versuri aici…" spellcheck="true"
                     @focus="activeBlockId = block.id"
-                    @input="onBlockInput(block.id, ($event.target as HTMLTextAreaElement).value)"
-                  />
+                    @input="onBlockInput(block.id, ($event.target as HTMLTextAreaElement).value)" />
                   <div class="write-editor__card-aside">
-                    <button
-                      type="button"
-                      class="write-editor__remove-block"
-                      :title="t('write.removeVerseBlock')"
-                      :aria-label="t('write.removeVerseBlock')"
-                      @click="removeBlock(block.id)"
-                    >
+                    <button type="button" class="write-editor__remove-block" :title="t('write.removeVerseBlock')"
+                      :aria-label="t('write.removeVerseBlock')" @click="removeBlock(block.id)">
                       <Icon icon="heroicons:trash" class="write-editor__remove-icon" aria-hidden="true" />
                     </button>
-                    <div
-                      class="write-editor__drag-handle"
-                      role="button"
-                      tabindex="0"
-                      :aria-label="t('write.dragVerseBlock')"
-                      :title="t('write.dragVerseBlock')"
-                      @pointerdown="onDragHandlePointerDown(block.id, $event)"
-                    >
+                    <div class="write-editor__drag-handle" role="button" tabindex="0"
+                      :aria-label="t('write.dragVerseBlock')" :title="t('write.dragVerseBlock')"
+                      @pointerdown="onDragHandlePointerDown(block.id, $event)">
                       <Icon icon="heroicons:arrows-pointing-out" class="write-editor__drag-icon" aria-hidden="true" />
                     </div>
                   </div>
                 </div>
               </div>
-              <div
-                class="write-editor__insert-bar"
-                :class="{ 'write-editor__insert-bar--idle': !!draggingId }"
-              >
-                <button
-                  type="button"
-                  class="write-editor__insert-bar-btn"
-                  :disabled="!!draggingId"
-                  :title="t('write.insertVerseBlock')"
-                  :aria-label="t('write.insertVerseBlock')"
-                  @click="addBlock(block.id)"
-                >
+              <div class="write-editor__insert-bar" :class="{ 'write-editor__insert-bar--idle': !!draggingId }">
+                <button type="button" class="write-editor__insert-bar-btn" :disabled="!!draggingId"
+                  :title="t('write.insertVerseBlock')" :aria-label="t('write.insertVerseBlock')"
+                  @click="addBlock(block.id)">
                   <Icon icon="heroicons:plus" class="write-editor__insert-icon" aria-hidden="true" />
                 </button>
               </div>
             </template>
           </div>
 
-          <div
-            v-show="draggingId && dropHit"
-            class="write-editor__drop-line"
-            :style="dropLineStyle"
-            aria-hidden="true"
-          >
+          <div v-show="draggingId && dropHit" class="write-editor__drop-line" :style="dropLineStyle" aria-hidden="true">
             <span class="write-editor__drop-dot write-editor__drop-dot--start" />
             <span class="write-editor__drop-dot write-editor__drop-dot--end" />
           </div>
         </div>
 
         <Teleport to="body">
-          <div
-            v-if="draggingId && dragPreview"
-            class="write-editor__drag-preview"
-            :style="{
-              left: `${pointer.x + 12}px`,
-              top: `${pointer.y + 12}px`,
-            }"
-          >
+          <div v-if="draggingId && dragPreview" class="write-editor__drag-preview" :style="{
+            left: `${pointer.x + 12}px`,
+            top: `${pointer.y + 12}px`,
+          }">
             <p class="write-editor__drag-preview-label">
               {{ dragPreview.label }}
             </p>
@@ -751,68 +676,32 @@ onBeforeUnmount(() => {
         Adaugă cuvinte cu + sau din rezultatele căutării.
       </p>
       <ul class="write-editor__saved-list" aria-label="Cuvinte salvate">
-        <li
-          v-for="w in projects.activeSavedWords"
-          :key="w"
-          class="write-editor__saved-chip"
-        >
+        <li v-for="w in projects.activeSavedWords" :key="w" class="write-editor__saved-chip">
           <span>{{ w }}</span>
-          <button
-            type="button"
-            class="write-editor__saved-remove"
-            title="Elimină"
-            @click="projects.removeSavedWord(w)"
-          >
+          <button type="button" class="write-editor__saved-remove" title="Elimină" @click="projects.removeSavedWord(w)">
             ×
           </button>
         </li>
         <li class="write-editor__saved-add">
-          <button
-            ref="savedWordAddBtnRef"
-            type="button"
-            class="write-editor__saved-add-btn"
-            title="Adaugă cuvânt"
-            aria-label="Adaugă cuvânt"
-            :aria-expanded="savedWordInputOpen"
-            aria-haspopup="dialog"
-            aria-controls="write-saved-word-tooltip"
-            @click="toggleSavedWordInput"
-          >
+          <button ref="savedWordAddBtnRef" type="button" class="write-editor__saved-add-btn" title="Adaugă cuvânt"
+            aria-label="Adaugă cuvânt" :aria-expanded="savedWordInputOpen" aria-haspopup="dialog"
+            aria-controls="write-saved-word-tooltip" @click="toggleSavedWordInput">
             <Icon icon="heroicons:plus" class="write-editor__saved-add-icon" aria-hidden="true" />
           </button>
         </li>
       </ul>
 
       <Teleport to="body">
-        <form
-          v-if="savedWordInputOpen && savedWordTooltipPos"
-          id="write-saved-word-tooltip"
-          ref="savedWordTooltipRef"
-          class="write-editor__saved-form"
-          role="dialog"
-          aria-label="Adaugă cuvânt salvat"
-          :style="{
+        <form v-if="savedWordInputOpen && savedWordTooltipPos" id="write-saved-word-tooltip" ref="savedWordTooltipRef"
+          class="write-editor__saved-form" role="dialog" aria-label="Adaugă cuvânt salvat" :style="{
             top: `${savedWordTooltipPos.top}px`,
             left: `${savedWordTooltipPos.left}px`,
             width: `${savedWordTooltipPos.width}px`,
-          }"
-          @submit.prevent="confirmSavedWord"
-        >
+          }" @submit.prevent="confirmSavedWord">
           <label class="sr-only" for="write-saved-word-input">Cuvânt de salvat</label>
-          <input
-            id="write-saved-word-input"
-            ref="savedWordInputRef"
-            v-model="savedWordDraft"
-            type="text"
-            class="write-editor__saved-input"
-            placeholder="ex. lumină"
-            autocomplete="off"
-          />
-          <button
-            type="submit"
-            class="write-editor__saved-submit"
-            :disabled="!canAddSavedWord"
-          >
+          <input id="write-saved-word-input" ref="savedWordInputRef" v-model="savedWordDraft" type="text"
+            class="write-editor__saved-input" placeholder="ex. lumină" autocomplete="off" />
+          <button type="submit" class="write-editor__saved-submit" :disabled="!canAddSavedWord">
             Adaugă
           </button>
         </form>
