@@ -1,0 +1,498 @@
+@use '../tokens' as *;
+
+.poetry-card {
+  &--featured {
+    grid-column: span 2 / span 2;
+    grid-row: span 2 / span 2;
+  }
+
+  &--masonry {
+    height: auto;
+  }
+
+  &--grid-fill {
+    height: 100%;
+  }
+}
+
+.poetry-card__list {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25rem;
+  border-bottom: 1px solid ph-rgb(edge-subtle);
+  padding-block: 1.5rem;
+  transition: background-color 0.15s ease;
+
+  &:last-child {
+    border-bottom-width: 0;
+  }
+
+  &:hover {
+    background-color: rgb(var(--color-surface-subtle) / 0.5);
+  }
+}
+
+.poetry-card__accent {
+  margin-top: 0.375rem;
+  height: 3.5rem;
+  width: 0.125rem;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  opacity: 0.8;
+  transition: opacity 0.15s ease;
+  background-color: ph-rgb(edge-strong);
+
+  .poetry-card__list:hover & {
+    opacity: 1;
+  }
+}
+
+.poetry-card__list-body {
+  min-width: 0;
+  flex: 1 1 0%;
+}
+
+.poetry-card__list-title-row {
+  margin-bottom: 0.375rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.poetry-card__list-title-link {
+  min-width: 0;
+  flex: 1 1 0%;
+}
+
+.poetry-card__title {
+  font-family: $ph-font-typewriter;
+  font-weight: 600;
+  line-height: 1.375;
+  letter-spacing: 0.04em;
+  color: ph-rgb(content);
+
+  &--list {
+    font-size: 1.125rem;
+  }
+
+  &--featured {
+    font-size: 1.5rem;
+
+    @media (min-width: $bp-md) {
+      font-size: 1.65rem;
+    }
+  }
+
+  &--card {
+    font-size: 1.125rem;
+  }
+}
+
+.poetry-card__year {
+  margin-left: 0.375rem;
+  font-family: $ph-font-sans;
+  font-size: 0.75rem;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  color: ph-rgb(content-muted);
+}
+
+.poetry-card__lang {
+  flex-shrink: 0;
+  font-size: 0.875rem;
+  color: ph-rgb(content-soft);
+}
+
+.poetry-card__author-list {
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: ph-rgb(content-muted);
+  transition: color 0.15s ease;
+
+  &:hover {
+    color: ph-rgb(content-secondary);
+  }
+}
+
+.poetry-card__author-avatar {
+  flex-shrink: 0;
+  border-radius: 9999px;
+  object-fit: cover;
+  box-shadow: 0 0 0 1px ph-rgb(edge-subtle);
+
+  &--sm {
+    height: 1.5rem;
+    width: 1.5rem;
+  }
+
+  &--md {
+    height: 1.75rem;
+    width: 1.75rem;
+  }
+}
+
+.poetry-card__preview {
+  white-space: pre-wrap;
+  color: ph-rgb(content-secondary);
+
+  &--grid {
+    min-height: 4.5rem;
+    flex: 1 1 0%;
+  }
+}
+
+.poetry-card__read-more {
+  margin-top: 0.625rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: ph-rgb(brand);
+  transition: color 0.15s ease;
+
+  &:hover {
+    color: ph-rgb(brand-hover);
+  }
+
+  &--grid {
+    margin-top: 0;
+    gap: 0.375rem;
+    min-width: 0;
+  }
+}
+
+.poetry-card__read-icon {
+  flex-shrink: 0;
+  height: 0.875rem;
+  width: 0.875rem;
+
+  &--md {
+    height: 1rem;
+    width: 1rem;
+    transition: transform 0.15s ease;
+
+    .poetry-card__read-more:hover & {
+      transform: translateX(0.125rem);
+    }
+  }
+}
+
+.poetry-card__list-actions {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.poetry-card__action-row {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+}
+
+.poetry-card__icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $ph-radius-md;
+  color: ph-rgb(content-muted);
+  transition: color 0.15s ease, background-color 0.15s ease;
+
+  &:hover {
+    background-color: ph-rgb(surface-subtle);
+    color: ph-rgb(brand);
+  }
+
+  &--fav {
+    padding: 0.5rem;
+    color: ph-rgb(content-hint);
+
+    &:hover {
+      background-color: ph-rgb(brand-tint);
+      color: ph-rgb(brand);
+    }
+  }
+
+  &--liked {
+    color: ph-rgb(brand);
+    background-color: ph-rgb(brand-tint);
+  }
+}
+
+.poetry-card__icon {
+  height: 1.25rem;
+  width: 1.25rem;
+
+  &--sm {
+    height: 1rem;
+    width: 1rem;
+  }
+}
+
+.poetry-card__grid {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: $ph-radius-lg;
+  border: 1px solid ph-rgb(edge-subtle);
+  background-color: ph-rgb(surface-raised);
+  transition: transform 0.3s ease-out, border-color 0.3s ease-out, box-shadow 0.3s ease-out;
+
+  &:hover {
+    transform: translateY(-0.125rem);
+    border-color: ph-rgb(edge);
+    box-shadow: var(--shadow-ds-card-hover);
+  }
+
+  &--fill {
+    height: 100%;
+  }
+
+  &--auto {
+    height: auto;
+  }
+}
+
+.poetry-card__grid-inner {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+}
+
+.poetry-card__author-grid {
+  margin-bottom: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: ph-rgb(content-muted);
+  transition: color 0.15s ease;
+
+  &:hover {
+    color: ph-rgb(brand);
+  }
+}
+
+.poetry-card__author-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.poetry-card__grid-title {
+  margin-bottom: 0.5rem;
+}
+
+.poetry-card__grid-title-link {
+  display: block;
+  min-width: 0;
+}
+
+.poetry-card__tags {
+  margin-bottom: 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.poetry-card__footer {
+  margin-top: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  border-top: 1px solid ph-rgb(edge-subtle);
+  padding-top: 1rem;
+}
+
+.poetry-card__footer-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.poetry-card__carousel {
+  flex-shrink: 0;
+  opacity: 0.8;
+  transition: opacity 0.15s ease;
+
+  .poetry-card__grid:hover & {
+    opacity: 1;
+  }
+}
+
+// Quick-read modal
+.quick-read-fade-enter-active {
+  transition: opacity 0.2s ease-out;
+}
+
+.quick-read-fade-leave-active {
+  transition: opacity 0.15s ease-in;
+}
+
+.quick-read-fade-enter-from,
+.quick-read-fade-leave-to {
+  opacity: 0;
+}
+
+.quick-read {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+
+  @media (min-width: 640px) {
+    padding: 1.5rem;
+  }
+}
+
+.quick-read__dialog {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  max-height: 78vh;
+  width: 100%;
+  max-width: 42rem;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: $ph-radius-xl;
+  background-color: ph-rgb(surface-raised);
+  box-shadow: var(--shadow-ds-popover);
+
+  @media (min-width: 640px) {
+    max-height: 90vh;
+  }
+}
+
+.quick-read__header {
+  display: flex;
+  flex-shrink: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background-color: rgb(var(--color-surface-page) / 0.5);
+  padding: 0.5rem;
+
+  @media (min-width: 640px) {
+    padding: 1rem;
+  }
+}
+
+.quick-read__header-main {
+  min-width: 0;
+  flex: 1 1 0%;
+}
+
+.quick-read__title-row {
+  margin-top: 0.25rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.quick-read__title-link {
+  min-width: 0;
+  flex: 1 1 0%;
+}
+
+.quick-read__title {
+  min-width: 0;
+  flex: 1 1 0%;
+  font-family: $ph-font-serif;
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.375;
+  letter-spacing: -0.025em;
+  color: ph-rgb(content);
+
+  &:hover {
+    color: ph-rgb(brand);
+  }
+}
+
+.quick-read__author {
+  margin-top: 0.25rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.875rem;
+  color: ph-rgb(content-secondary);
+}
+
+.quick-read__close-row {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.125rem;
+}
+
+.quick-read__body {
+  min-height: 0;
+  flex: 1 1 0%;
+  overflow-y: auto;
+  background-color: ph-rgb(surface-raised);
+  padding: 0.5rem;
+
+  @media (min-width: 640px) {
+    padding: 1rem;
+  }
+}
+
+.quick-read__footer {
+  flex-shrink: 0;
+  background-color: rgb(var(--color-surface-page) / 0.5);
+  padding: 1rem;
+}
+
+.quick-read__nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.quick-read__nav-btn {
+  display: inline-flex;
+  min-height: 2.5rem;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: $ph-radius-md;
+  border: 1px solid ph-rgb(edge-subtle);
+  background-color: ph-rgb(surface-page);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: ph-rgb(content);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+
+  &:hover:not(:disabled) {
+    border-color: ph-rgb(edge);
+    background-color: ph-rgb(surface-subtle);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
+}
+
+.quick-read__nav-icon {
+  height: 1rem;
+  width: 1rem;
+  flex-shrink: 0;
+}

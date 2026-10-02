@@ -181,145 +181,245 @@ watchEffect((onCleanup) => {
 </script>
 
 <template>
-  <div :class="[
-    layout === 'masonry' ? 'h-auto' : 'h-full',
-    {
-      'col-span-2 row-span-2': featured && view !== 'list' && layout !== 'masonry',
-    },
-  ]">
+  <div
+    :class="[
+      layout === 'masonry' ? 'poetry-card poetry-card--masonry' : 'poetry-card poetry-card--grid-fill',
+      { 'poetry-card--featured': featured && view !== 'list' && layout !== 'masonry' },
+    ]"
+  >
     <!-- List view -->
-    <article v-if="view === 'list'"
-      class="group flex items-start gap-5 border-b border-edge-subtle py-6 transition-colors last:border-0 hover:bg-surface-subtle/50">
-      <!-- Accent line -->
-      <div class="mt-1.5 h-14 w-0.5 shrink-0 rounded-full opacity-80 transition-opacity group-hover:opacity-100"
-        :style="accentColor ? `background-color: ${accentColor}` : ''" :class="{ 'bg-edge-strong': !accentColor }" />
+    <article
+      v-if="view === 'list'"
+      class="poetry-card__list"
+    >
+      <div
+        class="poetry-card__accent"
+        :style="accentColor ? `background-color: ${accentColor}` : ''"
+      />
 
-      <div class="min-w-0 flex-1">
-        <div class="mb-1.5 flex items-baseline gap-2">
-          <NuxtLink :to="poemHref" class="min-w-0 flex-1">
-            <h2 class="font-typewriter text-lg font-semibold leading-snug tracking-[0.04em] text-content">
-              {{ poem.title }}<span v-if="poem.writtenYear"
-                class="ml-1.5 font-sans text-xs font-normal tabular-nums text-content-muted">{{ poem.writtenYear
-                }}</span>
+      <div class="poetry-card__list-body">
+        <div class="poetry-card__list-title-row">
+          <NuxtLink
+            :to="poemHref"
+            class="poetry-card__list-title-link"
+          >
+            <h2 class="poetry-card__title poetry-card__title--list">
+              {{ poem.title }}<span
+                v-if="poem.writtenYear"
+                class="poetry-card__year"
+              >{{ poem.writtenYear }}</span>
             </h2>
           </NuxtLink>
-          <span v-if="showLangFlag" class="shrink-0 text-sm text-content-soft">{{ langFlag }}</span>
+          <span
+            v-if="showLangFlag"
+            class="poetry-card__lang"
+          >{{ langFlag }}</span>
         </div>
 
-        <NuxtLink v-if="author" :to="`/authors/${author.slug}`"
-          class="mb-2 flex items-center gap-2 text-xs font-medium text-content-muted transition-colors hover:text-content-secondary">
-          <img :src="authorAvatar" alt="" loading="lazy"
-            class="h-7 w-7 shrink-0 rounded-full object-cover ring-1 ring-edge-subtle" />
+        <NuxtLink
+          v-if="author"
+          :to="`/authors/${author.slug}`"
+          class="poetry-card__author-list"
+        >
+          <img
+            :src="authorAvatar"
+            alt=""
+            loading="lazy"
+            class="poetry-card__author-avatar poetry-card__author-avatar--md"
+          >
           <span>{{ author.name }}</span>
         </NuxtLink>
 
-        <p class="poem-text whitespace-pre-wrap text-content-secondary">
+        <p class="poem-text poetry-card__preview">
           {{ previewLines }}
         </p>
-        <NuxtLink :to="poemHref"
-          class="mt-2.5 inline-flex items-center gap-1 text-sm font-semibold text-brand transition-colors hover:text-brand-hover"
-          @click.stop>
+        <NuxtLink
+          :to="poemHref"
+          class="poetry-card__read-more"
+          @click.stop
+        >
           {{ t('card.readMore') }}
-          <svg class="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
-            aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+          <svg
+            class="poetry-card__read-icon"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M9 5l7 7-7 7"
+            />
           </svg>
         </NuxtLink>
       </div>
 
-      <div class="flex shrink-0 flex-col items-end gap-2">
-        <div class="flex items-center gap-0.5">
-          <button type="button"
-            class="inline-flex items-center justify-center rounded-ds-md text-content-muted transition-colors hover:bg-surface-subtle hover:text-brand"
-            :aria-label="t('card.quickRead')" :title="t('card.quickRead')" @click.stop="openQuickRead">
-            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
-              aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round"
-                d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3M8 21H5a2 2 0 01-2-2v-3m18 0v3a2 2 0 01-2 2h-3" />
+      <div class="poetry-card__list-actions">
+        <div class="poetry-card__action-row">
+          <button
+            type="button"
+            class="poetry-card__icon-btn"
+            :aria-label="t('card.quickRead')"
+            :title="t('card.quickRead')"
+            @click.stop="openQuickRead"
+          >
+            <svg
+              class="poetry-card__icon"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+              aria-hidden="true"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3M8 21H5a2 2 0 01-2-2v-3m18 0v3a2 2 0 01-2 2h-3"
+              />
             </svg>
           </button>
-          <button type="button" class="rounded-ds-md p-2 transition-colors"
-            :class="liked ? 'text-brand bg-brand-tint' : 'text-content-hint hover:bg-brand-tint hover:text-brand'"
-            :aria-label="liked ? t('card.favoriteRemove') : t('card.favoriteAdd')" @click.prevent="toggle(poem.id)">
+          <button
+            type="button"
+            class="poetry-card__icon-btn poetry-card__icon-btn--fav"
+            :class="{ 'poetry-card__icon-btn--liked': liked }"
+            :aria-label="liked ? t('card.favoriteRemove') : t('card.favoriteAdd')"
+            @click.prevent="toggle(poem.id)"
+          >
             <Icon
               :icon="liked ? 'heroicons:heart-solid' : 'heroicons:heart'"
-              class="h-4 w-4"
+              class="poetry-card__icon poetry-card__icon--sm"
               aria-hidden="true"
             />
           </button>
-          <PoemCarouselIcon :slug="poem.slug" size="sm" class="shrink-0" />
+          <PoemCarouselIcon
+            :slug="poem.slug"
+            size="sm"
+          />
         </div>
       </div>
     </article>
 
     <!-- Grid view (default) -->
-    <article v-else
-      class="group relative flex flex-col overflow-hidden rounded-ds-lg border border-edge-subtle bg-surface-raised transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-edge hover:shadow-ds-card-hover"
-      :class="layout === 'masonry' ? 'h-auto' : 'h-full'">
-
-      <div class="flex flex-col p-4">
-        <!-- Eyebrow author -->
-        <NuxtLink v-if="author" :to="`/authors/${author.slug}`"
-          class="mb-3 inline-flex items-center gap-2 text-ui-xs font-semibold uppercase tracking-wider text-content-muted transition-colors hover:text-brand">
-          <img :src="authorAvatar" alt="" loading="lazy"
-            class="h-6 w-6 shrink-0 rounded-full object-cover ring-1 ring-edge-subtle">
-          <span class="truncate">{{ author.name }}</span>
+    <article
+      v-else
+      class="poetry-card__grid"
+      :class="layout === 'masonry' ? 'poetry-card__grid--auto' : 'poetry-card__grid--fill'"
+    >
+      <div class="poetry-card__grid-inner">
+        <NuxtLink
+          v-if="author"
+          :to="`/authors/${author.slug}`"
+          class="poetry-card__author-grid"
+        >
+          <img
+            :src="authorAvatar"
+            alt=""
+            loading="lazy"
+            class="poetry-card__author-avatar poetry-card__author-avatar--sm"
+          >
+          <span class="poetry-card__author-name">{{ author.name }}</span>
         </NuxtLink>
 
-        <!-- Title -->
-        <div class="mb-2">
-          <NuxtLink :to="poemHref" class="block min-w-0">
-            <h2 class="font-typewriter leading-snug tracking-[0.04em] text-content"
-              :class="featured ? 'text-2xl md:text-[1.65rem]' : 'text-lg'">
-              {{ poem.title }}<span v-if="poem.writtenYear"
-                class="ml-1.5 font-sans text-xs font-normal tabular-nums text-content-muted">{{ poem.writtenYear
-                }}</span>
+        <div class="poetry-card__grid-title">
+          <NuxtLink
+            :to="poemHref"
+            class="poetry-card__grid-title-link"
+          >
+            <h2
+              class="poetry-card__title"
+              :class="featured ? 'poetry-card__title--featured' : 'poetry-card__title--card'"
+            >
+              {{ poem.title }}<span
+                v-if="poem.writtenYear"
+                class="poetry-card__year"
+              >{{ poem.writtenYear }}</span>
             </h2>
           </NuxtLink>
         </div>
 
-        <!-- Tag chips -->
-        <div v-if="displayTags.length" class="mb-3 flex flex-wrap gap-1.5">
-          <TagBadge v-for="tag in displayTags" :key="tag.id" :name="tag.name" :slug="tag.slug" :color="tag.color" />
+        <div
+          v-if="displayTags.length"
+          class="poetry-card__tags"
+        >
+          <TagBadge
+            v-for="tag in displayTags"
+            :key="tag.id"
+            :name="tag.name"
+            :slug="tag.slug"
+            :color="tag.color"
+          />
         </div>
 
-        <p class="poem-text min-h-[4.5rem] flex-1 whitespace-pre-wrap text-content-secondary">
+        <p class="poem-text poetry-card__preview poetry-card__preview--grid">
           {{ previewLines }}
         </p>
 
-        <!-- Footer -->
-        <div class="mt-5 flex items-center justify-end gap-3 border-t border-edge-subtle pt-4">
-          <div class="flex w-full items-center justify-between gap-2">
-            <NuxtLink :to="poemHref"
-              class="group/readmore inline-flex min-w-0 items-center gap-1.5 text-sm font-semibold text-brand transition-colors hover:text-brand-hover"
-              @click.stop>
+        <div class="poetry-card__footer">
+          <div class="poetry-card__footer-row">
+            <NuxtLink
+              :to="poemHref"
+              class="poetry-card__read-more poetry-card__read-more--grid"
+              @click.stop
+            >
               {{ t('card.readMore') }}
-              <svg class="h-4 w-4 shrink-0 transition-transform group-hover/readmore:translate-x-0.5" fill="none"
-                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+              <svg
+                class="poetry-card__read-icon poetry-card__read-icon--md"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M9 5l7 7-7 7"
+                />
               </svg>
             </NuxtLink>
-            <div class="flex shrink-0 items-center gap-0.5">
-              <button type="button"
-                class="inline-flex items-center justify-center rounded-ds-md text-content-muted transition-colors hover:bg-surface-subtle hover:text-brand"
-                :aria-label="t('card.quickRead')" :title="t('card.quickRead')" @click.stop="openQuickRead">
-                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
-                  aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3M8 21H5a2 2 0 01-2-2v-3m18 0v3a2 2 0 01-2 2h-3" />
+            <div class="poetry-card__action-row">
+              <button
+                type="button"
+                class="poetry-card__icon-btn"
+                :aria-label="t('card.quickRead')"
+                :title="t('card.quickRead')"
+                @click.stop="openQuickRead"
+              >
+                <svg
+                  class="poetry-card__icon"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  aria-hidden="true"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3M8 21H5a2 2 0 01-2-2v-3m18 0v3a2 2 0 01-2 2h-3"
+                  />
                 </svg>
               </button>
-              <button type="button" class="rounded-ds-md p-2 transition-colors"
-                :class="liked ? 'text-brand bg-brand-tint' : 'text-content-hint hover:bg-brand-tint hover:text-brand'"
-                :aria-label="liked ? t('card.favoriteRemove') : t('card.favoriteAdd')" @click.prevent="toggle(poem.id)">
+              <button
+                type="button"
+                class="poetry-card__icon-btn poetry-card__icon-btn--fav"
+                :class="{ 'poetry-card__icon-btn--liked': liked }"
+                :aria-label="liked ? t('card.favoriteRemove') : t('card.favoriteAdd')"
+                @click.prevent="toggle(poem.id)"
+              >
                 <Icon
                   :icon="liked ? 'heroicons:heart-solid' : 'heroicons:heart'"
-                  class="h-4 w-4"
+                  class="poetry-card__icon poetry-card__icon--sm"
                   aria-hidden="true"
                 />
               </button>
-              <PoemCarouselIcon :slug="poem.slug" size="sm"
-                class="shrink-0 opacity-80 transition-opacity group-hover:opacity-100" />
+              <PoemCarouselIcon
+                :slug="poem.slug"
+                size="sm"
+                class="poetry-card__carousel"
+              />
             </div>
           </div>
         </div>
@@ -328,55 +428,107 @@ watchEffect((onCleanup) => {
   </div>
 
   <Teleport to="body">
-    <Transition enter-active-class="transition-opacity duration-200 ease-out"
-      leave-active-class="transition-opacity duration-150 ease-in" enter-from-class="opacity-0"
-      leave-to-class="opacity-0">
-      <div v-if="quickReadOpen" class="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6"
-        @click.self="closeQuickRead">
-        <div role="dialog" aria-modal="true" :aria-label="t('card.quickRead')"
-          class="relative z-10 flex max-h-[78vh] w-full max-w-2xl flex-col overflow-hidden rounded-ds-xl bg-surface-raised shadow-ds-popover sm:max-h-[90vh]"
-          @click.stop>
-          <header
-            class="flex shrink-0 items-start justify-between gap-3 bg-surface-raised p-2 sm:p-4 bg-surface-page/50">
-            <div class="min-w-0 flex-1">
-              <div class="mt-1 flex items-start gap-2">
-                <NuxtLink :to="readerPoemHref" class="min-w-0 flex-1" @click="closeQuickRead">
-                  <h3
-                    class="min-w-0 flex-1 font-serif text-xl font-semibold leading-snug tracking-tight text-content hover:text-brand">
+    <Transition name="quick-read-fade">
+      <div
+        v-if="quickReadOpen"
+        class="quick-read"
+        @click.self="closeQuickRead"
+      >
+        <div
+          role="dialog"
+          aria-modal="true"
+          :aria-label="t('card.quickRead')"
+          class="quick-read__dialog"
+          @click.stop
+        >
+          <header class="quick-read__header">
+            <div class="quick-read__header-main">
+              <div class="quick-read__title-row">
+                <NuxtLink
+                  :to="readerPoemHref"
+                  class="quick-read__title-link"
+                  @click="closeQuickRead"
+                >
+                  <h3 class="quick-read__title">
                     {{ readerPoem.title }}
                   </h3>
                 </NuxtLink>
-                <PoemCarouselIcon :slug="readerPoem.slug" size="sm" class="shrink-0" />
+                <PoemCarouselIcon
+                  :slug="readerPoem.slug"
+                  size="sm"
+                />
               </div>
-              <p v-if="readerAuthor" class="mt-1 truncate text-sm text-content-secondary">{{ readerAuthor.name }}</p>
+              <p
+                v-if="readerAuthor"
+                class="quick-read__author"
+              >{{ readerAuthor.name }}</p>
             </div>
-            <div class="flex shrink-0 items-center gap-0.5">
-              <CloseButton :label="t('card.quickReadClose')" @click="closeQuickRead" />
+            <div class="quick-read__close-row">
+              <CloseButton
+                :label="t('card.quickReadClose')"
+                @click="closeQuickRead"
+              />
             </div>
           </header>
 
-          <div class="min-h-0 flex-1 overflow-y-auto bg-surface-raised p-2 sm:p-4">
-            <PoemReader :poem="readerPoem" variant="modal" :show-title="false" :show-author="false"
-              :show-written-context="false" :show-ornament="false" />
+          <div class="quick-read__body">
+            <PoemReader
+              :poem="readerPoem"
+              variant="modal"
+              :show-title="false"
+              :show-author="false"
+              :show-written-context="false"
+              :show-ornament="false"
+            />
           </div>
-          <footer v-if="showQuickReadNav" class="shrink-0 bg-surface-page/50 p-4" :aria-busy="quickReadNavLoading">
-            <div class="flex items-center justify-between gap-3">
-              <button type="button"
-                class="inline-flex min-h-[2.5rem] items-center gap-2 rounded-ds-md border border-edge-subtle bg-surface-page px-3 py-2 text-sm font-medium text-content transition hover:border-edge hover:bg-surface-subtle disabled:cursor-not-allowed disabled:opacity-40"
-                :disabled="!hasQuickReadPrev || quickReadNavLoading" :aria-label="t('card.quickReadPrevAria')"
-                @click="quickReadGoPrev">
-                <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
-                  aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+          <footer
+            v-if="showQuickReadNav"
+            class="quick-read__footer"
+            :aria-busy="quickReadNavLoading"
+          >
+            <div class="quick-read__nav">
+              <button
+                type="button"
+                class="quick-read__nav-btn"
+                :disabled="!hasQuickReadPrev || quickReadNavLoading"
+                :aria-label="t('card.quickReadPrevAria')"
+                @click="quickReadGoPrev"
+              >
+                <svg
+                  class="quick-read__nav-icon"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  aria-hidden="true"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M15 19l-7-7 7-7"
+                  />
                 </svg>
               </button>
-              <button type="button"
-                class="inline-flex min-h-[2.5rem] items-center gap-2 rounded-ds-md border border-edge-subtle bg-surface-page px-3 py-2 text-sm font-medium text-content transition hover:border-edge hover:bg-surface-subtle disabled:cursor-not-allowed disabled:opacity-40"
-                :disabled="!hasQuickReadNext || quickReadNavLoading" :aria-label="t('card.quickReadNextAria')"
-                @click="quickReadGoNext">
-                <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
-                  aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+              <button
+                type="button"
+                class="quick-read__nav-btn"
+                :disabled="!hasQuickReadNext || quickReadNavLoading"
+                :aria-label="t('card.quickReadNextAria')"
+                @click="quickReadGoNext"
+              >
+                <svg
+                  class="quick-read__nav-icon"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  aria-hidden="true"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M9 5l7 7-7 7"
+                  />
                 </svg>
               </button>
             </div>

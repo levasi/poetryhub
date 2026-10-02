@@ -5,12 +5,12 @@ defineProps<{
   groups: ApiRouteGroup[]
 }>()
 
-const methodClass: Record<string, string> = {
-  GET: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
-  POST: 'bg-blue-500/10 text-blue-700 dark:text-blue-400',
-  PUT: 'bg-amber-500/10 text-amber-700 dark:text-amber-400',
-  PATCH: 'bg-violet-500/10 text-violet-700 dark:text-violet-400',
-  DELETE: 'bg-red-500/10 text-red-700 dark:text-red-400',
+const methodModifier: Record<string, string> = {
+  GET: 'docs-api-table__method--get',
+  POST: 'docs-api-table__method--post',
+  PUT: 'docs-api-table__method--put',
+  PATCH: 'docs-api-table__method--patch',
+  DELETE: 'docs-api-table__method--delete',
 }
 
 const authLabel: Record<string, string> = {
@@ -22,36 +22,43 @@ const authLabel: Record<string, string> = {
 </script>
 
 <template>
-  <div class="docs-api-table space-y-10">
-    <section v-for="group in groups" :key="group.id" :id="group.id">
+  <div class="docs-api-table">
+    <section
+      v-for="group in groups"
+      :id="group.id"
+      :key="group.id"
+    >
       <h2 class="docs-api-heading">{{ group.title }}</h2>
-      <div class="overflow-x-auto rounded-ds-lg border border-edge-subtle">
+      <div class="docs-api-table__scroll">
         <table>
           <thead>
-            <tr class="bg-surface-subtle/60">
-              <th class="w-24">Method</th>
+            <tr class="docs-api-table__head-row">
+              <th class="docs-api-table__th-method">Method</th>
               <th>Path</th>
-              <th class="hidden md:table-cell">Descriere</th>
-              <th class="w-24">Auth</th>
+              <th class="docs-api-table__th-desc">Descriere</th>
+              <th class="docs-api-table__th-auth">Auth</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="route in group.routes" :key="`${route.method}-${route.path}`">
+            <tr
+              v-for="route in group.routes"
+              :key="`${route.method}-${route.path}`"
+            >
               <td>
                 <span
-                  class="inline-flex rounded-ds-sm px-2 py-0.5 font-mono text-[11px] font-semibold"
-                  :class="methodClass[route.method]"
+                  class="docs-api-table__method"
+                  :class="methodModifier[route.method]"
                 >
                   {{ route.method }}
                 </span>
               </td>
               <td>
-                <code class="text-xs">{{ route.path }}</code>
-                <p class="mt-1 text-xs text-content-muted md:hidden">{{ route.summary }}</p>
+                <code class="docs-api-table__path">{{ route.path }}</code>
+                <p class="docs-api-table__summary-mobile">{{ route.summary }}</p>
               </td>
-              <td class="hidden text-content-secondary md:table-cell">{{ route.summary }}</td>
+              <td class="docs-api-table__summary-desktop">{{ route.summary }}</td>
               <td>
-                <span class="text-xs text-content-soft">{{ authLabel[route.auth ?? 'public'] }}</span>
+                <span class="docs-api-table__auth">{{ authLabel[route.auth ?? 'public'] }}</span>
               </td>
             </tr>
           </tbody>
@@ -60,9 +67,3 @@ const authLabel: Record<string, string> = {
     </section>
   </div>
 </template>
-
-<style scoped>
-.docs-api-heading {
-  @apply mb-4 mt-12 scroll-mt-24 font-serif text-xl font-semibold tracking-tight text-content first:mt-0;
-}
-</style>

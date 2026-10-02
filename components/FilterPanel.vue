@@ -20,11 +20,10 @@ const sources = computed(() => [
 </script>
 
 <template>
-  <div class="space-y-6">
-    <!-- Mood -->
+  <div class="filter-panel">
     <div v-if="moodTags?.length">
-      <p class="mb-3 text-xs font-semibold uppercase tracking-widest text-content-secondary">{{ t('filters.mood') }}</p>
-      <div class="flex flex-wrap gap-1.5">
+      <p class="filter-panel__section-title">{{ t('filters.mood') }}</p>
+      <div class="filter-panel__tags">
         <TagBadge
           v-for="tag in moodTags"
           :key="tag.id"
@@ -39,10 +38,9 @@ const sources = computed(() => [
       </div>
     </div>
 
-    <!-- Theme -->
     <div v-if="themeTags?.length">
-      <p class="mb-3 text-xs font-semibold uppercase tracking-widest text-content-secondary">{{ t('filters.theme') }}</p>
-      <div class="flex flex-wrap gap-1.5">
+      <p class="filter-panel__section-title">{{ t('filters.theme') }}</p>
+      <div class="filter-panel__tags">
         <TagBadge
           v-for="tag in themeTags"
           :key="tag.id"
@@ -57,10 +55,9 @@ const sources = computed(() => [
       </div>
     </div>
 
-    <!-- Source -->
     <div>
-      <p class="mb-3 text-xs font-semibold uppercase tracking-widest text-content-secondary">{{ t('filters.source') }}</p>
-      <div class="flex flex-wrap gap-1.5">
+      <p class="filter-panel__section-title">{{ t('filters.source') }}</p>
+      <div class="filter-panel__tags">
         <TagBadge
           v-for="src in sources"
           :key="src.value"
@@ -72,10 +69,9 @@ const sources = computed(() => [
       </div>
     </div>
 
-    <!-- Clear -->
     <button
       v-if="hasActiveFilters"
-      class="w-full rounded-lg border border-edge bg-surface-raised py-2 text-xs text-content-secondary shadow-sm transition-colors hover:border-edge-strong hover:text-content"
+      class="filter-panel__clear"
       @click="emit('clear')"
     >
       {{ t('filters.clearAllFilters') }}

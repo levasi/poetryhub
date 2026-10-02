@@ -1,0 +1,45 @@
+@use '../tokens' as *;
+
+.reader-mobile-actions {
+  pointer-events: none;
+  position: fixed;
+  inset-inline: 0;
+  z-index: 40;
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+  bottom: calc(6.5rem + env(safe-area-inset-bottom, 0px));
+
+  @media (min-width: $bp-md) {
+    display: none;
+  }
+}
+
+.reader-mobile-actions__pill {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 9999px;
+  border: 1px solid ph-rgb(edge-subtle);
+  background-color: rgb(var(--color-surface-overlay) / 0.95);
+  padding: 0.375rem 0.5rem;
+  box-shadow: var(--shadow-ds-popover);
+  backdrop-filter: blur(12px);
+}
+
+.reader-mobile-actions__btn {
+  min-height: 2.75rem !important;
+  min-width: 2.75rem !important;
+  border-radius: 9999px !important;
+  border-color: transparent;
+
+  &--liked {
+    color: ph-rgb(brand);
+  }
+}
+
+.reader-mobile-actions__icon {
+  height: 1.25rem;
+  width: 1.25rem;
+}

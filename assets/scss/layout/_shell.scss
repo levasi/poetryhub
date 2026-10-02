@@ -1,0 +1,86 @@
+@use '../tokens' as *;
+
+// ── Page shell (layouts) ───────────────────────────────────────────────────
+.page-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+  min-width: 0;
+  background-color: ph-rgb(surface-page);
+}
+
+.page-shell__main {
+  width: 100%;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.page-shell__main--keyboard-open {
+  padding-bottom: 0.5rem;
+
+  @media (min-width: $bp-md) {
+    padding-bottom: 3.5rem;
+  }
+}
+
+.page-shell__inset {
+  margin-inline: auto;
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  padding-inline: 1rem;
+
+  @media (min-width: $bp-md) {
+    padding-inline: 2rem;
+  }
+
+  @media (min-width: $bp-lg) {
+    padding-inline: 2.5rem;
+  }
+}
+
+.page-shell__footer {
+  display: none;
+
+  @media (min-width: $bp-md) {
+    display: block;
+  }
+}
+
+.page-shell__tab-clearance {
+  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+
+  @media (min-width: $bp-md) {
+    padding-bottom: 3.5rem;
+  }
+}
+
+// Used alone (e.g. sheets) — mobile tab clearance without desktop override
+.pb-mobile-tab {
+  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+.pb-reader-mobile {
+  padding-bottom: calc(10.75rem + env(safe-area-inset-bottom, 0px));
+
+  @media (min-width: $bp-md) {
+    padding-bottom: 0;
+  }
+}
+
+.pb-carousel-mobile {
+  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+
+  @media (min-width: $bp-md) {
+    padding-bottom: 4rem;
+  }
+}
+
+.author-edit-bar-clearance {
+  padding-bottom: calc(9rem + env(safe-area-inset-bottom, 0px));
+
+  @media (min-width: $bp-md) {
+    padding-bottom: 9rem;
+  }
+}

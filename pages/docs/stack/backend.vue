@@ -4,7 +4,7 @@ useHead({ title: 'Backend — Documentație PoetryHub' })
 </script>
 
 <template>
-  <DocsProse>
+  <div class="docs-page"><DocsProse>
     <span class="docs-eyebrow">Stack</span>
     <h1>Backend</h1>
     <p class="lead">
@@ -57,5 +57,5 @@ useHead({ title: 'Backend — Documentație PoetryHub' })
     <p>
       Vezi <NuxtLink to="/docs/api">referința API</NuxtLink> pentru lista completă de endpoint-uri.
     </p>
-  </DocsProse>
+  </DocsProse></div>
 </template>

@@ -822,116 +822,154 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="flex min-w-0 flex-1 flex-col" aria-label="Lucru: dicționar, versuri">
-    <WriteToolsBar :draft-status="draftStatusText" :save-loading="saveLoading" @save="saveNowDirect"
-      @publish="openPublish" />
+  <div class="write-split" aria-label="Lucru: dicționar, versuri">
+    <WriteToolsBar
+      :draft-status="draftStatusText"
+      :save-loading="saveLoading"
+      @save="saveNowDirect"
+      @publish="openPublish"
+    />
 
     <Teleport to="body">
-      <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0 translate-y-2"
-        leave-active-class="transition duration-150 ease-in" leave-to-class="opacity-0 translate-y-2">
-        <div v-if="saveToastVisible && saveMsg"
-          class="ds-banner fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] left-1/2 z-[100] flex max-w-[min(100%-2rem,28rem)] -translate-x-1/2 items-center gap-3 shadow-ds-popover md:bottom-6 md:max-w-md"
-          :class="saveMsg.ok ? 'ds-banner-success' : 'ds-banner-danger'" :role="saveMsg.ok ? 'status' : 'alert'"
-          aria-live="polite">
-          <Icon :icon="saveMsg.ok ? 'heroicons:check-circle' : 'heroicons:exclamation-circle'" class="size-5 shrink-0"
-            :class="saveMsg.ok ? 'text-success' : 'text-danger'" aria-hidden="true" />
-          <p class="min-w-0 flex-1 font-medium text-content">{{ saveMsg.text }}</p>
-          <button type="button"
-            class="shrink-0 text-content-muted underline decoration-edge underline-offset-2 hover:text-content"
-            @click="dismissSaveToast">
+      <Transition name="write-split-toast">
+        <div
+          v-if="saveToastVisible && saveMsg"
+          class="ds-banner write-split__toast"
+          :class="saveMsg.ok ? 'ds-banner-success' : 'ds-banner-danger'"
+          :role="saveMsg.ok ? 'status' : 'alert'"
+          aria-live="polite"
+        >
+          <Icon
+            :icon="saveMsg.ok ? 'heroicons:check-circle' : 'heroicons:exclamation-circle'"
+            class="write-split__toast-icon"
+            :class="saveMsg.ok ? 'write-split__toast-icon--ok' : 'write-split__toast-icon--err'"
+            aria-hidden="true"
+          />
+          <p class="write-split__toast-text">{{ saveMsg.text }}</p>
+          <button type="button" class="write-split__toast-dismiss" @click="dismissSaveToast">
             {{ t('write.done') }}
           </button>
         </div>
       </Transition>
     </Teleport>
-    <div ref="splitContainerRef" class="flex min-h-0 min-w-0 flex-1 flex-col lg:flex-row">
+
+    <div ref="splitContainerRef" class="write-split__container">
       <!-- Stânga (desktop): căutare + rezultate; pe mobil order: versuri → căutare → rezultate (contents + order) -->
-      <div
-        class="contents min-h-0 min-w-0 lg:order-1 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col lg:gap-4 sm:pr-4 sm:pb-6">
+      <div class="write-split__left">
         <!-- Bară căutare -->
-        <div class="order-2 shrink-0 lg:order-none" aria-label="Căutare dicționar">
-          <div class="shrink-0 rounded-xl bg-surface-raised p-2 my-2 sm:my-0 shadow-sm sm:p-4">
-            <div class="flex flex-wrap gap-2">
-              <button v-for="m in modes" :key="m.id" type="button" :title="m.hint"
-                class="rounded-lg border px-3 py-1.5 text-xs font-medium transition" :class="mode === m.id
-                  ? 'border-brand bg-brand-soft/40 text-content shadow-sm'
-                  : 'border-edge-subtle bg-surface-subtle text-content-secondary hover:border-edge'
-                  " @click="selectSearchMode(m.id)">
+        <div class="write-split__search-slot" aria-label="Căutare dicționar">
+          <div class="write-search">
+            <div class="write-search__modes">
+              <button
+                v-for="m in modes"
+                :key="m.id"
+                type="button"
+                :title="m.hint"
+                class="write-search__mode"
+                :class="{ 'write-search__mode--active': mode === m.id }"
+                @click="selectSearchMode(m.id)"
+              >
                 {{ m.label }}
               </button>
             </div>
 
-            <div class="mt-4">
+            <div class="write-search__fields">
               <label class="sr-only">Căutare</label>
-              <div class="flex flex-wrap items-center gap-2">
+              <div class="write-search__row">
                 <div
                   v-for="(row, i) in searchQueries"
                   :key="row.id"
-                  class="group relative w-[9.5rem] max-w-full shrink-0 overflow-hidden rounded-xl border border-edge bg-surface-raised shadow-inner ring-brand/20 transition focus-within:border-brand focus-within:ring-2 sm:w-[10.5rem]"
+                  class="write-search__field"
                 >
                   <label class="sr-only">Cuvânt căutat {{ i + 1 }}</label>
-                  <input :ref="(el) => setSearchInputRef(i, el)" v-model="row.text" type="text" inputmode="search"
-                    autocomplete="off" enterkeyhint="search" :placeholder="placeholder"
-                    class="w-full bg-transparent py-2 pl-3 text-base text-content outline-none placeholder:text-sm placeholder:text-content-soft sm:py-2.5"
-                    :class="searchQueries.length > 1 ? 'pr-7 sm:pr-8' : 'pr-3 sm:pr-4'" @focus="activeSearchIndex = i"
-                    @keydown.enter.prevent="runSearch" />
-                  <button v-if="searchQueries.length > 1" type="button"
-                    class="absolute inset-y-0 right-0 flex w-7 translate-x-full items-center justify-center bg-surface-subtle text-content-muted transition duration-200 ease-out hover:bg-edge-subtle hover:text-content-secondary focus-visible:translate-x-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-brand/40 group-hover:translate-x-0 group-focus-within:translate-x-0 sm:w-8"
-                    :title="'Elimină câmpul ' + (i + 1)" :aria-label="'Elimină câmpul ' + (i + 1)"
-                    @click="removeSearchQuery(i)">
-                    <Icon icon="heroicons:x-mark" class="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                  <input
+                    :ref="(el) => setSearchInputRef(i, el)"
+                    v-model="row.text"
+                    type="text"
+                    inputmode="search"
+                    autocomplete="off"
+                    enterkeyhint="search"
+                    :placeholder="placeholder"
+                    class="write-search__input"
+                    :class="{ 'write-search__input--removable': searchQueries.length > 1 }"
+                    @focus="activeSearchIndex = i"
+                    @keydown.enter.prevent="runSearch"
+                  />
+                  <button
+                    v-if="searchQueries.length > 1"
+                    type="button"
+                    class="write-search__remove"
+                    :title="'Elimină câmpul ' + (i + 1)"
+                    :aria-label="'Elimină câmpul ' + (i + 1)"
+                    @click="removeSearchQuery(i)"
+                  >
+                    <Icon icon="heroicons:x-mark" class="write-search__remove-icon" aria-hidden="true" />
                   </button>
                 </div>
-                <button type="button"
-                  class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-dashed border-brand/45 bg-brand-soft/30 text-brand transition hover:border-brand hover:bg-brand-soft/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35"
-                  title="Adaugă alt cuvânt de căutare" aria-label="Adaugă alt cuvânt de căutare"
-                  @click="addSearchQuery">
-                  <Icon icon="heroicons:plus" class="h-5 w-5 shrink-0 text-current" aria-hidden="true" />
+                <button
+                  type="button"
+                  class="write-search__add"
+                  title="Adaugă alt cuvânt de căutare"
+                  aria-label="Adaugă alt cuvânt de căutare"
+                  @click="addSearchQuery"
+                >
+                  <Icon icon="heroicons:plus" class="write-search__add-icon" aria-hidden="true" />
                 </button>
               </div>
-              <WriteSearchActions :can-search="canSearch" :loading="loading" @search="runSearch"
-                @insert-diacritic="insertDiacritic" />
+              <WriteSearchActions
+                :can-search="canSearch"
+                :loading="loading"
+                @search="runSearch"
+                @insert-diacritic="insertDiacritic"
+              />
             </div>
           </div>
         </div>
 
         <!-- Rezultate dicționar -->
-        <div class="order-3 flex min-h-0 min-w-0 flex-1 flex-col lg:order-none lg:min-h-0 lg:flex-none lg:p-0"
-          aria-label="Rezultate dicționar">
-          <div class="flex min-w-0 flex-col rounded-xl bg-surface-raised p-2 shadow-sm sm:p-4">
-            <p class="mb-2 text-xs font-medium uppercase tracking-wide text-content-muted">
+        <div class="write-results" aria-label="Rezultate dicționar">
+          <div class="write-results__panel">
+            <p class="write-results__heading">
               Rezultate
-              <span v-if="loading" class="font-normal text-content-soft">— se încarcă…</span>
+              <span v-if="loading" class="write-results__loading">— se încarcă…</span>
             </p>
-            <ul v-if="results.length" class="flex flex-wrap content-start gap-2 rounded-xl">
-              <li v-for="r in results" :key="r.id" class="min-w-0 max-w-full">
-                <div
-                  class="group relative inline-flex max-w-full min-w-0 items-center gap-0.5 rounded-lg border border-transparent bg-surface-subtle/50 p-1 transition hover:border-brand/30 hover:bg-brand-tint">
-                  <button type="button" class="flex min-w-0 max-w-[12rem] items-center justify-center rounded-md"
-                    :title="'Definiție: ' + r.word" @click="openWordDefinition(r, $event)">
-                    <span class="min-w-0 truncate text-sm font-semibold leading-tight text-content">{{ r.word }}</span>
+            <ul v-if="results.length" class="write-results__list">
+              <li v-for="r in results" :key="r.id" class="write-results__item">
+                <div class="write-results__chip">
+                  <button
+                    type="button"
+                    class="write-results__word"
+                    :title="'Definiție: ' + r.word"
+                    @click="openWordDefinition(r, $event)"
+                  >
+                    <span class="write-results__word-text">{{ r.word }}</span>
                   </button>
-                  <button type="button"
-                    class="shrink-0 rounded-md bg-surface-raised p-1 text-sm font-semibold leading-none text-brand shadow-sm hover:border-brand/40 hover:bg-brand-tint disabled:cursor-not-allowed disabled:opacity-40"
+                  <button
+                    type="button"
+                    class="write-results__save"
                     :title="projects.isWordSaved(r.word)
                       ? 'Deja în cuvinte salvate'
-                      : 'Salvează cuvântul în proiect'
-                      " :disabled="projects.isWordSaved(r.word)" aria-label="Salvează în proiect"
-                    @click="saveWordToProject(r.word, $event)">
+                      : 'Salvează cuvântul în proiect'"
+                    :disabled="projects.isWordSaved(r.word)"
+                    aria-label="Salvează în proiect"
+                    @click="saveWordToProject(r.word, $event)"
+                  >
                     {{ projects.isWordSaved(r.word) ? '✓' : '+' }}
                   </button>
                 </div>
               </li>
             </ul>
-            <div v-if="results.length && resultsHasMore && !loading" class="mt-3 flex justify-center">
-              <button type="button"
-                class="w-full max-w-xs rounded-xl border border-edge-subtle bg-surface-subtle px-4 py-2.5 text-sm font-medium text-content-secondary transition hover:border-edge hover:bg-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-                :disabled="loadingMore" @click="loadMoreResults">
+            <div v-if="results.length && resultsHasMore && !loading" class="write-results__more-wrap">
+              <button
+                type="button"
+                class="write-results__more"
+                :disabled="loadingMore"
+                @click="loadMoreResults"
+              >
                 {{ loadingMore ? t('write.loadingMoreResults') : t('write.loadMoreResults') }}
               </button>
             </div>
-            <p v-else-if="!loading && !results.length"
-              class="rounded-xl border border-dashed border-edge-subtle px-4 py-8 text-center text-sm text-content-muted">
+            <p v-else-if="!loading && !results.length" class="write-results__empty">
               Niciun rezultat. Schimbă modul sau textul căutat.
             </p>
           </div>
@@ -939,28 +977,34 @@ onUnmounted(() => {
       </div>
 
       <!-- Mâner redimensionare (doar desktop) -->
-      <div class="group relative order-2 hidden shrink-0 items-stretch justify-center lg:flex" role="separator"
-        aria-orientation="vertical" aria-label="Redimensionează coloanele (săgeți stânga/dreapta)" tabindex="0"
-        @mousedown="startSplitResize" @keydown="onSplitKeydown">
-        <div class="absolute inset-y-0 -left-2 -right-2 z-[1] cursor-col-resize" aria-hidden="true" />
-        <div
-          class="relative z-0 flex w-[1.625rem] flex-col items-center justify-start bg-surface-subtle/90 px-0.5 py-3 shadow-sm transition-colors group-hover:border-brand/50 group-hover:bg-brand-soft/50 group-focus-visible:border-brand group-focus-visible:ring-2 group-focus-visible:ring-brand/30">
-          <span
-            class="pointer-events-none flex items-center gap-px text-content-muted group-hover:text-brand group-focus-visible:text-brand"
-            aria-hidden="true">
-            <Icon icon="heroicons:chevron-left" class="h-3.5 w-3.5 shrink-0" />
-            <Icon icon="heroicons:chevron-right" class="h-3.5 w-3.5 shrink-0" />
+      <div
+        class="write-split__handle"
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="Redimensionează coloanele (săgeți stânga/dreapta)"
+        tabindex="0"
+        @mousedown="startSplitResize"
+        @keydown="onSplitKeydown"
+      >
+        <div class="write-split__handle-hit" aria-hidden="true" />
+        <div class="write-split__handle-bar">
+          <span class="write-split__handle-icons" aria-hidden="true">
+            <Icon icon="heroicons:chevron-left" class="write-split__handle-icon" />
+            <Icon icon="heroicons:chevron-right" class="write-split__handle-icon" />
           </span>
         </div>
       </div>
 
       <!-- Dreapta: versuri (pe mobil deasupra căutării) -->
-      <section class="write-split-right order-1 flex min-w-0 flex-col sm:pl-4 lg:order-3"
-        :style="{ '--write-right-w': rightWidthPx + 'px' }" aria-label="Editor versuri">
+      <section
+        class="write-split__right"
+        :style="{ '--write-right-w': rightWidthPx + 'px' }"
+        aria-label="Editor versuri"
+      >
         <ClientOnly>
           <WriteLyricsEditor />
           <template #fallback>
-            <div class="h-48 animate-pulse rounded-xl bg-surface-subtle" aria-hidden="true" />
+            <div class="write-split__skeleton" aria-hidden="true" />
           </template>
         </ClientOnly>
       </section>
@@ -968,36 +1012,44 @@ onUnmounted(() => {
 
     <Teleport to="body">
       <Transition name="publish-panel">
-        <div v-if="publishOpen" class="fixed inset-0 z-[100] flex items-end justify-center sm:items-center sm:p-4">
-          <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closePublish" />
-          <div
-            class="relative z-10 w-full max-w-lg rounded-t-2xl border border-edge-subtle bg-surface-raised shadow-ds-popover sm:rounded-ds-xl">
-            <div class="flex items-center justify-between border-b border-edge-subtle px-6 py-4">
-              <h2 class="text-base font-semibold text-content">{{ t('write.publishTitle') }}</h2>
+        <div v-if="publishOpen" class="write-publish">
+          <div class="write-publish__backdrop" @click="closePublish" />
+          <div class="write-publish__panel">
+            <div class="write-publish__header">
+              <h2 class="write-publish__title">{{ t('write.publishTitle') }}</h2>
               <CloseButton :label="t('a11y.close')" @click="closePublish" />
             </div>
 
-            <div class="max-h-[80vh] overflow-y-auto px-6 py-5">
-              <div v-if="!isLoggedIn" class="py-4 text-center">
-                <p class="mb-4 text-sm text-content-muted">{{ t('write.loginRequired') }}</p>
-                <NuxtLink to="/login?redirect=/write" class="ds-btn-primary inline-flex" @click="closePublish">
+            <div class="write-publish__body">
+              <div v-if="!isLoggedIn" class="write-publish__login">
+                <p class="write-publish__login-text">{{ t('write.loginRequired') }}</p>
+                <NuxtLink to="/login?redirect=/write" class="ds-btn-primary" @click="closePublish">
                   {{ t('auth.signIn') }}
                 </NuxtLink>
               </div>
 
-              <div v-else-if="publishMsg?.ok" class="py-4 text-center">
-                <div
-                  class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft/40 ring-1 ring-brand/25">
-                  <svg class="h-6 w-6 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                    stroke-width="2">
+              <div v-else-if="publishMsg?.ok" class="write-publish__success">
+                <div class="write-publish__success-icon-wrap">
+                  <svg
+                    class="write-publish__success-icon"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
                     <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <p class="mb-4 font-medium text-content">{{ publishMsg.text }}</p>
-                <div class="flex flex-wrap justify-center gap-3">
-                  <NuxtLink v-if="publishMsg.slug" :to="publishMsg.authorSlug
-                    ? { path: `/authors/${publishMsg.authorSlug}`, query: { poem: publishMsg.slug } }
-                    : `/poems/${publishMsg.slug}`" class="ds-btn-primary" @click="closePublish">
+                <p class="write-publish__success-text">{{ publishMsg.text }}</p>
+                <div class="write-publish__success-actions">
+                  <NuxtLink
+                    v-if="publishMsg.slug"
+                    :to="publishMsg.authorSlug
+                      ? { path: `/authors/${publishMsg.authorSlug}`, query: { poem: publishMsg.slug } }
+                      : `/poems/${publishMsg.slug}`"
+                    class="ds-btn-primary"
+                    @click="closePublish"
+                  >
                     {{ t('write.viewPoem') }}
                   </NuxtLink>
                   <button type="button" class="ds-btn-secondary" @click="closePublish">
@@ -1006,31 +1058,42 @@ onUnmounted(() => {
                 </div>
               </div>
 
-              <form v-else class="space-y-4" @submit.prevent="submitPublish">
-                <p class="text-sm text-content-muted">{{ t('write.publishDesc') }}</p>
+              <form v-else class="write-publish__form" @submit.prevent="submitPublish">
+                <p class="write-publish__desc">{{ t('write.publishDesc') }}</p>
 
                 <div>
-                  <label class="mb-1.5 block text-xs font-medium uppercase tracking-widest text-content-muted">
+                  <label class="write-publish__label">
                     {{ t('write.fieldTitle') }} *
                   </label>
-                  <input v-model="publishForm.title" type="text" :placeholder="t('write.fieldTitlePlaceholder')"
-                    required maxlength="500" class="ds-input px-4 py-2.5" />
+                  <input
+                    v-model="publishForm.title"
+                    type="text"
+                    :placeholder="t('write.fieldTitlePlaceholder')"
+                    required
+                    maxlength="500"
+                    class="ds-input write-publish__input"
+                  />
                 </div>
 
                 <div>
-                  <label class="mb-1.5 block text-xs font-medium uppercase tracking-widest text-content-muted">
+                  <label class="write-publish__label">
                     {{ t('write.fieldAuthorName') }} *
                   </label>
-                  <input v-model="publishForm.authorName" type="text" required maxlength="80"
-                    class="ds-input px-4 py-2.5" />
-                  <p class="mt-1 text-xs text-content-soft">{{ t('write.fieldAuthorNameHint') }}</p>
+                  <input
+                    v-model="publishForm.authorName"
+                    type="text"
+                    required
+                    maxlength="80"
+                    class="ds-input write-publish__input"
+                  />
+                  <p class="write-publish__hint">{{ t('write.fieldAuthorNameHint') }}</p>
                 </div>
 
                 <div>
-                  <label class="mb-1.5 block text-xs font-medium uppercase tracking-widest text-content-muted">
+                  <label class="write-publish__label">
                     {{ t('write.fieldLanguage') }}
                   </label>
-                  <select v-model="publishForm.language" class="ds-input px-4 py-2.5">
+                  <select v-model="publishForm.language" class="ds-input write-publish__input">
                     <option value="ro">Română</option>
                     <option value="en">English</option>
                     <option value="fr">Français</option>
@@ -1040,31 +1103,40 @@ onUnmounted(() => {
                 </div>
 
                 <div v-if="allTags.length">
-                  <label class="mb-2 block text-xs font-medium uppercase tracking-widest text-content-muted">
+                  <label class="write-publish__label write-publish__label--tags">
                     {{ t('write.fieldTags') }}
                   </label>
-                  <div class="flex flex-wrap gap-1.5">
-                    <button v-for="tag in allTags" :key="tag.id" type="button"
-                      :class="publishForm.tagIds.includes(tag.id)
-                        ? 'border-brand bg-brand-soft/35 text-brand shadow-sm ring-1 ring-brand/20'
-                        : 'border-edge-subtle bg-surface-subtle text-content-muted hover:border-edge hover:bg-surface-raised'"
-                      class="rounded-full border px-3 py-1 text-xs font-medium transition"
-                      @click="togglePublishTag(tag.id)">
+                  <div class="write-publish__tags">
+                    <button
+                      v-for="tag in allTags"
+                      :key="tag.id"
+                      type="button"
+                      class="write-publish__tag"
+                      :class="{ 'write-publish__tag--active': publishForm.tagIds.includes(tag.id) }"
+                      @click="togglePublishTag(tag.id)"
+                    >
                       {{ tag.name }}
                     </button>
                   </div>
                 </div>
 
-                <p v-if="publishMsg && !publishMsg.ok"
-                  class="rounded-ds-md border border-danger/25 bg-danger-soft px-4 py-2.5 text-sm text-danger">
+                <p v-if="publishMsg && !publishMsg.ok" class="write-publish__error">
                   {{ publishMsg.text }}
                 </p>
 
-                <div class="flex flex-wrap gap-3 pt-1">
-                  <button type="submit" :disabled="publishLoading" class="ds-btn-primary px-5">
+                <div class="write-publish__actions">
+                  <button
+                    type="submit"
+                    :disabled="publishLoading"
+                    class="ds-btn-primary write-publish__action"
+                  >
                     {{ publishLoading ? t('write.publishing') : t('write.publishBtn') }}
                   </button>
-                  <button type="button" class="ds-btn-secondary px-5" @click="closePublish">
+                  <button
+                    type="button"
+                    class="ds-btn-secondary write-publish__action"
+                    @click="closePublish"
+                  >
                     {{ t('write.cancel') }}
                   </button>
                 </div>
@@ -1077,30 +1149,42 @@ onUnmounted(() => {
 
     <Teleport to="body">
       <Transition name="publish-panel">
-        <div v-if="poetSwitchOpen" class="fixed inset-0 z-[110] flex items-end justify-center sm:items-center sm:p-4">
-          <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closePoetSwitch" />
+        <div v-if="poetSwitchOpen" class="write-publish write-publish--poet">
+          <div class="write-publish__backdrop" @click="closePoetSwitch" />
           <div
-            class="relative z-10 w-full max-w-lg rounded-t-2xl border border-edge-subtle bg-surface-raised shadow-ds-popover sm:rounded-ds-xl"
-            role="dialog" aria-modal="true" aria-labelledby="poet-switch-title" @click.stop>
-            <div class="flex items-center justify-between border-b border-edge-subtle px-6 py-4">
-              <h2 id="poet-switch-title" class="text-base font-semibold text-content">
+            class="write-publish__panel"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="poet-switch-title"
+            @click.stop
+          >
+            <div class="write-publish__header">
+              <h2 id="poet-switch-title" class="write-publish__title">
                 {{ t('write.poetSwitchTitle') }}
               </h2>
               <CloseButton :label="t('a11y.close')" @click="closePoetSwitch" />
             </div>
 
-            <div class="px-6 py-5">
-              <p class="text-sm leading-relaxed text-content-secondary">
+            <div class="write-publish__body write-publish__body--compact">
+              <p class="write-publish__copy">
                 {{ t('write.poetSwitchDesc') }}
               </p>
 
-              <div class="mt-5 flex flex-wrap gap-3">
-                <button type="button" class="ds-btn-primary px-5" :disabled="poetSwitchLoading"
-                  @click="confirmPoetSwitch">
+              <div class="write-publish__poet-actions">
+                <button
+                  type="button"
+                  class="ds-btn-primary write-publish__action"
+                  :disabled="poetSwitchLoading"
+                  @click="confirmPoetSwitch"
+                >
                   {{ poetSwitchLoading ? t('write.poetSwitching') : t('write.poetSwitchConfirm') }}
                 </button>
-                <button type="button" class="ds-btn-secondary px-5" :disabled="poetSwitchLoading"
-                  @click="closePoetSwitch">
+                <button
+                  type="button"
+                  class="ds-btn-secondary write-publish__action"
+                  :disabled="poetSwitchLoading"
+                  @click="closePoetSwitch"
+                >
                   {{ t('write.poetSwitchCancel') }}
                 </button>
               </div>
@@ -1111,72 +1195,44 @@ onUnmounted(() => {
     </Teleport>
 
     <!-- Tooltip: definition next to clicked word (no backdrop) -->
-    <div v-if="defPop" id="word-def-tooltip"
-      class="fixed z-[90] max-h-[min(22rem,70vh)] overflow-y-auto rounded-xl border border-edge-subtle bg-surface-raised p-4 shadow-2xl ring-1 ring-black/10"
+    <div
+      v-if="defPop"
+      id="word-def-tooltip"
+      class="write-results__def"
       :style="{
         top: defPop.top + 'px',
         left: defPop.left + 'px',
         width: defPop.maxW + 'px',
-      }" role="tooltip" aria-labelledby="word-def-tooltip-title">
-      <div class="flex items-start justify-between gap-3">
-        <h2 id="word-def-tooltip-title" class="font-display text-base font-semibold text-content">
+      }"
+      role="tooltip"
+      aria-labelledby="word-def-tooltip-title"
+    >
+      <div class="write-results__def-header">
+        <h2 id="word-def-tooltip-title" class="write-results__def-title">
           {{ defPop.hit.word }}
         </h2>
-        <CloseButton class="-mt-1 -mr-1" :label="t('a11y.close')" @click="closeWordDefinition" />
+        <CloseButton
+          class="write-results__def-close"
+          :label="t('a11y.close')"
+          @click="closeWordDefinition"
+        />
       </div>
 
-      <div class="mt-3 text-sm leading-relaxed text-content-secondary">
-        <p v-if="defLoading" class="text-content-muted">Se încarcă definiția…</p>
+      <div class="write-results__def-body">
+        <p v-if="defLoading" class="write-results__def-muted">Se încarcă definiția…</p>
         <template v-else>
-          <p v-if="defText" class="whitespace-pre-wrap">{{ defText }}</p>
-          <p v-else class="text-content-muted">
+          <p v-if="defText" class="write-results__def-text">{{ defText }}</p>
+          <p v-else class="write-results__def-muted">
             Nu există definiție în dicționar și nu s-a găsit nici pe Wikipedia (RO), nici pe Wiktionary (RO).
           </p>
         </template>
       </div>
 
-      <div class="mt-4 flex flex-wrap gap-2">
-        <button type="button"
-          class="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
-          @click="addWordFromDefinitionPopover">
+      <div class="write-results__def-actions">
+        <button type="button" class="write-results__def-add" @click="addWordFromDefinitionPopover">
           Adaugă la versuri
         </button>
       </div>
     </div>
   </div>
 </template>
-
-<style scoped>
-/* Lățime coloană dreaptă doar pe desktop; pe mobil rămâne 100%. */
-.write-split-right {
-  width: 100%;
-}
-
-@media (min-width: 1024px) {
-  .write-split-right {
-    width: var(--write-right-w, 280px);
-    flex-shrink: 0;
-  }
-}
-
-.publish-panel-enter-active,
-.publish-panel-leave-active {
-  transition: opacity 0.2s ease;
-}
-
-.publish-panel-enter-active .relative.z-10,
-.publish-panel-leave-active .relative.z-10 {
-  transition: transform 0.25s ease, opacity 0.2s ease;
-}
-
-.publish-panel-enter-from,
-.publish-panel-leave-to {
-  opacity: 0;
-}
-
-.publish-panel-enter-from .relative.z-10,
-.publish-panel-leave-to .relative.z-10 {
-  transform: translateY(1.5rem);
-  opacity: 0;
-}
-</style>

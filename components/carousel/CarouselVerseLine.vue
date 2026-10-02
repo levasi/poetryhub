@@ -14,11 +14,23 @@ const parts = computed(() => highlightSegments(props.line, props.keywords))
 </script>
 
 <template>
-  <!-- Explicit blank line from textarea: keep vertical space -->
-  <span v-if="line === ''" class="block min-h-[0.55em]" aria-hidden="true">&nbsp;</span>
-  <span v-else class="inline-block max-w-full">
-    <template v-for="(p, i) in parts" :key="i">
-      <mark v-if="p.mark" :class="markClass">{{ p.text }}</mark>
+  <span
+    v-if="line === ''"
+    class="carousel-verse-blank"
+    aria-hidden="true"
+  >&nbsp;</span>
+  <span
+    v-else
+    class="carousel-verse-line"
+  >
+    <template
+      v-for="(p, i) in parts"
+      :key="i"
+    >
+      <mark
+        v-if="p.mark"
+        :class="markClass"
+      >{{ p.text }}</mark>
       <span v-else>{{ p.text }}</span>
     </template>
   </span>

@@ -1,0 +1,48 @@
+@use '../tokens' as *;
+
+.mobile-tab-bar {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 70;
+  border-top: 1px solid ph-rgb(edge-subtle);
+  background-color: rgb(var(--color-surface-raised) / 0.95);
+  padding-top: 0.25rem;
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  box-shadow: 0 -2px 16px -8px rgb(0 0 0 / 0.08);
+  backdrop-filter: blur(12px);
+
+  @media (min-width: $bp-md) {
+    display: none;
+  }
+}
+
+.mobile-tab-bar__inner {
+  margin-inline: auto;
+  display: flex;
+  max-width: 32rem;
+  align-items: stretch;
+  justify-content: space-around;
+}
+
+.mobile-tab-bar__item {
+  display: flex;
+  min-height: 3rem;
+  min-width: 0;
+  flex: 1 1 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-inline: 0.25rem;
+  color: ph-rgb(content-muted);
+  transition: color 0.15s ease;
+
+  &--active {
+    color: ph-rgb(brand);
+  }
+}
+
+.mobile-tab-bar__icon {
+  width: 1.5rem;
+  height: 1.5rem;
+}

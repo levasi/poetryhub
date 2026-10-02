@@ -226,8 +226,7 @@ onBeforeUnmount(() => {
 <template>
   <div
     ref="rootRef"
-    class="fixed inset-x-0 top-14 z-20 overflow-hidden md:hidden"
-    style="bottom: calc(3.25rem + env(safe-area-inset-bottom, 0px));"
+    class="poem-reels"
     role="feed"
     :aria-label="t('home.reelsFeedAria')"
     tabindex="0"
@@ -236,29 +235,29 @@ onBeforeUnmount(() => {
   >
     <div
       v-if="pending && !poems.length"
-      class="flex h-full items-center justify-center"
+      class="poem-reels__pending"
     >
       <span
-        class="h-9 w-9 animate-spin rounded-full border-2 border-edge-subtle border-t-brand"
+        class="poem-reels__spinner"
         aria-hidden="true"
       />
     </div>
 
     <DsEmpty
       v-else-if="!poems.length"
-      class="flex h-full items-center justify-center px-6"
+      class="poem-reels__empty"
       :title="t('home.emptyLibrary')"
     />
 
     <div
       v-else
-      class="poem-reels-track will-change-transform"
+      class="poem-reels-track"
       :style="trackStyle"
     >
       <div
         v-for="(poem, i) in poems"
         :key="poem.id"
-        class="overflow-hidden"
+        class="poem-reels__slide"
         :style="viewportH ? { height: `${viewportH}px` } : { height: '100vh' }"
         :aria-hidden="i !== activeIndex"
       >
@@ -272,22 +271,25 @@ onBeforeUnmount(() => {
 
     <p
       v-if="loadingMore"
-      class="pointer-events-none absolute inset-x-0 bottom-2 z-10 text-center text-ui-xs text-content-soft"
+      class="poem-reels__loading-more"
     >
       {{ t('home.loadingMore') }}
     </p>
 
-    <!-- Instagram-style more (⋮) — Citește only; toggles side actions -->
     <button
       v-if="poems.length"
       type="button"
-      class="absolute bottom-3 right-1.5 z-30 flex h-11 w-11 items-center justify-center rounded-full text-content transition-colors"
-      :class="sideActionsVisible ? 'text-brand' : 'text-content'"
+      class="poem-reels__more"
+      :class="{ 'poem-reels__more--active': sideActionsVisible }"
       :aria-pressed="sideActionsVisible"
       :aria-label="sideActionsVisible ? t('nav.reelActionsHide') : t('nav.reelActionsShow')"
       @click.stop="toggleSideActions"
     >
-      <Icon icon="heroicons:ellipsis-vertical" class="h-6 w-6" aria-hidden="true" />
+      <Icon
+        icon="heroicons:ellipsis-vertical"
+        class="poem-reels__more-icon"
+        aria-hidden="true"
+      />
     </button>
   </div>
 </template>

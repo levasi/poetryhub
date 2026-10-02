@@ -4,7 +4,7 @@ useHead({ title: 'Write — Documentație PoetryHub' })
 </script>
 
 <template>
-  <DocsProse>
+  <div class="docs-page"><DocsProse>
     <span class="docs-eyebrow">Features</span>
     <h1>Scrie (Write)</h1>
     <p class="lead">
@@ -44,5 +44,5 @@ useHead({ title: 'Write — Documentație PoetryHub' })
       <li><code>tests/api/words.get.test.ts</code> — contract API</li>
       <li><code>tests/components/WriteSearchActions.test.ts</code> — UI căutare</li>
     </ul>
-  </DocsProse>
+  </DocsProse></div>
 </template>

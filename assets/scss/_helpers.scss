@@ -1,0 +1,90 @@
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+@keyframes pulseSoft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.animate-pulse-soft {
+  animation: pulseSoft 3s ease-in-out infinite;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.35s ease-out both;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.shadow-ds-card {
+  box-shadow: var(--shadow-ds-card);
+}
+
+.shadow-ds-nav {
+  box-shadow: var(--shadow-ds-nav);
+}
+
+.shadow-ds-popover {
+  box-shadow: var(--shadow-ds-popover);
+}
+
+.rounded-ds-sm {
+  border-radius: 0.5rem;
+}
+
+.rounded-ds-md {
+  border-radius: 0.75rem;
+}
+
+.rounded-ds-lg {
+  border-radius: 1rem;
+}
+
+.rounded-ds-xl {
+  border-radius: 1.25rem;
+}
+
+.text-ui-xs {
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  letter-spacing: 0.08em;
+}
+
+.text-ui-sm {
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+  letter-spacing: 0.01em;
+}

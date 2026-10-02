@@ -49,16 +49,12 @@ onUnmounted(() => {
   <Teleport to="body">
     <div
       v-if="open"
-      class="fixed inset-0 z-50 flex"
-      :class="[
-        'md:justify-end md:items-stretch',
-        'items-end justify-center',
-      ]"
+      class="ds-sheet"
       @keydown="onKeydown"
     >
       <button
         type="button"
-        class="absolute inset-0 bg-content/25 backdrop-blur-[1px]"
+        class="ds-sheet__backdrop"
         aria-label="Închide"
         @click="close"
       />
@@ -68,24 +64,24 @@ onUnmounted(() => {
         role="dialog"
         aria-modal="true"
         :aria-labelledby="title ? titleId : undefined"
-        class="ds-sheet-panel relative z-10 w-full max-h-[85dvh] rounded-t-ds-xl border-t border-edge-subtle md:h-full md:max-h-none md:w-[380px] md:max-w-[90vw] md:rounded-none md:border-l md:border-t-0"
+        class="ds-sheet-panel"
       >
         <div
-          class="mx-auto mb-3 mt-2 h-1 w-10 rounded-full bg-edge-strong md:hidden"
+          class="ds-sheet__handle"
           aria-hidden="true"
         />
 
-        <header class="flex items-center justify-between gap-3 border-b border-edge-subtle px-4 py-3 md:px-5">
+        <header class="ds-sheet__header">
           <h2
             v-if="title"
             :id="titleId"
-            class="font-serif text-lg font-semibold tracking-tight text-content"
+            class="ds-sheet__title"
           >
             {{ title }}
           </h2>
           <div
             v-else
-            class="flex-1"
+            class="ds-sheet__title-spacer"
           />
           <CloseButton
             label="Închide panoul"
@@ -93,7 +89,7 @@ onUnmounted(() => {
           />
         </header>
 
-        <div class="min-h-0 flex-1 overflow-y-auto px-4 py-4 pb-mobile-tab md:px-5 md:pb-4">
+        <div class="ds-sheet__body pb-mobile-tab">
           <slot />
         </div>
       </div>

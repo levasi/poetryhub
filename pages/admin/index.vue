@@ -41,12 +41,12 @@ const quickLinks = computed(() => [
 </script>
 
 <template>
-  <div>
-    <h1 class="mb-8 font-serif text-3xl font-semibold tracking-tight text-content">
+<div class="admin-page">
+    <h1 class="admin-page__header admin-page__header--dashboard admin-page__title admin-page__title--lg">
       {{ t('admin.dashboard') }}
     </h1>
 
-    <div class="mb-10 grid gap-4 sm:grid-cols-3">
+    <div class="admin-page__stats">
       <div
         v-for="(stat, i) in [
           { label: t('admin.stats.totalPoems'), value: totalPoems, accent: true },
@@ -54,58 +54,58 @@ const quickLinks = computed(() => [
           { label: t('admin.stats.tags'), value: totalTags, accent: false },
         ]"
         :key="i"
-        class="ds-card p-6"
+        class="ds-card admin-page__stat"
       >
-        <p class="text-ui-xs font-semibold uppercase tracking-wider text-content-soft">
+        <p class="admin-page__stat-label">
           {{ stat.label }}
         </p>
         <p
-          class="mt-2 font-serif text-4xl font-semibold tabular-nums"
-          :class="stat.accent ? 'text-brand' : 'text-content'"
+          class="admin-page__stat-value"
+          :class="stat.accent ? 'admin-page__stat-value--accent' : ''"
         >
           {{ stat.value }}
         </p>
       </div>
     </div>
 
-    <div class="grid gap-4 sm:grid-cols-2">
+    <div class="admin-page__links">
       <NuxtLink
         v-for="link in quickLinks"
         :key="link.to"
         :to="link.to"
         :target="link.external ? '_blank' : undefined"
-        class="ds-card-interactive flex items-center gap-4 p-5"
+        class="ds-card-interactive admin-page__link-card"
       >
-        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-ds-md bg-brand-tint text-brand">
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <div class="admin-page__link-icon">
+          <svg class="admin-page__link-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" :d="link.icon" />
           </svg>
         </div>
-        <div class="min-w-0">
-          <p class="font-medium text-content">{{ link.title }}</p>
-          <p class="text-ui-xs text-content-muted">{{ link.desc }}</p>
+        <div class="admin-page__panel-body">
+          <p class="admin-page__link-title">{{ link.title }}</p>
+          <p class="admin-page__link-desc">{{ link.desc }}</p>
         </div>
       </NuxtLink>
     </div>
 
-    <div class="ds-card mt-10 p-6">
-      <div class="mb-4 flex items-start gap-4">
-        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-ds-md bg-brand-tint text-brand">
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+    <div class="ds-card admin-page__panel">
+      <div class="admin-page__panel-head">
+        <div class="admin-page__link-icon">
+          <svg class="admin-page__link-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
         </div>
-        <div class="min-w-0 flex-1">
-          <p class="font-medium text-content">{{ t('admin.enrich.title') }}</p>
-          <p class="mt-0.5 text-sm text-content-muted">{{ t('admin.enrich.desc') }}</p>
+        <div class="admin-page__panel-body">
+          <p class="admin-page__panel-title">{{ t('admin.enrich.title') }}</p>
+          <p class="admin-page__panel-desc">{{ t('admin.enrich.desc') }}</p>
         </div>
       </div>
 
       <div
         v-if="enrichResult"
-        class="mb-4 rounded-ds-md border border-edge-subtle bg-surface-subtle px-4 py-3 text-sm text-content-secondary"
+        class="admin-page__result"
       >
-        <p v-if="enrichResult.done" class="font-medium text-success">
+        <p v-if="enrichResult.done" class="admin-page__success-text">
           ✓ {{ t('admin.enrich.done') }}
         </p>
         <p v-else>
@@ -114,28 +114,23 @@ const quickLinks = computed(() => [
             enriched: enrichResult.enriched,
             remaining: enrichResult.remaining,
           }) }}
-          <span v-if="enrichResult.errors > 0" class="ml-2 text-danger">
+          <span v-if="enrichResult.errors > 0" class="admin-page__danger-text">
             · {{ t('admin.enrich.errorCount', { errors: enrichResult.errors }) }}
           </span>
         </p>
       </div>
 
-      <p
-        v-if="enrichError"
-        class="mb-4 rounded-ds-md border border-danger/25 bg-danger-soft px-4 py-2.5 text-sm text-danger"
-      >
-        {{ enrichError }}
-      </p>
+      <p v-if="enrichError" class="admin-page__error" style="margin-bottom:1rem">{{ enrichError }}</p>
 
       <button
         type="button"
-        class="ds-btn-primary gap-2"
+        class="ds-btn-primary"
         :disabled="enrichRunning || enrichResult?.done"
         @click="runEnrichBatch"
       >
         <span
           v-if="enrichRunning"
-          class="h-4 w-4 animate-spin rounded-full border-2 border-brand-foreground/30 border-t-brand-foreground"
+          class="ph-spinner"
           aria-hidden="true"
         />
         {{ enrichRunning ? t('admin.enrich.running') : t('admin.enrich.btn') }}

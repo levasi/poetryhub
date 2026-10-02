@@ -221,9 +221,8 @@ async function sharePoem() {
 
 <template>
   <div>
-    <!-- Reading progress bar -->
-    <div class="fixed left-0 top-0 z-50 h-0.5 w-full bg-edge-subtle pointer-events-none">
-      <div class="h-full bg-brand transition-all duration-100" :style="{ width: `${progress}%` }" />
+    <div class="poetry-viewer__progress">
+      <div class="poetry-viewer__progress-bar" :style="{ width: `${progress}%` }" />
     </div>
 
     <ReaderMobileActions
@@ -235,24 +234,26 @@ async function sharePoem() {
       @share="sharePoem"
     />
 
-    <!-- ── Standard reading view — reading measure matches poem column ─────── -->
     <div
-      class="animate-fade-in mx-auto w-full max-w-reading md:pb-0"
+      class="poetry-viewer__content"
       :class="showMobileActions ? READER_MOBILE_CLEARANCE : ''"
     >
       <template v-if="allowPoemEdit && editingPoem">
-        <div class="space-y-4">
+        <div class="poetry-viewer__edit">
           <div>
-            <label class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-content-muted">
+            <label class="poetry-viewer__field-label">
               {{ t('viewer.poemTitleLabel') }}
             </label>
-            <input v-model="titleDraft" type="text"
-              class="w-full rounded-ds-lg border border-edge-subtle bg-surface-page px-4 py-3 font-serif text-2xl font-semibold text-content outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 md:text-3xl"
-              autocomplete="off" />
+            <input
+              v-model="titleDraft"
+              type="text"
+              class="poetry-viewer__input"
+              autocomplete="off"
+            >
           </div>
           <div>
             <label
-              class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-content-muted"
+              class="poetry-viewer__field-label"
               for="poem-edit-written-in"
             >
               {{ t('viewer.writtenInLabel') }}
@@ -262,47 +263,72 @@ async function sharePoem() {
               v-model="writtenInDraft"
               type="text"
               maxlength="220"
-              class="w-full rounded-ds-lg border border-edge-subtle bg-surface-page px-4 py-2.5 text-sm text-content outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+              class="poetry-viewer__input poetry-viewer__input--sm"
               :placeholder="t('viewer.writtenInHint')"
               autocomplete="off"
             >
-            <p class="mt-1.5 text-xs leading-relaxed text-content-muted">
+            <p class="poetry-viewer__hint">
               {{ t('viewer.writtenInHint') }}
             </p>
           </div>
           <div>
-            <label class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-content-muted">
+            <label class="poetry-viewer__field-label">
               {{ t('viewer.poemBodyLabel') }}
             </label>
-            <textarea v-model="contentDraft" rows="18"
-              class="w-full resize-y rounded-ds-lg border border-edge-subtle bg-surface-page px-4 py-3 font-serif text-base leading-relaxed outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-              :style="poemBodyStyle" />
+            <textarea
+              v-model="contentDraft"
+              rows="18"
+              class="poetry-viewer__textarea"
+              :style="poemBodyStyle"
+            />
           </div>
-          <div v-if="showPoemEditToolbar" class="flex flex-wrap gap-2 pt-2">
-            <button type="button"
-              class="inline-flex items-center justify-center rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-brand-foreground transition hover:bg-brand-hover disabled:opacity-50"
-              :disabled="savingPoemEdit" @click="savePoemEdit">
+          <div
+            v-if="showPoemEditToolbar"
+            class="poetry-viewer__toolbar"
+          >
+            <button
+              type="button"
+              class="poetry-viewer__btn-save"
+              :disabled="savingPoemEdit"
+              @click="savePoemEdit"
+            >
               {{ savingPoemEdit ? t('viewer.savingPoemEdit') : t('viewer.savePoemChanges') }}
             </button>
-            <button type="button"
-              class="inline-flex items-center justify-center rounded-lg border border-edge-subtle bg-surface-subtle px-4 py-2 text-sm font-medium text-content-secondary transition hover:border-edge hover:bg-surface-raised disabled:opacity-50"
-              :disabled="savingPoemEdit" @click="cancelPoemEdit">
+            <button
+              type="button"
+              class="poetry-viewer__btn-cancel"
+              :disabled="savingPoemEdit"
+              @click="cancelPoemEdit"
+            >
               {{ t('viewer.cancelPoemEdit') }}
             </button>
           </div>
         </div>
       </template>
-      <PoemReader v-else :poem="poem" variant="pdp" :show-tags="true">
-        <template v-if="allowPoemEdit && !autoPoemEdit" #titleAside>
-          <button type="button"
-            class="inline-flex items-center gap-1.5 rounded-full border border-edge-subtle bg-surface-raised px-3 py-1.5 text-xs font-medium text-content-secondary shadow-sm transition-colors hover:border-brand/40 hover:text-brand md:px-4 md:py-2 md:text-sm"
-            @click="startPoemEdit">
-            <Icon icon="heroicons:pencil-square" class="h-3.5 w-3.5 md:h-4 md:w-4" aria-hidden="true" />
+      <PoemReader
+        v-else
+        :poem="poem"
+        variant="pdp"
+        :show-tags="true"
+      >
+        <template
+          v-if="allowPoemEdit && !autoPoemEdit"
+          #titleAside
+        >
+          <button
+            type="button"
+            class="poetry-viewer__edit-poem"
+            @click="startPoemEdit"
+          >
+            <Icon
+              icon="heroicons:pencil-square"
+              class="poetry-viewer__edit-icon"
+              aria-hidden="true"
+            />
             {{ t('viewer.editPoem') }}
           </button>
         </template>
       </PoemReader>
-
     </div>
   </div>
 </template>

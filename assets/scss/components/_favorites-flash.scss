@@ -1,0 +1,50 @@
+@use '../tokens' as *;
+
+.favorites-flash {
+  position: fixed;
+  bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  z-index: 100;
+  display: flex;
+  max-width: min(100% - 2rem, 28rem);
+  transform: translateX(-50%);
+  align-items: center;
+  gap: 0.75rem;
+  box-shadow: var(--shadow-ds-popover);
+
+  @media (min-width: $bp-md) {
+    bottom: 1.5rem;
+    max-width: 28rem;
+  }
+}
+
+.favorites-flash__message {
+  flex: 1 1 0%;
+}
+
+.favorites-flash__dismiss {
+  flex-shrink: 0;
+  font-weight: 500;
+  color: ph-rgb(danger);
+  text-decoration: underline;
+  text-decoration-color: rgb(var(--color-danger) / 0.4);
+  text-underline-offset: 2px;
+
+  &:hover {
+    color: ph-rgb(content);
+  }
+}
+
+.favorites-flash-enter-active {
+  transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+}
+
+.favorites-flash-leave-active {
+  transition: opacity 0.15s ease-in, transform 0.15s ease-in;
+}
+
+.favorites-flash-enter-from,
+.favorites-flash-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(0.5rem);
+}

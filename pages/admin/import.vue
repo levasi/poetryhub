@@ -88,78 +88,78 @@ function formatResult(r: { imported: number; skipped: number; errors: number }) 
 </script>
 
 <template>
-  <div class="w-full">
-    <h1 class="mb-8 font-serif text-2xl font-bold text-content">{{ t('admin.import.title') }}</h1>
+<div class="admin-page">
+    <h1 class="admin-page__title" style="margin-bottom:2rem">{{ t('admin.import.title') }}</h1>
 
     <!-- ── PoetryDB ────────────────────────────────────────────────────────── -->
-    <section class="mb-8 rounded-xl border border-edge-subtle bg-surface-raised p-6 shadow-sm">
-      <h2 class="mb-1 font-serif text-lg font-bold text-content">{{ t('admin.import.poetryDbTitle') }}</h2>
-      <p class="mb-4 text-xs text-content-muted">{{ t('admin.import.poetryDbDesc') }}</p>
+    <section class="admin-page__section">
+      <h2 class="admin-page__section-title">{{ t('admin.import.poetryDbTitle') }}</h2>
+      <p class="admin-page__section-desc">{{ t('admin.import.poetryDbDesc') }}</p>
 
-      <div class="mb-4 flex items-center gap-4">
-        <label class="text-xs text-content-muted">{{ t('admin.import.poemsToImport') }}</label>
+      <div class="admin-page__inline-field">
+        <label class="admin-page__inline-label">{{ t('admin.import.poemsToImport') }}</label>
         <input v-model.number="pdbCount" type="number" min="1" max="100"
-          class="w-20 rounded-lg border border-edge-subtle bg-surface-subtle px-3 py-1.5 text-sm text-content outline-none focus:border-brand focus:ring-2 focus:ring-brand/35" />
+          class="admin-page__num-input" />
       </div>
 
       <button type="button" :disabled="pdbLoading"
-        class="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+        class="admin-page__btn-emerald"
         @click="importPoetryDB">
         {{ pdbLoading ? t('admin.import.importing') : t('admin.import.importFromPdb') }}
       </button>
 
       <div v-if="pdbResult"
-        class="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
+        class="admin-page__result-box admin-page__result-box--ok">
         {{ formatResult(pdbResult) }}
       </div>
-      <div v-if="pdbError" class="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+      <div v-if="pdbError" class="admin-page__result-box admin-page__result-box--err">
         {{ pdbError }}
       </div>
     </section>
 
     <!-- ── Romanian Classics ───────────────────────────────────────────────── -->
-    <section class="mb-8 rounded-xl border border-edge-subtle bg-surface-raised p-6 shadow-sm">
-      <h2 class="mb-1 font-serif text-lg font-bold text-content">{{ t('admin.import.roTitle') }}</h2>
-      <p class="mb-4 text-xs text-content-muted">
+    <section class="admin-page__section">
+      <h2 class="admin-page__section-title">{{ t('admin.import.roTitle') }}</h2>
+      <p class="admin-page__section-desc">
         {{ t('admin.import.roDesc') }}
       </p>
 
       <button type="button" :disabled="roLoading"
-        class="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+        class="admin-page__btn-blue"
         @click="importRomanian">
         {{ roLoading ? t('admin.import.importing') : t('admin.import.roButton') }}
       </button>
 
-      <div v-if="roResult" class="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
+      <div v-if="roResult" class="admin-page__result-box admin-page__result-box--ok">
         {{ formatResult(roResult) }}
       </div>
-      <div v-if="roError" class="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+      <div v-if="roError" class="admin-page__result-box admin-page__result-box--err">
         {{ roError }}
       </div>
     </section>
 
     <!-- ── Bulk JSON ───────────────────────────────────────────────────────── -->
-    <section class="rounded-xl border border-edge-subtle bg-surface-raised p-6 shadow-sm">
-      <h2 class="mb-1 font-serif text-lg font-bold text-content">{{ t('admin.import.jsonTitle') }}</h2>
-      <p class="mb-4 text-xs text-content-muted">
+    <section class="admin-page__section admin-page__section--last">
+      <h2 class="admin-page__section-title">{{ t('admin.import.jsonTitle') }}</h2>
+      <p class="admin-page__section-desc">
         {{ t('admin.import.jsonDesc') }}
       </p>
 
       <textarea v-model="jsonText" rows="12"
-        class="mb-4 w-full rounded-lg border border-edge-subtle bg-surface-subtle px-3 py-2.5 font-mono text-xs text-content outline-none focus:border-brand focus:ring-2 focus:ring-brand/35"
+        class="admin-page__json"
         :placeholder="jsonExample" />
 
       <button type="button" :disabled="jsonLoading || !jsonText.trim()"
-        class="rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50"
+        class="admin-page__btn-violet"
         @click="importJSON">
         {{ jsonLoading ? t('admin.import.importing') : t('admin.import.importJson') }}
       </button>
 
       <div v-if="jsonResult"
-        class="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
+        class="admin-page__result-box admin-page__result-box--ok">
         {{ formatResult(jsonResult) }}
       </div>
-      <div v-if="jsonError" class="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+      <div v-if="jsonError" class="admin-page__result-box admin-page__result-box--err">
         {{ jsonError }}
       </div>
     </section>

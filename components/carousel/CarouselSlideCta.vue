@@ -134,14 +134,14 @@ const blockClass = computed(() => {
 
 <template>
   <div
-    class="flex max-w-[920px] flex-col items-center gap-10 text-center sm:gap-12"
+    class="carousel-slide-cta"
     :class="blockClass"
   >
     <template v-for="(row, idx) in rows" :key="idx">
-      <p v-if="row.kind === 'plain'" class="leading-[1.35]" :class="plainClass">
+      <p v-if="row.kind === 'plain'" class="carousel-slide-cta__row" :class="plainClass">
         {{ row.text }}
       </p>
-      <p v-else class="leading-[1.35]">
+      <p v-else class="carousel-slide-cta__row">
         <span v-if="row.before">{{ row.before }}</span>
         <span :class="poetryClass">{{ row.poetry }}</span>
         <span :class="hubClass">{{ row.hub }}</span>

@@ -96,65 +96,114 @@ const hasTitleAside = computed(() => !!slots.titleAside)
 </script>
 
 <template>
-  <div class="poem-reader" :class="wrapperClass">
-    <div v-if="showTagsResolved && tags.length" class="mb-6 flex flex-wrap gap-2 md:mb-8">
-      <NuxtLink v-for="tag in tags" :key="tag.id" :to="`/descopera?tag=${tag.slug}`"
-        class="rounded-full border border-edge bg-surface-raised/90 px-3 py-1 text-xs text-content-secondary shadow-sm transition-colors hover:border-brand/50 hover:text-brand">
+  <div
+    class="poem-reader"
+    :class="wrapperClass"
+  >
+    <div
+      v-if="showTagsResolved && tags.length"
+      class="poem-reader__tags"
+    >
+      <NuxtLink
+        v-for="tag in tags"
+        :key="tag.id"
+        :to="`/descopera?tag=${tag.slug}`"
+        class="poem-reader__tag"
+      >
         {{ labelForTag(tag.slug, tag.name) }}
       </NuxtLink>
-      <span v-if="langLabel"
-        class="rounded-full border border-edge bg-surface-raised/90 px-3 py-1 text-xs text-content-secondary">
+      <span
+        v-if="langLabel"
+        class="poem-reader__tag poem-reader__tag--static"
+      >
         {{ langLabel }}
       </span>
     </div>
 
     <template v-if="showTitle && hasTitleAside">
-      <div class="mb-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-3 sm:items-center">
-        <div class="min-w-0 flex-1">
-          <PoemTitle :title="poem.title" :slug="poem.slug" :variant="titleVariant" :poem-id="poemIdForTitle"
-            class="!mb-0" />
+      <div class="poem-reader__title-row">
+        <div class="poem-reader__title-main">
+          <PoemTitle
+            :title="poem.title"
+            :slug="poem.slug"
+            :variant="titleVariant"
+            :poem-id="poemIdForTitle"
+            class="poem-title--flush"
+          />
         </div>
-        <div class="flex shrink-0 items-center self-start pt-1 sm:self-center sm:pt-0">
+        <div class="poem-reader__title-aside">
           <slot name="titleAside" />
         </div>
       </div>
     </template>
-    <PoemTitle v-else-if="showTitle" :title="poem.title" :slug="poem.slug" :variant="titleVariant"
-      :poem-id="poemIdForTitle" />
+    <PoemTitle
+      v-else-if="showTitle"
+      :title="poem.title"
+      :slug="poem.slug"
+      :variant="titleVariant"
+      :poem-id="poemIdForTitle"
+    />
 
     <p
       v-if="showWrittenContext && writtenContextLine && variant !== 'modal'"
-      class="mt-2 text-sm text-content-muted"
-      :class="variant === 'banner' ? 'text-center md:text-left' : ''"
+      class="poem-reader__written"
+      :class="{ 'poem-reader__written--banner': variant === 'banner' }"
     >
       {{ writtenContextLine }}
     </p>
 
-    <NuxtLink v-if="showAuthor && author && variant === 'pdp'" :to="`/authors/${author.slug}`"
-      class="group mt-2 mb-8 inline-flex max-w-full items-center gap-4 text-content-secondary transition-colors hover:text-brand">
-      <img :src="authorAvatar" alt="" loading="lazy"
-        class="h-14 w-14 shrink-0 rounded-full object-cover ring-2 ring-edge-subtle transition-[box-shadow] group-hover:ring-brand/35" />
-      <span
-        class="font-serif text-lg font-semibold leading-snug tracking-tight text-content group-hover:text-brand">&mdash;
+    <NuxtLink
+      v-if="showAuthor && author && variant === 'pdp'"
+      :to="`/authors/${author.slug}`"
+      class="poem-reader__author"
+    >
+      <img
+        :src="authorAvatar"
+        alt=""
+        loading="lazy"
+        class="poem-reader__author-avatar"
+      >
+      <span class="poem-reader__author-name">&mdash;
         {{ author.name }}</span>
     </NuxtLink>
 
-    <NuxtLink v-else-if="showAuthor && author && variant === 'banner'" :to="`/authors/${author.slug}`"
-      class="mt-2 inline-block text-sm text-content-muted transition hover:text-brand">
+    <NuxtLink
+      v-else-if="showAuthor && author && variant === 'banner'"
+      :to="`/authors/${author.slug}`"
+      class="poem-reader__author-banner"
+    >
       — {{ author.name }}
     </NuxtLink>
 
-    <div v-if="showOrnamentResolved" class="my-10 flex items-center gap-4 md:my-12">
-      <div class="h-px flex-1 bg-gradient-to-r from-transparent via-edge-strong/40 to-edge-subtle" />
-      <span class="select-none text-lg text-brand/70" aria-hidden="true">✦</span>
-      <div class="h-px flex-1 bg-gradient-to-l from-transparent via-edge-strong/40 to-edge-subtle" />
+    <div
+      v-if="showOrnamentResolved"
+      class="poem-reader__ornament"
+    >
+      <div class="poem-reader__ornament-line" />
+      <span
+        class="poem-reader__ornament-mark"
+        aria-hidden="true"
+      >✦</span>
+      <div class="poem-reader__ornament-line poem-reader__ornament-line--flip" />
     </div>
 
-    <div class="poem-body w-full space-y-6" :class="bodyClass">
+    <div
+      class="poem-body poem-reader__body"
+      :class="bodyClass"
+    >
       <template v-if="bodyModeResolved === 'stanzas'">
-        <p v-for="(stanza, i) in stanzas" :key="i" class="whitespace-pre-wrap" :style="poemBodyStyle">{{ stanza }}</p>
+        <p
+          v-for="(stanza, i) in stanzas"
+          :key="i"
+          class="poem-reader__stanza"
+          :style="poemBodyStyle"
+        >{{ stanza }}</p>
       </template>
-      <p v-else :style="poemBodyStyle" class="whitespace-pre-wrap">{{ plainBody }}</p>
+      <p
+        v-else
+        :style="poemBodyStyle"
+        class="poem-reader__stanza"
+      >{{ plainBody }}</p>
     </div>
   </div>
 </template>

@@ -1,0 +1,60 @@
+// PoetryHub styles — SCSS entry (no Tailwind).
+
+@use 'preflight';
+@use 'base';
+@use 'helpers';
+@use 'design-system';
+@use 'carousel-export';
+
+@use 'layout/shell';
+@use 'layout/mobile-tab-bar';
+@use 'layout/app-nav';
+@use 'layout/account' as layout-account;
+@use 'layout/admin' as layout-admin;
+@use 'layout/auth' as layout-auth;
+@use 'layout/docs' as layout-docs;
+@use 'layout/carousel' as layout-carousel;
+
+@use 'components/alert';
+@use 'components/app-footer';
+@use 'components/app-logo';
+@use 'components/auth';
+@use 'components/author-card';
+@use 'components/carousel' as cmp-carousel;
+@use 'components/close-button';
+@use 'components/color-scheme';
+@use 'components/docs' as cmp-docs;
+@use 'components/ds-sheet';
+@use 'components/favorites-flash';
+@use 'components/filter-panel';
+@use 'components/home-authors';
+@use 'components/language-switch';
+@use 'components/page-loading';
+@use 'components/pagination';
+@use 'components/poem-carousel-icon';
+@use 'components/poem-reader';
+@use 'components/poem-reels';
+@use 'components/poem-title';
+@use 'components/poetry-card';
+@use 'components/poetry-viewer';
+@use 'components/reader-mobile';
+@use 'components/reader-settings';
+@use 'components/search-bar';
+@use 'components/tag-badge';
+@use 'components/write-editor';
+@use 'components/write-tools';
+
+@use 'pages/home';
+@use 'pages/search';
+@use 'pages/favorites';
+@use 'pages/auth' as page-auth;
+@use 'pages/discover';
+@use 'pages/author';
+@use 'pages/poem';
+@use 'pages/carousel' as page-carousel;
+@use 'pages/account' as page-account;
+@use 'pages/admin' as page-admin;
+@use 'pages/docs' as page-docs;
+@use 'pages/write';
+
+@use 'custom' as *;

@@ -44,23 +44,23 @@ function toggleSettings() {
 <template>
   <nav
     v-show="!keyboardOpen"
-    class="fixed inset-x-0 bottom-0 z-[70] border-t border-edge-subtle bg-surface-raised/95 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1 shadow-[0_-2px_16px_-8px_rgba(0,0,0,0.08)] backdrop-blur-md md:hidden"
+    class="mobile-tab-bar"
     :aria-label="t('nav.mobileTabBarAria')"
   >
-    <div class="mx-auto flex max-w-lg items-stretch justify-around">
+    <div class="mobile-tab-bar__inner">
       <NuxtLink
         v-for="item in items"
         :key="item.to"
         :to="item.to"
-        class="flex min-h-[3rem] min-w-0 flex-1 flex-col items-center justify-center px-1 transition-colors"
-        :class="isActive(item) ? 'text-brand' : 'text-content-muted'"
+        class="mobile-tab-bar__item"
+        :class="{ 'mobile-tab-bar__item--active': isActive(item) }"
         :aria-current="isActive(item) ? 'page' : undefined"
         :aria-label="item.label"
         @click="settingsOpen = false"
       >
         <Icon
           :icon="isActive(item) ? item.iconActive : item.icon"
-          class="h-6 w-6"
+          class="mobile-tab-bar__icon"
           aria-hidden="true"
         />
       </NuxtLink>
@@ -68,8 +68,8 @@ function toggleSettings() {
       <button
         type="button"
         data-reading-settings-toggle
-        class="flex min-h-[3rem] min-w-0 flex-1 flex-col items-center justify-center px-1 transition-colors"
-        :class="settingsOpen ? 'text-brand' : 'text-content-muted'"
+        class="mobile-tab-bar__item"
+        :class="{ 'mobile-tab-bar__item--active': settingsOpen }"
         :aria-label="t('nav.mobileSettings')"
         :aria-pressed="settingsOpen"
         :aria-expanded="settingsOpen"
@@ -78,7 +78,7 @@ function toggleSettings() {
       >
         <Icon
           :icon="settingsOpen ? 'heroicons:cog-6-tooth-solid' : 'heroicons:cog-6-tooth'"
-          class="h-6 w-6"
+          class="mobile-tab-bar__icon"
           aria-hidden="true"
         />
       </button>

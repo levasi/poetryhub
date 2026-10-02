@@ -4,7 +4,7 @@ useHead({ title: 'Frontend — Documentație PoetryHub' })
 </script>
 
 <template>
-  <DocsProse>
+  <div class="docs-page"><DocsProse>
     <span class="docs-eyebrow">Stack</span>
     <h1>Frontend</h1>
     <p class="lead">
@@ -21,8 +21,8 @@ useHead({ title: 'Frontend — Documentație PoetryHub' })
 
     <h2>Styling & design system</h2>
     <ul>
-      <li><strong>Tailwind CSS</strong> — utilitare + tokeni semantici în <code>tailwind.config.ts</code></li>
-      <li><strong>main.css</strong> — clase DS (<code>.ds-card</code>, <code>.ds-btn-primary</code>, <code>.poem-body</code>)</li>
+      <li><strong>SCSS</strong> — <code>assets/scss/main.scss</code> (preflight, tokeni, design system, partials BEM)</li>
+      <li><strong>Tokeni</strong> — <code>assets/css/color-schemes.css</code> + <code>assets/scss/_tokens.scss</code></li>
       <li><strong>Color schemes</strong> — teme cititor (<code>assets/css/color-schemes.css</code>, <code>utils/colorScheme.ts</code>)</li>
       <li><strong>Fonturi</strong> — Playfair (titluri/poezii), Inter (UI), JetBrains Mono (cod)</li>
       <li><strong>Iconuri</strong> — <code>@iconify/vue</code> + Heroicons</li>
@@ -53,8 +53,7 @@ useHead({ title: 'Frontend — Documentație PoetryHub' })
 
     <h2>Module Nuxt</h2>
     <pre><code>@pinia/nuxt
-@nuxtjs/tailwindcss
 @nuxtjs/i18n
 @nuxtjs/storybook  # enabled: false în dev Nuxt; rulează standalone</code></pre>
-  </DocsProse>
+  </DocsProse></div>
 </template>

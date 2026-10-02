@@ -15,7 +15,8 @@ const SCAN_DIRS = [
 const SCAN_FILES = [
   join(ROOT, 'app.vue'),
   join(ROOT, 'error.vue'),
-  join(ROOT, 'assets/css/main.css'),
+  join(ROOT, 'assets/scss/main.scss'),
+  join(ROOT, 'assets/scss/_custom.scss'),
 ]
 const SKIP_SUFFIXES = ['.stories.ts', '.stories.tsx', '.stories.js', '.stories.jsx']
 const LEGACY_RE =
@@ -30,7 +31,7 @@ async function walk(dir) {
       if (entry.name === 'node_modules' || entry.name === '.output') continue
       files.push(...await walk(path))
     } else if (
-      (entry.name.endsWith('.vue') || entry.name.endsWith('.ts') || entry.name.endsWith('.css'))
+      (entry.name.endsWith('.vue') || entry.name.endsWith('.ts') || entry.name.endsWith('.css') || entry.name.endsWith('.scss'))
       && !SKIP_SUFFIXES.some((s) => entry.name.endsWith(s))
     ) {
       files.push(path)

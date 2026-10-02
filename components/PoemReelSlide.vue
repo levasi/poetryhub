@@ -144,67 +144,105 @@ async function sharePoem() {
 </script>
 
 <template>
-  <article class="relative flex h-full w-full flex-col overflow-hidden bg-surface-page" :aria-label="poem.title">
-    <div ref="bodyRef"
-      class="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-5 pb-8 pt-5"
-      style="scrollbar-width: thin; -webkit-overflow-scrolling: touch;">
-      <header class="mb-5">
-        <NuxtLink v-if="author" :to="authorHref || undefined" class="mb-4 flex items-center gap-3">
-          <img v-if="avatarSrc" :src="avatarSrc" :alt="author.name" width="40" height="40"
-            class="h-10 w-10 rounded-full object-cover ring-2 ring-edge-subtle" :loading="active ? 'eager' : 'lazy'">
-          <div class="min-w-0">
-            <p class="truncate font-serif text-sm font-semibold text-content">
+  <article
+    class="poem-reel-slide"
+    :aria-label="poem.title"
+  >
+    <div
+      ref="bodyRef"
+      class="poem-reel-slide__body"
+    >
+      <header class="poem-reel-slide__header">
+        <NuxtLink
+          v-if="author"
+          :to="authorHref || undefined"
+          class="poem-reel-slide__author"
+        >
+          <img
+            v-if="avatarSrc"
+            :src="avatarSrc"
+            :alt="author.name"
+            width="40"
+            height="40"
+            class="poem-reel-slide__avatar"
+            :loading="active ? 'eager' : 'lazy'"
+          >
+          <div class="poem-reel-slide__author-meta">
+            <p class="poem-reel-slide__author-name">
               {{ author.name }}
             </p>
           </div>
         </NuxtLink>
-        <h2 class="font-serif text-2xl font-semibold tracking-tight text-content">
+        <h2 class="poem-reel-slide__title">
           <NuxtLink
             :to="poemHref"
-            class="transition-colors hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+            class="poem-reel-slide__title-link"
           >
             {{ poem.title }}
           </NuxtLink>
         </h2>
       </header>
 
-      <div class="whitespace-pre-wrap text-content" :style="poemBodyStyle">
+      <div
+        class="poem-reel-slide__content"
+        :style="poemBodyStyle"
+      >
         {{ poem.content }}
       </div>
     </div>
 
-    <!-- Side actions (IG / TikTok style) — GSAP stagger on toggle; leave room for ⋮ -->
-    <div ref="actionsRef"
-      class="pointer-events-none absolute inset-y-0 right-0 z-10 flex w-14 flex-col items-center justify-end gap-4 pb-16 pr-2"
-      :aria-hidden="!sideActionsVisible">
-      <button type="button" class="pointer-events-auto flex flex-col items-center gap-1 text-content"
-        :tabindex="sideActionsVisible ? 0 : -1" :aria-label="liked ? t('viewer.saved') : t('viewer.savePoem')"
-        @click="toggle(poem.id)">
+    <div
+      ref="actionsRef"
+      class="poem-reel-slide__actions"
+      :aria-hidden="!sideActionsVisible"
+    >
+      <button
+        type="button"
+        class="poem-reel-slide__action"
+        :tabindex="sideActionsVisible ? 0 : -1"
+        :aria-label="liked ? t('viewer.saved') : t('viewer.savePoem')"
+        @click="toggle(poem.id)"
+      >
         <span
-          class="flex h-11 w-11 items-center justify-center rounded-full bg-surface-raised/90 shadow-ds-card backdrop-blur-sm"
-          :class="liked ? 'text-brand' : 'text-content-secondary'">
+          class="poem-reel-slide__action-btn"
+          :class="{ 'poem-reel-slide__action-btn--liked': liked }"
+        >
           <Icon
             :icon="liked ? 'heroicons:heart-solid' : 'heroicons:heart'"
-            class="h-6 w-6"
+            class="poem-reel-slide__action-icon"
             aria-hidden="true"
           />
         </span>
       </button>
 
-      <button type="button" class="pointer-events-auto flex flex-col items-center gap-1 text-content"
-        :tabindex="sideActionsVisible ? 0 : -1" :aria-label="copied ? t('viewer.linkCopied') : t('viewer.sharePoem')"
-        @click="sharePoem">
-        <span
-          class="flex h-11 w-11 items-center justify-center rounded-full bg-surface-raised/90 text-content-secondary shadow-ds-card backdrop-blur-sm">
-          <Icon icon="heroicons:share" class="h-5 w-5" aria-hidden="true" />
+      <button
+        type="button"
+        class="poem-reel-slide__action"
+        :tabindex="sideActionsVisible ? 0 : -1"
+        :aria-label="copied ? t('viewer.linkCopied') : t('viewer.sharePoem')"
+        @click="sharePoem"
+      >
+        <span class="poem-reel-slide__action-btn">
+          <Icon
+            icon="heroicons:share"
+            class="poem-reel-slide__action-icon poem-reel-slide__action-icon--sm"
+            aria-hidden="true"
+          />
         </span>
       </button>
 
-      <NuxtLink :to="poemHref" class="pointer-events-auto flex flex-col items-center gap-1 text-content"
-        :tabindex="sideActionsVisible ? 0 : -1" :aria-label="t('home.continueReading')">
-        <span
-          class="flex h-11 w-11 items-center justify-center rounded-full bg-surface-raised/90 text-content-secondary shadow-ds-card backdrop-blur-sm">
-          <Icon icon="heroicons:arrow-top-right-on-square" class="h-5 w-5" aria-hidden="true" />
+      <NuxtLink
+        :to="poemHref"
+        class="poem-reel-slide__action"
+        :tabindex="sideActionsVisible ? 0 : -1"
+        :aria-label="t('home.continueReading')"
+      >
+        <span class="poem-reel-slide__action-btn">
+          <Icon
+            icon="heroicons:arrow-top-right-on-square"
+            class="poem-reel-slide__action-icon poem-reel-slide__action-icon--sm"
+            aria-hidden="true"
+          />
         </span>
       </NuxtLink>
     </div>

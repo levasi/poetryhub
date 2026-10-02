@@ -25,14 +25,14 @@ const favorites = computed(() => {
 </script>
 
 <template>
-  <div class="animate-fade-in min-w-0">
-    <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+  <div class="favorites-page">
+    <div class="favorites-page__header">
       <div>
-        <h1 class="font-serif text-3xl font-bold text-content">{{ t('favorites.title') }}</h1>
-        <p class="mt-1 text-sm text-content-muted">{{ t('favorites.count', { n: count }) }}</p>
-        <p v-if="!isLoggedIn" class="mt-3 max-w-xl text-sm text-content-muted">
+        <h1 class="favorites-page__title">{{ t('favorites.title') }}</h1>
+        <p class="favorites-page__count">{{ t('favorites.count', { n: count }) }}</p>
+        <p v-if="!isLoggedIn" class="favorites-page__hint">
           {{ t('favorites.localOnlyHint') }}
-          <NuxtLink to="/login" class="font-medium text-brand underline decoration-brand/40 underline-offset-2 hover:text-brand-hover">
+          <NuxtLink to="/login" class="favorites-page__signin">
             {{ t('favorites.signInToSync') }}
           </NuxtLink>
         </p>
@@ -40,23 +40,23 @@ const favorites = computed(() => {
       <button
         v-if="count > 0"
         type="button"
-        class="shrink-0 self-start text-xs text-content-muted underline hover:text-danger"
+        class="favorites-page__clear"
         @click="clearAll"
       >
         {{ t('favorites.clearAll') }}
       </button>
     </div>
 
-    <div v-if="pending && count > 0" class="space-y-6 py-8">
+    <div v-if="pending && count > 0" class="favorites-page__skeleton">
       <DsSkeleton v-for="n in 3" :key="n" :lines="4" />
     </div>
 
-    <div v-else-if="count > 0 && favorites.length" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div v-else-if="count > 0 && favorites.length" class="favorites-page__grid">
       <PoetryCard v-for="poem in favorites" :key="poem.id" :poem="poem" :quick-read-list="favorites" />
     </div>
 
-    <div v-else-if="count > 0 && !favorites.length" class="py-16 text-center">
-      <p class="text-sm text-content-muted">{{ t('favorites.missingFromCatalog') }}</p>
+    <div v-else-if="count > 0 && !favorites.length" class="favorites-page__missing">
+      <p>{{ t('favorites.missingFromCatalog') }}</p>
     </div>
 
     <DsEmpty

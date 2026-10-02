@@ -502,8 +502,10 @@ const canvasStyle = computed(() => ({
     <div v-for="o in tok.overlays" :key="o.key" :class="o.class" :style="o.style" />
 
     <template v-if="variant === 'cover'">
-      <div class="flex h-full flex-col items-center justify-center text-center"
-        :class="coverShellRelative ? 'relative' : ''">
+      <div
+        class="carousel-insta__cover"
+        :class="{ 'carousel-insta__cover--relative': coverShellRelative }"
+      >
         <img v-if="avatarUrl" :src="avatarUrl" alt="" :class="tok.avatarClass" width="236" height="236" :style="{
           width: `${coverAvatarPx}px`,
           height: `${coverAvatarPx}px`,
@@ -543,17 +545,20 @@ const canvasStyle = computed(() => ({
 
     <template v-else-if="variant === 'body'">
       <div :class="[tok.bodyOuterClass, tok.bodyPad]" :style="bodySlideTypographyStyle">
-        <p v-for="(line, i) in lines" :key="i" class="whitespace-pre-wrap" :class="tok.bodyInnerClass">
+        <p v-for="(line, i) in lines" :key="i" class="carousel-insta__verse" :class="tok.bodyInnerClass">
           <CarouselVerseLine :line="line" :keywords="keywords" :mark-class="tok.verseMarkClass" />
         </p>
       </div>
     </template>
 
     <template v-else>
-      <div class="flex h-full flex-col items-center justify-center text-center" :class="[
-        ctaShellRelative ? 'relative' : '',
-        tok.ctaPadClass,
-      ]">
+      <div
+        class="carousel-insta__cta"
+        :class="[
+          { 'carousel-insta__cta--relative': ctaShellRelative },
+          tok.ctaPadClass,
+        ]"
+      >
         <CarouselSlideCta :cta-text="ctaText" :theme="tok.ctaTheme" />
       </div>
     </template>

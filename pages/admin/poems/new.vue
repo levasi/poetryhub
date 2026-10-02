@@ -56,27 +56,27 @@ async function submit() {
 </script>
 
 <template>
-  <div class="w-full">
-    <div class="mb-6 flex items-center gap-4">
-      <NuxtLink to="/admin/poems" class="text-sm text-content-muted hover:text-content">{{ t('admin.poemForm.backPoems') }}</NuxtLink>
-      <h1 class="font-serif text-2xl font-bold text-content">{{ t('admin.poemForm.newTitle') }}</h1>
+  <div class="admin-page">
+    <div class="admin-page__header admin-page__header--form">
+      <NuxtLink to="/admin/poems" class="admin-page__back">{{ t('admin.poemForm.backPoems') }}</NuxtLink>
+      <h1 class="admin-page__title">{{ t('admin.poemForm.newTitle') }}</h1>
     </div>
 
-    <form class="space-y-5" @submit.prevent="submit">
+    <form class="admin-page__form" @submit.prevent="submit">
       <!-- Error -->
-      <div v-if="error" class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+      <div v-if="error" class="admin-page__error">
         {{ error }}
       </div>
 
       <!-- Title -->
       <div>
-        <label class="mb-1.5 block text-xs font-medium text-content-muted">{{ t('admin.poemForm.titleRequired') }}</label>
+        <label class="admin-page__field-label">{{ t('admin.poemForm.titleRequired') }}</label>
         <input v-model="form.title" type="text" required class="admin-input" :placeholder="t('admin.poemForm.placeholderTitle')" />
       </div>
 
       <!-- Author -->
       <div>
-        <label class="mb-1.5 block text-xs font-medium text-content-muted">{{ t('admin.poemForm.authorRequired') }}</label>
+        <label class="admin-page__field-label">{{ t('admin.poemForm.authorRequired') }}</label>
         <select v-model="form.authorId" required class="admin-input">
           <option value="">{{ t('admin.poemForm.selectAuthor') }}</option>
           <option v-for="a in (authors as { data: { id: string; name: string }[] })?.data" :key="a.id" :value="a.id">
@@ -87,21 +87,21 @@ async function submit() {
 
       <!-- Content -->
       <div>
-        <label class="mb-1.5 block text-xs font-medium text-content-muted">{{ t('admin.poemForm.contentRequired') }}</label>
+        <label class="admin-page__field-label">{{ t('admin.poemForm.contentRequired') }}</label>
         <textarea
           v-model="form.content"
           rows="14"
           required
-          class="admin-input font-mono text-xs"
+          class="admin-input admin-input--mono"
           :placeholder="t('admin.poemForm.placeholderContent')"
         />
-        <p class="mt-1 text-xs text-content-muted">{{ t('admin.poemForm.contentHint') }}</p>
+        <p class="admin-page__hint-inline">{{ t('admin.poemForm.contentHint') }}</p>
       </div>
 
       <!-- Row: Language + Source -->
-      <div class="grid grid-cols-2 gap-4">
+      <div class="admin-page__year-grid">
         <div>
-          <label class="mb-1.5 block text-xs font-medium text-content-muted">{{ t('admin.poemForm.language') }}</label>
+          <label class="admin-page__field-label">{{ t('admin.poemForm.language') }}</label>
           <select v-model="form.language" class="admin-input">
             <option value="en">{{ t('lang.en') }}</option>
             <option value="ro">{{ t('lang.ro') }}</option>
@@ -112,7 +112,7 @@ async function submit() {
           </select>
         </div>
         <div>
-          <label class="mb-1.5 block text-xs font-medium text-content-muted">{{ t('admin.poemForm.source') }}</label>
+          <label class="admin-page__field-label">{{ t('admin.poemForm.source') }}</label>
           <select v-model="form.source" class="admin-input">
             <option value="classic">{{ t('admin.poemForm.sources.classic') }}</option>
             <option value="user-submitted">{{ t('admin.poemForm.sources.user') }}</option>
@@ -123,22 +123,20 @@ async function submit() {
 
       <!-- Source URL -->
       <div>
-        <label class="mb-1.5 block text-xs font-medium text-content-muted">{{ t('admin.poemForm.sourceUrl') }} <span class="text-content-secondary">{{ t('admin.poemForm.optional') }}</span></label>
+        <label class="admin-page__field-label">{{ t('admin.poemForm.sourceUrl') }} <span class="admin-page__optional">{{ t('admin.poemForm.optional') }}</span></label>
         <input v-model="form.sourceUrl" type="url" class="admin-input" placeholder="https://…" />
       </div>
 
       <!-- Tags -->
       <div v-if="(tags as unknown[])?.length">
-        <label class="mb-2 block text-xs font-medium text-content-muted">{{ t('admin.poemForm.tags') }}</label>
-        <div class="flex flex-wrap gap-1.5">
+        <label class="admin-page__field-label">{{ t('admin.poemForm.tags') }}</label>
+        <div class="admin-page__tag-row">
           <button
             v-for="tag in (tags as { id: string; name: string; color: string | null }[])"
             :key="tag.id"
             type="button"
-            class="rounded-full border px-3 py-0.5 text-xs transition-colors"
-            :class="form.tagIds.includes(tag.id)
-              ? 'border-amber-300 bg-amber-50 text-amber-900'
-              : 'border-edge-subtle bg-surface-raised text-content-muted hover:border-edge'"
+            class="admin-page__tag-chip"
+            :class="form.tagIds.includes(tag.id) ? 'admin-page__tag-chip--active' : ''"
             @click="toggleTag(tag.id)"
           >
             {{ labelForTag(tag.slug, tag.name) }}
@@ -147,21 +145,21 @@ async function submit() {
       </div>
 
       <!-- Featured -->
-      <label class="flex cursor-pointer items-center gap-3">
-        <input v-model="form.featured" type="checkbox" class="h-4 w-4 rounded border-edge accent-brand" />
-        <span class="text-sm text-content-secondary">{{ t('admin.poemForm.featuredNew') }}</span>
+      <label class="admin-page__featured-row">
+        <input v-model="form.featured" type="checkbox" class="admin-page__checkbox" />
+        <span class="admin-page__featured-label">{{ t('admin.poemForm.featuredNew') }}</span>
       </label>
 
       <!-- Submit -->
-      <div class="flex gap-3 pt-2">
+      <div class="admin-page__form-actions">
         <button
           type="submit"
           :disabled="loading"
-          class="rounded-lg bg-brand px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-brand-hover disabled:opacity-50"
+          class="admin-page__btn-brand"
         >
           {{ loading ? t('admin.poemForm.saving') : t('admin.poemForm.create') }}
         </button>
-        <NuxtLink to="/admin/poems" class="rounded-lg border border-edge-subtle bg-surface-raised px-5 py-2.5 text-sm text-content-muted hover:border-edge hover:text-content">
+        <NuxtLink to="/admin/poems" class="admin-page__btn-ghost">
           {{ t('admin.poemForm.cancel') }}
         </NuxtLink>
       </div>
@@ -169,8 +167,4 @@ async function submit() {
   </div>
 </template>
 
-<style scoped>
-.admin-input {
-  @apply w-full rounded-lg border border-edge-subtle bg-surface-subtle px-3 py-2.5 text-sm text-content placeholder:text-content-soft outline-none focus:border-brand focus:ring-2 focus:ring-brand/35;
-}
-</style>
+

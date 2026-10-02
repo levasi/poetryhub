@@ -312,7 +312,7 @@ const isDefaultFeed = computed(() => !authorSlug.value && !tagSlug.value)
 </script>
 
 <template>
-  <div class="animate-fade-in min-w-0">
+  <div class="discover-page">
     <!-- Mobile: TikTok / Reels-style poem feed -->
     <ClientOnly>
       <PoemReelsFeed
@@ -326,38 +326,38 @@ const isDefaultFeed = computed(() => !authorSlug.value && !tagSlug.value)
     </ClientOnly>
 
     <div
-      class="w-full min-w-0 pt-2 md:pt-4"
-      :class="isDefaultFeed ? 'hidden md:block' : ''"
+      class="discover-page__desktop"
+      :class="isDefaultFeed ? 'discover-page__desktop--default-feed' : ''"
     >
       <!-- Mobile / tablet author shelf -->
-      <div v-if="!authorSlug" class="mb-8 lg:hidden">
+      <div v-if="!authorSlug" class="discover-page__shelf">
         <HomeAuthorsColumn variant="shelf" />
       </div>
 
-      <div class="grid grid-cols-1 gap-12 lg:grid-cols-[minmax(200px,260px)_minmax(0,1fr)] lg:gap-10 xl:gap-12">
+      <div class="discover-page__layout">
         <!-- Left: authors (desktop rail) -->
-        <aside class="order-2 hidden min-w-0 lg:order-1 lg:block lg:max-w-[320px]">
-          <div class="sticky top-28 flex flex-col gap-10" :aria-label="t('home.leftRailAria')">
+        <aside class="discover-page__aside">
+          <div class="discover-page__rail" :aria-label="t('home.leftRailAria')">
             <HomeAuthorsColumn variant="sidebar" />
           </div>
         </aside>
         <!-- Center feed -->
-        <main class="order-1 min-w-0 lg:order-2 lg:min-w-0">
-          <div class="mx-auto w-full max-w-none">
+        <main class="discover-page__main">
+          <div class="discover-page__feed">
             <!-- Tag filter active -->
             <template v-if="tagSlug && !authorSlug">
-              <div class="ds-banner ds-banner-info mb-6 flex flex-wrap items-center gap-3">
-                <span class="text-sm text-content-secondary">
+              <div class="ds-banner ds-banner-info discover-page__tag-banner">
+                <span class="discover-page__tag-label">
                   {{ t('home.filterByTag') }}:
                 </span>
                 <TagBadge :name="activeTagLabel" :slug="tagSlug" :active="true" :link="false" />
-                <button type="button" class="ml-auto text-sm font-medium text-brand underline-offset-2 hover:underline"
+                <button type="button" class="discover-page__tag-clear"
                   @click="clearTagFilter">
                   {{ t('home.clearTagFilter') }}
                 </button>
               </div>
 
-              <div v-if="tagPending" class="space-y-6 py-8">
+              <div v-if="tagPending" class="discover-page__skeleton">
                 <DsSkeleton v-for="n in 4" :key="n" :lines="4" />
               </div>
 
@@ -378,38 +378,35 @@ const isDefaultFeed = computed(() => !authorSlug.value && !tagSlug.value)
 
             <!-- Author poems (from left column selection) -->
             <template v-else-if="authorSlug">
-              <div v-if="authorPending" class="flex min-h-[16rem] items-center justify-center py-16">
-                <span class="h-9 w-9 animate-spin rounded-full border-2 border-edge-subtle border-t-brand"
-                  aria-hidden="true" />
+              <div v-if="authorPending" class="discover-page__loading">
+                <span class="ph-spinner ph-spinner--lg" aria-hidden="true" />
               </div>
 
-              <div v-else-if="authorError" class="py-16 text-center">
-                <p class="text-content-muted">{{ t('authors.notFound') }}</p>
-                <button type="button" class="mt-4 text-sm font-medium text-brand underline-offset-2 hover:underline"
+              <div v-else-if="authorError" class="discover-page__error">
+                <p>{{ t('authors.notFound') }}</p>
+                <button type="button" class="discover-page__back-link"
                   @click="clearHomeAuthor">
                   {{ t('home.backToFeed') }}
                 </button>
               </div>
 
               <template v-else-if="authorPage && !('idle' in authorPage)">
-                <button type="button"
-                  class="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-content-secondary transition hover:text-content"
-                  @click="clearHomeAuthor">
-                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
+                <button type="button" class="discover-page__back-btn" @click="clearHomeAuthor">
+                  <svg class="discover-page__back-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
                     aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
                   </svg>
                   {{ t('home.backToFeed') }}
                 </button>
 
-                <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
+                <div class="discover-page__author-head">
                   <img :src="authorAvatarUrl(authorPage.author)" :alt="authorPage.author.name" width="80" height="80"
-                    loading="lazy" class="h-20 w-20 shrink-0 rounded-full object-cover ring-2 ring-brand/35">
-                  <div class="min-w-0">
-                    <h2 class="font-serif text-2xl font-bold text-content sm:text-3xl">
+                    loading="lazy" class="discover-page__author-avatar">
+                  <div class="discover-page__author-meta">
+                    <h2 class="discover-page__author-name">
                       {{ authorPage.author.name }}
                     </h2>
-                    <p class="mt-1 text-sm text-content-secondary">
+                    <p class="discover-page__author-sub">
                       <span v-if="displayNationality(authorPage.author.nationality)">{{
                         displayNationality(authorPage.author.nationality)
                       }}</span>
@@ -418,31 +415,28 @@ const isDefaultFeed = computed(() => !authorSlug.value && !tagSlug.value)
                         · </span>
                       <span>{{ authorYearsLabel(authorPage.author) }}</span>
                     </p>
-                    <p class="mt-2 text-sm text-content-muted">
+                    <p class="discover-page__author-count">
                       {{ t('authors.poemCount', authorPage.poems.meta.total) }}
                     </p>
                     <NuxtLink :to="`/authors/${authorPage.author.slug}`"
-                      class="mt-2 inline-block text-sm font-medium text-brand transition hover:text-brand-hover">
+                      class="discover-page__author-profile">
                       {{ t('home.viewFullProfile') }}
                     </NuxtLink>
                   </div>
                 </div>
 
-                <div
-                  class="sticky z-10 -mx-1 mb-8 flex flex-wrap items-end gap-4 border-b border-edge-subtle bg-surface-page/90 px-1 pb-0 pt-1 backdrop-blur-md top-[3.25rem] md:top-16">
-                  <div class="flex gap-8" role="tablist" :aria-label="t('home.authorTabsAria')">
+                <div class="discover-page__sticky-tabs">
+                  <div class="discover-page__tablist" role="tablist" :aria-label="t('home.authorTabsAria')">
                     <button type="button" role="tab" :aria-selected="authorTab === 'works'"
-                      class="relative pb-3 text-sm transition-colors" :class="authorTab === 'works'
-                        ? 'font-medium text-content after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-content'
-                        : 'text-content-muted hover:text-content-secondary'
-                        " @click="authorTab = 'works'">
+                      class="discover-page__tab"
+                      :class="authorTab === 'works' ? 'discover-page__tab--active' : ''"
+                      @click="authorTab = 'works'">
                       {{ t('home.authorTabWorks') }}
                     </button>
                     <button type="button" role="tab" :aria-selected="authorTab === 'bio'"
-                      class="relative pb-3 text-sm transition-colors" :class="authorTab === 'bio'
-                        ? 'font-medium text-content after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-content'
-                        : 'text-content-muted hover:text-content-secondary'
-                        " @click="authorTab = 'bio'">
+                      class="discover-page__tab"
+                      :class="authorTab === 'bio' ? 'discover-page__tab--active' : ''"
+                      @click="authorTab = 'bio'">
                       {{ t('authors.biography') }}
                     </button>
                   </div>
@@ -456,11 +450,11 @@ const isDefaultFeed = computed(() => !authorSlug.value && !tagSlug.value)
                       <PoetryCard :poem="poem" layout="masonry" :quick-read-list="authorPoemsForCards" />
                     </div>
                   </div>
-                  <p v-else class="py-12 text-center text-content-muted">
+                  <p v-else class="discover-page__empty-poems">
                     {{ t('authors.noPoemsYet') }}
                   </p>
 
-                  <div v-if="(authorPage.poems.meta.totalPages ?? 1) > 1" class="mt-10">
+                  <div v-if="(authorPage.poems.meta.totalPages ?? 1) > 1" class="discover-page__pagination">
                     <PaginationNav :page="authorFeedPage" :total-pages="authorPage.poems.meta.totalPages"
                       @update:page="(p) => { authorFeedPage = p }" />
                   </div>
@@ -468,12 +462,11 @@ const isDefaultFeed = computed(() => !authorSlug.value && !tagSlug.value)
 
                 <!-- Biography -->
                 <div v-show="authorTab === 'bio'" role="tabpanel">
-                  <section class="pt-2">
-                    <p v-if="authorPage.author.bio"
-                      class="max-w-3xl whitespace-pre-wrap text-base leading-relaxed text-content-secondary">
+                  <section class="discover-page__bio">
+                    <p v-if="authorPage.author.bio" class="discover-page__bio-text">
                       {{ authorPage.author.bio }}
                     </p>
-                    <p v-else class="max-w-3xl text-sm italic text-content-muted">{{ t('authors.bioUnavailable') }}</p>
+                    <p v-else class="discover-page__bio-text discover-page__bio-text--empty">{{ t('authors.bioUnavailable') }}</p>
                   </section>
                 </div>
               </template>
@@ -481,9 +474,9 @@ const isDefaultFeed = computed(() => !authorSlug.value && !tagSlug.value)
 
             <!-- Default feed: For you / Staff picks -->
             <template v-else>
-              <Alert v-if="!dbNoticeDismissed" variant="info" class="mb-6">
+              <Alert v-if="!dbNoticeDismissed" variant="info" class="discover-page__notice">
                 <template #icon>
-                  <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
+                  <svg class="discover-page__notice-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
                     aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round"
                       d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -494,10 +487,8 @@ const isDefaultFeed = computed(() => !authorSlug.value && !tagSlug.value)
                 </AlertDescription>
               </Alert>
 
-              <div
-                class="sticky z-10 -mx-1 mb-8 overflow-x-auto bg-surface-page/90 px-1 pb-0 pt-1 backdrop-blur-md top-[3.25rem] md:top-16 [scrollbar-width:thin]"
-              >
-                <DsTabs :label="t('home.feedTabsAria')" class="min-w-max gap-4 sm:gap-6">
+              <div class="discover-page__sticky-tabs discover-page__sticky-tabs--feed">
+                <DsTabs :label="t('home.feedTabsAria')" class="discover-page__feed-tabs">
                   <DsTab :active="feedTab === 'foryou'" @click="feedTab = 'foryou'">
                     {{ t('home.tabForYou') }}
                   </DsTab>
@@ -510,14 +501,14 @@ const isDefaultFeed = computed(() => !authorSlug.value && !tagSlug.value)
                 </DsTabs>
               </div>
 
-              <div v-if="homePending" class="space-y-6 py-8">
+              <div v-if="homePending" class="discover-page__skeleton">
                 <DsSkeleton v-for="n in 4" :key="n" :lines="4" />
               </div>
 
               <template v-else>
                 <!-- For you -->
                 <div v-show="feedTab === 'foryou'">
-                  <div v-if="forYouPending && !forYouPoems.length" class="space-y-6 py-8">
+                  <div v-if="forYouPending && !forYouPoems.length" class="discover-page__skeleton">
                     <DsSkeleton v-for="n in 4" :key="n" :lines="4" />
                   </div>
 
@@ -529,13 +520,10 @@ const isDefaultFeed = computed(() => !authorSlug.value && !tagSlug.value)
                         <PoetryCard :poem="poem" layout="masonry" :quick-read-list="forYouPoems" />
                       </div>
                     </div>
-                    <div v-if="canLoadMoreForYou" class="mt-10 flex justify-center">
-                      <button type="button"
-                        class="inline-flex min-w-[12rem] items-center justify-center gap-2 rounded-full border border-edge bg-surface-raised px-6 py-2.5 text-sm font-medium text-content-secondary transition hover:border-edge-strong hover:text-content disabled:cursor-not-allowed disabled:opacity-60"
+                    <div v-if="canLoadMoreForYou" class="discover-page__load-more">
+                      <button type="button" class="discover-page__load-btn"
                         :disabled="forYouLoadingMore" :aria-busy="forYouLoadingMore" @click="loadMoreForYou">
-                        <span v-if="forYouLoadingMore"
-                          class="h-4 w-4 animate-spin rounded-full border-2 border-edge-subtle border-t-brand"
-                          aria-hidden="true" />
+                        <span v-if="forYouLoadingMore" class="ph-spinner" aria-hidden="true" />
                         {{ forYouLoadingMore ? t('home.loadingMore') : t('home.loadMoreForYou') }}
                       </button>
                     </div>
@@ -544,7 +532,7 @@ const isDefaultFeed = computed(() => !authorSlug.value && !tagSlug.value)
 
                 <!-- Newest (by published date) -->
                 <div v-show="feedTab === 'newest'" role="tabpanel">
-                  <div v-if="newestPending && !newestPoems.length" class="space-y-6 py-8">
+                  <div v-if="newestPending && !newestPoems.length" class="discover-page__skeleton">
                     <DsSkeleton v-for="n in 4" :key="n" :lines="4" />
                   </div>
 
@@ -556,19 +544,15 @@ const isDefaultFeed = computed(() => !authorSlug.value && !tagSlug.value)
                         <PoetryCard :poem="poem" layout="masonry" :quick-read-list="newestPoems" />
                       </div>
                     </div>
-                    <div v-if="canLoadMoreNewest" class="mt-10 flex justify-center">
+                    <div v-if="canLoadMoreNewest" class="discover-page__load-more">
                       <button
                         type="button"
-                        class="inline-flex min-w-[12rem] items-center justify-center gap-2 rounded-full border border-edge bg-surface-raised px-6 py-2.5 text-sm font-medium text-content-secondary transition hover:border-edge-strong hover:text-content disabled:cursor-not-allowed disabled:opacity-60"
+                        class="discover-page__load-btn"
                         :disabled="newestLoadingMore"
                         :aria-busy="newestLoadingMore"
                         @click="loadMoreNewest"
                       >
-                        <span
-                          v-if="newestLoadingMore"
-                          class="h-4 w-4 animate-spin rounded-full border-2 border-edge-subtle border-t-brand"
-                          aria-hidden="true"
-                        />
+                        <span v-if="newestLoadingMore" class="ph-spinner" aria-hidden="true" />
                         {{ newestLoadingMore ? t('home.loadingMore') : t('home.loadMoreForYou') }}
                       </button>
                     </div>
@@ -592,11 +576,10 @@ const isDefaultFeed = computed(() => !authorSlug.value && !tagSlug.value)
 
       <section
         v-if="!authorSlug && !tagSlug && !featured.length && !recent.length && !homePending && !forYouPoems.length"
-        class="mx-auto max-w-content py-10 text-center text-sm text-content-soft">
+        class="discover-page__empty-hint">
         <p>
           {{ t('home.emptyHintBefore') }}
-          <NuxtLink to="/admin"
-            class="font-medium underline decoration-edge-strong underline-offset-2 hover:text-content">
+          <NuxtLink to="/admin" class="discover-page__empty-link">
             {{ t('home.emptyHintLink') }}
           </NuxtLink>
           {{ t('home.emptyHintAfter') }}

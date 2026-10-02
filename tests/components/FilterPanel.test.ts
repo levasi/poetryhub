@@ -30,7 +30,7 @@ describe('FilterPanel', () => {
         hasActiveFilters: true,
       },
     })
-    const clearBtn = wrapper.findAll('button').find((b) => b.classes().includes('w-full'))
+    const clearBtn = wrapper.find('.filter-panel__clear')
     expect(clearBtn).toBeTruthy()
     await clearBtn!.trigger('click')
     expect(wrapper.emitted('clear')).toHaveLength(1)

@@ -48,22 +48,22 @@ function startGoogle() {
     <DsBanner
       v-if="googleError"
       variant="danger"
-      class="mb-4"
+      class="auth-page__banner"
     >
       {{ googleError }}
     </DsBanner>
 
     <AuthGoogleButton
       v-if="googleEnabled"
-      class="mb-2"
+      class="auth-page__google"
       @click="startGoogle"
     />
 
-    <p class="mt-6 text-center text-sm text-content-secondary">
+    <p class="auth-page__footer">
       {{ t('auth.haveAccount') }}
       <NuxtLink
         to="/login"
-        class="font-medium text-brand underline-offset-2 hover:underline"
+        class="auth-page__link"
       >
         {{ t('auth.signInLink') }}
       </NuxtLink>

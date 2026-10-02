@@ -1,5 +1,6 @@
 import type { Preview } from '@nuxtjs/storybook'
-import '../assets/css/main.css'
+import '../assets/css/color-schemes.css'
+import '../assets/scss/main.scss'
 
 const preview: Preview = {
   parameters: {

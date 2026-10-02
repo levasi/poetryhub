@@ -52,48 +52,48 @@ async function deletePost(id: string) {
 </script>
 
 <template>
-  <div class="mx-auto max-w-3xl">
-    <header class="mb-8">
-      <h1 class="font-serif text-2xl font-semibold tracking-tight text-content md:text-3xl">
+  <div class="account-page">
+    <header class="account-page__header">
+      <h1 class="account-page__page-title">
         {{ t('account.instaPostsSection') }}
       </h1>
-      <p class="mt-2 text-sm leading-relaxed text-content-muted">
+      <p class="account-page__page-desc">
         {{ t('account.instaPostsDesc') }}
       </p>
     </header>
 
-    <p v-if="deleteError" class="mb-4 text-sm text-danger" role="alert">
+    <p v-if="deleteError" class="account-page__alert account-page__alert--plain" role="alert">
       {{ deleteError }}
     </p>
 
-    <div v-if="posts.length" class="space-y-3">
+    <div v-if="posts.length" class="account-page__list">
       <article
         v-for="post in posts"
         :key="post.id"
-        class="flex flex-col gap-3 rounded-ds-lg border border-edge-subtle bg-surface-raised p-4 shadow-ds-card sm:flex-row sm:items-center sm:justify-between"
+        class="account-page__list-item account-page__list-item--insta"
       >
-        <div class="min-w-0">
-          <h2 class="truncate font-serif text-lg font-semibold text-content">
+        <div class="account-page__list-main">
+          <h2 class="account-page__list-title account-page__list-title--serif">
             {{ post.title }}
           </h2>
-          <p class="mt-0.5 truncate text-sm text-content-muted">
+          <p class="account-page__list-sub account-page__list-sub--muted">
             {{ post.authorName }}
-            <span v-if="post.poemSlug" class="text-content-soft"> · {{ post.poemSlug }}</span>
+            <span v-if="post.poemSlug" class="account-page__soft"> · {{ post.poemSlug }}</span>
           </p>
-          <p class="mt-1 text-xs text-content-soft">
+          <p class="account-page__meta-date account-page__meta-date--mt">
             {{ formatDate(post.updatedAt) }}
           </p>
         </div>
-        <div class="flex shrink-0 flex-wrap items-center gap-2">
+        <div class="account-page__list-actions account-page__list-actions--wrap">
           <NuxtLink
             :to="{ path: '/carousel-generator', query: { saved: post.id } }"
-            class="ds-btn-secondary px-3 py-2 text-sm"
+            class="ds-btn-secondary ds-btn--sm"
           >
             {{ t('account.instaPostsEdit') }}
           </NuxtLink>
           <button
             type="button"
-            class="ds-btn-secondary px-3 py-2 text-sm text-danger hover:bg-danger/5"
+            class="ds-btn-secondary ds-btn--sm ds-btn--danger"
             :disabled="deleting === post.id"
             @click="deletePost(post.id)"
           >
@@ -102,22 +102,22 @@ async function deletePost(id: string) {
         </div>
       </article>
 
-      <div v-if="totalPages > 1" class="flex justify-center gap-2 pt-4">
-        <button type="button" class="ds-btn-secondary px-3 py-1.5 text-sm" :disabled="page <= 1" @click="page--">
+      <div v-if="totalPages > 1" class="account-page__pagination account-page__pagination--center">
+        <button type="button" class="ds-btn-secondary ds-btn--xs" :disabled="page <= 1" @click="page--">
           ‹
         </button>
-        <span class="self-center text-sm text-content-muted tabular-nums">{{ page }} / {{ totalPages }}</span>
-        <button type="button" class="ds-btn-secondary px-3 py-1.5 text-sm" :disabled="page >= totalPages" @click="page++">
+        <span class="account-page__page-num">{{ page }} / {{ totalPages }}</span>
+        <button type="button" class="ds-btn-secondary ds-btn--xs" :disabled="page >= totalPages" @click="page++">
           ›
         </button>
       </div>
     </div>
 
-    <div v-else class="rounded-ds-lg border border-dashed border-edge-subtle bg-surface-subtle/50 p-8 text-center">
-      <p class="mb-3 font-medium text-content-secondary">
+    <div v-else class="account-page__empty account-page__empty--dashed-subtle">
+      <p class="account-page__empty-title">
         {{ t('account.instaPostsEmpty') }}
       </p>
-      <NuxtLink to="/carousel-generator" class="ds-link text-sm font-medium">
+      <NuxtLink to="/carousel-generator" class="ds-link ds-link--sm">
         {{ t('account.instaPostsOpenGenerator') }}
       </NuxtLink>
     </div>

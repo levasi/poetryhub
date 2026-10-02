@@ -10,16 +10,16 @@ withDefaults(
 
 <template>
   <div
-    class="space-y-3"
+    class="ds-skeleton-stack"
     aria-hidden="true"
   >
-    <div class="ds-skeleton h-3 w-1/4" />
-    <div class="ds-skeleton h-5 w-3/4" />
+    <div class="ds-skeleton ds-skeleton-stack__line ds-skeleton-stack__line--eyebrow" />
+    <div class="ds-skeleton ds-skeleton-stack__line ds-skeleton-stack__line--title" />
     <div
       v-for="n in Math.max(0, lines - 2)"
       :key="n"
-      class="ds-skeleton h-4"
-      :class="n === lines - 2 ? 'w-5/6' : 'w-full'"
+      class="ds-skeleton ds-skeleton-stack__line ds-skeleton-stack__line--body"
+      :class="{ 'ds-skeleton-stack__line--short': n === lines - 2 }"
     />
   </div>
 </template>

@@ -24,38 +24,37 @@ async function setLanguageSwitch(enabled: boolean) {
 </script>
 
 <template>
-  <div class="max-w-content">
-    <p class="ds-eyebrow mb-2 text-content-soft">{{ t('admin.panel') }}</p>
-    <h1 class="mb-3 font-serif text-3xl font-semibold tracking-tight text-content">
+<div class="admin-page admin-page--narrow">
+    <p class="ds-eyebrow admin-page__eyebrow">{{ t('admin.panel') }}</p>
+    <h1 class="admin-page__title admin-page__title--lg" style="margin-bottom:0.75rem">
       {{ t('admin.settings.title') }}
     </h1>
-    <p class="max-w-reading text-content-secondary">
+    <p class="admin-page__lead">
       {{ t('admin.settings.lead') }}
     </p>
 
-    <section class="mt-10 rounded-ds-lg border border-edge-subtle bg-surface-raised p-6 shadow-ds-card">
-      <h2 class="mb-2 font-serif text-lg font-semibold text-content">
+    <section class="admin-page__card-block">
+      <h2 class="admin-page__card-title admin-page__card-title--mb2">
         {{ t('admin.settings.languageSwitchTitle') }}
       </h2>
-      <p class="mb-6 max-w-reading text-sm text-content-secondary">
+      <p class="admin-page__card-desc">
         {{ t('admin.settings.languageSwitchBody') }}
       </p>
-      <label class="flex cursor-pointer items-start gap-3">
-        <input type="checkbox" class="mt-1 h-4 w-4 rounded border-edge text-brand focus:ring-brand/40"
+      <label class="admin-page__checkbox-row">
+        <input type="checkbox" class="admin-page__checkbox"
           :checked="siteSettings?.showLanguageSwitch === true" :disabled="savingLang"
           @change="setLanguageSwitch(($event.target as HTMLInputElement).checked)" />
-        <span class="text-sm text-content">{{ t('admin.settings.languageSwitchLabel') }}</span>
+        <span>{{ t('admin.settings.languageSwitchLabel') }}</span>
       </label>
-      <p v-if="saveError" class="mt-3 text-sm text-danger">{{ saveError }}</p>
-      <p v-else-if="savingLang" class="mt-3 text-sm text-content-muted">{{ t('admin.settings.languageSwitchSaving') }}
-      </p>
+      <p v-if="saveError" class="admin-page__owner-note" style="margin-top:0.75rem;color:rgb(var(--color-danger))">{{ saveError }}</p>
+      <p v-else-if="savingLang" class="admin-page__saving">{{ t('admin.settings.languageSwitchSaving') }}</p>
     </section>
 
-    <section class="mt-10 rounded-ds-lg border border-edge-subtle bg-surface-raised p-6 shadow-ds-card">
-      <h2 class="mb-2 font-serif text-lg font-semibold text-content">
+    <section class="admin-page__card-block">
+      <h2 class="admin-page__card-title admin-page__card-title--mb2">
         {{ t('admin.settings.schemesTitle') }}
       </h2>
-      <p class="mb-6 max-w-reading text-sm text-content-secondary">
+      <p class="admin-page__card-desc">
         {{ t('admin.settings.schemesBody') }}
       </p>
       <ColorSchemeSwitch />

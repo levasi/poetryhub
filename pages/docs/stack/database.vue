@@ -4,7 +4,7 @@ useHead({ title: 'Bază de date — Documentație PoetryHub' })
 </script>
 
 <template>
-  <DocsProse>
+  <div class="docs-page"><DocsProse>
     <span class="docs-eyebrow">Stack</span>
     <h1>Bază de date</h1>
     <p class="lead">
@@ -57,5 +57,5 @@ npm run db:studio    # UI explorare date</code></pre>
       Schema include indexuri compuse pentru pattern-uri frecvente: listări pe limbă + dată publicare,
       featured, slug-uri, căutări lexicon pe <code>endingKey</code> și <code>syllableCount</code>.
     </p>
-  </DocsProse>
+  </DocsProse></div>
 </template>

@@ -4,5 +4,5 @@ const route = useRoute()
 await navigateTo({ path: '/descopera', query: { ...route.query } }, { redirectCode: 301 })
 </script>
 <template>
-  <div class="min-h-[30vh]" />
+  <div class="poem-page__stub" />
 </template>

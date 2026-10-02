@@ -16,15 +16,15 @@ defineEmits<{ click: [event: MouseEvent] }>()
 <template>
   <button
     type="button"
-    class="ds-icon-btn shrink-0 border-edge-subtle"
-    :class="size === 'md' ? '!min-h-9 !min-w-9' : '!min-h-8 !min-w-8'"
+    class="ds-icon-btn close-button"
+    :class="{ 'close-button--md': size === 'md' }"
     :aria-label="label"
     :title="title ?? label"
     :disabled="disabled"
     @click="$emit('click', $event)"
   >
     <svg
-      class="size-4"
+      class="close-button__icon"
       fill="none"
       viewBox="0 0 24 24"
       stroke="currentColor"

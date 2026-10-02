@@ -1,0 +1,60 @@
+@use '../tokens' as *;
+
+.search-page {
+  min-width: 0;
+  padding-top: 1.25rem;
+  animation: ph-fade-in 0.6s ease-out;
+}
+
+.search-page__header {
+  margin-bottom: 1.5rem;
+}
+
+.search-page__title {
+  font-family: $ph-font-serif;
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: ph-rgb(content);
+}
+
+.search-page__prompt {
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  color: ph-rgb(content-muted);
+}
+
+.search-page__bar {
+  margin-bottom: 1.5rem;
+}
+
+.search-page__alert {
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  color: ph-rgb(danger);
+}
+
+.search-page__skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding-block: 1rem;
+}
+
+.search-page__meta {
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  color: ph-rgb(content-muted);
+}
+
+.search-page__grid {
+  display: grid;
+  gap: 1rem;
+
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (min-width: $bp-lg) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

@@ -2,21 +2,7 @@
 import { defineNuxtModule } from '@nuxt/kit'
 import { defu } from 'defu'
 import { resolve } from 'node:path'
-import autoprefixer from 'autoprefixer'
-import tailwindcss from 'tailwindcss'
 import { CAROUSEL_DEFAULTS_ADMIN_EMAIL } from './utils/carouselDefaultsAdmin'
-
-const tailwindConfigPath = resolve(process.cwd(), 'tailwind.config.ts')
-
-function applyTailwindPostcss(config: { css?: { postcss?: unknown } }) {
-  config.css ??= {}
-  config.css.postcss = {
-    plugins: [
-      tailwindcss({ config: tailwindConfigPath }),
-      autoprefixer(),
-    ],
-  }
-}
 
 /** Nitro virtual imports are not real package exports; they must be bundled, not loaded by Node. */
 const BUNDLE_NOT_EXTERNAL = ['nitropack/runtime', 'nitro/runtime'] as const
@@ -209,16 +195,16 @@ export default defineNuxtConfig({
   // Bundling nitropack into the server output avoids raw runtime imports (common on Node 20–24).
   hooks: {
     'vite:extendConfig'(config, ctx) {
-      applyTailwindPostcss(config)
       if (!ctx.isServer) return
       patchServerViteConfig(config)
     },
     'vite:configResolved'(config, ctx) {
-      applyTailwindPostcss(config)
       if (!ctx.isServer) return
       patchServerViteConfig(config)
     },
   },
+
+  css: ['~/assets/css/color-schemes.css', '~/assets/scss/main.scss'],
 
   vite: {
     server: {
@@ -250,12 +236,7 @@ export default defineNuxtConfig({
     viteEnvironmentApi: false,
   },
 
-  modules: [poetryhubNitroRuntimeCache, '@pinia/nuxt', '@nuxtjs/tailwindcss', '@nuxtjs/i18n', '@nuxtjs/storybook'],
-
-  tailwindcss: {
-    configPath: 'tailwind.config.ts',
-    cssPath: '~/assets/css/main.css',
-  },
+  modules: [poetryhubNitroRuntimeCache, '@pinia/nuxt', '@nuxtjs/i18n', '@nuxtjs/storybook'],
 
   storybook: {
     host: 'http://127.0.0.1',
@@ -277,8 +258,6 @@ export default defineNuxtConfig({
     // No Accept-Language redirect — first visit is always Romanian; switching locale persists for the session
     detectBrowserLanguage: false,
   },
-
-  // main.css is injected by @nuxtjs/tailwindcss via tailwindcss.cssPath
 
   // Runtime config — public values exposed to client, private to server only
   runtimeConfig: {

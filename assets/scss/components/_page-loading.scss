@@ -1,0 +1,63 @@
+@use '../tokens' as *;
+
+.page-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgb(var(--color-surface-page) / 0.85);
+  backdrop-filter: blur(4px);
+}
+
+.page-loading__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  padding-inline: 1.5rem;
+  text-align: center;
+}
+
+.page-loading__spinner {
+  height: 2rem;
+  width: 2rem;
+  border-radius: 9999px;
+  border: 2px solid ph-rgb(edge-subtle);
+  border-top-color: ph-rgb(brand);
+  animation: page-loading-spin 0.75s linear infinite;
+}
+
+.page-loading__label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: ph-rgb(content-muted);
+}
+
+.page-loading-fade-enter-active,
+.page-loading-fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.page-loading-fade-enter-from,
+.page-loading-fade-leave-to {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-loading-fade-enter-active,
+  .page-loading-fade-leave-active {
+    transition: none;
+  }
+
+  .page-loading__spinner {
+    animation: none;
+  }
+}
+
+@keyframes page-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

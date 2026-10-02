@@ -30,5 +30,5 @@ await navigateTo(
 </script>
 
 <template>
-  <div class="min-h-[30vh]" />
+  <div class="poem-page__stub" />
 </template>

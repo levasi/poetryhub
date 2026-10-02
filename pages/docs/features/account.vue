@@ -4,7 +4,7 @@ useHead({ title: 'Cont & autentificare — Documentație PoetryHub' })
 </script>
 
 <template>
-  <DocsProse>
+  <div class="docs-page"><DocsProse>
     <span class="docs-eyebrow">Features</span>
     <h1>Cont & autentificare</h1>
     <p class="lead">
@@ -44,5 +44,5 @@ useHead({ title: 'Cont & autentificare — Documentație PoetryHub' })
 
     <h2>Layout</h2>
     <p>Zonele account folosesc <code>layouts/account.vue</code> cu sidebar desktop și tab bar mobile.</p>
-  </DocsProse>
+  </DocsProse></div>
 </template>

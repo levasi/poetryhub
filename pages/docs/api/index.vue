@@ -6,7 +6,7 @@ useHead({ title: 'API — Documentație PoetryHub' })
 </script>
 
 <template>
-  <DocsProse>
+  <div class="docs-page"><DocsProse>
     <span class="docs-eyebrow">API</span>
     <h1>Rute API</h1>
     <p class="lead">
@@ -23,5 +23,5 @@ useHead({ title: 'API — Documentație PoetryHub' })
     </ul>
 
     <DocsApiTable :groups="apiRouteGroups" />
-  </DocsProse>
+  </DocsProse></div>
 </template>

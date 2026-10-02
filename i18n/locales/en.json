@@ -74,6 +74,8 @@
     "contentEmpty": "Write something before publishing.",
     "cancel": "Cancel",
     "addVerseBlock": "Add stanza",
+    "insertVerseBlock": "Insert stanza here",
+    "removeVerseBlock": "Remove stanza",
     "dragVerseBlock": "Drag to reorder",
     "verseColumnsAria": "Number of columns",
     "verseBlockLabel": "Stanza {n}"

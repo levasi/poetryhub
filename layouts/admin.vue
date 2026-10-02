@@ -30,9 +30,9 @@ function isNavActive(item: { to: string }) {
 </script>
 
 <template>
-  <div class="min-h-screen w-full bg-surface-page">
+  <div class="admin-layout">
     <!-- Mobile top bar -->
-    <header class="sticky top-0 z-40 flex items-center justify-between border-b border-edge-subtle bg-surface-raised/95 px-4 py-3 backdrop-blur-md md:hidden">
+    <header class="admin-layout__mobile-header">
       <AppLogo size="sm" />
       <button
         type="button"
@@ -40,41 +40,41 @@ function isNavActive(item: { to: string }) {
         :aria-label="t('nav.menu')"
         @click="mobileNavOpen = true"
       >
-        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <svg class="admin-layout__menu-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
         </svg>
       </button>
     </header>
 
-    <div class="flex w-full">
-      <aside class="sticky top-0 hidden h-screen w-56 shrink-0 flex-col border-r border-edge-subtle bg-surface-raised shadow-ds-nav md:flex">
-        <div class="border-b border-edge-subtle px-5 py-5">
-          <NuxtLink to="/" class="block">
+    <div class="admin-layout__body">
+      <aside class="admin-layout__sidebar">
+        <div class="admin-layout__brand">
+          <NuxtLink to="/" class="admin-layout__brand-link">
             <AppLogo />
           </NuxtLink>
-          <p class="mt-1 text-ui-xs text-content-soft">{{ t('admin.panel') }}</p>
+          <p class="admin-layout__brand-label">{{ t('admin.panel') }}</p>
         </div>
 
-        <nav class="flex-1 space-y-1 px-3 py-4">
+        <nav class="admin-layout__nav">
           <NuxtLink
             v-for="item in navItems"
             :key="item.to"
             :to="item.to"
-            class="flex items-center gap-3 rounded-ds-md px-3 py-2 text-sm text-content-muted transition-colors hover:bg-surface-subtle hover:text-content"
-            :class="{ 'bg-brand-tint text-content ring-1 ring-brand/25': isNavActive(item) }"
+            class="admin-layout__nav-link"
+            :class="{ 'admin-layout__nav-link--active': isNavActive(item) }"
           >
-            <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <svg class="admin-layout__nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" :d="item.icon" />
             </svg>
             {{ item.label }}
           </NuxtLink>
         </nav>
 
-        <div class="border-t border-edge-subtle px-4 py-4">
-          <p class="mb-2 truncate text-ui-xs text-content-soft">{{ user?.email }}</p>
+        <div class="admin-layout__footer">
+          <p class="admin-layout__user-email">{{ user?.email }}</p>
           <button
             type="button"
-            class="w-full rounded-ds-md border border-edge-subtle bg-surface-raised px-3 py-1.5 text-ui-sm text-content-muted transition-colors hover:border-danger-soft hover:text-danger"
+            class="admin-layout__logout"
             @click="logout"
           >
             {{ t('admin.signOut') }}
@@ -82,7 +82,7 @@ function isNavActive(item: { to: string }) {
         </div>
       </aside>
 
-      <main class="min-h-screen min-w-0 flex-1 overflow-auto px-4 py-6 md:px-8 md:py-8 lg:px-10">
+      <main class="admin-layout__main">
         <slot />
       </main>
     </div>
@@ -92,26 +92,26 @@ function isNavActive(item: { to: string }) {
       :title="t('admin.panel')"
       id-prefix="admin-nav"
     >
-      <nav class="space-y-1">
+      <nav>
         <NuxtLink
           v-for="item in navItems"
           :key="item.to"
           :to="item.to"
-          class="flex items-center gap-3 rounded-ds-md px-3 py-3 text-sm text-content-secondary transition-colors hover:bg-surface-subtle"
-          :class="{ 'bg-brand-tint text-content font-medium': isNavActive(item) }"
+          class="admin-layout__sheet-link"
+          :class="{ 'admin-layout__sheet-link--active': isNavActive(item) }"
           @click="mobileNavOpen = false"
         >
-          <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <svg class="admin-layout__nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" :d="item.icon" />
           </svg>
           {{ item.label }}
         </NuxtLink>
       </nav>
-      <div class="mt-6 border-t border-edge-subtle pt-4">
-        <p class="mb-2 truncate text-ui-xs text-content-soft">{{ user?.email }}</p>
+      <div class="admin-layout__sheet-footer">
+        <p class="admin-layout__user-email">{{ user?.email }}</p>
         <button
           type="button"
-          class="ds-btn-secondary w-full"
+          class="ds-btn-secondary admin-layout__sheet-logout"
           @click="logout"
         >
           {{ t('admin.signOut') }}

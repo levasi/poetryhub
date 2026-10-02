@@ -42,60 +42,51 @@ async function deletePoem(slug: string) {
 </script>
 
 <template>
-  <div>
-    <!-- Header -->
-    <div class="mb-6 flex items-center justify-between">
-      <h1 class="font-serif text-2xl font-bold text-content">{{ t('admin.poems.title') }}</h1>
-      <NuxtLink
-        to="/admin/poems/new"
-        class="ds-btn-primary px-4 py-2 text-sm"
-      >
+<div class="admin-page">
+    <div class="admin-page__header">
+      <h1 class="admin-page__title">{{ t('admin.poems.title') }}</h1>
+      <NuxtLink to="/admin/poems/new" class="ds-btn-primary">
         {{ t('admin.poems.new') }}
       </NuxtLink>
     </div>
 
-    <!-- Search -->
-    <div class="mb-4 w-full">
+    <div class="admin-page__search">
       <SearchBar v-model="search" :placeholder="t('admin.poems.searchPlaceholder')" />
     </div>
 
-    <!-- Table -->
-    <div class="overflow-hidden rounded-xl border border-edge-subtle bg-surface-raised shadow-sm">
-      <table class="w-full text-sm">
-        <thead class="border-b border-edge-subtle bg-surface-subtle">
+    <div class="admin-page__table-wrap">
+      <table class="admin-page__table">
+        <thead class="admin-page__thead">
           <tr>
-            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-content-muted">{{ t('admin.poems.colTitle') }}</th>
-            <th class="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-content-muted md:table-cell">{{ t('admin.poems.colAuthor') }}</th>
-            <th class="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-content-muted lg:table-cell">{{ t('admin.poems.colTags') }}</th>
-            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-content-muted">{{ t('admin.poems.colActions') }}</th>
+            <th class="admin-page__th">{{ t('admin.poems.colTitle') }}</th>
+            <th class="admin-page__th admin-page__th--md">{{ t('admin.poems.colAuthor') }}</th>
+            <th class="admin-page__th admin-page__th--lg">{{ t('admin.poems.colTags') }}</th>
+            <th class="admin-page__th">{{ t('admin.poems.colActions') }}</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-edge-subtle bg-surface-raised">
-          <tr v-for="poem in poems" :key="poem.id" class="hover:bg-surface-subtle">
-            <td class="max-w-[280px] truncate px-4 py-3 font-medium text-content">
-              <div class="flex items-center gap-2">
-                <span v-if="poem.featured" class="h-1.5 w-1.5 shrink-0 rounded-full bg-brand" :title="t('admin.poems.featuredTitle')" />
-                <span class="truncate">{{ poem.title }}</span>
+        <tbody class="admin-page__tbody">
+          <tr v-for="poem in poems" :key="poem.id">
+            <td class="admin-page__td admin-page__td--truncate">
+              <div class="admin-page__cell-row">
+                <span v-if="poem.featured" class="admin-page__featured-dot" :title="t('admin.poems.featuredTitle')" />
+                <span>{{ poem.title }}</span>
               </div>
             </td>
-            <td class="hidden px-4 py-3 text-content-muted md:table-cell">{{ poem.author.name }}</td>
-            <td class="hidden px-4 py-3 lg:table-cell">
-              <div class="flex flex-wrap gap-1">
+            <td class="admin-page__td admin-page__td--md">{{ poem.author.name }}</td>
+            <td class="admin-page__td admin-page__td--lg">
+              <div class="admin-page__tags">
                 <span
                   v-for="pt in poem.poemTags?.slice(0, 3)"
                   :key="pt.tag.id"
-                  class="rounded-full bg-surface-subtle px-2 py-0.5 text-xs text-content-muted"
+                  class="admin-page__tag"
                 >
                   {{ labelForTag(pt.tag.slug, pt.tag.name) }}
                 </span>
               </div>
             </td>
-            <td class="px-4 py-3">
-              <div class="flex items-center gap-2">
-                <NuxtLink
-                  :to="`/admin/poems/${poem.slug}`"
-                  class="rounded px-2 py-1 text-xs text-content-muted hover:bg-surface-subtle hover:text-content"
-                >
+            <td class="admin-page__td">
+              <div class="admin-page__actions">
+                <NuxtLink :to="`/admin/poems/${poem.slug}`" class="admin-page__action">
                   {{ t('admin.poems.edit') }}
                 </NuxtLink>
                 <NuxtLink
@@ -103,13 +94,13 @@ async function deletePoem(slug: string) {
                     ? { path: `/authors/${poem.author.slug}`, query: { poem: poem.slug } }
                     : `/poems/${poem.slug}`"
                   target="_blank"
-                  class="rounded px-2 py-1 text-xs text-content-muted hover:bg-surface-subtle hover:text-content"
+                  class="admin-page__action"
                 >
                   {{ t('admin.poems.view') }}
                 </NuxtLink>
                 <button
                   type="button"
-                  class="rounded px-2 py-1 text-xs text-red-700 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                  class="admin-page__action admin-page__action--danger"
                   :disabled="deleting === poem.slug"
                   @click="deletePoem(poem.slug)"
                 >
@@ -121,13 +112,12 @@ async function deletePoem(slug: string) {
         </tbody>
       </table>
 
-      <div v-if="!poems.length" class="py-10 text-center text-sm text-content-muted">
+      <div v-if="!poems.length" class="admin-page__empty">
         {{ t('admin.poems.none') }}
       </div>
     </div>
 
-    <!-- Pagination -->
-    <div v-if="totalPages > 1" class="mt-6">
+    <div v-if="totalPages > 1" class="admin-page__pagination">
       <PaginationNav :page="page" :total-pages="totalPages" @update:page="(p) => { page = p }" />
     </div>
   </div>

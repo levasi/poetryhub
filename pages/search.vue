@@ -22,32 +22,32 @@ watch(query, (q) => {
 </script>
 
 <template>
-  <div class="animate-fade-in min-w-0 pt-5">
-    <div class="mb-6">
-      <h1 class="font-serif text-3xl font-bold text-content">
+  <div class="search-page">
+    <div class="search-page__header">
+      <h1 class="search-page__title">
         {{ t('search.title') }}
       </h1>
-      <p class="mt-1 text-sm text-content-muted">
+      <p class="search-page__prompt">
         {{ t('search.prompt') }}
       </p>
     </div>
 
-    <SearchBar v-model="query" autofocus class="mb-6" @clear="clear" />
+    <SearchBar v-model="query" autofocus class="search-page__bar" @clear="clear" />
 
-    <p v-if="error" class="mb-4 text-sm text-danger" role="alert">
+    <p v-if="error" class="search-page__alert" role="alert">
       {{ error }}
     </p>
 
-    <div v-if="loading" class="space-y-6 py-4">
+    <div v-if="loading" class="search-page__skeleton">
       <DsSkeleton v-for="n in 3" :key="n" :lines="4" />
     </div>
 
     <template v-else-if="searched">
-      <p v-if="results.length" class="mb-4 text-sm text-content-muted">
+      <p v-if="results.length" class="search-page__meta">
         {{ t('search.resultsLine', { count: results.length, q: query.trim() }) }}
       </p>
 
-      <div v-if="results.length" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div v-if="results.length" class="search-page__grid">
         <PoetryCard v-for="poem in results" :key="poem.id" :poem="poem" :quick-read-list="results" />
       </div>
 

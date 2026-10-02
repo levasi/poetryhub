@@ -1,13 +1,35 @@
 /** Explicit separator between editor verse cards — blank lines inside a card stay intact. */
 export const WRITE_VERSE_BLOCK_SEP = '\n\n⟦ph-block⟧\n\n'
 const COL_META_RE = /^⟦ph-col:(\d+)⟧\n?/
+const COLS_LAYOUT_RE = /^⟦ph-cols:([123])⟧\n?/
 /** Legacy refrain header — stripped on load; new cards are always stanzas. */
 const LEGACY_REFRAIN_RE = /^\[?refren\]?:?$/i
 
+export type WriteColumnCount = 1 | 2 | 3
+
 export type WriteVerseBlockData = {
   text: string
-  /** 0-based editor column (empty columns stay empty when cards move). */
+  /** 0-based editor column (kept even when the UI shows fewer columns). */
   column: number
+}
+
+export type WriteVerseLayout = {
+  columnCount: WriteColumnCount | null
+  body: string
+}
+
+export function parseWriteLayout(raw: string): WriteVerseLayout {
+  const text = raw.replace(/^\uFEFF/, '')
+  const match = text.match(COLS_LAYOUT_RE)
+  if (!match) return { columnCount: null, body: text }
+  return {
+    columnCount: Number(match[1]) as WriteColumnCount,
+    body: text.slice(match[0].length),
+  }
+}
+
+export function readWriteColumnCount(raw: string): WriteColumnCount | null {
+  return parseWriteLayout(raw).columnCount
 }
 
 export function parseWriteVerseBlockText(raw: string): WriteVerseBlockData {
@@ -30,29 +52,35 @@ export function parseWriteVerseBlockText(raw: string): WriteVerseBlockData {
  * Only splits on the explicit `⟦ph-block⟧` marker — never on blank lines alone.
  */
 export function splitWriteVerseBlocks(raw: string): WriteVerseBlockData[] {
-  if (!raw) return [{ text: '', column: 0 }]
-  if (raw.includes('⟦ph-block⟧')) {
-    return raw
+  const { body } = parseWriteLayout(raw)
+  if (!body) return [{ text: '', column: 0 }]
+  if (body.includes('⟦ph-block⟧')) {
+    return body
       .split(/\n*⟦ph-block⟧\n*/)
       .map((part) => parseWriteVerseBlockText(part))
   }
   // Legacy / single-card content: keep blank lines inside one textarea.
-  return [parseWriteVerseBlockText(raw)]
+  return [parseWriteVerseBlockText(body)]
 }
 
-export function joinWriteVerseBlocks(list: WriteVerseBlockData[]): string {
-  return list
+export function joinWriteVerseBlocks(
+  list: WriteVerseBlockData[],
+  columnCount: WriteColumnCount = 1,
+): string {
+  const body = list
     .map((b) => {
       const col = Math.max(0, Math.floor(b.column || 0))
-      const body = b.text.replace(/\s+$/g, '')
-      return `⟦ph-col:${col}⟧\n${body}`
+      const text = b.text.replace(/\s+$/g, '')
+      return `⟦ph-col:${col}⟧\n${text}`
     })
     .join(WRITE_VERSE_BLOCK_SEP)
+  return `⟦ph-cols:${columnCount}⟧\n${body}`
 }
 
 /** Strip editor-only markers so published poems show normal stanza gaps. */
 export function toPublishablePoemContent(raw: string): string {
   const stripped = raw
+    .replace(/⟦ph-cols:\d+⟧\n?/g, '')
     .replace(/⟦ph-col:\d+⟧\n?/g, '')
     .replace(/\n*⟦ph-block⟧\n*/g, '\n\n')
   return stripped

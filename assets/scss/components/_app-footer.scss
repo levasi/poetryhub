@@ -1,0 +1,107 @@
+@use '../tokens' as *;
+
+.app-footer {
+  margin-top: auto;
+  width: 100%;
+  border-top: 1px solid ph-rgb(edge-subtle);
+  background-color: rgb(var(--color-surface-subtle) / 0.4);
+  padding-block: 3rem;
+
+  @media (min-width: $bp-md) {
+    padding-block: 4rem;
+  }
+}
+
+.app-footer__inner {
+  margin-inline: auto;
+  width: 100%;
+  max-width: none;
+  padding-inline: 1rem;
+
+  @media (min-width: $bp-md) {
+    padding-inline: 2rem;
+  }
+
+  @media (min-width: $bp-lg) {
+    padding-inline: 2.5rem;
+  }
+}
+
+.app-footer__body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  text-align: center;
+
+  @media (min-width: $bp-md) {
+    gap: 2.5rem;
+  }
+}
+
+.app-footer__quote {
+  max-width: 42rem;
+  text-wrap: balance;
+  font-family: $ph-font-serif;
+  font-size: 0.875rem;
+  line-height: 1.625;
+  font-style: italic;
+  color: ph-rgb(content-secondary);
+}
+
+.app-footer__attribution {
+  display: block;
+  margin-top: 0.75rem;
+  font-style: normal;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  color: ph-rgb(content-soft);
+}
+
+.app-footer__nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  column-gap: 1.5rem;
+  row-gap: 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: ph-rgb(content-soft);
+}
+
+.app-footer__link {
+  &:hover {
+    color: ph-rgb(content-secondary);
+  }
+}
+
+.app-footer__email {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: $ph-radius-md;
+  border: 1px solid ph-rgb(edge-subtle);
+  background-color: ph-rgb(surface-raised);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: ph-rgb(content-secondary);
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+
+  &:hover {
+    border-color: ph-rgb(edge);
+    background-color: ph-rgb(surface-page);
+    color: ph-rgb(content);
+  }
+}
+
+.app-footer__copy {
+  margin-top: 2.5rem;
+  text-align: center;
+  font-size: 0.75rem;
+  color: ph-rgb(content-hint);
+}

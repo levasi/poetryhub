@@ -17,6 +17,6 @@ describe('AppLogo', () => {
 
   it('applies small size class', async () => {
     const wrapper = await mountSuspended(AppLogo, { props: { size: 'sm' } })
-    expect(wrapper.find('span.font-serif').classes()).toContain('text-lg')
+    expect(wrapper.classes()).toContain('app-logo--sm')
   })
 })

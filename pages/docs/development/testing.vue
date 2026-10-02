@@ -4,7 +4,7 @@ useHead({ title: 'Testare — Documentație PoetryHub' })
 </script>
 
 <template>
-  <DocsProse>
+  <div class="docs-page"><DocsProse>
     <span class="docs-eyebrow">Dev</span>
     <h1>Testare</h1>
     <p class="lead">
@@ -80,5 +80,5 @@ import { myFn } from '~/utils/myFn'</code></pre>
       <li>Contracte API publice (home, poems, tags, carousel)</li>
       <li>Componente DS și carduri poem</li>
     </ul>
-  </DocsProse>
+  </DocsProse></div>
 </template>

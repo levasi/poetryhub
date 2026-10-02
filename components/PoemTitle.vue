@@ -28,14 +28,6 @@ const liked = computed(() => (props.poemId ? isFavorite(props.poemId) : false))
 
 const heading = computed(() => (props.variant === 'pdp' ? 'h1' : 'h3'))
 
-const titleClass = computed(() =>
-  props.variant === 'pdp'
-    ? 'leading-tight tracking-tight text-4xl md:text-5xl'
-    : 'leading-snug text-xl',
-)
-
-const wrapperClass = computed(() => (props.variant === 'pdp' ? 'mb-3' : ''))
-
 const showActions = computed(() => Boolean(props.poemId || props.showCarousel))
 
 const copied = ref(false)
@@ -61,53 +53,52 @@ async function sharePoem() {
 
 <template>
   <div
+    class="poem-title"
     :class="[
-      wrapperClass,
-      variant === 'pdp'
-        ? 'flex flex-col gap-2'
-        : 'flex flex-wrap items-center gap-x-3 gap-y-2',
+      variant === 'pdp' ? 'poem-title--pdp' : 'poem-title--banner',
     ]"
   >
     <component
       :is="heading"
-      class="font-serif font-semibold text-content"
-      :class="[titleClass, variant === 'pdp' ? 'order-2' : 'order-1']"
+      class="poem-title__heading"
     >
       {{ title }}
     </component>
     <div
       v-if="showActions"
-      class="flex shrink-0 items-center gap-0.5"
-      :class="variant === 'pdp' ? 'order-1' : 'order-2'"
+      class="poem-title__actions"
     >
       <button
         v-if="poemId"
         type="button"
-        class="rounded-ds-md p-2 transition-colors"
-        :class="liked ? 'text-brand bg-brand-tint' : 'text-content-hint hover:bg-brand-tint hover:text-brand'"
+        class="poem-title__action"
+        :class="{ 'poem-title__action--liked': liked }"
         :aria-label="liked ? t('card.favoriteRemove') : t('card.favoriteAdd')"
         @click.prevent="poemId && toggle(poemId)"
       >
         <Icon
           :icon="liked ? 'heroicons:heart-solid' : 'heroicons:heart'"
-          class="h-4 w-4"
+          class="poem-title__action-icon"
           aria-hidden="true"
         />
       </button>
       <button
         v-if="poemId"
         type="button"
-        class="rounded-ds-md p-2 text-content-hint transition-colors hover:bg-brand-tint hover:text-brand"
+        class="poem-title__action"
         :aria-label="copied ? t('viewer.linkCopied') : t('viewer.sharePoem')"
         @click.prevent="sharePoem"
       >
-        <Icon icon="heroicons:share" class="h-4 w-4" aria-hidden="true" />
+        <Icon
+          icon="heroicons:share"
+          class="poem-title__action-icon"
+          aria-hidden="true"
+        />
       </button>
       <PoemCarouselIcon
         v-if="showCarousel"
         :slug="slug"
         :size="instagramSize"
-        class="shrink-0"
       />
     </div>
   </div>

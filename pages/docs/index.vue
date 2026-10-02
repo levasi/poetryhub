@@ -7,7 +7,7 @@ useHead({
 </script>
 
 <template>
-  <DocsProse>
+  <div class="docs-page"><DocsProse>
     <span class="docs-eyebrow">Start</span>
     <h1>Documentație PoetryHub</h1>
     <p class="lead">
@@ -83,5 +83,5 @@ npm run storybook    # Storybook (port 6006)
 npm test             # Vitest (unit + API + component)
 npm run test:e2e     # Playwright (build + smoke)
 npm run db:studio    # Prisma Studio</code></pre>
-  </DocsProse>
+  </DocsProse></div>
 </template>

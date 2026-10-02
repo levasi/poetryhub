@@ -36,31 +36,41 @@ const nationalityLabel = computed(() => displayNationality(props.author.national
 </script>
 
 <template>
-  <NuxtLink :to="`/authors/${author.slug}`"
-    class="group flex items-start gap-4 rounded-xl border border-edge-subtle bg-surface-raised p-5 shadow-ds-card transition-all hover:border-brand/40 hover:shadow-ds-card-hover">
-    <!-- Avatar -->
-    <div class="shrink-0">
-      <img :src="avatarSrc" :alt="author.name" loading="lazy"
-        class="h-14 w-14 rounded-full object-cover ring-2 ring-edge-subtle group-hover:ring-brand/40" />
+  <NuxtLink
+    :to="`/authors/${author.slug}`"
+    class="author-card"
+  >
+    <div class="author-card__avatar-wrap">
+      <img
+        :src="avatarSrc"
+        :alt="author.name"
+        loading="lazy"
+        class="author-card__avatar"
+      >
     </div>
 
-    <!-- Info -->
-    <div class="min-w-0 flex-1">
-      <h3 class="font-serif text-base font-bold text-content transition-colors group-hover:text-brand truncate">
+    <div class="author-card__body">
+      <h3 class="author-card__name">
         {{ author.name }}
       </h3>
 
-      <div class="mt-0.5 flex items-center gap-2 text-xs text-content-muted">
+      <div class="author-card__meta">
         <span v-if="nationalityLabel">{{ nationalityLabel }}</span>
         <span v-if="nationalityLabel && yearsLabel(author.birthYear, author.deathYear)">·</span>
         <span>{{ yearsLabel(author.birthYear, author.deathYear) }}</span>
       </div>
 
-      <p v-if="author.bio" class="mt-2 line-clamp-2 text-xs leading-relaxed text-content-secondary">
+      <p
+        v-if="author.bio"
+        class="author-card__bio"
+      >
         {{ author.bio }}
       </p>
 
-      <p v-if="poemCountLabel" class="mt-2 text-xs text-content-muted">
+      <p
+        v-if="poemCountLabel"
+        class="author-card__count"
+      >
         {{ poemCountLabel }}
       </p>
     </div>

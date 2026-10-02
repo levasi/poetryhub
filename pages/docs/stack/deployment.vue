@@ -4,7 +4,7 @@ useHead({ title: 'Deployment — Documentație PoetryHub' })
 </script>
 
 <template>
-  <DocsProse>
+  <div class="docs-page"><DocsProse>
     <span class="docs-eyebrow">Stack</span>
     <h1>Deployment</h1>
     <p class="lead">
@@ -55,5 +55,5 @@ useHead({ title: 'Deployment — Documentație PoetryHub' })
     <h2>Storybook (static)</h2>
     <pre><code>npm run build-storybook   # Output: storybook-static/</code></pre>
     <p>Poate fi hostat separat sau ca preview static; nu face parte din deploy-ul principal Nuxt.</p>
-  </DocsProse>
+  </DocsProse></div>
 </template>

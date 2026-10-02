@@ -4,7 +4,7 @@ useHead({ title: 'Citire & descoperire — Documentație PoetryHub' })
 </script>
 
 <template>
-  <DocsProse>
+  <div class="docs-page"><DocsProse>
     <span class="docs-eyebrow">Features</span>
     <h1>Citire & descoperire</h1>
     <p class="lead">
@@ -44,5 +44,5 @@ useHead({ title: 'Citire & descoperire — Documentație PoetryHub' })
       <li><code>SearchBar</code>, <code>FilterPanel</code></li>
       <li><code>HomeAuthorsColumn</code></li>
     </ul>
-  </DocsProse>
+  </DocsProse></div>
 </template>

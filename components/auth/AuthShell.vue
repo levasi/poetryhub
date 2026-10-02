@@ -10,50 +10,48 @@ const { showLanguageSwitch } = useSiteSettings()
 </script>
 
 <template>
-  <div class="flex min-h-screen min-w-0 flex-col bg-surface-page lg:flex-row">
-    <div
-      class="border-b border-edge-subtle bg-[#0e0e0c] px-4 py-8 text-center lg:hidden"
-    >
-      <p class="font-serif text-lg italic leading-relaxed text-[#f8f6f0]/90">
+  <div class="auth-shell">
+    <div class="auth-shell__mobile-verse">
+      <p class="auth-shell__mobile-quote">
         {{ verse }}
       </p>
-      <p class="ds-eyebrow mt-4 !mb-0 text-brand">
+      <p class="ds-eyebrow auth-shell__mobile-attr">
         {{ attribution }}
       </p>
     </div>
 
-    <div class="relative flex flex-1 items-center justify-center px-4 py-10 pb-[max(2.5rem,env(safe-area-inset-bottom,0px))] pt-[max(2.5rem,env(safe-area-inset-top,0px))] lg:max-w-lg lg:px-10 lg:pb-10 lg:pt-10 xl:max-w-xl">
-      <div class="absolute right-4 top-4 z-10">
+    <div class="auth-shell__form-col">
+      <div class="auth-shell__lang">
         <LanguageSwitch v-if="showLanguageSwitch" />
       </div>
 
-      <div class="w-full max-w-md">
-        <div class="mb-8 text-center">
+      <div class="auth-shell__form-inner">
+        <div class="auth-shell__brand">
           <NuxtLink
             to="/"
-            class="inline-flex justify-center"
+            class="auth-shell__logo-link"
           >
             <AppLogo />
           </NuxtLink>
-          <h1 class="mt-6 font-serif text-2xl font-semibold tracking-tight text-content">
+          <h1 class="auth-shell__title">
             {{ title }}
           </h1>
-          <p class="mt-2 text-sm text-content-secondary">
+          <p class="auth-shell__subtitle">
             {{ subtitle }}
           </p>
         </div>
 
-        <div class="rounded-ds-lg border border-edge-subtle bg-surface-raised p-6 shadow-ds-card sm:p-8">
+        <div class="auth-shell__card">
           <slot />
         </div>
 
-        <div class="mt-6 flex justify-center">
+        <div class="auth-shell__back-wrap">
           <NuxtLink
             to="/"
-            class="inline-flex items-center gap-1.5 text-sm font-medium text-content-secondary transition hover:text-content"
+            class="auth-shell__back"
           >
             <svg
-              class="h-4 w-4 shrink-0"
+              class="auth-shell__back-icon"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -72,19 +70,17 @@ const { showLanguageSwitch } = useSiteSettings()
       </div>
     </div>
 
-    <div
-      class="relative hidden flex-1 items-center justify-center bg-[#0e0e0c] px-12 lg:flex"
-    >
-      <div class="max-w-md text-center">
+    <div class="auth-shell__desktop-verse">
+      <div class="auth-shell__desktop-inner">
         <DsFleuron
           width="6rem"
-          class="mb-10 opacity-60"
+          class="auth-shell__desktop-fleuron"
         />
-        <p class="font-serif text-[clamp(1.5rem,3vw,2.25rem)] italic leading-[1.55] text-[#f8f6f0]">
+        <p class="auth-shell__desktop-quote">
           {{ verse }}
         </p>
-        <div class="mx-auto mt-10 h-px w-24 bg-brand/40" />
-        <p class="ds-eyebrow mt-6 !mb-0 text-brand">
+        <div class="auth-shell__desktop-rule" />
+        <p class="ds-eyebrow auth-shell__desktop-attr">
           {{ attribution }}
         </p>
       </div>

@@ -27,11 +27,13 @@ const visiblePages = computed(() => {
 </script>
 
 <template>
-  <nav v-if="totalPages > 1" class="flex items-center justify-center gap-1">
-    <!-- Prev -->
+  <nav
+    v-if="totalPages > 1"
+    class="pagination"
+  >
     <button
       type="button"
-      class="rounded-lg border border-edge bg-surface-raised px-3 py-1.5 text-sm text-content-secondary shadow-sm transition-colors hover:border-edge-strong hover:text-content disabled:opacity-30"
+      class="pagination__btn"
       :disabled="page === 1 || loading"
       :aria-label="t('pagination.previous')"
       @click="emit('update:page', page - 1)"
@@ -39,15 +41,18 @@ const visiblePages = computed(() => {
       ←
     </button>
 
-    <!-- Page numbers -->
-    <template v-for="p in visiblePages" :key="String(p)">
-      <span v-if="p === '...'" class="px-2 text-content-soft">…</span>
+    <template
+      v-for="p in visiblePages"
+      :key="String(p)"
+    >
+      <span
+        v-if="p === '...'"
+        class="pagination__ellipsis"
+      >…</span>
       <button
         v-else
-        class="rounded-lg border px-3 py-1.5 text-sm shadow-sm transition-colors"
-        :class="p === page
-          ? 'border-brand/50 bg-brand-soft/25 text-content'
-          : 'border-edge bg-surface-raised text-content-secondary hover:border-edge-strong hover:text-content'"
+        class="pagination__btn"
+        :class="{ 'pagination__btn--active': p === page }"
         :disabled="loading"
         @click="emit('update:page', p as number)"
       >
@@ -55,10 +60,9 @@ const visiblePages = computed(() => {
       </button>
     </template>
 
-    <!-- Next -->
     <button
       type="button"
-      class="rounded-lg border border-edge bg-surface-raised px-3 py-1.5 text-sm text-content-secondary shadow-sm transition-colors hover:border-edge-strong hover:text-content disabled:opacity-30"
+      class="pagination__btn"
       :disabled="page === totalPages || loading"
       :aria-label="t('pagination.next')"
       @click="emit('update:page', page + 1)"

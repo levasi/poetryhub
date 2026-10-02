@@ -74,6 +74,8 @@
     "contentEmpty": "Scrie ceva înainte de a publica.",
     "cancel": "Anulează",
     "addVerseBlock": "Adaugă strofă",
+    "insertVerseBlock": "Inserează strofă aici",
+    "removeVerseBlock": "Șterge strofa",
     "dragVerseBlock": "Trage pentru a reordona",
     "verseColumnsAria": "Număr de coloane",
     "verseBlockLabel": "Strofă {n}"

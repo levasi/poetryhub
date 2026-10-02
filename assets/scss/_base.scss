@@ -1,0 +1,87 @@
+@use 'tokens' as *;
+
+html {
+  background-color: ph-rgb(surface-page);
+  color: ph-rgb(content);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: ph-rgb(surface-subtle);
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background-color: ph-rgb(edge-strong);
+
+  &:hover {
+    background-color: ph-rgb(content-hint);
+  }
+}
+
+:focus-visible {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow:
+    0 0 0 2px ph-rgb(surface-page),
+    0 0 0 4px ph-rgb(brand, 0.4);
+}
+
+::selection {
+  background-color: ph-rgb(brand-soft, 0.5);
+  color: ph-rgb(content);
+}
+
+button {
+  cursor: pointer;
+}
+
+.container {
+  width: 100%;
+
+  @media (min-width: 640px) {
+    max-width: 640px;
+  }
+
+  @media (min-width: 768px) {
+    max-width: 768px;
+  }
+
+  @media (min-width: 1024px) {
+    max-width: 1024px;
+  }
+
+  @media (min-width: 1280px) {
+    max-width: 1280px;
+  }
+
+  @media (min-width: 1536px) {
+    max-width: 1536px;
+  }
+}
+
+.pb-mobile-tab {
+  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+.pb-reader-mobile {
+  padding-bottom: calc(10.75rem + env(safe-area-inset-bottom, 0px));
+}
+
+.pb-carousel-mobile {
+  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+}

@@ -1,0 +1,46 @@
+@use '../tokens' as *;
+
+.search-bar {
+  position: relative;
+  width: 100%;
+}
+
+.search-bar__icon {
+  pointer-events: none;
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  height: 1rem;
+  width: 1rem;
+  transform: translateY(-50%);
+  color: ph-rgb(content-soft);
+}
+
+.search-bar__input {
+  width: 100%;
+  border-radius: 9999px;
+  border: 1px solid ph-rgb(edge-subtle);
+  background-color: ph-rgb(surface-raised);
+  padding: 0.75rem 2.5rem 0.75rem 2.75rem;
+  font-size: 0.875rem;
+  color: ph-rgb(content);
+  box-shadow: var(--shadow-ds-card);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &::placeholder {
+    color: ph-rgb(content-soft);
+  }
+
+  &:focus {
+    border-color: ph-rgb(brand);
+    box-shadow: 0 0 0 2px rgb(var(--color-brand) / 0.25), var(--shadow-ds-card);
+  }
+}
+
+.search-bar__clear {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+}

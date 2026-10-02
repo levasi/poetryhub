@@ -11,23 +11,19 @@ withDefaults(
 
 <template>
   <span
-    class="group inline-flex min-w-0 items-center gap-2"
-    :class="size === 'sm' ? 'gap-1.5' : 'gap-2'"
+    class="app-logo"
+    :class="{ 'app-logo--sm': size === 'sm' }"
   >
     <img
       v-if="showMark"
       src="/mark-luceafar.svg"
       alt=""
-      class="shrink-0"
-      :class="size === 'sm' ? 'size-5' : 'size-6'"
+      class="app-logo__mark"
       width="24"
       height="24"
     >
-    <span
-      class="font-serif font-semibold tracking-tight text-content"
-      :class="size === 'sm' ? 'text-lg' : 'text-xl'"
-    >
-      Poetry<span class="text-brand">Hub</span>
+    <span class="app-logo__wordmark">
+      Poetry<span class="app-logo__hub">Hub</span>
     </span>
   </span>
 </template>

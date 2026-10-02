@@ -4,7 +4,7 @@ useHead({ title: 'Storybook — Documentație PoetryHub' })
 </script>
 
 <template>
-  <DocsProse>
+  <div class="docs-page"><DocsProse>
     <span class="docs-eyebrow">Dev</span>
     <h1>Storybook</h1>
     <p class="lead">
@@ -51,5 +51,5 @@ npm run build-storybook   # Static build → storybook-static/</code></pre>
       <li>Pornește Storybook: <code>npm run storybook</code> (port 6006)</li>
       <li>Storybook proxy-uiește asset-uri Nuxt pentru context complet</li>
     </ol>
-  </DocsProse>
+  </DocsProse></div>
 </template>

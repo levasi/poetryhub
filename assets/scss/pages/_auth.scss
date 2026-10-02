@@ -1,0 +1,26 @@
+@use '../tokens' as *;
+
+.auth-page__banner {
+  margin-bottom: 1rem;
+}
+
+.auth-page__google {
+  margin-bottom: 0.5rem;
+}
+
+.auth-page__footer {
+  margin-top: 1.5rem;
+  text-align: center;
+  font-size: 0.875rem;
+  color: ph-rgb(content-secondary);
+}
+
+.auth-page__link {
+  font-weight: 500;
+  color: ph-rgb(brand);
+  text-underline-offset: 2px;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}

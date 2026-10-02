@@ -31,21 +31,17 @@ const useRouterLink = computed(() => {
   <component
     :is="useRouterLink ? 'NuxtLink' : 'span'"
     :to="useRouterLink ? `/descopera?tag=${slug}` : undefined"
+    class="tag-badge"
     :class="[
-      clickable || useRouterLink
-        ? 'cursor-pointer hover:opacity-90'
-        : 'cursor-default',
-      active
-        ? 'gap-1 border-brand/40 bg-brand-tint text-content ring-1 ring-brand/30'
-        : 'border border-edge-subtle bg-surface-subtle text-content-muted',
-      'inline-flex items-center rounded-full px-2.5 py-1 text-ui-xs font-medium tracking-wide transition-colors',
+      clickable || useRouterLink ? 'tag-badge--interactive' : 'tag-badge--static',
+      { 'tag-badge--active': active },
     ]"
     :style="color && !active ? `background-color:${color}22;color:${color};border-color:${color}55` : ''"
     @click="$emit('click')"
   >
     <span
       v-if="active"
-      class="text-brand"
+      class="tag-badge__mark"
       aria-hidden="true"
     >✦</span>
     {{ displayName }}

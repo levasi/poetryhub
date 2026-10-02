@@ -1,0 +1,20 @@
+// Semantic color helpers — RGB triplets from color-schemes.css
+@function ph-rgb($name, $alpha: 1) {
+  @if $alpha == 1 {
+    @return rgb(var(--color-#{$name}));
+  }
+  @return rgb(var(--color-#{$name}) / #{$alpha});
+}
+
+$ph-font-serif: 'Playfair Display', Georgia, serif;
+$ph-font-sans: Inter, system-ui, sans-serif;
+$ph-font-mono: 'JetBrains Mono', monospace;
+$ph-font-typewriter: 'Courier Prime', Courier, monospace;
+
+$ph-radius-sm: 0.5rem;
+$ph-radius-md: 0.75rem;
+$ph-radius-lg: 1rem;
+$ph-radius-xl: 1.25rem;
+
+$bp-md: 768px;
+$bp-lg: 1024px;

@@ -4,7 +4,7 @@ useHead({ title: 'Design system — Documentație PoetryHub' })
 </script>
 
 <template>
-  <DocsProse>
+  <div class="docs-page"><DocsProse>
     <span class="docs-eyebrow">Dev</span>
     <h1>Design system</h1>
     <p class="lead">
@@ -13,9 +13,10 @@ useHead({ title: 'Design system — Documentație PoetryHub' })
 
     <h2>Surse de adevăr</h2>
     <ul>
-      <li><code>tailwind.config.ts</code> — tokeni Tailwind</li>
-      <li><code>assets/css/main.css</code> — clase utilitare și componente CSS</li>
-      <li><code>assets/css/color-schemes.css</code> — variabile teme cititor</li>
+      <li><code>assets/scss/main.scss</code> — entry SCSS (runtime)</li>
+      <li><code>assets/scss/_design-system.scss</code> — clase <code>.ds-*</code>, masonry, poem body</li>
+      <li><code>assets/scss/_tokens.scss</code> + <code>assets/css/color-schemes.css</code> — variabile teme</li>
+      <li><code>assets/scss/_carousel-export.scss</code> — utilitare statice doar pentru export canvas carousel</li>
       <li><code>components/ds/</code> — primitive Vue reutilizabile</li>
     </ul>
 
@@ -69,5 +70,5 @@ useHead({ title: 'Design system — Documentație PoetryHub' })
     <h2>Verificare tokeni</h2>
     <pre><code>npm run check:legacy-tokens   # scripts/check-legacy-tokens.mjs</code></pre>
     <p>Script CI care previne reintroducerea scalelor legacy <code>ink</code> / <code>gold</code> / <code>rose</code>.</p>
-  </DocsProse>
+  </DocsProse></div>
 </template>

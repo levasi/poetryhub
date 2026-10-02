@@ -110,19 +110,19 @@ async function save() {
 </script>
 
 <template>
-  <div class="max-w-content">
-    <p class="ds-eyebrow mb-2 text-content-soft">{{ t('admin.panel') }}</p>
-    <h1 class="mb-3 font-serif text-3xl font-semibold tracking-tight text-content">
+  <div class="admin-page admin-page--narrow">
+    <p class="ds-eyebrow admin-page__eyebrow">{{ t('admin.panel') }}</p>
+    <h1 class="admin-page__title admin-page__title--lg" style="margin-bottom:0.75rem">
       {{ t('admin.instaPost.title') }}
     </h1>
-    <p class="max-w-reading text-content-secondary">
+    <p class="admin-page__lead">
       {{ t('admin.instaPost.lead') }}
     </p>
 
-    <p class="mt-6 max-w-reading text-sm text-content-muted">
+    <p class="admin-page__lead admin-page__lead--muted">
       {{ t('admin.instaPost.placeholderPoemIntro') }}
       <NuxtLink
-        class="font-medium text-brand underline-offset-2 hover:underline"
+        class="admin-page__link-inline"
         :to="{ path: `/authors/${PLACEHOLDER_AUTHOR_SLUG}`, query: { poem: PLACEHOLDER_POEM_SLUG } }"
       >
         {{ t('admin.instaPost.placeholderPoemLink') }}
@@ -131,26 +131,26 @@ async function save() {
 
     <section
       v-if="canManageDefaults"
-      class="mt-10 space-y-10 rounded-ds-lg border border-edge-subtle bg-surface-raised p-6 shadow-ds-card"
+      class="admin-page__card-block admin-page__card-block--stack"
     >
       <div>
-        <h2 class="mb-4 font-serif text-lg font-semibold text-content">
+        <h2 class="admin-page__card-title admin-page__card-title--mb4">
           {{ t('admin.instaPost.sectionCarouselDefaults') }}
         </h2>
 
-        <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-content-muted">{{
+        <label class="admin-page__field-label admin-page__field-label--upper">{{
           t('carousel.fieldTheme')
         }}</label>
-        <div class="mb-6 flex flex-wrap gap-2">
+        <div class="admin-page__chip-row">
           <button
             v-for="th in CAROUSEL_THEME_IDS"
             :key="th"
             type="button"
-            class="rounded-full border px-4 py-1.5 text-sm transition"
+            class="admin-page__chip"
             :class="
               theme === th
-                ? 'border-brand bg-brand text-white'
-                : 'border-edge-subtle bg-surface-raised text-content-secondary hover:border-edge'
+                ? 'admin-page__chip--active'
+                : ''
             "
             @click="theme = th"
           >
@@ -158,63 +158,63 @@ async function save() {
           </button>
         </div>
 
-        <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-content-muted">{{
+        <label class="admin-page__field-label admin-page__field-label--upper">{{
           t('carousel.fieldFont')
         }}</label>
-        <CarouselFontSelect v-model="carouselFontKey" class="mb-6 max-w-md" />
+        <CarouselFontSelect v-model="carouselFontKey" class="admin-page__font-select" />
 
-        <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-content-muted">{{
+        <label class="admin-page__field-label admin-page__field-label--upper">{{
           t('carousel.fieldLinesPerSlide')
         }}</label>
-        <div class="mb-6 flex max-w-md items-center gap-3">
+        <div class="admin-page__range-row">
           <input
             v-model.number="linesPerSlide"
             type="range"
             min="4"
             max="16"
             step="1"
-            class="h-2 flex-1 cursor-pointer accent-brand"
+            class="admin-page__range"
           />
-          <span class="w-10 text-right text-sm tabular-nums text-content-muted">{{ linesPerSlide }}</span>
+          <span class="admin-page__range-val">{{ linesPerSlide }}</span>
         </div>
 
-        <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-content-muted">{{
+        <label class="admin-page__field-label admin-page__field-label--upper">{{
           t('carousel.fieldBodyFontSize')
         }}</label>
-        <div class="mb-6 flex max-w-md items-center gap-3">
+        <div class="admin-page__range-row">
           <input
             v-model.number="bodyFontSizeScale"
             type="range"
             min="0.7"
             max="2"
             step="0.05"
-            class="h-2 flex-1 cursor-pointer accent-brand"
+            class="admin-page__range"
           />
-          <span class="w-12 text-right text-sm tabular-nums text-content-muted">{{ Math.round(bodyFontSizeScale * 100)
+          <span class="admin-page__range-val admin-page__range-val--wide">{{ Math.round(bodyFontSizeScale * 100)
           }}%</span>
         </div>
 
-        <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-content-muted">{{
+        <label class="admin-page__field-label admin-page__field-label--upper">{{
           t('carousel.fieldLineHeight')
         }}</label>
-        <div class="mb-6 flex max-w-md items-center gap-3">
+        <div class="admin-page__range-row">
           <input
             v-model.number="bodyLineHeight"
             type="range"
             min="1.15"
             max="2.25"
             step="0.05"
-            class="h-2 flex-1 cursor-pointer accent-brand"
+            class="admin-page__range"
           />
-          <span class="w-12 text-right text-sm tabular-nums text-content-muted">{{ bodyLineHeight.toFixed(2) }}</span>
+          <span class="admin-page__range-val admin-page__range-val--wide">{{ bodyLineHeight.toFixed(2) }}</span>
         </div>
 
-        <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-content-muted" for="insta-body-weight">{{
+        <label class="admin-page__field-label admin-page__field-label--upper" for="insta-body-weight">{{
           t('carousel.fieldBodyFontWeight')
         }}</label>
         <select
           id="insta-body-weight"
-          class="mb-6 max-w-md w-full rounded-ds-md border border-edge-subtle bg-surface-raised px-3 py-2 text-sm text-content outline-none focus:border-brand"
+          class="admin-page__select"
           :value="bodyFontWeight ?? ''"
           @change="
             bodyFontWeight =
@@ -229,12 +229,12 @@ async function save() {
           </option>
         </select>
 
-        <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-content-muted" for="insta-title-weight">{{
+        <label class="admin-page__field-label admin-page__field-label--upper" for="insta-title-weight">{{
           t('carousel.fieldTitleFontWeight')
         }}</label>
         <select
           id="insta-title-weight"
-          class="mb-6 max-w-md w-full rounded-ds-md border border-edge-subtle bg-surface-raised px-3 py-2 text-sm text-content outline-none focus:border-brand"
+          class="admin-page__select"
           :value="titleFontWeight ?? ''"
           @change="
             titleFontWeight =
@@ -249,7 +249,7 @@ async function save() {
           </option>
         </select>
 
-        <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-content-muted" for="insta-keywords">{{
+        <label class="admin-page__field-label admin-page__field-label--upper" for="insta-keywords">{{
           t('carousel.fieldKeywords')
         }}</label>
         <input
@@ -257,15 +257,15 @@ async function save() {
           v-model="keywordLocal"
           type="text"
           maxlength="2000"
-          class="mb-2 w-full max-w-lg rounded-ds-md border border-edge-subtle bg-surface-raised px-3 py-2 text-sm text-content outline-none focus:border-brand"
+          class="admin-page__text-input"
           :placeholder="t('carousel.phKeywords')"
         />
-        <p class="mb-6 max-w-reading text-xs text-content-muted">{{ t('carousel.keywordsHelp') }}</p>
+        <p class="admin-page__hint">{{ t('carousel.keywordsHelp') }}</p>
       </div>
 
-      <div class="border-t border-edge-subtle pt-8">
-        <h2 class="mb-2 font-serif text-lg font-semibold text-content">{{ t('admin.instaPost.fieldCta') }}</h2>
-        <p v-if="!isOwner" class="mb-3 max-w-reading text-sm text-amber-800">
+      <div class="admin-page__divider">
+        <h2 class="admin-page__card-title admin-page__card-title--mb2">{{ t('admin.instaPost.fieldCta') }}</h2>
+        <p v-if="!isOwner" class="admin-page__warn">
           {{ t('admin.instaPost.ctaStaffHint') }}
         </p>
         <textarea
@@ -273,29 +273,29 @@ async function save() {
           v-model="ctaLocal"
           rows="4"
           maxlength="500"
-          class="mb-4 w-full max-w-lg rounded-ds-md border border-edge-subtle bg-surface-page px-3 py-2 font-sans text-content outline-none focus:border-brand disabled:cursor-not-allowed disabled:opacity-60"
+          class="admin-page__text-input admin-page__text-input--cta"
           :disabled="!isOwner"
           :placeholder="t('admin.instaPost.placeholderCta')"
         />
       </div>
 
-      <div class="flex flex-wrap items-center gap-3 border-t border-edge-subtle pt-6">
+      <div class="admin-page__divider admin-page__divider--actions">
         <button
           type="button"
-          class="rounded-ds-md bg-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-hover disabled:opacity-50"
+          class="admin-page__btn-brand"
           :disabled="saving"
           @click="save"
         >
           {{ saving ? t('admin.instaPost.saving') : t('admin.instaPost.save') }}
         </button>
-        <p v-if="showSaved" class="text-sm text-emerald-700" role="status">
+        <p v-if="showSaved" class="admin-page__saved" role="status">
           {{ t('admin.instaPost.saved') }}
         </p>
       </div>
     </section>
 
-    <section v-else class="mt-10 rounded-ds-lg border border-edge-subtle bg-surface-raised p-6 shadow-ds-card">
-      <p class="max-w-reading text-sm text-content-secondary">{{ t('admin.instaPost.cannotManageDefaults') }}</p>
+    <section v-else class="admin-page__card-block">
+      <p class="admin-page__card-desc">{{ t('admin.instaPost.cannotManageDefaults') }}</p>
     </section>
   </div>
 </template>

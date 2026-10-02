@@ -4,7 +4,7 @@ useHead({ title: 'Carousel Instagram — Documentație PoetryHub' })
 </script>
 
 <template>
-  <DocsProse>
+  <div class="docs-page"><DocsProse>
     <span class="docs-eyebrow">Features</span>
     <h1>Carousel Instagram</h1>
     <p class="lead">
@@ -40,5 +40,5 @@ useHead({ title: 'Carousel Instagram — Documentație PoetryHub' })
       <li><code>tests/unit/utils/carousel*.test.ts</code> — defaults, font weights, written-in</li>
       <li><code>tests/api/carousel.defaults.get.test.ts</code></li>
     </ul>
-  </DocsProse>
+  </DocsProse></div>
 </template>

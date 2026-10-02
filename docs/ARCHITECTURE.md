@@ -10,7 +10,7 @@
 |-------|-----------|---------|
 | Framework | Nuxt 3 | 3.14.0 |
 | UI | Vue 3 | 3.5.13 |
-| Styling | TailwindCSS | 6.12.1 |
+| Styling | SCSS (sass) | ^1.86 |
 | State | Pinia | 3.0.0 |
 | i18n | @nuxtjs/i18n | 10.2.4 |
 | ORM | Prisma | 5.22.0 |
@@ -29,7 +29,8 @@
 
 ```
 poetryhub/
-├── assets/css/main.css          # Tailwind imports + semantic CSS tokens
+├── assets/scss/main.scss        # SCSS entry (preflight, DS, layout, components, pages)
+├── assets/css/color-schemes.css # Semantic color tokens / themes
 ├── components/                  # Vue components (see below)
 ├── composables/                 # Vue composables (see below)
 ├── docs/                        # Project documentation (this file)
@@ -50,7 +51,6 @@ poetryhub/
 │   ├── routes/                  # Nitro non-API routes (sitemap.xml)
 │   └── utils/                   # Shared server utilities
 ├── stores/                      # Pinia stores (write tool)
-├── tailwind.config.ts           # Design tokens + semantic vars
 └── nuxt.config.ts               # Nuxt + Nitro config
 ```
 

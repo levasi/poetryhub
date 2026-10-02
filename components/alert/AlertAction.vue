@@ -1,5 +1,8 @@
 <template>
-  <div data-slot="alert-action" class="absolute right-3 top-3">
+  <div
+    data-slot="alert-action"
+    class="alert__action"
+  >
     <slot />
   </div>
 </template>

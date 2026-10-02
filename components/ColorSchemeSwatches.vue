@@ -34,19 +34,24 @@ const previews: Record<ColorSchemeId, { bg: string, text: string }> = {
 function swatchLabel(id: ColorSchemeId) {
   return t(labels[id])
 }
+
+const rootClass = computed(() => {
+  switch (props.variant) {
+    case 'compact':
+      return 'color-scheme color-scheme--compact'
+    case 'swatches':
+      return 'color-scheme color-scheme--swatches'
+    default:
+      return 'color-scheme color-scheme--labels'
+  }
+})
 </script>
 
 <template>
   <div
     role="group"
     :aria-label="t('colorScheme.aria')"
-    :class="[
-      variant === 'labels'
-        ? 'inline-flex max-w-full flex-wrap justify-center gap-0.5 rounded-ds-md border border-edge-subtle bg-surface-raised p-2 shadow-sm'
-        : variant === 'compact'
-          ? 'flex flex-wrap gap-2'
-          : 'grid grid-cols-3 gap-2 sm:grid-cols-6',
-    ]"
+    :class="rootClass"
   >
     <button
       v-for="id in COLOR_SCHEMES"
@@ -55,45 +60,27 @@ function swatchLabel(id: ColorSchemeId) {
       :aria-pressed="scheme === id"
       :aria-label="swatchLabel(id)"
       :title="swatchLabel(id)"
-      :class="[
-        variant === 'labels'
-          ? [
-            'rounded-ds-sm px-2.5 py-1.5 text-ui-xs font-medium transition-colors md:px-3',
-            scheme === id
-              ? 'bg-brand-tint text-content shadow-sm ring-1 ring-brand/35'
-              : 'text-content-muted hover:bg-surface-subtle hover:text-content',
-          ]
-          : variant === 'compact'
-            ? [
-              'size-9 rounded-full border-2 transition',
-              scheme === id ? 'border-brand ring-2 ring-brand/30' : 'border-edge-subtle hover:border-edge',
-            ]
-            : [
-              'flex flex-col items-center gap-1.5 rounded-ds-md border p-2 text-center transition',
-              scheme === id
-                ? 'border-brand bg-brand-tint ring-1 ring-brand/35'
-                : 'border-edge-subtle bg-surface-raised hover:border-edge',
-            ],
-      ]"
+      class="color-scheme__btn"
+      :class="{ 'color-scheme__btn--active': scheme === id }"
       @click="applyScheme(id)"
     >
       <template v-if="variant === 'swatches'">
         <span
-          class="flex h-10 w-full items-center justify-center rounded-ds-sm border border-black/5 font-serif text-sm font-semibold"
+          class="color-scheme__preview"
           :style="{ backgroundColor: previews[id].bg, color: previews[id].text }"
         >
           Aa
         </span>
-        <span class="text-ui-xs font-medium text-content-muted">{{ swatchLabel(id) }}</span>
+        <span class="color-scheme__label">{{ swatchLabel(id) }}</span>
         <span
           v-if="scheme === id"
-          class="text-brand"
+          class="color-scheme__check"
           aria-hidden="true"
         >✦</span>
       </template>
       <span
         v-else-if="variant === 'compact'"
-        class="mx-auto block size-full rounded-full"
+        class="color-scheme__dot"
         :style="{ backgroundColor: previews[id].bg, boxShadow: `inset 0 0 0 1px ${previews[id].text}22` }"
       />
       <template v-else>

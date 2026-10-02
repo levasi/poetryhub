@@ -351,19 +351,15 @@ function onAuthorEditFabClick() {
 }
 
 /** Above mobile tab bar when a poem is open; otherwise vertically centered. */
-const authorEditFabPositionClass = computed(() =>
-  activePoem.value
-    ? 'top-[calc(50%+3.5rem)] -translate-y-1/2 max-md:bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] max-md:top-auto max-md:translate-y-0'
-    : 'top-1/2 -translate-y-1/2 max-md:bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] max-md:top-auto max-md:translate-y-0',
-)
+const authorEditFabClass = computed(() => [
+  activePoem.value ? 'author-page__edit-fab--poem-open' : '',
+  authorEditMode.value ? 'author-page__edit-fab--active' : '',
+])
 
-const authorPagePaddingClass = computed(() => {
+const authorPageBodyClass = computed(() => {
   if (authorEditMode.value) return AUTHOR_EDIT_BAR_CLEARANCE
-  // Extra room so the last poem lines clear the fixed mobile tab bar (+ edit FAB).
-  if (activePoem.value) {
-    return 'pb-[calc(8rem+env(safe-area-inset-bottom,0px))] md:pb-20'
-  }
-  return 'pb-8 md:pb-0'
+  if (activePoem.value) return 'author-page__body--poem-open'
+  return ''
 })
 
 const poetryViewerRef = ref<{ savePoemEdit: () => Promise<void>; cancelPoemEdit: () => void } | null>(null)
@@ -593,13 +589,13 @@ async function submitNewPoemFromModal() {
 </script>
 
 <template>
-  <div class="animate-fade-in min-w-0">
+  <div class="author-page">
     <!-- Floating author edit (same style as poem reading settings; below it when a poem is open) -->
     <button
       v-if="canEditCatalog && author && !readingSettingsOpen"
       type="button"
-      class="fixed right-3 z-[44] flex h-11 w-11 items-center justify-center rounded-full border border-edge-subtle bg-surface-raised/95 text-content-secondary shadow-ds-card backdrop-blur-sm transition hover:border-brand/45 hover:text-brand md:right-6"
-      :class="[authorEditFabPositionClass, authorEditMode ? 'border-brand/50 text-brand ring-2 ring-brand/25' : '']"
+      class="author-page__edit-fab"
+      :class="authorEditFabClass"
       :aria-label="authorEditMode ? t('authors.exitAuthorEdit') : t('authors.openAuthorEdit')"
       :disabled="savingEdits || deletingAuthor"
       @click="onAuthorEditFabClick"
@@ -607,36 +603,36 @@ async function submitNewPoemFromModal() {
       <Icon
         v-if="!authorEditMode"
         icon="heroicons:pencil-square"
-        class="h-5 w-5"
+        class="author-page__edit-icon"
         aria-hidden="true"
       />
       <Icon
         v-else
         icon="heroicons:x-mark"
-        class="h-5 w-5"
+        class="author-page__edit-icon"
         aria-hidden="true"
       />
     </button>
 
-    <div v-if="author" class="w-full min-w-0 pt-2 md:pt-4" :class="authorPagePaddingClass">
+    <div v-if="author" class="author-page__body" :class="authorPageBodyClass">
       <!-- Author profile -->
-      <div class="mb-12 flex flex-col items-start gap-6 sm:flex-row">
-        <div class="shrink-0">
+      <div class="author-page__header">
+        <div class="author-page__portrait-wrap">
           <img :src="avatarSrc" :alt="author.name" loading="eager"
-            class="h-24 w-24 rounded-full object-cover ring-2 ring-brand/35" />
+            class="author-page__portrait" />
         </div>
 
-        <div class="min-w-0 flex-1">
+        <div class="author-page__header-main">
           <template v-if="!authorEditMode">
-            <div class="flex flex-wrap items-baseline gap-x-3 gap-y-2">
-              <h1 class="font-serif text-3xl font-bold text-content sm:text-4xl">{{ author.name }}</h1>
+            <div class="author-page__title-row">
+              <h1 class="author-page__title">{{ author.name }}</h1>
               <button v-if="isSiteOwner" type="button"
-                class="shrink-0 rounded-md border border-danger/40 px-2 py-0.5 text-xs font-medium text-danger transition hover:bg-danger/10 disabled:opacity-50"
+                class="author-page__danger-chip"
                 :disabled="deletingAuthor" @click="deleteAuthor">
                 {{ deletingAuthor ? t('admin.poems.deleting') : t('admin.authors.delete') }}
               </button>
             </div>
-            <p class="mt-1 text-sm text-content-secondary">
+            <p class="author-page__meta">
               <span v-if="nationalityLabel">{{ nationalityLabel }}</span>
               <span v-if="nationalityLabel && yearsLabel()"> · </span>
               <span>{{ yearsLabel() }}</span>
@@ -644,128 +640,126 @@ async function submitNewPoemFromModal() {
           </template>
 
           <template v-else>
-            <div class="max-w-3xl space-y-5">
+            <div class="author-page__edit-fields">
               <div>
-                <label class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-content-muted">
+                <label class="author-page__label">
                   {{ t('admin.authors.name') }}
                 </label>
                 <input v-model="nameDraft" type="text" maxlength="200"
-                  class="w-full rounded-lg border border-edge-subtle bg-surface-page px-3 py-2 font-serif text-2xl font-bold text-content outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 sm:text-3xl md:text-4xl"
+                  class="author-page__input author-page__input--title"
                   :placeholder="t('admin.authors.placeholderName')" autocomplete="off" />
               </div>
               <div>
-                <label class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-content-muted">
+                <label class="author-page__label">
                   {{ t('admin.authors.nationality') }}
                 </label>
                 <input v-model="ethnicityDraft" type="text"
-                  class="w-full max-w-xl rounded-lg border border-edge-subtle bg-surface-page px-3 py-2 text-sm text-content outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                  class="author-page__input author-page__input--narrow"
                   :placeholder="t('admin.authors.placeholderNationality')" />
               </div>
               <div>
-                <label class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-content-muted">
+                <label class="author-page__label">
                   {{ t('admin.authors.photoUrl') }}
                 </label>
                 <input v-model="imageUrlDraft" type="text"
-                  class="w-full rounded-lg border border-edge-subtle bg-surface-page px-3 py-2 text-sm text-content outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                  class="author-page__input"
                   :placeholder="t('authors.portraitUrlPlaceholder')" autocomplete="off" spellcheck="false" />
               </div>
               <div v-if="canUploadPortraitAsAdmin"
-                class="rounded-xl border border-edge-subtle bg-surface-subtle/60 p-4">
-                <p class="mb-2 text-xs font-medium uppercase tracking-wide text-content-muted">
+                class="author-page__portrait-panel">
+                <p class="author-page__label">
                   {{ t('authors.portraitUploadLabel') }}
                 </p>
                 <input ref="portraitFileInputRef" type="file" accept="image/*,.heic,.heif" class="sr-only"
                   @change="onPortraitFileSelected" />
-                <div class="flex flex-wrap items-center gap-2">
+                <div class="author-page__portrait-actions">
                   <button type="button"
-                    class="rounded-lg border border-edge bg-surface-raised px-4 py-2 text-sm font-medium text-content transition hover:border-brand/40 disabled:opacity-50"
+                    class="author-page__portrait-btn"
                     :disabled="uploadingPortrait" @click="portraitFileInputRef?.click()">
                     {{ uploadingPortrait ? t('authors.portraitUploading') : t('authors.portraitUploadPick') }}
                   </button>
-                  <span class="text-xs text-content-muted">{{ t('authors.portraitUploadAdminOnly') }}</span>
+                  <span class="author-page__hint author-page__hint--inline">{{ t('authors.portraitUploadAdminOnly') }}</span>
                 </div>
-                <p class="mt-2 text-xs leading-relaxed text-content-muted">
+                <p class="author-page__hint">
                   {{ t('authors.portraitUploadHint') }}
                 </p>
               </div>
-              <div class="flex flex-wrap gap-6">
+              <div class="author-page__years">
                 <div>
-                  <label class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-content-muted">
+                  <label class="author-page__label">
                     {{ t('admin.authors.birthYear') }}
                   </label>
                   <input v-model="birthYearDraft" type="text" inputmode="numeric" maxlength="4"
-                    class="w-28 rounded-lg border border-edge-subtle bg-surface-page px-3 py-2 text-sm text-content outline-none focus:border-brand focus:ring-2 focus:ring-brand/20" />
+                    class="author-page__input author-page__input--year" />
                 </div>
                 <div>
-                  <label class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-content-muted">
+                  <label class="author-page__label">
                     {{ t('admin.authors.deathYear') }}
                   </label>
                   <input v-model="deathYearDraft" type="text" inputmode="numeric" maxlength="4"
-                    class="w-28 rounded-lg border border-edge-subtle bg-surface-page px-3 py-2 text-sm text-content outline-none focus:border-brand focus:ring-2 focus:ring-brand/20" />
+                    class="author-page__input author-page__input--year" />
                 </div>
               </div>
-              <p class="text-xs text-content-muted">{{ t('authors.profileDetailsHint') }}</p>
+              <p class="author-page__hint">{{ t('authors.profileDetailsHint') }}</p>
               <button v-if="isSiteOwner" type="button"
-                class="rounded-md border border-danger/40 px-3 py-1.5 text-xs font-medium text-danger transition hover:bg-danger/10 disabled:opacity-50"
+                class="author-page__danger-chip"
                 :disabled="deletingAuthor" @click="deleteAuthor">
                 {{ deletingAuthor ? t('admin.poems.deleting') : t('admin.authors.delete') }}
               </button>
             </div>
           </template>
 
-          <p class="mt-3 text-sm text-content-muted">
+          <p class="author-page__poem-count">
             {{ t('authors.poemCount', meta?.total ?? 0) }}
           </p>
         </div>
       </div>
 
       <!-- Biography -->
-      <section class="mb-10">
-        <h2 class="mb-3 font-serif text-xl font-bold text-content">{{ t('authors.biography') }}</h2>
+      <section class="author-page__section">
+        <h2 class="author-page__section-title">{{ t('authors.biography') }}</h2>
         <template v-if="authorEditMode">
           <textarea v-model="bioDraft" rows="14"
-            class="max-w-3xl w-full rounded-ds-lg border border-edge-subtle bg-surface-page px-4 py-3 font-serif text-base leading-relaxed text-content outline-none focus:border-brand focus:ring-2 focus:ring-brand/20" />
+            class="author-page__bio-input" />
         </template>
         <template v-else>
-          <div v-if="author.bio" class="max-w-3xl">
-            <p ref="bioReadRef" class="whitespace-pre-wrap text-base leading-relaxed text-content-secondary"
-              :class="{ 'line-clamp-6': !bioExpanded }">
+          <div v-if="author.bio" class="author-page__bio-read">
+            <p ref="bioReadRef" class="author-page__bio-text"
+              :class="{ 'author-page__bio-text--clamped': !bioExpanded }">
               {{ author.bio }}
             </p>
             <button v-if="bioToggleVisible && !authorEditMode" type="button"
-              class="mt-3 inline-flex items-center rounded-lg border border-edge-subtle bg-surface-subtle px-3 py-1.5 text-sm font-medium text-brand transition hover:border-brand/45 hover:bg-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35"
+              class="author-page__bio-more"
               :aria-expanded="bioExpanded" @click="bioExpanded = !bioExpanded">
               {{ bioExpanded ? t('authors.biographyCollapse') : t('authors.biographyExpand') }}
             </button>
           </div>
-          <p v-else class="max-w-3xl text-sm italic text-content-muted">{{ t('authors.bioUnavailable') }}</p>
+          <p v-else class="author-page__bio-empty">{{ t('authors.bioUnavailable') }}</p>
         </template>
       </section>
 
       <!-- Bibliography + active poem -->
-      <section v-if="works.length || canAddPoemFromBibliography" class="pt-8">
-        <div class="mb-3 flex flex-wrap items-center gap-1.5">
-          <h2 class="font-serif text-xl font-bold text-content">{{ t('authors.bibliography') }}</h2>
+      <section v-if="works.length || canAddPoemFromBibliography" class="author-page__section author-page__section--works">
+        <div class="author-page__works-head">
+          <h2 class="author-page__section-title">{{ t('authors.bibliography') }}</h2>
           <button v-if="canAddPoemFromBibliography" type="button"
-            class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-edge-subtle bg-surface-subtle text-content-secondary transition hover:border-brand/45 hover:bg-surface-raised hover:text-brand"
+            class="author-page__add-poem"
             :aria-label="t('authors.addPoemAria')" :title="t('authors.addPoemAria')" @click="openAddPoemModal">
-            <Icon icon="heroicons:plus" class="h-5 w-5" aria-hidden="true" />
+            <Icon icon="heroicons:plus" class="author-page__add-icon" aria-hidden="true" />
           </button>
         </div>
 
-        <div class="grid gap-6 lg:grid-cols-[minmax(260px,340px)_minmax(0,1fr)] lg:items-start lg:gap-10 xl:gap-14">
+        <div class="author-page__works-grid">
           <!-- Bibliography navigation (in-page on all breakpoints) -->
-          <div
-            class="flex min-h-0 max-h-56 flex-col lg:sticky lg:top-28 lg:max-h-[calc(100vh-7rem)]"
-          >
+          <div class="author-page__works-list">
             <ul
-              class="min-h-0 flex-1 space-y-1 overflow-y-auto pr-1 text-sm"
+              class="author-page__works-scroll"
               role="listbox"
               :aria-label="t('authors.worksListAria')"
             >
               <li
                 v-if="!works.length && canAddPoemFromBibliography"
-                class="rounded-ds-md border border-dashed border-edge-subtle px-3 py-4 text-sm italic text-content-muted"
+                class="author-page__works-empty"
               >
                 {{ t('authors.bibliographyEmptyStaff') }}
               </li>
@@ -773,14 +767,12 @@ async function submitNewPoemFromModal() {
                 <button
                   type="button"
                   role="option"
-                  class="flex w-full items-center gap-2 rounded-ds-md border px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-page"
-                  :class="selectedSlug === w.slug
-                    ? 'border-brand/45 border-l-[3px] border-l-brand bg-brand-tint/50 text-content shadow-sm'
-                    : 'border-transparent text-content-secondary hover:border-edge-subtle hover:bg-surface-subtle'"
+                  class="author-page__work-item"
+                  :class="selectedSlug === w.slug ? 'author-page__work-item--active' : ''"
                   :aria-selected="selectedSlug === w.slug"
                   @click="selectWork(w.slug)"
                 >
-                  <span class="min-w-0 flex-1 font-medium text-content">{{ w.title }}</span>
+                  <span class="author-page__work-title">{{ w.title }}</span>
                   <PoemCarouselIcon :slug="w.slug" size="sm" class="shrink-0" />
                 </button>
               </li>
@@ -788,11 +780,10 @@ async function submitNewPoemFromModal() {
           </div>
 
           <!-- Active poem (scroll target for ?poem= deep links) -->
-          <div ref="activePoemPanelRef" class="min-w-0 scroll-mt-24 md:scroll-mt-28">
-            <div class="rounded-ds-lg bg-surface-raised/40 px-3 pb-10 pt-6 shadow-ds-card sm:px-5 md:px-8 md:pb-12 md:pt-10">
-              <div v-if="poemPending" class="flex min-h-[16rem] items-center justify-center py-12">
-                <span class="h-9 w-9 animate-spin rounded-full border-2 border-edge-subtle border-t-brand"
-                  aria-hidden="true" />
+          <div ref="activePoemPanelRef" class="author-page__poem-panel">
+            <div class="author-page__poem-card">
+              <div v-if="poemPending" class="author-page__poem-loading">
+                <span class="ph-spinner ph-spinner--lg" aria-hidden="true" />
               </div>
               <template v-else-if="activePoem">
                 <PoetryViewer
@@ -805,11 +796,11 @@ async function submitNewPoemFromModal() {
                   @updated="onPoemUpdated"
                 />
               </template>
-              <p v-else-if="poemLoadFailed" class="text-center text-sm text-content-muted">
+              <p v-else-if="poemLoadFailed" class="author-page__poem-msg">
                 {{ t('authors.poemCouldNotLoad') }}
               </p>
               <p v-else-if="!works.length && canAddPoemFromBibliography"
-                class="py-12 text-center text-sm text-content-muted">
+                class="author-page__poem-msg author-page__poem-msg--pad">
                 {{ t('authors.addFirstPoemInPanelHint') }}
               </p>
             </div>
@@ -817,22 +808,21 @@ async function submitNewPoemFromModal() {
         </div>
       </section>
 
-      <div v-else class="border-t border-edge/80 py-16 text-center text-content-secondary">
-        <p class="font-serif">{{ t('authors.noPoemsYet') }}</p>
+      <div v-else class="author-page__no-poems">
+        <p>{{ t('authors.noPoemsYet') }}</p>
       </div>
     </div>
 
     <!-- Unified save / discard — fixed to viewport -->
-    <div v-if="authorEditMode && author"
-      class="fixed inset-x-0 z-[60] border-t border-edge-subtle bg-surface-raised/98 py-3 shadow-[0_-4px_24px_rgba(0,0,0,0.06)] backdrop-blur-md max-md:bottom-[calc(3.25rem+env(safe-area-inset-bottom,0px))] md:bottom-0 md:pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-      <div :class="[PAGE_SHELL_INSET_CLASS, 'flex flex-wrap items-center justify-center gap-2']">
+    <div v-if="authorEditMode && author" class="author-page__edit-bar">
+      <div :class="[PAGE_SHELL_INSET_CLASS, 'author-page__edit-bar-inner']">
         <button type="button"
-          class="inline-flex min-h-[44px] min-w-[44px] flex-1 items-center justify-center rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-brand-foreground transition hover:bg-brand-hover disabled:opacity-50 sm:max-w-xs sm:flex-none"
+          class="author-page__edit-save"
           :disabled="savingEdits" @click="saveAllEdits">
           {{ savingEdits ? t('admin.authors.saving') : t('authors.saveAuthorChanges') }}
         </button>
         <button type="button"
-          class="inline-flex min-h-[44px] min-w-[44px] flex-1 items-center justify-center rounded-lg border border-edge-subtle bg-surface-subtle px-5 py-2.5 text-sm font-medium text-content-secondary transition hover:border-edge hover:bg-surface-raised disabled:opacity-50 sm:max-w-xs sm:flex-none"
+          class="author-page__edit-discard"
           :disabled="savingEdits" @click="discardAllEdits">
           {{ t('authors.discardEdits') }}
         </button>
@@ -840,51 +830,50 @@ async function submitNewPoemFromModal() {
     </div>
 
     <Teleport to="body">
-      <div v-if="addPoemModalOpen && author" class="fixed inset-0 z-[70] flex items-center justify-center p-4 sm:p-6">
-        <div class="absolute inset-0 bg-black/50 backdrop-blur-[2px]" aria-hidden="true"
+      <div v-if="addPoemModalOpen && author" class="author-page__modal">
+        <div class="author-page__modal-backdrop" aria-hidden="true"
           @click="onAddPoemModalBackdropClick" />
         <div role="dialog" aria-modal="true" aria-labelledby="authors-add-poem-modal-title"
-          class="relative z-10 flex max-h-[min(90vh,720px)] w-full max-w-lg flex-col rounded-xl border border-edge-subtle bg-surface-raised shadow-xl">
-          <div class="border-b border-edge-subtle px-5 py-4 sm:px-6">
-            <h3 id="authors-add-poem-modal-title" class="font-serif text-lg font-semibold text-content">
+          class="author-page__modal-panel">
+          <div class="author-page__modal-header">
+            <h3 id="authors-add-poem-modal-title" class="author-page__modal-title">
               {{ t('authors.addPoemModalTitle') }}
             </h3>
-            <p class="mt-1 text-sm text-content-muted">{{ t('authors.addPoemForAuthor', { name: author.name }) }}</p>
+            <p class="author-page__modal-sub">{{ t('authors.addPoemForAuthor', { name: author.name }) }}</p>
           </div>
-          <div class="min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-6">
-            <div v-if="createPoemError"
-              class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
+          <div class="author-page__modal-body">
+            <div v-if="createPoemError" class="author-page__modal-error">
               {{ createPoemError }}
             </div>
-            <label class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-content-muted"
+            <label class="author-page__label"
               for="authors-new-poem-title">{{ t('admin.poemForm.titleRequired') }}</label>
-            <div class="mb-4">
+            <div class="author-page__modal-field">
               <input id="authors-new-poem-title" v-model="newPoemTitle" type="text" maxlength="500"
-                class="w-full rounded-xl border bg-surface-page px-4 py-2.5 text-sm text-content outline-none focus:ring-2"
+                class="author-page__modal-input"
                 :class="newPoemTitleLooksDuplicate
-                  ? 'border-amber-500/80 focus:border-amber-500 focus:ring-amber-500/25'
-                  : 'border-edge-subtle focus:border-brand focus:ring-brand/20'"
+                  ? 'author-page__modal-input--dup'
+                  : 'author-page__modal-input--ok'"
                 :placeholder="t('admin.poemForm.placeholderTitle')" autocomplete="off"
                 :aria-invalid="newPoemTitleLooksDuplicate ? 'true' : undefined"
                 :aria-describedby="newPoemTitleLooksDuplicate ? 'authors-new-poem-title-dup' : undefined" />
               <p v-if="newPoemTitleLooksDuplicate" id="authors-new-poem-title-dup" role="alert"
-                class="mt-2 text-sm text-amber-800 dark:text-amber-200">
+                class="author-page__modal-warn">
                 {{ t('authors.duplicatePoemTitle') }}
               </p>
             </div>
-            <label class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-content-muted"
+            <label class="author-page__label"
               for="authors-new-poem-content">{{ t('admin.poemForm.contentRequired') }}</label>
             <textarea id="authors-new-poem-content" v-model="newPoemContent" rows="12"
-              class="w-full resize-y rounded-xl border border-edge-subtle bg-surface-page px-4 py-3 font-serif text-sm leading-relaxed text-content outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+              class="author-page__modal-input author-page__modal-input--textarea"
               :placeholder="t('admin.poemForm.placeholderContent')" />
-            <p class="mt-2 text-xs text-content-muted">{{ t('admin.poemForm.contentHint') }}</p>
+            <p class="author-page__hint">{{ t('admin.poemForm.contentHint') }}</p>
           </div>
-          <div class="flex flex-wrap items-center justify-end gap-2 border-t border-edge-subtle px-5 py-4 sm:px-6">
+          <div class="author-page__modal-footer">
             <button type="button"
-              class="rounded-xl border border-edge-subtle bg-surface-subtle px-4 py-2.5 text-sm font-medium text-content-secondary transition hover:bg-surface-raised disabled:opacity-50"
+              class="author-page__modal-cancel"
               :disabled="creatingPoem" @click="closeAddPoemModal">{{ t('admin.poemForm.cancel') }}</button>
             <button type="button"
-              class="rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-brand-foreground shadow transition hover:bg-brand-hover disabled:opacity-50"
+              class="author-page__modal-submit"
               :disabled="creatingPoem || newPoemTitleLooksDuplicate" @click="submitNewPoemFromModal">
               {{ creatingPoem ? t('admin.poemForm.saving') : t('authors.addPoemSubmit') }}
             </button>

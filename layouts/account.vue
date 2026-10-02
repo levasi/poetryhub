@@ -48,52 +48,48 @@ const displayName = computed(() => user.value?.name || user.value?.email?.split(
 </script>
 
 <template>
-  <div class="flex min-h-screen w-full min-w-0 flex-col bg-surface-page">
+  <div class="account-layout">
     <FavoritesFlash />
     <AppNav />
 
     <!-- Full-width row: sidebar flush left, main fills the rest (page bodies use their own max-width). -->
-    <div class="flex w-full min-w-0 flex-1">
+    <div class="account-layout__body">
       <!-- Sidebar (desktop) -->
-      <aside
-        class="sticky top-[3.25rem] z-10 hidden h-[calc(100vh-3.25rem)] w-60 shrink-0 flex-col border-r border-edge-subtle bg-surface-raised/90 shadow-[2px_0_12px_-4px_rgba(0,0,0,0.06)] backdrop-blur-sm supports-[backdrop-filter]:bg-surface-raised/80 md:top-16 md:flex md:h-[calc(100vh-4rem)] lg:w-64"
-      >
-        <div class="border-b border-edge-subtle px-5 py-6">
-          <div class="flex items-center gap-3">
-            <div
-              class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-bold text-brand-foreground shadow-sm ring-2 ring-brand-soft/50"
-            >
+      <aside class="account-layout__sidebar">
+        <div class="account-layout__profile">
+          <div class="account-layout__profile-row">
+            <div class="account-layout__avatar">
               {{ displayInitials }}
             </div>
-            <div class="min-w-0">
-              <p class="truncate font-serif text-sm font-semibold text-content">{{ displayName }}</p>
-              <p class="truncate text-xs text-content-soft">{{ user?.email }}</p>
+            <div class="account-layout__profile-meta">
+              <p class="account-layout__profile-name">{{ displayName }}</p>
+              <p class="account-layout__profile-email">{{ user?.email }}</p>
             </div>
           </div>
         </div>
 
-        <nav class="flex-1 space-y-0.5 px-3 py-4" aria-label="Account">
+        <nav class="account-layout__nav" aria-label="Account">
           <NuxtLink
             v-for="item in navItems"
             :key="item.to"
             :to="item.to"
-            class="flex items-center gap-3 rounded-ds-lg px-3 py-2.5 text-sm text-content-muted transition-colors hover:bg-surface-subtle hover:text-content"
-            :class="navIsActive(item.to) ? 'bg-brand-soft/35 font-medium text-content shadow-sm' : ''"
+            class="account-layout__nav-link"
+            :class="{ 'account-layout__nav-link--active': navIsActive(item.to) }"
           >
-            <svg class="h-4 w-4 shrink-0 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <svg class="account-layout__nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
               <path stroke-linecap="round" stroke-linejoin="round" :d="item.icon" />
             </svg>
             {{ item.label }}
           </NuxtLink>
         </nav>
 
-        <div class="border-t border-edge-subtle px-3 py-4">
+        <div class="account-layout__footer">
           <button
             type="button"
-            class="flex w-full items-center gap-2 rounded-ds-lg px-3 py-2.5 text-sm text-content-muted transition-colors hover:bg-danger/5 hover:text-danger"
+            class="account-layout__logout"
             @click="logout"
           >
-            <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <svg class="account-layout__logout-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
               <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
             {{ t('account.signOut') }}
@@ -102,30 +98,25 @@ const displayName = computed(() => user.value?.name || user.value?.email?.split(
       </aside>
 
       <!-- Mobile tab bar -->
-      <div
-        class="fixed bottom-0 left-0 right-0 z-30 flex border-t border-edge-subtle bg-surface-raised/95 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_24px_-8px_rgba(0,0,0,0.08)] backdrop-blur-md md:hidden"
-      >
+      <div class="account-layout__mobile-tabs">
         <NuxtLink
           v-for="item in navItems"
           :key="item.to"
           :to="item.to"
-          class="flex flex-1 flex-col items-center gap-1 py-2 text-[10px] font-medium text-content-muted transition sm:text-[11px]"
-          :class="navIsActive(item.to) ? 'text-brand' : ''"
+          class="account-layout__mobile-tab"
+          :class="{ 'account-layout__mobile-tab--active': navIsActive(item.to) }"
         >
-          <span
-            class="flex h-9 w-9 items-center justify-center rounded-full transition"
-            :class="navIsActive(item.to) ? 'bg-brand-soft/40 text-brand' : ''"
-          >
-            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+          <span class="account-layout__mobile-tab-icon-wrap">
+            <svg class="account-layout__mobile-tab-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
               <path stroke-linecap="round" stroke-linejoin="round" :d="item.icon" />
             </svg>
           </span>
-          <span class="max-w-[5.5rem] truncate text-center">{{ item.label }}</span>
+          <span class="account-layout__mobile-tab-label">{{ item.label }}</span>
         </NuxtLink>
       </div>
 
       <!-- Main -->
-      <main class="min-h-[60vh] min-w-0 flex-1 px-4 pt-8 md:px-8 md:pt-10 lg:px-10" :class="MOBILE_TAB_BAR_CLEARANCE">
+      <main class="account-layout__main" :class="MOBILE_TAB_BAR_CLEARANCE">
         <slot />
       </main>
     </div>

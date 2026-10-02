@@ -1,0 +1,803 @@
+@use '../tokens' as *;
+
+.author-page {
+  min-width: 0;
+  animation: ph-fade-in 0.6s ease-out;
+}
+
+.author-page__stub {
+  min-height: 30vh;
+}
+
+.author-page__edit-fab {
+  position: fixed;
+  right: 0.75rem;
+  z-index: 44;
+  display: flex;
+  height: 2.75rem;
+  width: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 1px solid ph-rgb(edge-subtle);
+  background-color: ph-rgb(surface-raised, 0.95);
+  color: ph-rgb(content-secondary);
+  box-shadow: var(--shadow-ds-card);
+  backdrop-filter: blur(4px);
+  transition: border-color 0.15s ease, color 0.15s ease;
+  top: 50%;
+  transform: translateY(-50%);
+
+  @media (max-width: #{$bp-md - 1px}) {
+    top: auto;
+    bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+    transform: none;
+  }
+
+  @media (min-width: $bp-md) {
+    right: 1.5rem;
+  }
+
+  &--poem-open {
+    top: calc(50% + 3.5rem);
+
+    @media (max-width: #{$bp-md - 1px}) {
+      top: auto;
+      bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+      transform: none;
+    }
+  }
+
+  &:hover {
+    border-color: ph-rgb(brand, 0.45);
+    color: ph-rgb(brand);
+  }
+
+  &--active {
+    border-color: ph-rgb(brand, 0.5);
+    color: ph-rgb(brand);
+    box-shadow: 0 0 0 2px ph-rgb(brand, 0.25), var(--shadow-ds-card);
+  }
+}
+
+.author-page__edit-icon {
+  height: 1.25rem;
+  width: 1.25rem;
+}
+
+.author-page__body {
+  width: 100%;
+  min-width: 0;
+  padding-top: 0.5rem;
+  padding-bottom: 2rem;
+
+  @media (min-width: $bp-md) {
+    padding-top: 1rem;
+    padding-bottom: 0;
+  }
+
+  &--poem-open {
+    padding-bottom: calc(8rem + env(safe-area-inset-bottom, 0px));
+
+    @media (min-width: $bp-md) {
+      padding-bottom: 5rem;
+    }
+  }
+}
+
+.author-page__header {
+  margin-bottom: 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.5rem;
+
+  @media (min-width: 640px) {
+    flex-direction: row;
+  }
+}
+
+.author-page__portrait-wrap {
+  flex-shrink: 0;
+}
+
+.author-page__portrait {
+  height: 6rem;
+  width: 6rem;
+  border-radius: 9999px;
+  object-fit: cover;
+  box-shadow: 0 0 0 2px ph-rgb(brand, 0.35);
+}
+
+.author-page__header-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.author-page__title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 0.75rem;
+}
+
+.author-page__title {
+  font-family: $ph-font-serif;
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: ph-rgb(content);
+
+  @media (min-width: 640px) {
+    font-size: 2.25rem;
+  }
+}
+
+.author-page__danger-chip {
+  flex-shrink: 0;
+  border-radius: 0.375rem;
+  border: 1px solid ph-rgb(danger, 0.4);
+  padding: 0.125rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: ph-rgb(danger);
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: ph-rgb(danger, 0.1);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+  }
+}
+
+.author-page__meta {
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  color: ph-rgb(content-secondary);
+}
+
+.author-page__edit-fields {
+  max-width: 48rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.author-page__label {
+  margin-bottom: 0.375rem;
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  color: ph-rgb(content-muted);
+}
+
+.author-page__input {
+  width: 100%;
+  border-radius: 0.5rem;
+  border: 1px solid ph-rgb(edge-subtle);
+  background-color: ph-rgb(surface-page);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: ph-rgb(content);
+  outline: none;
+
+  &:focus {
+    border-color: ph-rgb(brand);
+    box-shadow: 0 0 0 2px ph-rgb(brand, 0.2);
+  }
+
+  &--title {
+    font-family: $ph-font-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+
+    @media (min-width: 640px) {
+      font-size: 1.875rem;
+    }
+
+    @media (min-width: $bp-md) {
+      font-size: 2.25rem;
+    }
+  }
+
+  &--narrow {
+    max-width: 36rem;
+  }
+
+  &--year {
+    width: 7rem;
+  }
+}
+
+.author-page__portrait-panel {
+  border-radius: $ph-radius-xl;
+  border: 1px solid ph-rgb(edge-subtle);
+  background-color: ph-rgb(surface-subtle, 0.6);
+  padding: 1rem;
+}
+
+.author-page__portrait-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.author-page__portrait-btn {
+  border-radius: 0.5rem;
+  border: 1px solid ph-rgb(edge);
+  background-color: ph-rgb(surface-raised);
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: ph-rgb(content);
+  transition: border-color 0.15s ease;
+
+  &:hover {
+    border-color: ph-rgb(brand, 0.4);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+  }
+}
+
+.author-page__hint {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1.625;
+  color: ph-rgb(content-muted);
+
+  &--inline {
+    margin-top: 0;
+  }
+}
+
+.author-page__years {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.author-page__poem-count {
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+  color: ph-rgb(content-muted);
+}
+
+.author-page__section {
+  margin-bottom: 2.5rem;
+
+  &--works {
+    padding-top: 2rem;
+  }
+}
+
+.author-page__section-title {
+  margin-bottom: 0.75rem;
+  font-family: $ph-font-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: ph-rgb(content);
+}
+
+.author-page__bio-input {
+  max-width: 48rem;
+  width: 100%;
+  border-radius: $ph-radius-lg;
+  border: 1px solid ph-rgb(edge-subtle);
+  background-color: ph-rgb(surface-page);
+  padding: 0.75rem 1rem;
+  font-family: $ph-font-serif;
+  font-size: 1rem;
+  line-height: 1.625;
+  color: ph-rgb(content);
+  outline: none;
+
+  &:focus {
+    border-color: ph-rgb(brand);
+    box-shadow: 0 0 0 2px ph-rgb(brand, 0.2);
+  }
+}
+
+.author-page__bio-read {
+  max-width: 48rem;
+}
+
+.author-page__bio-text {
+  white-space: pre-wrap;
+  font-size: 1rem;
+  line-height: 1.625;
+  color: ph-rgb(content-secondary);
+
+  &--clamped {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 6;
+    overflow: hidden;
+  }
+}
+
+.author-page__bio-more {
+  margin-top: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 0.5rem;
+  border: 1px solid ph-rgb(edge-subtle);
+  background-color: ph-rgb(surface-subtle);
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: ph-rgb(brand);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+
+  &:hover {
+    border-color: ph-rgb(brand, 0.45);
+    background-color: ph-rgb(surface-raised);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px ph-rgb(brand, 0.35);
+  }
+}
+
+.author-page__bio-empty {
+  max-width: 48rem;
+  font-size: 0.875rem;
+  font-style: italic;
+  color: ph-rgb(content-muted);
+}
+
+.author-page__works-head {
+  margin-bottom: 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.author-page__add-poem {
+  display: inline-flex;
+  height: 2.25rem;
+  width: 2.25rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  border: 1px solid ph-rgb(edge-subtle);
+  background-color: ph-rgb(surface-subtle);
+  color: ph-rgb(content-secondary);
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+
+  &:hover {
+    border-color: ph-rgb(brand, 0.45);
+    background-color: ph-rgb(surface-raised);
+    color: ph-rgb(brand);
+  }
+}
+
+.author-page__add-icon {
+  height: 1.25rem;
+  width: 1.25rem;
+}
+
+.author-page__works-grid {
+  display: grid;
+  gap: 1.5rem;
+
+  @media (min-width: $bp-lg) {
+    grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+    align-items: start;
+    gap: 2.5rem;
+  }
+
+  @media (min-width: 1280px) {
+    gap: 3.5rem;
+  }
+}
+
+.author-page__works-list {
+  display: flex;
+  min-height: 0;
+  max-height: 14rem;
+  flex-direction: column;
+
+  @media (min-width: $bp-lg) {
+    position: sticky;
+    top: 7rem;
+    max-height: calc(100vh - 7rem);
+  }
+}
+
+.author-page__works-scroll {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+  font-size: 0.875rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.author-page__works-empty {
+  border-radius: $ph-radius-md;
+  border: 1px dashed ph-rgb(edge-subtle);
+  padding: 1rem 0.75rem;
+  font-size: 0.875rem;
+  font-style: italic;
+  color: ph-rgb(content-muted);
+}
+
+.author-page__work-item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: $ph-radius-md;
+  border: 1px solid transparent;
+  padding: 0.625rem 0.75rem;
+  text-align: left;
+  color: ph-rgb(content-secondary);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+
+  &:hover {
+    border-color: ph-rgb(edge-subtle);
+    background-color: ph-rgb(surface-subtle);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px ph-rgb(brand, 0.35);
+  }
+
+  &--active {
+    border-color: ph-rgb(brand, 0.45);
+    border-left-width: 3px;
+    border-left-color: ph-rgb(brand);
+    background-color: rgb(var(--color-brand-tint) / 0.5);
+    color: ph-rgb(content);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
+  }
+}
+
+.author-page__work-title {
+  min-width: 0;
+  flex: 1;
+  font-weight: 500;
+  color: ph-rgb(content);
+}
+
+.author-page__poem-panel {
+  min-width: 0;
+  scroll-margin-top: 6rem;
+
+  @media (min-width: $bp-md) {
+    scroll-margin-top: 7rem;
+  }
+}
+
+.author-page__poem-card {
+  border-radius: $ph-radius-lg;
+  background-color: ph-rgb(surface-raised, 0.4);
+  padding: 1.5rem 0.75rem 2.5rem;
+  box-shadow: var(--shadow-ds-card);
+
+  @media (min-width: 640px) {
+    padding-inline: 1.25rem;
+  }
+
+  @media (min-width: $bp-md) {
+    padding: 2.5rem 2rem 3rem;
+  }
+}
+
+.author-page__poem-loading {
+  display: flex;
+  min-height: 16rem;
+  align-items: center;
+  justify-content: center;
+  padding-block: 3rem;
+}
+
+.author-page__poem-msg {
+  text-align: center;
+  font-size: 0.875rem;
+  color: ph-rgb(content-muted);
+
+  &--pad {
+    padding-block: 3rem;
+  }
+}
+
+.author-page__no-poems {
+  border-top: 1px solid ph-rgb(edge, 0.8);
+  padding-block: 4rem;
+  text-align: center;
+  color: ph-rgb(content-secondary);
+  font-family: $ph-font-serif;
+}
+
+.author-page__edit-bar {
+  position: fixed;
+  inset-inline: 0;
+  z-index: 60;
+  border-top: 1px solid ph-rgb(edge-subtle);
+  background-color: ph-rgb(surface-raised, 0.98);
+  padding-block: 0.75rem;
+  box-shadow: 0 -4px 24px rgb(0 0 0 / 0.06);
+  backdrop-filter: blur(12px);
+  bottom: calc(3.25rem + env(safe-area-inset-bottom, 0px));
+
+  @media (min-width: $bp-md) {
+    bottom: 0;
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+}
+
+.author-page__edit-bar-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.author-page__edit-save {
+  display: inline-flex;
+  min-height: 44px;
+  min-width: 44px;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  background-color: ph-rgb(brand);
+  padding: 0.625rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: ph-rgb(brand-foreground);
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: ph-rgb(brand-hover);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+  }
+
+  @media (min-width: 640px) {
+    max-width: 20rem;
+    flex: none;
+  }
+}
+
+.author-page__edit-discard {
+  display: inline-flex;
+  min-height: 44px;
+  min-width: 44px;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  border: 1px solid ph-rgb(edge-subtle);
+  background-color: ph-rgb(surface-subtle);
+  padding: 0.625rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: ph-rgb(content-secondary);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+
+  &:hover {
+    border-color: ph-rgb(edge);
+    background-color: ph-rgb(surface-raised);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+  }
+
+  @media (min-width: 640px) {
+    max-width: 20rem;
+    flex: none;
+  }
+}
+
+.author-page__modal {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+
+  @media (min-width: 640px) {
+    padding: 1.5rem;
+  }
+}
+
+.author-page__modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background-color: rgb(0 0 0 / 0.5);
+  backdrop-filter: blur(2px);
+}
+
+.author-page__modal-panel {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  max-height: min(90vh, 720px);
+  width: 100%;
+  max-width: 32rem;
+  flex-direction: column;
+  border-radius: $ph-radius-xl;
+  border: 1px solid ph-rgb(edge-subtle);
+  background-color: ph-rgb(surface-raised);
+  box-shadow: 0 20px 40px rgb(0 0 0 / 0.15);
+}
+
+.author-page__modal-header {
+  border-bottom: 1px solid ph-rgb(edge-subtle);
+  padding: 1rem 1.25rem;
+
+  @media (min-width: 640px) {
+    padding-inline: 1.5rem;
+  }
+}
+
+.author-page__modal-title {
+  font-family: $ph-font-serif;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: ph-rgb(content);
+}
+
+.author-page__modal-sub {
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  color: ph-rgb(content-muted);
+}
+
+.author-page__modal-body {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem 1.25rem;
+
+  @media (min-width: 640px) {
+    padding-inline: 1.5rem;
+  }
+}
+
+.author-page__modal-error {
+  margin-bottom: 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgb(254 202 202);
+  background-color: rgb(254 242 242);
+  padding: 0.75rem;
+  font-size: 0.875rem;
+  color: rgb(153 27 27);
+}
+
+.author-page__modal-field {
+  margin-bottom: 1rem;
+}
+
+.author-page__modal-input {
+  width: 100%;
+  border-radius: $ph-radius-xl;
+  border: 1px solid ph-rgb(edge-subtle);
+  background-color: ph-rgb(surface-page);
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  color: ph-rgb(content);
+  outline: none;
+
+  &:focus {
+    box-shadow: 0 0 0 2px ph-rgb(brand, 0.2);
+  }
+
+  &--ok {
+    border-color: ph-rgb(edge-subtle);
+
+    &:focus {
+      border-color: ph-rgb(brand);
+      box-shadow: 0 0 0 2px ph-rgb(brand, 0.2);
+    }
+  }
+
+  &--dup {
+    border-color: rgb(245 158 11 / 0.8);
+
+    &:focus {
+      border-color: rgb(245 158 11);
+      box-shadow: 0 0 0 2px rgb(245 158 11 / 0.25);
+    }
+  }
+
+  &--textarea {
+    resize: vertical;
+    font-family: $ph-font-serif;
+    line-height: 1.625;
+
+    &:focus {
+      border-color: ph-rgb(brand);
+    }
+  }
+}
+
+.author-page__modal-warn {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: rgb(146 64 14);
+}
+
+.author-page__modal-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  border-top: 1px solid ph-rgb(edge-subtle);
+  padding: 1rem 1.25rem;
+
+  @media (min-width: 640px) {
+    padding-inline: 1.5rem;
+  }
+}
+
+.author-page__modal-cancel {
+  border-radius: $ph-radius-xl;
+  border: 1px solid ph-rgb(edge-subtle);
+  background-color: ph-rgb(surface-subtle);
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: ph-rgb(content-secondary);
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: ph-rgb(surface-raised);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+  }
+}
+
+.author-page__modal-submit {
+  border-radius: $ph-radius-xl;
+  background-color: ph-rgb(brand);
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: ph-rgb(brand-foreground);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: ph-rgb(brand-hover);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}

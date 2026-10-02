@@ -42,24 +42,20 @@ const variantClass = computed(() => {
   >
     <Icon
       :icon="iconName"
-      class="mt-0.5 size-5 shrink-0"
-      :class="{
-        'text-danger': variant === 'danger',
-        'text-success': variant === 'success',
-        'text-brand': variant === 'info',
-      }"
+      class="ds-banner__icon"
+      :class="`ds-banner__icon--${variant}`"
       aria-hidden="true"
     />
-    <div class="min-w-0 flex-1">
+    <div class="ds-banner__body">
       <p
         v-if="title"
-        class="font-medium text-content"
+        class="ds-banner__title"
       >
         {{ title }}
       </p>
       <div
-        class="text-content-secondary"
-        :class="title ? 'mt-0.5' : ''"
+        class="ds-banner__content"
+        :class="{ 'ds-banner__content--spaced': title }"
       >
         <slot />
       </div>

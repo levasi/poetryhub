@@ -4,7 +4,7 @@ const { locale, locales, setLocale } = useI18n()
 
 <template>
   <div
-    class="flex items-center gap-0.5 rounded-lg border border-edge-subtle bg-surface-raised p-0.5 text-xs shadow-ds-card"
+    class="language-switch"
     role="group"
     :aria-label="$t('nav.language')"
   >
@@ -12,10 +12,8 @@ const { locale, locales, setLocale } = useI18n()
       v-for="l in locales"
       :key="l.code"
       type="button"
-      :class="[
-        'rounded-md px-2 py-1 font-medium transition-colors',
-        locale === l.code ? 'bg-brand text-brand-foreground' : 'text-content-muted hover:text-content',
-      ]"
+      class="language-switch__btn"
+      :class="{ 'language-switch__btn--active': locale === l.code }"
       :aria-pressed="locale === l.code"
       @click="setLocale(l.code)"
     >

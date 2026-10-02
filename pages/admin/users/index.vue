@@ -103,65 +103,65 @@ async function onDeleteUser(u: AdminUser) {
 </script>
 
 <template>
-  <div>
-    <div class="mb-6 flex items-center justify-between">
-      <h1 class="font-serif text-2xl font-bold text-content">{{ t('admin.users.title') }}</h1>
-      <span class="text-sm text-content-muted">{{ data?.meta.total ?? 0 }} total</span>
+<div class="admin-page">
+    <div class="admin-page__header">
+      <h1 class="admin-page__title">{{ t('admin.users.title') }}</h1>
+      <span class="admin-page__meta">{{ data?.meta.total ?? 0 }} total</span>
     </div>
 
     <Transition name="fade-down">
       <div
         v-if="toast"
-        :class="toast.ok ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'"
-        class="mb-4 rounded-lg border px-4 py-2.5 text-sm"
+        :class="toast.ok ? 'admin-page__toast--ok' : 'admin-page__toast--err'"
+        class="admin-page__toast"
       >
         {{ toast.text }}
       </div>
     </Transition>
 
-    <div class="mb-4">
+    <div class="admin-page__search">
       <SearchBar v-model="search" :placeholder="t('admin.users.searchPlaceholder')" />
     </div>
 
-    <div class="overflow-hidden rounded-xl border border-edge-subtle bg-surface-raised shadow-sm">
-      <table class="w-full text-sm">
-        <thead class="border-b border-edge-subtle bg-surface-subtle">
+    <div class="admin-page__table-wrap">
+      <table class="admin-page__table">
+        <thead class="admin-page__thead">
           <tr>
-            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-content-muted">
+            <th class="admin-page__th">
               {{ t('admin.users.colName') }}
             </th>
-            <th class="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-content-muted md:table-cell">
+            <th class="admin-page__th admin-page__th--md">
               {{ t('admin.users.colEmail') }}
             </th>
-            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-content-muted">
+            <th class="admin-page__th">
               {{ t('admin.users.colRole') }}
             </th>
-            <th class="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-content-muted lg:table-cell">
+            <th class="admin-page__th admin-page__th--lg">
               {{ t('admin.users.colJoined') }}
             </th>
-            <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-widest text-content-muted">
+            <th class="admin-page__th admin-page__th--right">
               {{ t('admin.users.colActions') }}
             </th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-edge-subtle bg-surface-raised">
-          <tr v-for="u in users" :key="u.id" class="hover:bg-surface-subtle">
-            <td class="px-4 py-3">
-              <div class="flex items-center gap-2.5">
-                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-tint text-xs font-bold text-brand">
+        <tbody class="admin-page__tbody">
+          <tr v-for="u in users" :key="u.id" >
+            <td class="admin-page__td">
+              <div class="admin-page__cell-row">
+                <span class="admin-page__avatar">
                   {{ (u.name || u.email).slice(0, 2).toUpperCase() }}
                 </span>
                 <div>
-                  <p class="font-medium text-content">{{ u.name || '—' }}</p>
-                  <p class="text-xs text-content-muted md:hidden">{{ u.email }}</p>
+                  <p class="admin-page__link-title">{{ u.name || '—' }}</p>
+                  <p class="admin-page__email-mobile">{{ u.email }}</p>
                 </div>
               </div>
             </td>
-            <td class="hidden px-4 py-3 text-content-muted md:table-cell">{{ u.email }}</td>
-            <td class="px-4 py-3">
+            <td class="admin-page__td admin-page__td--md">{{ u.email }}</td>
+            <td class="admin-page__td">
               <select
                 :value="u.role"
-                class="admin-input max-w-[11rem] py-1.5 text-xs"
+                class="admin-input admin-input--compact"
                 :disabled="updatingId === u.id || u.id === adminSession?.id || isOwnerAccount(u.email)"
                 :title="
                   u.id === adminSession?.id
@@ -177,15 +177,15 @@ async function onDeleteUser(u: AdminUser) {
                 <option value="moderator">{{ t('admin.users.roleLabels.moderator') }}</option>
                 <option value="admin">{{ t('admin.users.roleLabels.admin') }}</option>
               </select>
-              <p v-if="isOwnerAccount(u.email)" class="mt-1 text-[10px] text-content-soft">
+              <p v-if="isOwnerAccount(u.email)" class="admin-page__owner-note">
                 {{ t('admin.users.ownerNote') }}
               </p>
             </td>
-            <td class="hidden px-4 py-3 text-content-muted lg:table-cell">{{ formatDate(u.createdAt) }}</td>
-            <td class="px-4 py-3 text-right">
+            <td class="admin-page__td admin-page__td--lg">{{ formatDate(u.createdAt) }}</td>
+            <td class="admin-page__td admin-page__td--right">
               <button
                 type="button"
-                class="rounded-md px-2 py-1 text-xs font-medium text-red-700 transition hover:bg-red-50 hover:text-red-800 disabled:cursor-not-allowed disabled:opacity-40"
+                class="admin-page__action admin-page__action--danger"
                 :disabled="
                   deletingId === u.id ||
                   updatingId === u.id ||
@@ -208,12 +208,12 @@ async function onDeleteUser(u: AdminUser) {
         </tbody>
       </table>
 
-      <div v-if="!users.length" class="py-10 text-center text-sm text-content-muted">
+      <div v-if="!users.length" class="admin-page__empty">
         {{ t('admin.users.none') }}
       </div>
     </div>
 
-    <div v-if="totalPages > 1" class="mt-6">
+    <div v-if="totalPages > 1" class="admin-page__pagination">
       <PaginationNav :page="page" :total-pages="totalPages" @update:page="(p) => { page = p }" />
     </div>
   </div>

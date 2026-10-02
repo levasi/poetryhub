@@ -4,7 +4,7 @@ useHead({ title: 'Admin — Documentație PoetryHub' })
 </script>
 
 <template>
-  <DocsProse>
+  <div class="docs-page"><DocsProse>
     <span class="docs-eyebrow">Features</span>
     <h1>Admin</h1>
     <p class="lead">
@@ -40,5 +40,5 @@ useHead({ title: 'Admin — Documentație PoetryHub' })
 
     <h2>Import & scripturi</h2>
     <p>Scripturi CLI în <code>scripts/</code> pentru seed, import poezii, lexicon, portrete autori — rulează local sau în CI, nu din UI public.</p>
-  </DocsProse>
+  </DocsProse></div>
 </template>

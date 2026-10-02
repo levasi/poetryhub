@@ -1,0 +1,61 @@
+@use '../tokens' as *;
+
+.poem-carousel-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  color: ph-rgb(content-soft);
+  transition: color 0.15s ease, background-color 0.15s ease;
+
+  &:hover {
+    background-color: ph-rgb(surface-subtle);
+    color: ph-rgb(brand);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgb(var(--color-brand) / 0.4);
+  }
+
+  &--xs {
+    height: 1.5rem;
+    width: 1.5rem;
+  }
+
+  &--sm {
+    height: 1.75rem;
+    width: 1.75rem;
+  }
+
+  &--md {
+    height: 2.25rem;
+    width: 2.25rem;
+  }
+
+  &--lg {
+    height: 2.75rem;
+    width: 2.75rem;
+  }
+}
+
+.poem-carousel-icon__glyph {
+  flex-shrink: 0;
+
+  .poem-carousel-icon--xs & {
+    height: 0.75rem;
+    width: 0.75rem;
+  }
+
+  .poem-carousel-icon--sm &,
+  .poem-carousel-icon--md & {
+    height: 1rem;
+    width: 1rem;
+  }
+
+  .poem-carousel-icon--lg & {
+    height: 1.25rem;
+    width: 1.25rem;
+  }
+}

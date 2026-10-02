@@ -5,18 +5,18 @@ const { keyboardOpen } = useMobileKeyboard()
 </script>
 
 <template>
-  <div class="flex min-h-screen w-full min-w-0 flex-col bg-surface-page">
+  <div class="page-shell">
     <FavoritesFlash />
     <AppNav />
     <main
-      class="w-full min-w-0 flex-1"
-      :class="keyboardOpen ? 'pb-2 md:pb-14' : MOBILE_TAB_BAR_CLEARANCE"
+      class="page-shell__main"
+      :class="keyboardOpen ? 'page-shell__main--keyboard-open' : MOBILE_TAB_BAR_CLEARANCE"
     >
       <div :class="PAGE_SHELL_INSET_CLASS">
         <slot />
       </div>
     </main>
-    <AppFooter class="hidden md:block" />
+    <AppFooter class="page-shell__footer" />
     <AppMobileTabBar />
   </div>
 </template>

@@ -1,0 +1,191 @@
+@use '../tokens' as *;
+
+.poetry-viewer__progress {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 50;
+  height: 0.125rem;
+  width: 100%;
+  background-color: ph-rgb(edge-subtle);
+  pointer-events: none;
+}
+
+.poetry-viewer__progress-bar {
+  height: 100%;
+  background-color: ph-rgb(brand);
+  transition: width 0.1s ease;
+}
+
+.poetry-viewer__content {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 42rem;
+  animation: poetry-viewer-fade-in 0.35s ease-out;
+}
+
+.poetry-viewer__edit {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.poetry-viewer__field-label {
+  margin-bottom: 0.375rem;
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  color: ph-rgb(content-muted);
+}
+
+.poetry-viewer__input {
+  width: 100%;
+  border-radius: $ph-radius-lg;
+  border: 1px solid ph-rgb(edge-subtle);
+  background-color: ph-rgb(surface-page);
+  padding: 0.75rem 1rem;
+  font-family: $ph-font-serif;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: ph-rgb(content);
+  outline: none;
+
+  @media (min-width: $bp-md) {
+    font-size: 1.875rem;
+  }
+
+  &:focus {
+    border-color: ph-rgb(brand);
+    box-shadow: 0 0 0 2px rgb(var(--color-brand) / 0.2);
+  }
+
+  &--sm {
+    padding-block: 0.625rem;
+    font-family: $ph-font-sans;
+    font-size: 0.875rem;
+    font-weight: 400;
+  }
+}
+
+.poetry-viewer__hint {
+  margin-top: 0.375rem;
+  font-size: 0.75rem;
+  line-height: 1.625;
+  color: ph-rgb(content-muted);
+}
+
+.poetry-viewer__textarea {
+  width: 100%;
+  resize: vertical;
+  border-radius: $ph-radius-lg;
+  border: 1px solid ph-rgb(edge-subtle);
+  background-color: ph-rgb(surface-page);
+  padding: 0.75rem 1rem;
+  font-family: $ph-font-serif;
+  font-size: 1rem;
+  line-height: 1.625;
+  outline: none;
+
+  &:focus {
+    border-color: ph-rgb(brand);
+    box-shadow: 0 0 0 2px rgb(var(--color-brand) / 0.2);
+  }
+}
+
+.poetry-viewer__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+}
+
+.poetry-viewer__btn-save {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  background-color: ph-rgb(brand);
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: ph-rgb(brand-foreground);
+  transition: background-color 0.15s ease;
+
+  &:hover:not(:disabled) {
+    background-color: ph-rgb(brand-hover);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+  }
+}
+
+.poetry-viewer__btn-cancel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  border: 1px solid ph-rgb(edge-subtle);
+  background-color: ph-rgb(surface-subtle);
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: ph-rgb(content-secondary);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+
+  &:hover:not(:disabled) {
+    border-color: ph-rgb(edge);
+    background-color: ph-rgb(surface-raised);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+  }
+}
+
+.poetry-viewer__edit-poem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 9999px;
+  border: 1px solid ph-rgb(edge-subtle);
+  background-color: ph-rgb(surface-raised);
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: ph-rgb(content-secondary);
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  transition: border-color 0.15s ease, color 0.15s ease;
+
+  @media (min-width: $bp-md) {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+
+  &:hover {
+    border-color: rgb(var(--color-brand) / 0.4);
+    color: ph-rgb(brand);
+  }
+}
+
+.poetry-viewer__edit-icon {
+  height: 0.875rem;
+  width: 0.875rem;
+
+  @media (min-width: $bp-md) {
+    height: 1rem;
+    width: 1rem;
+  }
+}
+
+@keyframes poetry-viewer-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}

@@ -117,58 +117,56 @@ async function claimPoem() {
 </script>
 
 <template>
-  <div class="mx-auto max-w-3xl">
-    <header
-      class="mb-8 flex flex-col gap-4 border-b border-edge-subtle pb-8 sm:flex-row sm:items-end sm:justify-between">
+  <div class="account-page">
+    <header class="account-page__header account-page__header--bordered">
       <div>
         <p class="ds-eyebrow mb-2 text-brand">{{ t('account.title') }}</p>
-        <h1 class="font-serif text-3xl font-bold tracking-tight text-content md:text-4xl">
+        <h1 class="account-page__page-title account-page__page-title--lg">
           {{ t('account.poemsSection') }}
         </h1>
-        <p class="mt-2 max-w-xl text-sm leading-relaxed text-content-secondary">
+        <p class="account-page__page-desc account-page__page-desc--secondary">
           {{ t('account.poemsDesc') }}
         </p>
       </div>
     </header>
 
     <!-- Drafts -->
-    <section class="mb-8">
-      <div class="mb-3 flex items-end justify-between gap-3">
+    <section class="account-page__section">
+      <div class="account-page__section-head">
         <div>
-          <h2 class="font-serif text-lg font-semibold text-content">{{ t('account.draftsTitle') }}</h2>
-          <p class="mt-1 text-sm text-content-muted">{{ t('account.draftsDesc') }}</p>
+          <h2 class="account-page__section-title">{{ t('account.draftsTitle') }}</h2>
+          <p class="account-page__section-desc">{{ t('account.draftsDesc') }}</p>
         </div>
         <NuxtLink to="/write" class="ds-btn-secondary shrink-0">
           {{ t('account.draftsWriteLink') }}
         </NuxtLink>
       </div>
 
-      <p v-if="draftsError" class="mb-3 rounded-ds-md bg-danger/10 px-4 py-2.5 text-sm text-danger">
+      <p v-if="draftsError" class="account-page__alert">
         {{ draftsError }}
       </p>
 
-      <div v-if="!drafts.length" class="rounded-ds-lg border border-dashed border-edge bg-surface-subtle/40 px-6 py-10">
-        <p class="text-sm text-content-muted">{{ t('account.draftsEmpty') }}</p>
+      <div v-if="!drafts.length" class="account-page__empty account-page__empty--drafts">
+        <p class="account-page__section-desc">{{ t('account.draftsEmpty') }}</p>
       </div>
-      <div v-else class="space-y-3">
-        <div v-for="d in drafts" :key="d.id"
-          class="flex items-start justify-between gap-4 rounded-ds-lg border border-edge-subtle bg-surface-raised p-5 shadow-ds-card transition hover:border-edge hover:shadow-ds-card-hover">
-          <div class="min-w-0 flex-1">
-            <p class="font-semibold text-content">{{ d.title }}</p>
-            <p class="mt-0.5 text-sm text-content-secondary">
+      <div v-else class="account-page__list">
+        <div v-for="d in drafts" :key="d.id" class="account-page__list-item">
+          <div class="account-page__list-main">
+            <p class="account-page__list-title">{{ d.title }}</p>
+            <p class="account-page__list-sub">
               {{ d.authorName }} · {{ d.language.toUpperCase() }}
             </p>
-            <div class="mt-2 flex flex-wrap items-center gap-2">
-              <span class="text-xs text-content-soft">{{ formatDate(d.updatedAt) }}</span>
+            <div class="account-page__list-meta">
+              <span class="account-page__meta-date">{{ formatDate(d.updatedAt) }}</span>
             </div>
           </div>
-          <div class="flex shrink-0 flex-col items-stretch gap-1 sm:flex-row sm:items-center">
+          <div class="account-page__list-actions">
             <NuxtLink :to="{ path: '/write', query: { draft: d.id } }"
-              class="rounded-ds-md px-3 py-2 text-center text-xs font-medium text-content-secondary transition hover:bg-surface-subtle hover:text-brand">
+              class="account-page__list-action">
               {{ t('account.draftsEdit') }}
             </NuxtLink>
             <button type="button" :disabled="deletingDraft === d.id"
-              class="rounded-ds-md px-3 py-2 text-xs font-medium text-content-secondary transition hover:bg-danger/10 hover:text-danger disabled:opacity-50"
+              class="account-page__list-action account-page__list-action--danger"
               @click="deleteDraft(d.id)">
               {{ deletingDraft === d.id ? t('account.draftsDeleting') : t('account.draftsDelete') }}
             </button>
@@ -176,76 +174,70 @@ async function claimPoem() {
         </div>
       </div>
 
-      <div v-if="totalDraftPages > 1" class="mt-5">
+      <div v-if="totalDraftPages > 1" class="account-page__pagination">
         <PaginationNav :page="draftsPage" :total-pages="totalDraftPages" @update:page="(p) => { draftsPage = p }" />
       </div>
     </section>
 
-    <!-- Error -->
-    <p v-if="deleteError" class="mb-4 rounded-ds-md bg-danger/10 px-4 py-2.5 text-sm text-danger">
+    <p v-if="deleteError" class="account-page__alert">
       {{ deleteError }}
     </p>
 
-    <!-- Empty state -->
-    <div v-if="!poems.length"
-      class="rounded-ds-lg border border-dashed border-edge bg-surface-subtle/40 px-6 py-16 text-center">
-      <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-brand-soft/30 text-brand">
-        <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+    <div v-if="!poems.length" class="account-page__empty">
+      <div class="account-page__empty-icon">
+        <svg class="account-page__empty-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
           <path stroke-linecap="round" stroke-linejoin="round"
             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
       </div>
-      <p class="mb-3 font-medium text-content-secondary">{{ t('account.poemsEmpty') }}</p>
-      <NuxtLink to="/write" class="ds-btn-secondary inline-flex">
+      <p class="account-page__empty-title">{{ t('account.poemsEmpty') }}</p>
+      <NuxtLink to="/write" class="ds-btn-secondary">
         {{ t('account.poemsWriteLink') }}
       </NuxtLink>
 
-      <div class="mx-auto mt-8 max-w-md text-left">
-        <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-content-muted">
+      <div class="account-page__claim">
+        <p class="account-page__claim-label">
           {{ t('account.poemsClaimTitle') }}
         </p>
-        <div class="flex gap-2">
+        <div class="account-page__claim-row">
           <input v-model="claimSlug" type="text"
-            class="min-w-0 flex-1 rounded-xl border border-edge-subtle bg-surface-raised px-4 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/25"
+            class="account-page__claim-input"
             :placeholder="t('account.poemsClaimPlaceholder')" autocomplete="off" @keydown.enter.prevent="claimPoem" />
           <button type="button"
-            class="rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-brand-foreground shadow hover:bg-brand-hover disabled:opacity-50"
+            class="account-page__claim-btn"
             :disabled="claimLoading || !claimSlug.trim()" @click="claimPoem">
             {{ claimLoading ? t('account.poemsClaiming') : t('account.poemsClaimBtn') }}
           </button>
         </div>
-        <p v-if="claimError" class="mt-2 text-sm text-danger">{{ claimError }}</p>
-        <p v-else-if="claimOk" class="mt-2 text-sm text-emerald-600">{{ t('account.poemsClaimOk') }}</p>
+        <p v-if="claimError" class="account-page__claim-feedback account-page__claim-feedback--err">{{ claimError }}</p>
+        <p v-else-if="claimOk" class="account-page__claim-feedback account-page__claim-feedback--ok">{{ t('account.poemsClaimOk') }}</p>
       </div>
     </div>
 
-    <!-- Poems list -->
-    <div v-else class="space-y-3">
-      <div v-for="poem in poems" :key="poem.id"
-        class="flex items-start justify-between gap-4 rounded-ds-lg border border-edge-subtle bg-surface-raised p-5 shadow-ds-card transition hover:border-edge hover:shadow-ds-card-hover">
-        <div class="min-w-0 flex-1">
+    <div v-else class="account-page__list">
+      <div v-for="poem in poems" :key="poem.id" class="account-page__list-item">
+        <div class="account-page__list-main">
           <NuxtLink :to="{ path: `/authors/${poem.author.slug}`, query: { poem: poem.slug } }"
-            class="font-semibold text-content transition hover:text-brand">
+            class="account-page__list-title account-page__list-title--link">
             {{ poem.title }}
           </NuxtLink>
-          <p v-if="poem.excerpt" class="mt-0.5 line-clamp-2 text-sm text-content-secondary">
+          <p v-if="poem.excerpt" class="account-page__list-sub account-page__list-sub--clamp">
             {{ poem.excerpt }}
           </p>
-          <div class="mt-2 flex flex-wrap items-center gap-2">
-            <span class="text-xs text-content-soft">{{ formatDate(poem.createdAt) }}</span>
-            <span v-for="pt in poem.poemTags.slice(0, 3)" :key="pt.tag.id"
-              class="rounded-full bg-surface-subtle px-2 py-0.5 text-xs text-content-secondary">
+          <div class="account-page__list-meta">
+            <span class="account-page__meta-date">{{ formatDate(poem.createdAt) }}</span>
+            <span v-for="pt in poem.poemTags.slice(0, 3)" :key="pt.tag.id" class="account-page__tag">
               {{ pt.tag.name }}
             </span>
           </div>
         </div>
-        <div class="flex shrink-0 flex-col items-stretch gap-1 sm:flex-row sm:items-center">
+        <div class="account-page__list-actions">
           <NuxtLink :to="{ path: `/authors/${poem.author.slug}`, query: { poem: poem.slug } }"
-            class="rounded-ds-md px-3 py-2 text-center text-xs font-medium text-content-secondary transition hover:bg-surface-subtle hover:text-brand">
+            class="account-page__list-action">
             {{ t('account.poemsViewPoem') }}
           </NuxtLink>
           <button type="button" :disabled="deleting === poem.slug"
-            class="rounded-ds-md px-3 py-2 text-xs font-medium text-content-secondary transition hover:bg-danger/10 hover:text-danger disabled:opacity-50"
+            class="account-page__list-action account-page__list-action--danger"
             @click="deletePoem(poem.slug)">
             {{ deleting === poem.slug ? t('account.poemsDeleting') : t('account.poemsDeletePoem') }}
           </button>
@@ -253,8 +245,7 @@ async function claimPoem() {
       </div>
     </div>
 
-    <!-- Pagination -->
-    <div v-if="totalPages > 1" class="mt-6">
+    <div v-if="totalPages > 1" class="account-page__pagination">
       <PaginationNav :page="page" :total-pages="totalPages" @update:page="(p) => { page = p }" />
     </div>
   </div>

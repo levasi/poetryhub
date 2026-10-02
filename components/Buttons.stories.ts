@@ -29,7 +29,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'Button styles from `assets/css/main.css` — `.ds-btn-primary`, `.ds-btn-secondary`, and `.ds-icon-btn`. Apply classes to `<button>` or `<NuxtLink>`.',
+          'Button styles from `assets/scss` — `.ds-btn-primary`, `.ds-btn-secondary`, and `.ds-icon-btn`. Apply classes to `<button>` or `<NuxtLink>`.',
       },
     },
   },

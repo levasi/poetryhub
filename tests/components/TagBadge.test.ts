@@ -9,7 +9,7 @@ describe('TagBadge', () => {
     })
     expect(wrapper.text()).toContain('✦')
     expect(wrapper.text()).toContain('Melancolie')
-    expect(wrapper.classes().join(' ')).toContain('bg-brand-tint')
+    expect(wrapper.classes()).toContain('tag-badge--active')
   })
 
   it('renders inactive state without fleuron', async () => {

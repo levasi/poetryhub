@@ -4,7 +4,9 @@ import { useWriteLyricsStore } from '~/stores/writeLyrics'
 import { useWriteProjectsStore } from '~/stores/writeProjects'
 import {
   joinWriteVerseBlocks,
+  readWriteColumnCount,
   splitWriteVerseBlocks,
+  type WriteColumnCount,
 } from '~/utils/writeVerseBlocks'
 
 const { t } = useI18n()
@@ -13,7 +15,7 @@ const lyrics = useWriteLyricsStore()
 const { title, text: lyricsText } = storeToRefs(lyrics)
 
 type VerseBlock = { id: string; text: string; column: number }
-type ColumnCount = 1 | 2 | 3
+type ColumnCount = WriteColumnCount
 
 const COLUMNS_KEY = 'poetryhub-write-verse-columns-v1'
 const COLUMN_OPTIONS: ColumnCount[] = [1, 2, 3]
@@ -29,17 +31,19 @@ function clampCol(col: number, nCols: number): number {
   return Math.max(0, Math.min(nCols - 1, Math.floor(col || 0)))
 }
 
-function splitLyrics(raw: string, nCols: number): VerseBlock[] {
+/** Keep stored column indices — do not clamp to the current UI column count. */
+function splitLyrics(raw: string): VerseBlock[] {
   return splitWriteVerseBlocks(raw).map((b, i) => ({
     id: `verse-${i}`,
     text: b.text,
-    column: clampCol(b.column, nCols),
+    column: Math.max(0, Math.floor(b.column || 0)),
   }))
 }
 
 function joinBlocks(list: VerseBlock[]): string {
   return joinWriteVerseBlocks(
     list.map(({ text, column }) => ({ text, column })),
+    columns.value,
   )
 }
 
@@ -97,21 +101,30 @@ function blockPreview(text: string): string {
   return line.length > 72 ? `${line.slice(0, 72)}…` : line
 }
 
-function flattenColumns(stacks: VerseBlock[][]): VerseBlock[] {
+function flattenColumns(
+  stacks: VerseBlock[][],
+  movedId?: string | null,
+  movedColumn?: number,
+): VerseBlock[] {
   const next: VerseBlock[] = []
-  stacks.forEach((stack, ci) => {
+  stacks.forEach((stack) => {
     for (const b of stack) {
-      next.push({ ...b, column: ci })
+      next.push({
+        ...b,
+        // Preserve stored columns when the UI has fewer columns (overflow is only visual).
+        column:
+          movedId && b.id === movedId && movedColumn != null
+            ? movedColumn
+            : b.column,
+      })
     }
   })
   return next
 }
 
 function clampAllColumns(nCols: number) {
-  blocks.value = blocks.value.map((b) => ({
-    ...b,
-    column: clampCol(b.column, nCols),
-  }))
+  // Intentionally no-op for persistence: stored columns survive layout changes.
+  void nCols
 }
 
 watch(columns, (n) => {
@@ -121,7 +134,6 @@ watch(columns, (n) => {
   } catch {
     /* ignore */
   }
-  clampAllColumns(n)
   commitBlocks()
   nextTick(fitAll)
 })
@@ -237,6 +249,58 @@ function addBlock(afterId?: string) {
     { id: newBlockId(), text: '', column: clampCol(col, columns.value) },
     afterId,
   )
+}
+
+/** Insert a blank stanza at the top of a column (before the first quatrain). */
+function addBlockAtColumnStart(colIndex: number) {
+  const col = clampCol(colIndex, columns.value)
+  const nb: VerseBlock = { id: newBlockId(), text: '', column: col }
+  const first = columnStacks.value[col]?.[0]
+  if (first) {
+    const idx = blocks.value.findIndex((b) => b.id === first.id)
+    if (idx >= 0) {
+      blocks.value.splice(idx, 0, nb)
+      activeBlockId.value = nb.id
+      commitBlocks()
+      nextTick(() => {
+        fitTextarea(nb.id)
+        taRefs.value[nb.id]?.focus()
+      })
+      return
+    }
+  }
+  insertBlock(nb)
+}
+
+function removeBlock(id: string) {
+  const idx = blocks.value.findIndex((b) => b.id === id)
+  if (idx < 0) return
+
+  if (blocks.value.length === 1) {
+    blocks.value[0]!.text = ''
+    activeBlockId.value = blocks.value[0]!.id
+    commitBlocks()
+    nextTick(() => {
+      fitTextarea(blocks.value[0]!.id)
+      taRefs.value[blocks.value[0]!.id]?.focus()
+    })
+    return
+  }
+
+  const focusId =
+    blocks.value[idx + 1]?.id ?? blocks.value[idx - 1]?.id ?? null
+  blocks.value.splice(idx, 1)
+  delete taRefs.value[id]
+  delete cardEls.value[id]
+  if (activeBlockId.value === id) activeBlockId.value = focusId
+  if (draggingId.value === id) draggingId.value = null
+  commitBlocks()
+  nextTick(() => {
+    if (focusId) {
+      fitTextarea(focusId)
+      taRefs.value[focusId]?.focus()
+    }
+  })
 }
 
 function computeDropHit(clientX: number, clientY: number): DropHit {
@@ -414,9 +478,9 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="flex min-w-0 flex-col gap-2">
-    <div class="rounded-xl bg-surface-raised p-2 shadow-ds-card sm:p-4">
-      <label for="lyrics-title" class="font-serif text-sm font-semibold uppercase tracking-wide text-content-muted">
+  <div class="write-editor">
+    <div class="write-editor__panel">
+      <label for="lyrics-title" class="write-editor__label">
         Titlu
       </label>
       <input
@@ -424,17 +488,17 @@ onBeforeUnmount(() => {
         v-model="title"
         type="text"
         autocomplete="off"
-        class="my-2 w-full rounded-xl bg-surface-subtle/50 px-3 py-2 text-base text-content outline-none focus:border-brand focus:ring-2 focus:ring-brand/25"
+        class="write-editor__title-input"
         placeholder="Titlul poeziei…"
       >
 
-      <div class="mt-4 flex flex-wrap items-center justify-between gap-2">
-        <label class="font-serif text-sm font-semibold uppercase tracking-wide text-content-muted">
+      <div class="write-editor__toolbar">
+        <label class="write-editor__label">
           Versuri
         </label>
-        <div class="flex flex-wrap items-center gap-2">
+        <div class="write-editor__toolbar-actions">
           <div
-            class="inline-flex overflow-hidden rounded-lg border border-edge-subtle bg-surface-subtle"
+            class="write-editor__columns"
             role="group"
             :aria-label="t('write.verseColumnsAria')"
           >
@@ -442,10 +506,8 @@ onBeforeUnmount(() => {
               v-for="n in COLUMN_OPTIONS"
               :key="n"
               type="button"
-              class="min-w-[2.25rem] px-2.5 py-1.5 text-xs font-semibold transition"
-              :class="columns === n
-                ? 'bg-brand text-brand-foreground'
-                : 'text-content-secondary hover:bg-surface-raised hover:text-content'"
+              class="write-editor__column-btn"
+              :class="{ 'write-editor__column-btn--active': columns === n }"
               :aria-pressed="columns === n"
               @click="columns = n"
             >
@@ -454,10 +516,10 @@ onBeforeUnmount(() => {
           </div>
           <button
             type="button"
-            class="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-brand transition hover:bg-brand-tint"
+            class="write-editor__add-block"
             @click="addBlock()"
           >
-            <Icon icon="heroicons:plus" class="h-4 w-4" aria-hidden="true" />
+            <Icon icon="heroicons:plus" class="write-editor__add-icon" aria-hidden="true" />
             {{ t('write.addVerseBlock') }}
           </button>
         </div>
@@ -466,104 +528,145 @@ onBeforeUnmount(() => {
       <ClientOnly>
         <div
           ref="listRef"
-          class="relative mt-2 flex items-start gap-3"
-          :class="draggingId ? 'select-none' : ''"
+          class="write-editor__list"
+          :class="{ 'write-editor__list--dragging': !!draggingId }"
         >
           <div
             v-for="(stack, colIndex) in columnStacks"
             :key="colIndex"
             :ref="(el) => setColRef(colIndex, el)"
-            class="flex min-h-[6rem] min-w-0 flex-1 flex-col gap-3 rounded-xl border border-dashed border-transparent p-0.5 transition"
-            :class="draggingId ? 'border-edge-subtle/60 bg-surface-subtle/20' : ''"
+            class="write-editor__column"
+            :class="{ 'write-editor__column--drop-target': !!draggingId }"
           >
             <div
-              v-for="block in stack"
-              :key="block.id"
-              :ref="(el) => setCardRef(block.id, el)"
-              class="flex items-stretch gap-1 rounded-xl border border-edge-subtle/80 bg-surface-subtle/40 p-2 transition"
-              :class="[
-                activeBlockId === block.id ? 'ring-1 ring-brand/20' : '',
-                draggingId === block.id ? 'opacity-40' : '',
-              ]"
+              class="write-editor__insert-bar"
+              :class="{ 'write-editor__insert-bar--idle': !!draggingId }"
             >
-              <textarea
-                :id="`lyrics-block-${block.id}`"
-                :ref="(el) => setTaRef(block.id, el)"
-                :value="block.text"
-                rows="2"
-                class="block min-w-0 flex-1 cursor-text overflow-hidden rounded-xl bg-surface-raised px-3 py-2 font-serif text-base leading-relaxed text-content outline-none focus:border-brand focus:ring-2 focus:ring-brand/25"
-                placeholder="Scrie versuri aici…"
-                spellcheck="true"
-                @focus="activeBlockId = block.id"
-                @input="onBlockInput(block.id, ($event.target as HTMLTextAreaElement).value)"
-              />
-              <div
-                class="inline-flex w-8 shrink-0 cursor-grab items-center justify-center self-stretch rounded-lg text-content-muted transition hover:bg-surface-raised hover:text-content active:cursor-grabbing"
-                role="button"
-                tabindex="0"
-                :aria-label="t('write.dragVerseBlock')"
-                :title="t('write.dragVerseBlock')"
-                @pointerdown="onDragHandlePointerDown(block.id, $event)"
+              <button
+                type="button"
+                class="write-editor__insert-bar-btn"
+                :disabled="!!draggingId"
+                :title="t('write.insertVerseBlock')"
+                :aria-label="t('write.insertVerseBlock')"
+                @click="addBlockAtColumnStart(colIndex)"
               >
-                <Icon icon="heroicons:bars-3" class="h-4 w-4 rotate-90 pointer-events-none" aria-hidden="true" />
-              </div>
+                <Icon icon="heroicons:plus" class="write-editor__insert-icon" aria-hidden="true" />
+              </button>
             </div>
+            <template v-for="block in stack" :key="block.id">
+              <div class="write-editor__card-wrap">
+                <div
+                  :ref="(el) => setCardRef(block.id, el)"
+                  class="write-editor__card"
+                  :class="{
+                    'write-editor__card--active': activeBlockId === block.id,
+                    'write-editor__card--dragging': draggingId === block.id,
+                  }"
+                >
+                  <textarea
+                    :id="`lyrics-block-${block.id}`"
+                    :ref="(el) => setTaRef(block.id, el)"
+                    :value="block.text"
+                    rows="2"
+                    class="write-editor__textarea"
+                    placeholder="Scrie versuri aici…"
+                    spellcheck="true"
+                    @focus="activeBlockId = block.id"
+                    @input="onBlockInput(block.id, ($event.target as HTMLTextAreaElement).value)"
+                  />
+                  <div class="write-editor__card-aside">
+                    <button
+                      type="button"
+                      class="write-editor__remove-block"
+                      :title="t('write.removeVerseBlock')"
+                      :aria-label="t('write.removeVerseBlock')"
+                      @click="removeBlock(block.id)"
+                    >
+                      <Icon icon="heroicons:trash" class="write-editor__remove-icon" aria-hidden="true" />
+                    </button>
+                    <div
+                      class="write-editor__drag-handle"
+                      role="button"
+                      tabindex="0"
+                      :aria-label="t('write.dragVerseBlock')"
+                      :title="t('write.dragVerseBlock')"
+                      @pointerdown="onDragHandlePointerDown(block.id, $event)"
+                    >
+                      <Icon icon="heroicons:arrows-pointing-out" class="write-editor__drag-icon" aria-hidden="true" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div
+                class="write-editor__insert-bar"
+                :class="{ 'write-editor__insert-bar--idle': !!draggingId }"
+              >
+                <button
+                  type="button"
+                  class="write-editor__insert-bar-btn"
+                  :disabled="!!draggingId"
+                  :title="t('write.insertVerseBlock')"
+                  :aria-label="t('write.insertVerseBlock')"
+                  @click="addBlock(block.id)"
+                >
+                  <Icon icon="heroicons:plus" class="write-editor__insert-icon" aria-hidden="true" />
+                </button>
+              </div>
+            </template>
           </div>
 
           <div
             v-show="draggingId && dropHit"
-            class="pointer-events-none absolute z-20 rounded-full bg-brand shadow-[0_0_0_2px_rgba(255,255,255,0.65)]"
+            class="write-editor__drop-line"
             :style="dropLineStyle"
             aria-hidden="true"
           >
-            <span class="absolute -left-1.5 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-brand" />
-            <span class="absolute -right-1.5 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-brand" />
+            <span class="write-editor__drop-dot write-editor__drop-dot--start" />
+            <span class="write-editor__drop-dot write-editor__drop-dot--end" />
           </div>
         </div>
 
         <Teleport to="body">
           <div
             v-if="draggingId && dragPreview"
-            class="pointer-events-none fixed z-[80] max-w-xs rounded-lg border border-brand/40 bg-surface-raised px-2.5 py-1.5 shadow-lg"
+            class="write-editor__drag-preview"
             :style="{
               left: `${pointer.x + 12}px`,
               top: `${pointer.y + 12}px`,
             }"
           >
-            <p
-              class="text-[10px] font-semibold uppercase tracking-wide text-content-soft"
-            >
+            <p class="write-editor__drag-preview-label">
               {{ dragPreview.label }}
             </p>
-            <p class="truncate font-serif text-xs text-content-secondary">
+            <p class="write-editor__drag-preview-text">
               {{ dragPreview.preview }}
             </p>
           </div>
         </Teleport>
 
         <template #fallback>
-          <div class="mt-2 h-28 animate-pulse rounded-xl bg-surface-subtle/50" aria-hidden="true" />
+          <div class="write-editor__skeleton" aria-hidden="true" />
         </template>
       </ClientOnly>
     </div>
 
-    <div v-if="projects.currentProject" class="rounded-xl bg-surface-raised p-2 shadow-ds-card sm:p-4">
-      <h3 class="font-serif text-sm font-semibold uppercase tracking-wide text-content-muted">
+    <div v-if="projects.currentProject" class="write-editor__panel">
+      <h3 class="write-editor__label">
         Cuvinte salvate
       </h3>
-      <p class="mt-1 text-[11px] text-content-muted">
+      <p class="write-editor__saved-hint">
         Din rezultatele căutării, butonul + adaugă cuvântul la proiectul selectat.
       </p>
-      <ul v-if="projects.currentProject.savedWords.length" class="mt-3 flex flex-wrap gap-1.5">
+      <ul v-if="projects.currentProject.savedWords.length" class="write-editor__saved-list">
         <li
           v-for="w in projects.currentProject.savedWords"
           :key="w"
-          class="inline-flex items-center gap-1 rounded-full bg-surface-subtle px-2 py-0.5 text-xs text-content-secondary"
+          class="write-editor__saved-chip"
         >
           <span>{{ w }}</span>
           <button
             type="button"
-            class="rounded p-0.5 text-content-muted hover:bg-surface-subtle hover:text-content"
+            class="write-editor__saved-remove"
             title="Elimină"
             @click="projects.removeSavedWord(w)"
           >
@@ -571,7 +674,7 @@ onBeforeUnmount(() => {
           </button>
         </li>
       </ul>
-      <p v-else class="mt-3 text-xs text-content-muted">Niciun cuvânt salvat încă.</p>
+      <p v-else class="write-editor__saved-empty">Niciun cuvânt salvat încă.</p>
     </div>
   </div>
 </template>

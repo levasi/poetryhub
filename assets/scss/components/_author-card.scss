@@ -1,0 +1,81 @@
+@use '../tokens' as *;
+
+.author-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid ph-rgb(edge-subtle);
+  background-color: ph-rgb(surface-raised);
+  padding: 1.25rem;
+  box-shadow: var(--shadow-ds-card);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover {
+    border-color: rgb(var(--color-brand) / 0.4);
+    box-shadow: var(--shadow-ds-card-hover);
+  }
+}
+
+.author-card__avatar-wrap {
+  flex-shrink: 0;
+}
+
+.author-card__avatar {
+  height: 3.5rem;
+  width: 3.5rem;
+  border-radius: 9999px;
+  object-fit: cover;
+  box-shadow: 0 0 0 2px ph-rgb(edge-subtle);
+  transition: box-shadow 0.15s ease;
+
+  .author-card:hover & {
+    box-shadow: 0 0 0 2px rgb(var(--color-brand) / 0.4);
+  }
+}
+
+.author-card__body {
+  min-width: 0;
+  flex: 1 1 0%;
+}
+
+.author-card__name {
+  font-family: $ph-font-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: ph-rgb(content);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 0.15s ease;
+
+  .author-card:hover & {
+    color: ph-rgb(brand);
+  }
+}
+
+.author-card__meta {
+  margin-top: 0.125rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: ph-rgb(content-muted);
+}
+
+.author-card__bio {
+  margin-top: 0.5rem;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  font-size: 0.75rem;
+  line-height: 1.625;
+  color: ph-rgb(content-secondary);
+}
+
+.author-card__count {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: ph-rgb(content-muted);
+}
