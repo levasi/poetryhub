@@ -6,11 +6,18 @@ const props = withDefaults(
   defineProps<{
     saveLoading?: boolean
     canSave?: boolean
+    autosaveEnabled?: boolean
+    /** Flush pending autosave before leaving the current project. */
+    flushBeforeProjectChange?: () => Promise<void>
   }>(),
-  { saveLoading: false, canSave: false },
+  { saveLoading: false, canSave: false, autosaveEnabled: true },
 )
 
-const emit = defineEmits<{ save: []; publish: [] }>()
+const emit = defineEmits<{
+  save: []
+  publish: []
+  'update:autosaveEnabled': [value: boolean]
+}>()
 
 const { t } = useI18n()
 const icons = {
@@ -60,6 +67,26 @@ function isActiveProject(p: { id: string }) {
 
 const canSubmitNewProject = computed(() => newProjectNameDraft.value.trim().length > 0)
 
+const saveButtonDisabled = computed(
+  () => props.autosaveEnabled || !props.canSave || props.saveLoading,
+)
+
+const showSaveIdleTip = computed(
+  () => !props.autosaveEnabled && !props.canSave && !props.saveLoading,
+)
+
+const showSaveTip = computed(
+  () => (props.autosaveEnabled && !props.saveLoading) || showSaveIdleTip.value,
+)
+
+const saveTipText = computed(() =>
+  props.autosaveEnabled ? t('write.autosaveToggle') : t('write.saveNoChanges'),
+)
+
+function toggleAutosave() {
+  emit('update:autosaveEnabled', !props.autosaveEnabled)
+}
+
 function requestDeleteProject(p: { id: string; name: string }, ev?: Event) {
   ev?.stopPropagation()
   dropdownOpen.value = false
@@ -76,6 +103,7 @@ function closeDeleteModal() {
 async function executeDelete() {
   const p = deleteTarget.value
   if (!p) return
+  await props.flushBeforeProjectChange?.()
   const full = projectStore.projects.find((x) => x.id === p.id)
   if (full?.draftId) {
     try {
@@ -101,7 +129,13 @@ watch(dropdownOpen, (open) => {
   // no-op (rename removed)
 })
 
-function selectProject(id: string) {
+async function selectProject(id: string) {
+  if (isActiveProject({ id })) {
+    dropdownOpen.value = false
+    projectSearch.value = ''
+    return
+  }
+  await props.flushBeforeProjectChange?.()
   projectStore.selectProject(id)
   dropdownOpen.value = false
   projectSearch.value = ''
@@ -123,9 +157,10 @@ function closeNewProjectModal() {
   newProjectNameDraft.value = ''
 }
 
-function confirmNewProject() {
+async function confirmNewProject() {
   const name = newProjectNameDraft.value.trim()
   if (!name) return
+  await props.flushBeforeProjectChange?.()
   projectStore.createProject(name)
   closeNewProjectModal()
 }
@@ -252,17 +287,22 @@ onUnmounted(() => {
         <div
           class="write-tools__save-wrap"
           :class="{
-            'write-tools__save-wrap--idle': !props.canSave && !props.saveLoading,
+            'write-tools__save-wrap--idle': showSaveIdleTip,
             'write-tools__save-wrap--busy': props.saveLoading,
+            'write-tools__save-wrap--autosave': props.autosaveEnabled && !props.saveLoading,
+            'write-tools__save-wrap--tip': showSaveTip,
           }"
         >
           <button
             type="button"
             class="ds-btn-secondary write-tools__btn write-tools__btn--save"
-            :class="{ 'write-tools__btn--save-idle': !props.canSave && !props.saveLoading }"
-            :disabled="!props.canSave || props.saveLoading"
+            :class="{
+              'write-tools__btn--save-idle': showSaveIdleTip || (props.autosaveEnabled && !props.saveLoading),
+              'write-tools__btn--save-autosave': props.autosaveEnabled,
+            }"
+            :disabled="saveButtonDisabled"
             :aria-busy="props.saveLoading"
-            :aria-describedby="!props.canSave && !props.saveLoading ? 'write-save-tip' : undefined"
+            :aria-describedby="showSaveTip ? 'write-save-tip' : undefined"
             @click="emit('save')"
           >
             <span
@@ -272,23 +312,49 @@ onUnmounted(() => {
             />
             <Icon
               v-else
-              icon="heroicons:document-arrow-down"
+              icon="ph:floppy-disk"
               class="write-tools__icon"
               aria-hidden="true"
             />
             {{ t('write.saveBtn') }}
           </button>
           <span
-            v-if="!props.canSave && !props.saveLoading"
+            v-if="showSaveTip"
             id="write-save-tip"
             class="write-tools__save-tip"
             role="tooltip"
           >
-            {{ t('write.saveNoChanges') }}
+            {{ saveTipText }}
           </span>
         </div>
+
+        <div class="write-tools__autosave-bulb-wrap">
+          <button
+            type="button"
+            class="write-tools__autosave-bulb"
+            :class="{ 'write-tools__autosave-bulb--on': props.autosaveEnabled }"
+            :aria-pressed="props.autosaveEnabled"
+            :aria-label="t('write.autosaveToggle')"
+            aria-describedby="write-autosave-tip"
+            @click="toggleAutosave"
+          >
+            <Icon
+              :icon="props.autosaveEnabled ? 'heroicons:light-bulb-solid' : 'heroicons:light-bulb'"
+              class="write-tools__autosave-bulb-icon"
+              aria-hidden="true"
+            />
+          </button>
+          <span
+            id="write-autosave-tip"
+            class="write-tools__autosave-tip"
+            role="tooltip"
+          >
+            {{ t('write.autosaveToggle') }}
+          </span>
+        </div>
+
         <button type="button" class="ds-btn-primary write-tools__btn" @click="emit('publish')">
-          <Icon icon="heroicons:arrow-up-tray" class="write-tools__icon" aria-hidden="true" />
+          <Icon icon="heroicons:paper-airplane" class="write-tools__icon" aria-hidden="true" />
           {{ t('write.publishBtn') }}
         </button>
       </div>

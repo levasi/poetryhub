@@ -46,6 +46,7 @@
     "loadingMoreResults": "Se încarcă…",
     "loadingWorkspace": "Se încarcă proiectul…",
     "saveBtn": "Salvează",
+    "autosaveToggle": "Salvează automat",
     "saveNoChanges": "Nicio modificare de salvat",
     "saveTitle": "Salvează în cont",
     "saveDesc": "Salvează această poezie ca draft în contul tău (doar tu o vezi). O poți publica mai târziu.",

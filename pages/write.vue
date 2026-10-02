@@ -410,6 +410,42 @@ const saveLoading = ref(false)
 const saveMsg = ref<{ ok: boolean; text: string } | null>(null)
 const saveToastVisible = ref(false)
 let saveToastTimer: ReturnType<typeof setTimeout> | null = null
+/** Apple Notes–style: quiet save after a short idle. */
+const AUTOSAVE_MS = 1200
+const AUTOSAVE_PREF_KEY = 'poetryhub-write-autosave'
+const autosaveEnabled = ref(true)
+let autosaveTimer: ReturnType<typeof setTimeout> | null = null
+let saveInFlight: Promise<void> | null = null
+
+function readAutosavePref(): boolean {
+  if (!import.meta.client) return true
+  try {
+    const raw = localStorage.getItem(AUTOSAVE_PREF_KEY)
+    if (raw === null) return true
+    return raw === '1'
+  } catch {
+    return true
+  }
+}
+
+function persistAutosavePref(on: boolean) {
+  if (!import.meta.client) return
+  try {
+    localStorage.setItem(AUTOSAVE_PREF_KEY, on ? '1' : '0')
+  } catch {
+    /* ignore */
+  }
+}
+
+function setAutosaveEnabled(on: boolean) {
+  autosaveEnabled.value = on
+  persistAutosavePref(on)
+  if (!on) {
+    clearAutosaveTimer()
+    return
+  }
+  if (hasUnsavedChanges.value) scheduleAutosave()
+}
 
 /** Snapshot of last loaded/saved editor state — save is enabled only when current differs. */
 function editorSnapshotKey(title: string, content: string, words: readonly string[]): string {
@@ -494,22 +530,60 @@ function closePublish() {
   publishOpen.value = false
 }
 
+function clearAutosaveTimer() {
+  if (autosaveTimer) {
+    clearTimeout(autosaveTimer)
+    autosaveTimer = null
+  }
+}
+
+function scheduleAutosave() {
+  if (!import.meta.client) return
+  if (!autosaveEnabled.value || !workspaceReady.value || !isLoggedIn.value) return
+  clearAutosaveTimer()
+  autosaveTimer = setTimeout(() => {
+    autosaveTimer = null
+    void runAutosave()
+  }, AUTOSAVE_MS)
+}
+
+async function runAutosave() {
+  if (!autosaveEnabled.value || !workspaceReady.value || !isLoggedIn.value) return
+  if (!hasUnsavedChanges.value) return
+  if (saveLoading.value || saveInFlight) {
+    scheduleAutosave()
+    return
+  }
+  await submitSave({ quiet: true })
+}
+
+/** Persist immediately (project switch, leave page, tab hide). */
+async function flushAutosave() {
+  clearAutosaveTimer()
+  if (saveInFlight) await saveInFlight
+  if (!autosaveEnabled.value || !workspaceReady.value || !isLoggedIn.value) return
+  if (!hasUnsavedChanges.value) return
+  await submitSave({ quiet: true })
+}
+
 async function saveNowDirect() {
   if (!canSave.value) return
   if (!isLoggedIn.value) {
     showSaveToast(false, t('write.loginRequired'))
     return
   }
+  clearAutosaveTimer()
   // Always reflect the latest editor state when saving.
   publishForm.title = lyrics.title || ''
   publishForm.authorName = user.value?.name ?? user.value?.email?.split('@')[0] ?? ''
-  await submitSave()
+  await submitSave({ quiet: false })
 }
 
 function onSaveKeydown(e: KeyboardEvent) {
   if (!(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== 's') return
-  if (!workspaceReady.value || !canSave.value) return
+  // Always block the browser "Save page" dialog on this page.
   e.preventDefault()
+  if (!workspaceReady.value || !canSave.value) return
   void saveNowDirect()
 }
 
@@ -659,25 +733,39 @@ function closePoetSwitch() {
   poetSwitchOpen.value = false
 }
 
-async function submitSave() {
+async function submitSave(opts?: { quiet?: boolean }) {
   if (!hasUnsavedChanges.value) return
-  saveLoading.value = true
-  try {
-    const wasNewDraft = !draftId.value
-    await saveDraftInternal()
-    captureSaveBaseline()
-    showSaveToast(true, t('write.savedDraft'))
-    maybeOpenPoetSwitchModal(wasNewDraft)
-    if (isLoggedIn.value) await projects.syncRemoteDrafts()
-  } catch (err: unknown) {
-    const msg =
-      err instanceof Error && err.message === 'missing author'
-        ? t('write.loginRequired')
-        : t('write.saveDraftError')
-    showSaveToast(false, msg)
-  } finally {
-    saveLoading.value = false
+  if (saveInFlight) {
+    await saveInFlight
+    if (!hasUnsavedChanges.value) return
   }
+  const quiet = opts?.quiet === true
+  saveLoading.value = true
+  const run = (async () => {
+    try {
+      const wasNewDraft = !draftId.value
+      await saveDraftInternal()
+      captureSaveBaseline()
+      if (!quiet) showSaveToast(true, t('write.savedDraft'))
+      maybeOpenPoetSwitchModal(wasNewDraft)
+      // Full list sync on manual save or first create; skip on quiet updates.
+      if (isLoggedIn.value && (!quiet || wasNewDraft)) {
+        await projects.syncRemoteDrafts()
+      }
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error && err.message === 'missing author'
+          ? t('write.loginRequired')
+          : t('write.saveDraftError')
+      showSaveToast(false, msg)
+    } finally {
+      saveLoading.value = false
+    }
+  })()
+  saveInFlight = run.finally(() => {
+    saveInFlight = null
+  })
+  await saveInFlight
 }
 
 async function loadDraftById(id: string) {
@@ -742,6 +830,7 @@ watch(
   () => projects.currentProjectId,
   async (id, prev) => {
     if (suppressProjectWatch || !id || id === prev) return
+    clearAutosaveTimer()
     const p = projects.currentProject
     if (!p?.draftId) {
       publishForm.title = p?.title ?? ''
@@ -758,6 +847,24 @@ watch(
     }
   },
 )
+
+/** Debounce quiet autosave while typing (restarts on every edit). */
+watch(
+  () => editorSnapshotKey(lyrics.title, lyrics.text, projects.activeSavedWords),
+  () => {
+    if (!workspaceReady.value || suppressProjectWatch) return
+    if (hasUnsavedChanges.value) scheduleAutosave()
+    else clearAutosaveTimer()
+  },
+)
+
+function onWriteVisibilityChange() {
+  if (document.visibilityState === 'hidden') void flushAutosave()
+}
+
+onBeforeRouteLeave(async () => {
+  await flushAutosave()
+})
 
 onMounted(async () => {
   suppressProjectWatch = true
@@ -792,6 +899,9 @@ onMounted(async () => {
   }
   const shouldRerunSearch = restoreSearchState()
   if (shouldRerunSearch) void runSearch()
+  if (import.meta.client) {
+    document.addEventListener('visibilitychange', onWriteVisibilityChange)
+  }
 })
 
 // ── Split panes (desktop) ───────────────────────────────────────────────────
@@ -877,6 +987,7 @@ function clampRightToContainer() {
 
 onMounted(() => {
   if (!import.meta.client) return
+  autosaveEnabled.value = readAutosavePref()
   try {
     const raw = localStorage.getItem(WRITE_RIGHT_WIDTH_KEY)
     if (raw) {
@@ -898,12 +1009,15 @@ onUnmounted(() => {
   writeBootLoading.value = false
   searchGeneration++
   document.removeEventListener('keydown', onSaveKeydown)
+  document.removeEventListener('visibilitychange', onWriteVisibilityChange)
   window.removeEventListener('resize', clampRightToContainer)
   document.removeEventListener('mousemove', onSplitResizeMove)
   document.removeEventListener('mouseup', endSplitResize)
   document.body.style.removeProperty('cursor')
   document.body.style.removeProperty('user-select')
+  clearAutosaveTimer()
   if (saveToastTimer) clearTimeout(saveToastTimer)
+  void flushAutosave()
 })
 </script>
 
@@ -927,8 +1041,11 @@ onUnmounted(() => {
     <WriteToolsBar
       :save-loading="saveLoading"
       :can-save="canSave"
+      :autosave-enabled="autosaveEnabled"
+      :flush-before-project-change="flushAutosave"
       @save="saveNowDirect"
       @publish="openPublish"
+      @update:autosave-enabled="setAutosaveEnabled"
     />
 
     <Teleport to="body">
