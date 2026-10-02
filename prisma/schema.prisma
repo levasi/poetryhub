@@ -174,6 +174,8 @@ model UserPoemDraft {
   authorName String
   language   String   @default("ro")
   content    String   @db.Text
+  // Lexicon words pinned on the Write page for this draft.
+  savedWords Json     @default("[]")
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 

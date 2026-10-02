@@ -84,6 +84,11 @@
   }
 }
 
+.write-tools__spinner {
+  width: 1rem;
+  height: 1rem;
+}
+
 .write-tools__trigger-text {
   min-width: 0;
   flex: 1 1 0%;
@@ -108,18 +113,6 @@
   text-transform: uppercase;
   letter-spacing: 0.025em;
   color: ph-rgb(content-soft);
-}
-
-.write-tools__trigger-chevron {
-  width: 1.25rem;
-  height: 1.25rem;
-  flex-shrink: 0;
-  color: ph-rgb(content-soft);
-  transition: transform 0.2s ease;
-
-  &--open {
-    transform: rotate(180deg);
-  }
 }
 
 .write-tools-dropdown-enter-active {
@@ -416,18 +409,9 @@
   }
 }
 
-.write-tools__status {
-  display: none;
-  max-width: 12rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 0.8125rem;
-  color: ph-rgb(content-muted);
-
-  @media (min-width: 640px) {
-    display: block;
-  }
+.write-tools__save-wrap {
+  position: relative;
+  display: inline-flex;
 }
 
 .write-tools__btn {
@@ -435,6 +419,73 @@
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
   box-shadow: var(--shadow-ds-card);
+
+  &--save-idle {
+    cursor: default;
+    opacity: 1;
+    border-color: ph-rgb(edge-subtle);
+    background-color: ph-rgb(surface-subtle);
+    color: ph-rgb(content-muted);
+    box-shadow: none;
+
+    .write-tools__icon {
+      color: ph-rgb(content-soft);
+    }
+
+    &:disabled {
+      cursor: default;
+      opacity: 1;
+    }
+
+    &:hover:disabled,
+    &:focus-visible:disabled {
+      border-color: ph-rgb(edge);
+      background-color: ph-rgb(surface-subtle);
+      color: ph-rgb(content-muted);
+    }
+  }
+}
+
+.write-tools__save-tip {
+  pointer-events: none;
+  position: absolute;
+  z-index: 40;
+  bottom: calc(100% + 0.5rem);
+  left: 50%;
+  width: max-content;
+  max-width: 14rem;
+  transform: translateX(-50%) translateY(0.25rem);
+  border-radius: $ph-radius-md;
+  border: 1px solid ph-rgb(edge-subtle);
+  background-color: ph-rgb(surface-overlay);
+  padding: 0.375rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.25;
+  color: ph-rgb(content-secondary);
+  opacity: 0;
+  box-shadow: var(--shadow-ds-popover);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    border: 5px solid transparent;
+    border-top-color: ph-rgb(surface-overlay);
+    transform: translateX(-50%);
+  }
+
+  .write-tools__save-wrap--idle:hover &,
+  .write-tools__save-wrap--idle:focus-within & {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 }
 
 .write-tools__modal {

@@ -44,7 +44,9 @@
     "insertDiacritic": "Insert {char}",
     "loadMoreResults": "Load more",
     "loadingMoreResults": "Loading…",
+    "loadingWorkspace": "Loading your project…",
     "saveBtn": "Save",
+    "saveNoChanges": "No changes to save",
     "saveTitle": "Save to your account",
     "saveDesc": "Saves this poem draft to your account (only you can see it). You can publish later.",
     "savingDraft": "Saving…",
@@ -240,7 +242,6 @@
   "footer": {
     "quote": "\"Poetry is the spontaneous overflow of powerful feelings\" — Wordsworth",
     "emailCta": "Email us",
-    "docs": "Documentation",
     "copyright": "© {year} PoetryHub"
   },
   "home": {

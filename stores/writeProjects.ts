@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 
-const STORAGE_KEY = 'poetryhub-write-projects-v1'
-const DEFAULT_ID = 'project-default'
+/** Remembers only which project/draft was active — not full project payloads. */
+const ACTIVE_KEY = 'poetryhub-write-active-v1'
 
 export interface WriteProject {
   id: string
@@ -9,7 +9,7 @@ export interface WriteProject {
   title: string
   lyrics: string
   savedWords: string[]
-  /** Linked `UserPoemDraft` id when saved to the account; null = local-only. */
+  /** Linked `UserPoemDraft` id when saved to the account; null = session-only. */
   draftId: string | null
 }
 
@@ -19,6 +19,17 @@ export type RemoteDraftSummary = {
   updatedAt?: string
 }
 
+type ScratchBuffer = {
+  title: string
+  lyrics: string
+  savedWords: string[]
+}
+
+type ActivePreference = {
+  token: string
+  name: string
+}
+
 function newId(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID()
@@ -26,46 +37,11 @@ function newId(): string {
   return `p-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
 }
 
-function normalizeProjectName(name: string): string {
-  return name.trim() === 'Proiect nou' ? 'Proiect' : name
-}
-
-function ensureUniqueProjectIds(list: WriteProject[]): WriteProject[] {
-  const seen = new Set<string>()
-  const out: WriteProject[] = []
-  for (const p of list) {
-    let id = typeof p.id === 'string' && p.id.length > 0 ? p.id : newId()
-    if (seen.has(id)) {
-      id = newId()
-      while (seen.has(id)) id = newId()
-    }
-    seen.add(id)
-    out.push({ ...p, id })
-  }
-  return out
-}
-
-function normalizeProjectsList(list: WriteProject[]): WriteProject[] {
-  const mapped = list.map((p) => ({
-    ...p,
-    name: normalizeProjectName(typeof p.name === 'string' ? p.name : 'Proiect'),
-    title: typeof p.title === 'string' ? p.title : '',
-    lyrics: typeof p.lyrics === 'string' ? p.lyrics : '',
-    savedWords: Array.isArray(p.savedWords)
-      ? p.savedWords.filter((x): x is string => typeof x === 'string')
-      : [],
-    draftId:
-      typeof (p as WriteProject).draftId === 'string' && (p as WriteProject).draftId
-        ? (p as WriteProject).draftId
-        : null,
-  }))
-  return ensureUniqueProjectIds(mapped)
-}
-
-function defaultProject(): WriteProject {
+function blankSessionProject(name: string): WriteProject {
+  const base = name.trim() || 'Proiect'
   return {
-    id: DEFAULT_ID,
-    name: 'Proiect',
+    id: newId(),
+    name: base,
     title: '',
     lyrics: '',
     savedWords: [],
@@ -73,77 +49,196 @@ function defaultProject(): WriteProject {
   }
 }
 
-function loadLocal(): { projects: WriteProject[]; currentProjectId: string | null } {
-  if (!import.meta.client) {
-    return { projects: [defaultProject()], currentProjectId: DEFAULT_ID }
-  }
+function emptyScratch(): ScratchBuffer {
+  return { title: '', lyrics: '', savedWords: [] }
+}
+
+function readActivePreference(): ActivePreference | null {
+  if (!import.meta.client) return null
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) {
-      const data = JSON.parse(raw) as {
-        projects?: WriteProject[]
-        currentProjectId?: string | null
-      }
-      if (Array.isArray(data.projects) && data.projects.length > 0) {
-        const normalized = normalizeProjectsList(data.projects)
-        const cid =
-          data.currentProjectId && normalized.some((p) => p.id === data.currentProjectId)
-            ? data.currentProjectId
-            : normalized[0]!.id
-        return { projects: normalized, currentProjectId: cid }
-      }
+    const raw = localStorage.getItem(ACTIVE_KEY)
+    if (!raw || !raw.trim()) return null
+    const trimmed = raw.trim()
+    if (trimmed === 'project-default') return null
+    // Legacy: plain token string
+    if (!trimmed.startsWith('{')) {
+      return { token: trimmed, name: '' }
     }
+    const parsed = JSON.parse(trimmed) as { token?: unknown; name?: unknown }
+    const token = typeof parsed.token === 'string' ? parsed.token.trim() : ''
+    if (!token || token === 'project-default') return null
+    const name = typeof parsed.name === 'string' ? parsed.name.trim() : ''
+    return { token, name }
+  } catch {
+    return null
+  }
+}
+
+function writeActivePreference(token: string, name: string) {
+  if (!import.meta.client) return
+  try {
+    localStorage.setItem(ACTIVE_KEY, JSON.stringify({ token, name }))
   } catch {
     /* ignore */
   }
-  return { projects: [defaultProject()], currentProjectId: DEFAULT_ID }
+}
+
+function clearActivePreferenceStorage() {
+  if (!import.meta.client) return
+  try {
+    localStorage.removeItem(ACTIVE_KEY)
+  } catch {
+    /* ignore */
+  }
 }
 
 export const useWriteProjectsStore = defineStore('writeProjects', () => {
+  /** Listed projects: only user-created or remotely saved drafts. */
   const projects = ref<WriteProject[]>([])
   const currentProjectId = ref<string | null>(null)
   const remoteSyncing = ref(false)
+  /** Editor buffer when no listed project is selected. Never shown in the dropdown. */
+  const scratch = reactive<ScratchBuffer>(emptyScratch())
+  /**
+   * Last known active project label/token from localStorage.
+   * Used so the toolbar shows the working project immediately on refresh
+   * before remote drafts finish loading.
+   */
+  const lastActiveToken = ref<string | null>(null)
+  const lastActiveName = ref<string | null>(null)
+
+  // Client: restore label immediately so refresh does not flash "Fără proiect".
+  if (import.meta.client) {
+    const pref = readActivePreference()
+    if (pref) {
+      lastActiveToken.value = pref.token
+      if (pref.name) lastActiveName.value = pref.name
+    }
+  }
 
   const currentProject = computed(() =>
     projects.value.find((p) => p.id === currentProjectId.value) ?? null,
   )
 
-  function saveLocal() {
-    if (!import.meta.client) return
-    try {
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({
-          projects: projects.value,
-          currentProjectId: currentProjectId.value,
-        }),
-      )
-    } catch {
-      /* ignore */
-    }
+  const displayProjectName = computed(() =>
+    currentProject.value?.name
+    || lastActiveName.value
+    || null,
+  )
+
+  function clearScratch() {
+    scratch.title = ''
+    scratch.lyrics = ''
+    scratch.savedWords = []
   }
 
-  function hydrateLocalOnly() {
-    const { projects: p, currentProjectId: cid } = loadLocal()
-    projects.value = p
-    currentProjectId.value = cid
+  function clearActivePreference() {
+    lastActiveToken.value = null
+    lastActiveName.value = null
+    clearActivePreferenceStorage()
+  }
+
+  function rememberActiveProject() {
+    const p = currentProject.value
+    // Do not wipe persistence while bootstrapping (current is briefly null).
+    if (!p) return
+    const token = p.draftId || p.id
+    lastActiveToken.value = token
+    lastActiveName.value = p.name
+    writeActivePreference(token, p.name)
+  }
+
+  function findProjectByToken(token: string | null | undefined): WriteProject | null {
+    if (!token) return null
+    return (
+      projects.value.find((p) => p.draftId === token || p.id === token) ?? null
+    )
+  }
+
+  function hydrateActivePreferenceFromStorage() {
+    const pref = readActivePreference()
+    if (!pref) return
+    lastActiveToken.value = pref.token
+    if (pref.name) lastActiveName.value = pref.name
+  }
+
+  /** Select a remembered / preferred project if it still exists in the list. */
+  function restoreActivePreference(preferredToken?: string | null): boolean {
+    const fromArg = preferredToken?.trim() || ''
+    const token = fromArg || lastActiveToken.value || readActivePreference()?.token || null
+    const match = findProjectByToken(token)
+    if (!match) return false
+    currentProjectId.value = match.id
+    clearScratch()
+    rememberActiveProject()
+    return true
   }
 
   let initialized = false
+  let stopActiveWatch: (() => void) | null = null
 
+  /** Idempotent client ready hook. */
   async function init() {
     if (!import.meta.client || initialized) return
     initialized = true
-    hydrateLocalOnly()
-    watch([projects, currentProjectId], () => saveLocal(), { deep: true })
+    // Drop legacy full-project local cache from older builds.
+    try {
+      localStorage.removeItem('poetryhub-write-projects-v1')
+    } catch {
+      /* ignore */
+    }
+    hydrateActivePreferenceFromStorage()
+    stopActiveWatch?.()
+    stopActiveWatch = watch(
+      currentProjectId,
+      () => {
+        rememberActiveProject()
+      },
+      { flush: 'post' },
+    )
+  }
+
+  /**
+   * Promote the scratch buffer into a listed project (save / first draft link).
+   * No-op when a project is already selected.
+   */
+  function ensureListedProject(fallbackName = 'Proiect'): WriteProject {
+    const existing = currentProject.value
+    if (existing) return existing
+
+    const titleTrim = scratch.title.trim()
+    const name = titleTrim || fallbackName.trim() || 'Proiect'
+    const p = blankSessionProject(name)
+    p.title = scratch.title
+    p.name = name
+    p.lyrics = scratch.lyrics
+    p.savedWords = [...scratch.savedWords]
+    clearScratch()
+    projects.value.unshift(p)
+    currentProjectId.value = p.id
+    rememberActiveProject()
+    return p
+  }
+
+  function selectFirstAvailableProject() {
+    const first = projects.value[0]
+    if (!first) {
+      currentProjectId.value = null
+      return false
+    }
+    currentProjectId.value = first.id
+    clearScratch()
+    rememberActiveProject()
+    return true
   }
 
   /**
    * Merge account drafts into the dropdown so every saved draft appears.
-   * Keeps unsaved local projects and preserves per-project savedWords.
+   * Keeps unsaved session projects the user explicitly created; never invents a default.
    */
-  async function syncRemoteDrafts(): Promise<void> {
+  async function syncRemoteDrafts(preferredToken?: string | null): Promise<void> {
     if (!import.meta.client) return
+    await init()
     remoteSyncing.value = true
     try {
       const res = await $fetch<{ data: RemoteDraftSummary[] }>('/api/user/drafts', {
@@ -179,41 +274,57 @@ export const useWriteProjectsStore = defineStore('writeProjects', () => {
         }
       })
 
-      // Prefer remote list order (updatedAt desc from API); keep unsaved locals on top.
-      const next = [...unsavedLocals, ...fromRemote]
-      projects.value = next.length > 0 ? next : [defaultProject()]
+      // Prefer remote list order (updatedAt desc from API); keep real unsaved locals on top.
+      projects.value = [...unsavedLocals, ...fromRemote]
 
-      if (
-        !currentProjectId.value
-        || !projects.value.some((p) => p.id === currentProjectId.value)
-      ) {
-        currentProjectId.value = projects.value[0]!.id
+      if (!restoreActivePreference(preferredToken)) {
+        if (projects.value.length === 0) {
+          currentProjectId.value = null
+          // Keep lastActive* so a transient empty sync does not blank the toolbar;
+          // only clear when we know there is nothing to restore.
+          if (!lastActiveToken.value) clearActivePreference()
+        } else if (
+          !currentProjectId.value
+          || !projects.value.some((p) => p.id === currentProjectId.value)
+        ) {
+          selectFirstAvailableProject()
+        }
       }
     } catch {
-      /* not logged in / network — keep local list */
+      /* not logged in / network — keep in-memory list */
     } finally {
       remoteSyncing.value = false
     }
   }
 
-  /** For toolbar „Salvează”: persistă explicit (datele se salvează și la fiecare modificare). */
   async function saveNow(): Promise<{ ok: boolean }> {
-    saveLocal()
     return { ok: true }
   }
 
   function createProject(name: string) {
-    const base = name.trim() || 'Proiect'
-    const p: WriteProject = {
-      id: newId(),
-      draftId: null,
-      name: base,
-      title: base,
-      lyrics: '',
-      savedWords: [],
+    const label = name.trim() || 'Proiect'
+    const p = blankSessionProject(label)
+    // Adopt scratch when creating from an unlisted editor session.
+    if (!currentProject.value) {
+      p.lyrics = scratch.lyrics
+      p.savedWords = [...scratch.savedWords]
+      const titleTrim = scratch.title.trim()
+      p.title = titleTrim || label
+      p.name = titleTrim || label
+      clearScratch()
+    } else {
+      p.title = label
     }
     projects.value.unshift(p)
     currentProjectId.value = p.id
+    rememberActiveProject()
+  }
+
+  function selectProject(id: string) {
+    if (!projects.value.some((p) => p.id === id)) return
+    currentProjectId.value = id
+    clearScratch()
+    rememberActiveProject()
   }
 
   function deleteProject(id: string) {
@@ -221,12 +332,16 @@ export const useWriteProjectsStore = defineStore('writeProjects', () => {
     if (idx === -1) return
     projects.value.splice(idx, 1)
     if (projects.value.length === 0) {
-      createProject('Proiect')
+      currentProjectId.value = null
+      clearScratch()
+      clearActivePreference()
       return
     }
-    if (currentProjectId.value === id) {
-      currentProjectId.value = projects.value[Math.max(0, idx - 1)]!.id
+    if (currentProjectId.value === id || !projects.value.some((p) => p.id === currentProjectId.value)) {
+      currentProjectId.value = projects.value[Math.max(0, Math.min(idx, projects.value.length - 1))]!.id
+      clearScratch()
     }
+    rememberActiveProject()
   }
 
   function renameProject(id: string, name: string) {
@@ -235,8 +350,7 @@ export const useWriteProjectsStore = defineStore('writeProjects', () => {
   }
 
   function linkCurrentDraft(draftId: string) {
-    const p = currentProject.value
-    if (!p) return
+    const p = ensureListedProject()
     p.draftId = draftId
     // Prefer draft id as stable project id once synced.
     if (p.id !== draftId) {
@@ -245,74 +359,111 @@ export const useWriteProjectsStore = defineStore('writeProjects', () => {
       if (currentProjectId.value === oldId) currentProjectId.value = draftId
     }
     p.name = (p.title || '').trim() || p.name || 'Proiect'
+    rememberActiveProject()
   }
 
   function setLyrics(text: string) {
     const p = currentProject.value
-    if (!p) return
-    p.lyrics = text
+    if (p) p.lyrics = text
+    else scratch.lyrics = text
   }
 
   function setTitle(title: string) {
-    const p = currentProject.value
-    if (!p) return
     const next = title
-    p.title = next
-    const nextTitleTrim = (next || '').trim()
-    // Rename UI was removed; keep the project label identical to the poem title.
-    p.name = nextTitleTrim || 'Proiect'
+    const p = currentProject.value
+    if (p) {
+      p.title = next
+      const nextTitleTrim = (next || '').trim()
+      p.name = nextTitleTrim || p.name || 'Proiect'
+      rememberActiveProject()
+    } else {
+      scratch.title = next
+    }
   }
 
   function appendToLyrics(word: string) {
     const p = currentProject.value
-    if (!p) return
-    const sep = p.lyrics && !p.lyrics.endsWith('\n') ? ' ' : ''
-    p.lyrics = `${p.lyrics}${sep}${word}`
+    if (p) {
+      const sep = p.lyrics && !p.lyrics.endsWith('\n') ? ' ' : ''
+      p.lyrics = `${p.lyrics}${sep}${word}`
+      return
+    }
+    const sep = scratch.lyrics && !scratch.lyrics.endsWith('\n') ? ' ' : ''
+    scratch.lyrics = `${scratch.lyrics}${sep}${word}`
   }
 
   function clearLyrics() {
     const p = currentProject.value
-    if (!p) return
-    p.lyrics = ''
+    if (p) p.lyrics = ''
+    else scratch.lyrics = ''
   }
 
   function addSavedWord(word: string) {
-    const p = currentProject.value
-    if (!p) return
     const w = word.trim()
     if (!w) return
     const low = w.toLowerCase()
-    if (p.savedWords.some((s) => s.toLowerCase() === low)) return
-    p.savedWords.push(w)
+    const list = currentProject.value?.savedWords ?? scratch.savedWords
+    if (list.some((s) => s.toLowerCase() === low)) return
+    list.push(w)
   }
 
   function removeSavedWord(word: string) {
-    const p = currentProject.value
-    if (!p) return
     const low = word.toLowerCase()
-    p.savedWords = p.savedWords.filter((s) => s.toLowerCase() !== low)
+    const p = currentProject.value
+    if (p) {
+      p.savedWords = p.savedWords.filter((s) => s.toLowerCase() !== low)
+      return
+    }
+    scratch.savedWords = scratch.savedWords.filter((s) => s.toLowerCase() !== low)
+  }
+
+  function setSavedWords(words: string[]) {
+    const cleaned: string[] = []
+    const seen = new Set<string>()
+    for (const raw of words) {
+      const w = (raw || '').trim()
+      if (!w) continue
+      const low = w.toLowerCase()
+      if (seen.has(low)) continue
+      seen.add(low)
+      cleaned.push(w)
+    }
+    const p = currentProject.value
+    if (p) p.savedWords = cleaned
+    else scratch.savedWords = cleaned
   }
 
   function isWordSaved(word: string): boolean {
-    const p = currentProject.value
-    if (!p) return false
     const low = word.trim().toLowerCase()
-    return p.savedWords.some((s) => s.toLowerCase() === low)
+    const list = currentProject.value?.savedWords ?? scratch.savedWords
+    return list.some((s) => s.toLowerCase() === low)
   }
 
-  if (!import.meta.client) {
-    projects.value = [defaultProject()]
-    currentProjectId.value = DEFAULT_ID
-  }
+  const activeSavedWords = computed(() =>
+    currentProject.value?.savedWords ?? scratch.savedWords,
+  )
+
+  /** Title/lyrics for the editor — listed project or unlisted scratch. */
+  const editorTitle = computed(() => currentProject.value?.title ?? scratch.title)
+  const editorLyrics = computed(() => currentProject.value?.lyrics ?? scratch.lyrics)
 
   return {
     projects,
     currentProjectId,
     currentProject,
     remoteSyncing,
+    activeSavedWords,
+    editorTitle,
+    editorLyrics,
+    lastActiveToken,
+    lastActiveName,
+    displayProjectName,
     init,
     syncRemoteDrafts,
+    restoreActivePreference,
+    ensureListedProject,
     createProject,
+    selectProject,
     deleteProject,
     renameProject,
     linkCurrentDraft,
@@ -322,7 +473,9 @@ export const useWriteProjectsStore = defineStore('writeProjects', () => {
     clearLyrics,
     addSavedWord,
     removeSavedWord,
+    setSavedWords,
     isWordSaved,
     saveNow,
+    clearActivePreference,
   }
 })

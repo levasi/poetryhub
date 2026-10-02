@@ -456,18 +456,101 @@
   margin-top: 0.75rem;
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 0.375rem;
 }
 
 .write-editor__saved-chip {
   display: inline-flex;
+  box-sizing: border-box;
+  height: 1.5rem;
   align-items: center;
   gap: 0.25rem;
-  border-radius: 9999px;
+  border-radius: $ph-radius-sm;
+  border: 1px solid transparent;
   background-color: ph-rgb(surface-subtle);
-  padding: 0.125rem 0.5rem;
+  padding: 0 0.5rem;
   font-size: 0.75rem;
+  line-height: 1;
   color: ph-rgb(content-secondary);
+}
+
+.write-editor__saved-add {
+  display: inline-flex;
+  align-items: center;
+  height: 1.5rem;
+}
+
+.write-editor__saved-add-btn {
+  display: inline-flex;
+  box-sizing: border-box;
+  height: 1.5rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: $ph-radius-sm;
+  border: 1px solid ph-rgb(edge-subtle);
+  background-color: ph-rgb(surface-subtle);
+  font-size: 0.75rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  line-height: 1;
+  color: ph-rgb(content-secondary);
+  transition: border-color 0.15s ease, color 0.15s ease;
+
+  &:hover,
+  &[aria-expanded='true'] {
+    border-color: ph-rgb(brand);
+    color: ph-rgb(content);
+  }
+}
+
+.write-editor__saved-add-icon {
+  height: 0.875rem;
+  width: 0.875rem;
+}
+
+.write-editor__saved-form {
+  position: fixed;
+  z-index: 90;
+  display: flex;
+  gap: 0.5rem;
+  border-radius: $ph-radius-sm;
+  border: 1px solid ph-rgb(edge-subtle);
+  background-color: ph-rgb(surface-raised);
+  padding: 0.5rem;
+  box-shadow: var(--shadow-ds-popover);
+}
+
+.write-editor__saved-input {
+  min-width: 0;
+  flex: 1 1 auto;
+  border-radius: $ph-radius-sm;
+  border: 1px solid ph-rgb(edge-subtle);
+  background-color: ph-rgb(surface-subtle);
+  padding: 0.375rem 0.625rem;
+  font-size: 0.8125rem;
+  color: ph-rgb(content);
+
+  &:focus {
+    outline: none;
+    border-color: ph-rgb(brand);
+  }
+}
+
+.write-editor__saved-submit {
+  flex-shrink: 0;
+  border-radius: $ph-radius-sm;
+  border: 1px solid ph-rgb(brand);
+  background-color: rgb(var(--color-brand-soft) / 0.35);
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: ph-rgb(content);
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
 }
 
 .write-editor__saved-remove {
@@ -479,10 +562,4 @@
     background-color: ph-rgb(surface-subtle);
     color: ph-rgb(content);
   }
-}
-
-.write-editor__saved-empty {
-  margin-top: 0.75rem;
-  font-size: 0.75rem;
-  color: ph-rgb(content-muted);
 }

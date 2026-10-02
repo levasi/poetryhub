@@ -4,11 +4,10 @@ import { storeToRefs } from 'pinia'
 
 const props = withDefaults(
   defineProps<{
-    /** Short status line shown next to actions (e.g. draft saved). */
-    draftStatus?: string | null
     saveLoading?: boolean
+    canSave?: boolean
   }>(),
-  { draftStatus: null, saveLoading: false },
+  { saveLoading: false, canSave: false },
 )
 
 const emit = defineEmits<{ save: []; publish: [] }>()
@@ -16,7 +15,6 @@ const emit = defineEmits<{ save: []; publish: [] }>()
 const { t } = useI18n()
 const icons = {
   folder: 'heroicons:folder',
-  chevronDown: 'heroicons:chevron-down',
   plus: 'heroicons:plus',
   magnifyingGlass: 'heroicons:magnifying-glass',
   check: 'heroicons:check',
@@ -46,8 +44,14 @@ const filteredProjects = computed(() => {
 })
 
 const triggerLabel = computed(() => {
-  return projectStore.currentProject?.name ?? 'Proiect'
+  return projectStore.displayProjectName ?? 'Proiect'
 })
+
+const triggerMeta = computed(() => {
+  return projectStore.displayProjectName ? 'Proiect activ' : 'Niciun proiect selectat'
+})
+
+const hasAnyProjects = computed(() => projectList.value.length > 0)
 
 function isActiveProject(p: { id: string }) {
   const cid = projectStore.currentProjectId
@@ -98,7 +102,7 @@ watch(dropdownOpen, (open) => {
 })
 
 function selectProject(id: string) {
-  projectStore.currentProjectId = id
+  projectStore.selectProject(id)
   dropdownOpen.value = false
   projectSearch.value = ''
 }
@@ -177,35 +181,19 @@ onUnmounted(() => {
   <div class="write-tools" aria-label="Instrumente">
     <div class="write-tools__row">
       <div ref="rootRef" class="write-tools__project">
-        <button
-          type="button"
-          class="write-tools__trigger"
-          :aria-expanded="dropdownOpen"
-          aria-haspopup="listbox"
-          @click.stop="toggleDropdown"
-        >
+        <button type="button" class="write-tools__trigger" :aria-expanded="dropdownOpen" aria-haspopup="listbox"
+          @click.stop="toggleDropdown">
           <span class="write-tools__trigger-icon-wrap" aria-hidden="true">
             <Icon :icon="icons.folder" class="write-tools__icon" />
           </span>
           <span class="write-tools__trigger-text">
             <span class="write-tools__trigger-name">{{ triggerLabel }}</span>
-            <span class="write-tools__trigger-meta">Proiect activ</span>
+            <span class="write-tools__trigger-meta">{{ triggerMeta }}</span>
           </span>
-          <Icon
-            :icon="icons.chevronDown"
-            class="write-tools__trigger-chevron"
-            :class="{ 'write-tools__trigger-chevron--open': dropdownOpen }"
-            aria-hidden="true"
-          />
         </button>
 
         <Transition name="write-tools-dropdown">
-          <div
-            v-show="dropdownOpen"
-            class="write-tools__dropdown"
-            role="listbox"
-            @click.stop
-          >
+          <div v-show="dropdownOpen" class="write-tools__dropdown" role="listbox" @click.stop>
             <div class="write-tools__dropdown-head">
               <button type="button" class="write-tools__new-btn" @click="openNewProjectModal">
                 <Icon :icon="icons.plus" class="write-tools__new-icon" aria-hidden="true" />
@@ -220,61 +208,40 @@ onUnmounted(() => {
                   <Icon :icon="icons.magnifyingGlass" class="write-tools__icon" />
                 </span>
                 <label class="sr-only">Caută proiecte</label>
-                <input
-                  v-model="projectSearch"
-                  type="search"
-                  placeholder="Filtră după nume…"
-                  autocomplete="off"
-                  class="write-tools__search-input"
-                  @keydown.escape="dropdownOpen = false"
-                />
+                <input v-model="projectSearch" type="search" placeholder="Filtră după nume…" autocomplete="off"
+                  class="write-tools__search-input" @keydown.escape="dropdownOpen = false" />
               </div>
             </div>
 
             <ul class="write-tools__list" aria-label="Lista proiectelor">
               <li v-for="p in filteredProjects" :key="p.id" class="write-tools__item">
-                <div
-                  class="write-tools__item-row"
-                  :class="{ 'write-tools__item-row--active': isActiveProject(p) }"
-                >
-                  <button
-                    type="button"
-                    class="write-tools__item-btn"
-                    :class="{ 'write-tools__item-btn--active': isActiveProject(p) }"
-                    role="option"
-                    :aria-selected="isActiveProject(p)"
-                    @click="selectProject(p.id)"
-                  >
-                    <span
-                      v-if="isActiveProject(p)"
-                      class="write-tools__item-check"
-                      aria-hidden="true"
-                    >
+                <div class="write-tools__item-row" :class="{ 'write-tools__item-row--active': isActiveProject(p) }">
+                  <button type="button" class="write-tools__item-btn"
+                    :class="{ 'write-tools__item-btn--active': isActiveProject(p) }" role="option"
+                    :aria-selected="isActiveProject(p)" @click="selectProject(p.id)">
+                    <span v-if="isActiveProject(p)" class="write-tools__item-check" aria-hidden="true">
                       <Icon :icon="icons.check" class="write-tools__icon write-tools__icon--sm" />
                     </span>
-                    <span
-                      v-else
-                      class="write-tools__item-check-empty"
-                      aria-hidden="true"
-                    />
+                    <span v-else class="write-tools__item-check-empty" aria-hidden="true" />
                     <span class="write-tools__item-name">{{ p.name }}</span>
                   </button>
                   <div class="write-tools__item-actions">
-                    <button
-                      type="button"
-                      class="write-tools__item-delete"
-                      title="Șterge proiectul"
-                      aria-label="Șterge proiectul"
-                      @click="requestDeleteProject(p, $event)"
-                    >
+                    <button type="button" class="write-tools__item-delete" title="Șterge proiectul"
+                      aria-label="Șterge proiectul" @click="requestDeleteProject(p, $event)">
                       <Icon :icon="icons.trash" class="write-tools__icon" aria-hidden="true" />
                     </button>
                   </div>
                 </div>
               </li>
               <li v-if="!filteredProjects.length" class="write-tools__empty">
-                <p class="write-tools__empty-title">Niciun rezultat</p>
-                <p class="write-tools__empty-hint">Încearcă alt termen de căutare.</p>
+                <template v-if="!hasAnyProjects">
+                  <p class="write-tools__empty-title">Niciun proiect încă</p>
+                  <p class="write-tools__empty-hint">Salvează ciorna sau creează un proiect nou.</p>
+                </template>
+                <template v-else>
+                  <p class="write-tools__empty-title">Niciun rezultat</p>
+                  <p class="write-tools__empty-hint">Încearcă alt termen de căutare.</p>
+                </template>
               </li>
             </ul>
           </div>
@@ -282,28 +249,45 @@ onUnmounted(() => {
       </div>
 
       <div class="write-tools__actions">
-        <p
-          v-if="props.draftStatus"
-          class="write-tools__status"
-          role="status"
-          aria-live="polite"
+        <div
+          class="write-tools__save-wrap"
+          :class="{
+            'write-tools__save-wrap--idle': !props.canSave && !props.saveLoading,
+            'write-tools__save-wrap--busy': props.saveLoading,
+          }"
         >
-          {{ props.draftStatus }}
-        </p>
-        <button
-          type="button"
-          class="ds-btn-secondary write-tools__btn"
-          :disabled="props.saveLoading"
-          @click="emit('save')"
-        >
-          <Icon icon="heroicons:document-arrow-down" class="write-tools__icon" aria-hidden="true" />
-          {{ props.saveLoading ? t('write.savingDraft') : t('write.saveBtn') }}
-        </button>
-        <button
-          type="button"
-          class="ds-btn-primary write-tools__btn"
-          @click="emit('publish')"
-        >
+          <button
+            type="button"
+            class="ds-btn-secondary write-tools__btn write-tools__btn--save"
+            :class="{ 'write-tools__btn--save-idle': !props.canSave && !props.saveLoading }"
+            :disabled="!props.canSave || props.saveLoading"
+            :aria-busy="props.saveLoading"
+            :aria-describedby="!props.canSave && !props.saveLoading ? 'write-save-tip' : undefined"
+            @click="emit('save')"
+          >
+            <span
+              v-if="props.saveLoading"
+              class="ph-spinner write-tools__spinner"
+              aria-hidden="true"
+            />
+            <Icon
+              v-else
+              icon="heroicons:document-arrow-down"
+              class="write-tools__icon"
+              aria-hidden="true"
+            />
+            {{ t('write.saveBtn') }}
+          </button>
+          <span
+            v-if="!props.canSave && !props.saveLoading"
+            id="write-save-tip"
+            class="write-tools__save-tip"
+            role="tooltip"
+          >
+            {{ t('write.saveNoChanges') }}
+          </span>
+        </div>
+        <button type="button" class="ds-btn-primary write-tools__btn" @click="emit('publish')">
           <Icon icon="heroicons:arrow-up-tray" class="write-tools__icon" aria-hidden="true" />
           {{ t('write.publishBtn') }}
         </button>
@@ -312,19 +296,10 @@ onUnmounted(() => {
   </div>
 
   <Teleport to="body">
-    <div
-      v-if="deleteModalOpen && deleteTarget"
-      class="write-tools__modal write-tools__modal--alert"
-    >
+    <div v-if="deleteModalOpen && deleteTarget" class="write-tools__modal write-tools__modal--alert">
       <div class="write-tools__modal-backdrop" aria-hidden="true" @click="closeDeleteModal" />
-      <div
-        role="alertdialog"
-        aria-modal="true"
-        aria-labelledby="delete-project-title"
-        aria-describedby="delete-project-desc"
-        class="write-tools__modal-panel"
-        @click.stop
-      >
+      <div role="alertdialog" aria-modal="true" aria-labelledby="delete-project-title"
+        aria-describedby="delete-project-desc" class="write-tools__modal-panel" @click.stop>
         <h2 id="delete-project-title" class="write-tools__modal-title">Ștergi proiectul?</h2>
         <p id="delete-project-desc" class="write-tools__modal-desc">
           Proiectul <span class="write-tools__modal-strong">„{{ deleteTarget.name }}”</span> va fi șters definitiv
@@ -343,36 +318,19 @@ onUnmounted(() => {
 
     <div v-if="newProjectModalOpen" class="write-tools__modal">
       <div class="write-tools__modal-backdrop" aria-hidden="true" @click="closeNewProjectModal" />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="new-project-title"
-        class="write-tools__modal-panel"
-        @click.stop
-      >
+      <div role="dialog" aria-modal="true" aria-labelledby="new-project-title" class="write-tools__modal-panel"
+        @click.stop>
         <h2 id="new-project-title" class="write-tools__modal-title">Proiect nou</h2>
         <p class="write-tools__modal-desc">Alege un nume pentru proiect. Îl poți schimba oricând din meniu.</p>
         <label for="new-project-name" class="write-tools__modal-label">Nume</label>
-        <input
-          id="new-project-name"
-          ref="newProjectInputRef"
-          v-model="newProjectNameDraft"
-          type="text"
-          class="write-tools__modal-input"
-          placeholder="ex. Versuri aprilie"
-          autocomplete="off"
-          @keydown.enter.prevent="canSubmitNewProject && confirmNewProject()"
-        />
+        <input id="new-project-name" ref="newProjectInputRef" v-model="newProjectNameDraft" type="text"
+          class="write-tools__modal-input" placeholder="ex. Versuri aprilie" autocomplete="off"
+          @keydown.enter.prevent="canSubmitNewProject && confirmNewProject()" />
         <div class="write-tools__modal-actions">
           <button type="button" class="write-tools__modal-cancel" @click="closeNewProjectModal">
             Anulează
           </button>
-          <button
-            type="button"
-            class="ds-btn-primary"
-            :disabled="!canSubmitNewProject"
-            @click="confirmNewProject"
-          >
+          <button type="button" class="ds-btn-primary" :disabled="!canSubmitNewProject" @click="confirmNewProject">
             Adaugă proiectul
           </button>
         </div>

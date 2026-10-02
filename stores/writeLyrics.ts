@@ -5,12 +5,12 @@ export const useWriteLyricsStore = defineStore('writeLyrics', () => {
   const projects = useWriteProjectsStore()
 
   const title = computed({
-    get: () => projects.currentProject?.title ?? '',
+    get: () => projects.editorTitle,
     set: (v: string) => projects.setTitle(v),
   })
 
   const text = computed({
-    get: () => projects.currentProject?.lyrics ?? '',
+    get: () => projects.editorLyrics,
     set: (v: string) => projects.setLyrics(v),
   })
 

@@ -44,7 +44,9 @@
     "insertDiacritic": "Inserează {char}",
     "loadMoreResults": "Încarcă mai mult",
     "loadingMoreResults": "Se încarcă…",
+    "loadingWorkspace": "Se încarcă proiectul…",
     "saveBtn": "Salvează",
+    "saveNoChanges": "Nicio modificare de salvat",
     "saveTitle": "Salvează în cont",
     "saveDesc": "Salvează această poezie ca draft în contul tău (doar tu o vezi). O poți publica mai târziu.",
     "savingDraft": "Se salvează…",
@@ -240,7 +242,6 @@
   "footer": {
     "quote": "„Poezia este debordarea spontană a unor sentimente puternice” — Wordsworth",
     "emailCta": "Contactează-ne prin email",
-    "docs": "Documentație",
     "copyright": "© {year} PoetryHub"
   },
   "home": {

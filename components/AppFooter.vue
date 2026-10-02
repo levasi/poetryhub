@@ -50,12 +50,6 @@ const mailtoHref = computed(() => {
           >
             {{ t('nav.write') }}
           </NuxtLink>
-          <NuxtLink
-            to="/docs"
-            class="ds-link app-footer__link"
-          >
-            {{ t('footer.docs') }}
-          </NuxtLink>
           <a
             :href="mailtoHref"
             class="app-footer__email"

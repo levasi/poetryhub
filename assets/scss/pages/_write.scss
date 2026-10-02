@@ -685,6 +685,42 @@
   animation: write-editor-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
+.write-split__boot {
+  display: flex;
+  min-height: min(70vh, 32rem);
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+.write-split__boot-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  text-align: center;
+}
+
+.write-split__boot-spinner {
+  height: 2rem;
+  width: 2rem;
+  border-radius: 9999px;
+  border: 2px solid ph-rgb(edge-subtle);
+  border-top-color: ph-rgb(brand);
+  animation: page-loading-spin 0.75s linear infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+.write-split__boot-label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: ph-rgb(content-muted);
+}
+
 // ── Publish / poet-switch modals ───────────────────────────────────────────
 .write-publish {
   position: fixed;

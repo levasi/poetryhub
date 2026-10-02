@@ -15,11 +15,17 @@ export default defineEventHandler(async (event) => {
       authorName: true,
       language: true,
       content: true,
+      savedWords: true,
       updatedAt: true,
       createdAt: true,
     },
   })
   if (!d) throw createError({ statusCode: 404, statusMessage: 'Draft not found' })
-  return d
+  return {
+    ...d,
+    savedWords: Array.isArray(d.savedWords)
+      ? d.savedWords.filter((w): w is string => typeof w === 'string')
+      : [],
+  }
 })
 

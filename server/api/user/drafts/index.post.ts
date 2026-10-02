@@ -1,22 +1,17 @@
 // POST /api/user/drafts — create a draft (Write → Save)
-import { z } from 'zod'
 import { prisma } from '~/server/utils/prisma'
 import { requireUser } from '~/server/utils/auth'
-
-const schema = z.object({
-  title: z.string().min(1).max(500).trim(),
-  authorName: z.string().min(1).max(80).trim(),
-  language: z.string().default('ro'),
-  content: z.string().min(1).trim(),
-})
+import { draftBodySchema, normalizeSavedWords } from '~/server/utils/draftBody'
 
 export default defineEventHandler(async (event) => {
   const tokenUser = await requireUser(event)
   const body = await readBody(event)
-  const parsed = schema.safeParse(body)
+  const parsed = draftBodySchema.safeParse(body)
   if (!parsed.success) {
     throw createError({ statusCode: 400, statusMessage: 'Validation error' })
   }
+
+  const savedWords = normalizeSavedWords(parsed.data.savedWords)
 
   const d = await prisma.userPoemDraft.create({
     data: {
@@ -25,10 +20,10 @@ export default defineEventHandler(async (event) => {
       authorName: parsed.data.authorName,
       language: parsed.data.language,
       content: parsed.data.content,
+      savedWords,
     },
     select: { id: true },
   })
 
   return d
 })
-

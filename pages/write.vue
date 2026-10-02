@@ -13,6 +13,7 @@ definePageMeta({
 
 const { t } = useI18n()
 const route = useRoute()
+const router = useRouter()
 
 useHead({
   title: () => t('write.seoTitle'),
@@ -21,6 +22,13 @@ useHead({
 
 const lyrics = useWriteLyricsStore()
 const projects = useWriteProjectsStore()
+
+/** Hide the editor until the active project/draft is restored — avoids empty→populated flash. */
+const workspaceReady = ref(false)
+const writeBootLoading = useState('write-boot-loading', () => false)
+
+// Show the shared page loader as soon as this route is entered (SSR + client).
+writeBootLoading.value = true
 
 // —— Căutare dicționar
 const modes: { id: SearchMode; label: string; hint: string }[] = [
@@ -403,11 +411,40 @@ const saveMsg = ref<{ ok: boolean; text: string } | null>(null)
 const saveToastVisible = ref(false)
 let saveToastTimer: ReturnType<typeof setTimeout> | null = null
 
-const draftStatusText = computed(() => {
-  if (saveLoading.value) return t('write.savingDraft')
-  if (saveMsg.value?.ok) return saveMsg.value.text
-  return null
+/** Snapshot of last loaded/saved editor state — save is enabled only when current differs. */
+function editorSnapshotKey(title: string, content: string, words: readonly string[]): string {
+  const savedWords = [...words]
+    .map((w) => w.trim())
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b))
+  return JSON.stringify({
+    title: (title || '').trim(),
+    content: content || '',
+    savedWords,
+  })
+}
+
+const lastSavedSnapshot = ref(
+  editorSnapshotKey('', '', []),
+)
+
+function captureSaveBaseline() {
+  lastSavedSnapshot.value = editorSnapshotKey(
+    lyrics.title,
+    lyrics.text,
+    projects.activeSavedWords,
+  )
+}
+
+const hasUnsavedChanges = computed(() => {
+  if (!workspaceReady.value) return false
+  return (
+    editorSnapshotKey(lyrics.title, lyrics.text, projects.activeSavedWords)
+    !== lastSavedSnapshot.value
+  )
 })
+
+const canSave = computed(() => hasUnsavedChanges.value && !saveLoading.value)
 
 function showSaveToast(ok: boolean, text: string) {
   saveMsg.value = { ok, text }
@@ -466,7 +503,7 @@ function closePublish() {
 }
 
 async function saveNowDirect() {
-  if (saveLoading.value) return
+  if (!canSave.value) return
   if (!isLoggedIn.value) {
     showSaveToast(false, t('write.loginRequired'))
     return
@@ -475,6 +512,13 @@ async function saveNowDirect() {
   publishForm.title = lyrics.title || ''
   publishForm.authorName = user.value?.name ?? user.value?.email?.split('@')[0] ?? ''
   await submitSave()
+}
+
+function onSaveKeydown(e: KeyboardEvent) {
+  if (!(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== 's') return
+  if (!workspaceReady.value || !canSave.value) return
+  e.preventDefault()
+  void saveNowDirect()
 }
 
 function togglePublishTag(id: string) {
@@ -520,9 +564,6 @@ async function submitPublish() {
 
 async function saveDraftInternal(): Promise<void> {
   const content = lyrics.text.trim()
-  if (!content) {
-    throw new Error('empty content')
-  }
 
   const title =
     (publishForm.title || lyrics.title || projects.currentProject?.name || '').trim()
@@ -540,11 +581,15 @@ async function saveDraftInternal(): Promise<void> {
   publishForm.title = title
   publishForm.authorName = authorName
 
+  // First save from an unlisted scratch session creates the listed project.
+  projects.ensureListedProject(title)
+
   const payload = {
     title,
     authorName,
     language: publishForm.language || 'ro',
     content,
+    savedWords: [...(projects.activeSavedWords || [])],
   }
 
   const existingId = draftId.value
@@ -623,15 +668,12 @@ function closePoetSwitch() {
 }
 
 async function submitSave() {
-  const content = lyrics.text.trim()
-  if (!content) {
-    showSaveToast(false, t('write.contentEmpty'))
-    return
-  }
+  if (!hasUnsavedChanges.value) return
   saveLoading.value = true
   try {
     const wasNewDraft = !draftId.value
     await saveDraftInternal()
+    captureSaveBaseline()
     showSaveToast(true, t('write.savedDraft'))
     maybeOpenPoetSwitchModal(wasNewDraft)
     if (isLoggedIn.value) await projects.syncRemoteDrafts()
@@ -648,18 +690,33 @@ async function submitSave() {
 
 async function loadDraftById(id: string) {
   try {
-    const d = await $fetch<{ id: string; title: string; authorName: string; language: string; content: string }>(
+    const d = await $fetch<{
+      id: string
+      title: string
+      authorName: string
+      language: string
+      content: string
+      savedWords?: string[]
+    }>(
       `/api/user/drafts/${encodeURIComponent(id)}`,
       { credentials: 'include' },
     )
-    projects.linkCurrentDraft(d.id)
-    const match = projects.projects.find((p) => p.draftId === d.id)
-    if (match) projects.currentProjectId = match.id
+    const match = projects.projects.find((p) => p.draftId === d.id || p.id === d.id)
+    if (!match) {
+      // Draft opened via URL before sync listed it — ensure it appears as a real project.
+      projects.ensureListedProject(d.title || t('write.untitledDraft'))
+      projects.linkCurrentDraft(d.id)
+    } else {
+      projects.selectProject(match.id)
+      projects.linkCurrentDraft(d.id)
+    }
     lyrics.title = d.title
     lyrics.text = d.content
+    projects.setSavedWords(Array.isArray(d.savedWords) ? d.savedWords : [])
     publishForm.title = d.title
     publishForm.authorName = d.authorName
     publishForm.language = d.language || 'ro'
+    captureSaveBaseline()
   } catch {
     /* ignore */
   }
@@ -672,6 +729,20 @@ async function loadDraftFromRoute() {
   await loadDraftById(id)
 }
 
+function syncDraftQuery(draft: string | null) {
+  if (!import.meta.client) return
+  const current = typeof route.query.draft === 'string' ? route.query.draft : ''
+  if (draft) {
+    if (current === draft) return
+    void router.replace({ query: { ...route.query, draft } })
+    return
+  }
+  if (!current) return
+  const next = { ...route.query }
+  delete next.draft
+  void router.replace({ query: next })
+}
+
 let suppressProjectWatch = false
 
 /** When switching projects, load remote draft body (local unsaved projects use store state). */
@@ -682,11 +753,14 @@ watch(
     const p = projects.currentProject
     if (!p?.draftId) {
       publishForm.title = p?.title ?? ''
+      syncDraftQuery(null)
+      captureSaveBaseline()
       return
     }
     suppressProjectWatch = true
     try {
       await loadDraftById(p.draftId)
+      syncDraftQuery(p.draftId)
     } finally {
       suppressProjectWatch = false
     }
@@ -696,16 +770,33 @@ watch(
 onMounted(async () => {
   suppressProjectWatch = true
   try {
-    if (isLoggedIn.value) {
-      await projects.syncRemoteDrafts()
-    }
-    await loadDraftFromRoute()
-    const p = projects.currentProject
-    if (p?.draftId && !String(route.query.draft || '').trim()) {
-      await loadDraftById(p.draftId)
+    await projects.init()
+    const routeDraft =
+      typeof route.query.draft === 'string'
+        ? route.query.draft.trim()
+        : Array.isArray(route.query.draft)
+          ? String(route.query.draft[0] ?? '').trim()
+          : ''
+    // Always try sync — restores the remembered active project from account drafts.
+    await projects.syncRemoteDrafts(routeDraft || null)
+
+    if (routeDraft) {
+      await loadDraftFromRoute()
+    } else if (projects.currentProject?.draftId) {
+      await loadDraftById(projects.currentProject.draftId)
+      syncDraftQuery(projects.currentProject.draftId)
+    } else if (projects.lastActiveToken) {
+      // Preference survived but list restore missed it — open that draft directly.
+      await loadDraftById(projects.lastActiveToken)
+      if (projects.currentProject?.draftId) {
+        syncDraftQuery(projects.currentProject.draftId)
+      }
     }
   } finally {
     suppressProjectWatch = false
+    workspaceReady.value = true
+    writeBootLoading.value = false
+    captureSaveBaseline()
   }
   const shouldRerunSearch = restoreSearchState()
   if (shouldRerunSearch) void runSearch()
@@ -808,10 +899,13 @@ onMounted(() => {
     // ignore
   }
   window.addEventListener('resize', clampRightToContainer)
+  document.addEventListener('keydown', onSaveKeydown)
 })
 
 onUnmounted(() => {
+  writeBootLoading.value = false
   searchGeneration++
+  document.removeEventListener('keydown', onSaveKeydown)
   window.removeEventListener('resize', clampRightToContainer)
   document.removeEventListener('mousemove', onSplitResizeMove)
   document.removeEventListener('mouseup', endSplitResize)
@@ -823,9 +917,24 @@ onUnmounted(() => {
 
 <template>
   <div class="write-split" aria-label="Lucru: dicționar, versuri">
+    <div
+      v-if="!workspaceReady"
+      class="write-split__boot"
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+    >
+      <div class="write-split__boot-inner">
+        <DsFleuron width="5rem" />
+        <span class="write-split__boot-spinner" aria-hidden="true" />
+        <p class="write-split__boot-label">{{ t('write.loadingWorkspace') }}</p>
+      </div>
+    </div>
+
+    <template v-else>
     <WriteToolsBar
-      :draft-status="draftStatusText"
       :save-loading="saveLoading"
+      :can-save="canSave"
       @save="saveNowDirect"
       @publish="openPublish"
     />
@@ -1234,5 +1343,6 @@ onUnmounted(() => {
         </button>
       </div>
     </div>
+    </template>
   </div>
 </template>

@@ -14,6 +14,98 @@ const projects = useWriteProjectsStore()
 const lyrics = useWriteLyricsStore()
 const { title, text: lyricsText } = storeToRefs(lyrics)
 
+const savedWordDraft = ref('')
+const savedWordInputOpen = ref(false)
+const savedWordInputRef = ref<HTMLInputElement | null>(null)
+const savedWordAddBtnRef = ref<HTMLButtonElement | null>(null)
+const savedWordTooltipRef = ref<HTMLElement | null>(null)
+const savedWordTooltipPos = ref<{ top: number; left: number; width: number } | null>(null)
+
+const canAddSavedWord = computed(() => savedWordDraft.value.trim().length > 0)
+
+let savedWordOutsideHandler: ((e: PointerEvent) => void) | null = null
+let savedWordEscHandler: ((e: KeyboardEvent) => void) | null = null
+
+function clearSavedWordListeners() {
+  if (savedWordOutsideHandler) {
+    document.removeEventListener('pointerdown', savedWordOutsideHandler, true)
+    savedWordOutsideHandler = null
+  }
+  if (savedWordEscHandler) {
+    document.removeEventListener('keydown', savedWordEscHandler)
+    savedWordEscHandler = null
+  }
+  if (import.meta.client) {
+    window.removeEventListener('resize', placeSavedWordTooltip)
+    window.removeEventListener('scroll', placeSavedWordTooltip, true)
+  }
+}
+
+function placeSavedWordTooltip() {
+  const btn = savedWordAddBtnRef.value
+  if (!btn || !import.meta.client) return
+  const rect = btn.getBoundingClientRect()
+  const pad = 8
+  const width = Math.min(280, window.innerWidth - 2 * pad)
+  let left = rect.left + rect.width / 2 - width / 2
+  left = Math.max(pad, Math.min(left, window.innerWidth - width - pad))
+
+  const tipEl = savedWordTooltipRef.value
+  const estH = tipEl?.getBoundingClientRect().height || 56
+  // Prefer above the plus; fall back below only if there isn't room.
+  let top = rect.top - estH - pad
+  if (top < pad) {
+    top = Math.min(rect.bottom + pad, window.innerHeight - estH - pad)
+  }
+  savedWordTooltipPos.value = { top, left, width }
+}
+
+async function openSavedWordInput() {
+  if (!import.meta.client) return
+  placeSavedWordTooltip()
+  savedWordInputOpen.value = true
+  await nextTick()
+  placeSavedWordTooltip()
+  savedWordInputRef.value?.focus()
+
+  clearSavedWordListeners()
+  savedWordOutsideHandler = (e: PointerEvent) => {
+    const target = e.target as Node
+    if (savedWordTooltipRef.value?.contains(target)) return
+    if (savedWordAddBtnRef.value?.contains(target)) return
+    closeSavedWordInput()
+  }
+  savedWordEscHandler = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      e.preventDefault()
+      closeSavedWordInput()
+    }
+  }
+  document.addEventListener('pointerdown', savedWordOutsideHandler, true)
+  document.addEventListener('keydown', savedWordEscHandler)
+  window.addEventListener('resize', placeSavedWordTooltip)
+  window.addEventListener('scroll', placeSavedWordTooltip, true)
+}
+
+function closeSavedWordInput() {
+  savedWordInputOpen.value = false
+  savedWordDraft.value = ''
+  savedWordTooltipPos.value = null
+  clearSavedWordListeners()
+}
+
+function confirmSavedWord() {
+  const word = savedWordDraft.value.trim()
+  if (!word) return
+  projects.addSavedWord(word)
+  closeSavedWordInput()
+}
+
+function toggleSavedWordInput() {
+  if (savedWordInputOpen.value) closeSavedWordInput()
+  else void openSavedWordInput()
+}
+
 type VerseBlock = { id: string; text: string; column: number }
 type ColumnCount = WriteColumnCount
 
@@ -474,6 +566,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   finishDrag(false)
+  clearSavedWordListeners()
 })
 </script>
 
@@ -650,16 +743,16 @@ onBeforeUnmount(() => {
       </ClientOnly>
     </div>
 
-    <div v-if="projects.currentProject" class="write-editor__panel">
+    <div class="write-editor__panel">
       <h3 class="write-editor__label">
         Cuvinte salvate
       </h3>
       <p class="write-editor__saved-hint">
-        Din rezultatele căutării, butonul + adaugă cuvântul la proiectul selectat.
+        Adaugă cuvinte cu + sau din rezultatele căutării.
       </p>
-      <ul v-if="projects.currentProject.savedWords.length" class="write-editor__saved-list">
+      <ul class="write-editor__saved-list" aria-label="Cuvinte salvate">
         <li
-          v-for="w in projects.currentProject.savedWords"
+          v-for="w in projects.activeSavedWords"
           :key="w"
           class="write-editor__saved-chip"
         >
@@ -673,8 +766,57 @@ onBeforeUnmount(() => {
             ×
           </button>
         </li>
+        <li class="write-editor__saved-add">
+          <button
+            ref="savedWordAddBtnRef"
+            type="button"
+            class="write-editor__saved-add-btn"
+            title="Adaugă cuvânt"
+            aria-label="Adaugă cuvânt"
+            :aria-expanded="savedWordInputOpen"
+            aria-haspopup="dialog"
+            aria-controls="write-saved-word-tooltip"
+            @click="toggleSavedWordInput"
+          >
+            <Icon icon="heroicons:plus" class="write-editor__saved-add-icon" aria-hidden="true" />
+          </button>
+        </li>
       </ul>
-      <p v-else class="write-editor__saved-empty">Niciun cuvânt salvat încă.</p>
+
+      <Teleport to="body">
+        <form
+          v-if="savedWordInputOpen && savedWordTooltipPos"
+          id="write-saved-word-tooltip"
+          ref="savedWordTooltipRef"
+          class="write-editor__saved-form"
+          role="dialog"
+          aria-label="Adaugă cuvânt salvat"
+          :style="{
+            top: `${savedWordTooltipPos.top}px`,
+            left: `${savedWordTooltipPos.left}px`,
+            width: `${savedWordTooltipPos.width}px`,
+          }"
+          @submit.prevent="confirmSavedWord"
+        >
+          <label class="sr-only" for="write-saved-word-input">Cuvânt de salvat</label>
+          <input
+            id="write-saved-word-input"
+            ref="savedWordInputRef"
+            v-model="savedWordDraft"
+            type="text"
+            class="write-editor__saved-input"
+            placeholder="ex. lumină"
+            autocomplete="off"
+          />
+          <button
+            type="submit"
+            class="write-editor__saved-submit"
+            :disabled="!canAddSavedWord"
+          >
+            Adaugă
+          </button>
+        </form>
+      </Teleport>
     </div>
   </div>
 </template>
