@@ -30,7 +30,7 @@
   max-width: min(100%, 16rem);
   align-items: center;
   gap: 0.5rem;
-  border-radius: $ph-radius-xl;
+  border-radius: $ph-radius-sm;
   border: 1px solid ph-rgb(edge-subtle);
   background-color: ph-rgb(surface-raised);
   padding: 0.5rem 0.75rem;
@@ -58,7 +58,7 @@
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  border-radius: $ph-radius-md;
+  border-radius: $ph-radius-sm;
   background-color: ph-rgb(surface-subtle);
   color: ph-rgb(content-muted);
 }
@@ -159,11 +159,9 @@
 
 .write-tools__dropdown-head {
   border-bottom: 1px solid rgb(var(--color-edge-subtle) / 0.9);
-  background: linear-gradient(
-    to bottom,
-    rgb(var(--color-surface-subtle) / 0.8),
-    ph-rgb(surface-raised)
-  );
+  background: linear-gradient(to bottom,
+      rgb(var(--color-surface-subtle) / 0.8),
+      ph-rgb(surface-raised));
   padding: 0.75rem;
 }
 

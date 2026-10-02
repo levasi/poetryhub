@@ -81,7 +81,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  border-radius: $ph-radius-md;
+  border-radius: $ph-radius-sm;
   border: none;
   background-color: ph-rgb(brand);
   padding: 0.625rem 1rem;
@@ -144,7 +144,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  border-radius: $ph-radius-md;
+  border-radius: $ph-radius-sm;
   border: 1px solid ph-rgb(edge);
   background-color: ph-rgb(surface-raised);
   padding: 0.625rem 1rem;
@@ -360,12 +360,10 @@
   margin-top: 2.5rem;
   height: 1px;
   max-width: 20rem;
-  background-image: linear-gradient(
-    to right,
-    transparent,
-    ph-rgb(brand, 0.45),
-    transparent
-  );
+  background-image: linear-gradient(to right,
+      transparent,
+      ph-rgb(brand, 0.45),
+      transparent);
 }
 
 .ds-section-heading {

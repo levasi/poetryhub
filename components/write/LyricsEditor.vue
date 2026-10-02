@@ -591,10 +591,6 @@ onBeforeUnmount(() => {
               {{ n }}
             </button>
           </div>
-          <button type="button" class="write-editor__add-block" @click="addBlock()">
-            <Icon icon="heroicons:plus" class="write-editor__add-icon" aria-hidden="true" />
-            {{ t('write.addVerseBlock') }}
-          </button>
         </div>
       </div>
 

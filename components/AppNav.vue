@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Icon } from '@iconify/vue'
 import { isStaffRole } from '~/utils/roles'
 
 const { t } = useI18n()
@@ -48,6 +49,19 @@ function navLinkClass(path: string) {
 function mobileLinkClass(path: string) {
   return ['app-nav__mobile-link', { 'app-nav__mobile-link--active': isActive(path) }]
 }
+
+const mobileIcons = {
+  home: 'heroicons:home',
+  discover: 'heroicons:book-open',
+  favorites: 'heroicons:heart',
+  write: 'heroicons:pencil-square',
+  carousel: 'heroicons:photo',
+  signIn: 'heroicons:arrow-right-on-rectangle',
+  account: 'heroicons:user-circle',
+  myPoems: 'heroicons:document-text',
+  admin: 'heroicons:shield-check',
+  signOut: 'heroicons:arrow-left-on-rectangle',
+} as const
 </script>
 
 <template>
@@ -206,10 +220,16 @@ function mobileLinkClass(path: string) {
           </p>
           <div class="app-nav__mobile-stack">
             <NuxtLink to="/" :class="mobileLinkClass('/')" @click="mobileOpen = false">
-              {{ t('nav.home') }}
+              <span class="app-nav__mobile-link-icon-wrap" aria-hidden="true">
+                <Icon :icon="mobileIcons.home" class="app-nav__mobile-link-icon" />
+              </span>
+              <span>{{ t('nav.home') }}</span>
             </NuxtLink>
             <NuxtLink to="/descopera" :class="mobileLinkClass('/descopera')" @click="mobileOpen = false">
-              {{ t('nav.discover') }}
+              <span class="app-nav__mobile-link-icon-wrap" aria-hidden="true">
+                <Icon :icon="mobileIcons.discover" class="app-nav__mobile-link-icon" />
+              </span>
+              <span>{{ t('nav.discover') }}</span>
             </NuxtLink>
             <NuxtLink
               v-if="isLoggedIn"
@@ -217,7 +237,10 @@ function mobileLinkClass(path: string) {
               :class="mobileLinkClass('/favorites')"
               @click="mobileOpen = false"
             >
-              {{ t('nav.favorites') }}
+              <span class="app-nav__mobile-link-icon-wrap" aria-hidden="true">
+                <Icon :icon="mobileIcons.favorites" class="app-nav__mobile-link-icon" />
+              </span>
+              <span>{{ t('nav.favorites') }}</span>
             </NuxtLink>
           </div>
         </div>
@@ -228,37 +251,51 @@ function mobileLinkClass(path: string) {
           </p>
           <div class="app-nav__mobile-stack">
             <NuxtLink to="/write" :class="mobileLinkClass('/write')" @click="mobileOpen = false">
-              {{ t('nav.write') }}
+              <span class="app-nav__mobile-link-icon-wrap" aria-hidden="true">
+                <Icon :icon="mobileIcons.write" class="app-nav__mobile-link-icon" />
+              </span>
+              <span>{{ t('nav.write') }}</span>
             </NuxtLink>
             <NuxtLink
               to="/carousel-generator"
               :class="mobileLinkClass('/carousel-generator')"
               @click="mobileOpen = false"
             >
-              {{ t('nav.carousel') }}
+              <span class="app-nav__mobile-link-icon-wrap" aria-hidden="true">
+                <Icon :icon="mobileIcons.carousel" class="app-nav__mobile-link-icon" />
+              </span>
+              <span>{{ t('nav.carousel') }}</span>
             </NuxtLink>
           </div>
         </div>
 
         <div>
-          <p class="ds-eyebrow">
-            {{ t('nav.menuAccount') }}
-          </p>
+          <div class="app-nav__mobile-section-head">
+            <p class="ds-eyebrow">
+              {{ t('nav.menuAccount') }}
+            </p>
+            <p v-if="isLoggedIn" class="app-nav__signed-in-as">
+              {{ t('nav.signedInAs', { name: displayName }) }}
+            </p>
+          </div>
           <div class="app-nav__mobile-stack">
             <template v-if="!isLoggedIn">
               <NuxtLink to="/login" :class="mobileLinkClass('/login')" @click="mobileOpen = false">
-                {{ t('nav.signIn') }}
+                <span class="app-nav__mobile-link-icon-wrap" aria-hidden="true">
+                  <Icon :icon="mobileIcons.signIn" class="app-nav__mobile-link-icon" />
+                </span>
+                <span>{{ t('nav.signIn') }}</span>
               </NuxtLink>
               <NuxtLink to="/signup" class="ds-btn-primary justify-center text-center" @click="mobileOpen = false">
                 {{ t('nav.signUp') }}
               </NuxtLink>
             </template>
             <template v-else>
-              <p class="app-nav__signed-in-as">
-                {{ t('nav.signedInAs', { name: displayName }) }}
-              </p>
               <NuxtLink to="/account" :class="mobileLinkClass('/account')" @click="mobileOpen = false">
-                {{ t('nav.account') }}
+                <span class="app-nav__mobile-link-icon-wrap" aria-hidden="true">
+                  <Icon :icon="mobileIcons.account" class="app-nav__mobile-link-icon" />
+                </span>
+                <span>{{ t('nav.account') }}</span>
               </NuxtLink>
               <NuxtLink
                 v-if="isPoet"
@@ -266,17 +303,26 @@ function mobileLinkClass(path: string) {
                 :class="mobileLinkClass('/account/poems')"
                 @click="mobileOpen = false"
               >
-                {{ t('nav.myPoems') }}
+                <span class="app-nav__mobile-link-icon-wrap" aria-hidden="true">
+                  <Icon :icon="mobileIcons.myPoems" class="app-nav__mobile-link-icon" />
+                </span>
+                <span>{{ t('nav.myPoems') }}</span>
               </NuxtLink>
               <NuxtLink v-if="isStaff" to="/admin" :class="mobileLinkClass('/admin')" @click="mobileOpen = false">
-                {{ t('nav.admin') }}
+                <span class="app-nav__mobile-link-icon-wrap" aria-hidden="true">
+                  <Icon :icon="mobileIcons.admin" class="app-nav__mobile-link-icon" />
+                </span>
+                <span>{{ t('nav.admin') }}</span>
               </NuxtLink>
               <button
                 type="button"
                 class="app-nav__sign-out"
                 @click="logout(); mobileOpen = false"
               >
-                {{ t('nav.signOut') }}
+                <span class="app-nav__mobile-link-icon-wrap" aria-hidden="true">
+                  <Icon :icon="mobileIcons.signOut" class="app-nav__mobile-link-icon" />
+                </span>
+                <span>{{ t('nav.signOut') }}</span>
               </button>
             </template>
             <div v-if="showLanguageSwitch" class="app-nav__mobile-lang">

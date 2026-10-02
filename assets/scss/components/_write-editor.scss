@@ -8,7 +8,7 @@
 }
 
 .write-editor__panel {
-  border-radius: $ph-radius-xl;
+  border-radius: $ph-radius-sm;
   background-color: ph-rgb(surface-raised);
   padding: 0.5rem;
   box-shadow: var(--shadow-ds-card);
@@ -93,28 +93,6 @@
       color: ph-rgb(brand-foreground);
     }
   }
-}
-
-.write-editor__add-block {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  border-radius: $ph-radius-md;
-  padding: 0.25rem 0.5rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: ph-rgb(brand);
-  transition: background-color 0.15s ease;
-
-  &:hover {
-    background-color: ph-rgb(brand-tint);
-  }
-}
-
-.write-editor__add-icon {
-  width: 1rem;
-  height: 1rem;
-  flex-shrink: 0;
 }
 
 .write-editor__list {

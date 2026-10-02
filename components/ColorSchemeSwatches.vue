@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { COLOR_SCHEMES, type ColorSchemeId, useColorScheme } from '~/composables/useColorScheme'
+import { COLOR_SCHEMES, type ColorSchemeId } from '~/utils/colorScheme'
+import { useColorScheme } from '~/composables/useColorScheme'
 
 const props = withDefaults(
   defineProps<{

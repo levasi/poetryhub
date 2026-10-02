@@ -1,12 +1,11 @@
 import type { AuthUser } from '~/composables/useAuth'
 import {
-  COLOR_SCHEMES,
   DEFAULT_COLOR_SCHEME,
   isColorSchemeId,
   type ColorSchemeId,
 } from '~/utils/colorScheme'
 
-export { COLOR_SCHEMES, isColorSchemeId, type ColorSchemeId } from '~/utils/colorScheme'
+export type { ColorSchemeId } from '~/utils/colorScheme'
 
 const STORAGE_KEY = 'ph-color-scheme'
 

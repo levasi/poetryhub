@@ -30,13 +30,13 @@ function createPrismaClient() {
       'DATABASE_URL is not set. Copy `.env.example` to `.env` in the project root and set DATABASE_URL to your PostgreSQL URL (Neon, Supabase, or local Postgres). See README.',
     )
   }
-  /** Query logging floods the terminal and can slow or destabilize `nuxt dev`; opt in with PRISMA_LOG_QUERIES=1 */
-  const devLogs =
+  /** Query logging floods the terminal; opt in with PRISMA_LOG_QUERIES=1 */
+  const log =
     process.env.PRISMA_LOG_QUERIES === '1' || process.env.PRISMA_LOG_QUERIES === 'true'
       ? (['query', 'error', 'warn'] as const)
-      : (['error', 'warn'] as const)
+      : (['error'] as const)
   return new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? [...devLogs] : ['error'],
+    log: [...log],
   })
 }
 
