@@ -689,6 +689,7 @@ async function saveDraftInternal(): Promise<void> {
     language: publishForm.language || 'ro',
     content,
     savedWords: [...(projects.activeSavedWords || [])],
+    folderId: projects.currentProject?.folderId ?? null,
   }
 
   const existingId = draftId.value

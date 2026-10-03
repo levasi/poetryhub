@@ -83,7 +83,21 @@
     "moveVerseUp": "Mută strofa în sus",
     "moveVerseDown": "Mută strofa în jos",
     "verseColumnsAria": "Număr de coloane",
-    "verseBlockLabel": "Strofă {n}"
+    "verseBlockLabel": "Strofă {n}",
+    "newProject": "Proiect nou",
+    "newFolder": "Dosar nou",
+    "folderName": "Nume dosar",
+    "folderNamePlaceholder": "ex. Ciorne de primăvară",
+    "addFolder": "Adaugă dosarul",
+    "deleteFolder": "Șterge dosarul",
+    "deleteFolderTitle": "Ștergi dosarul?",
+    "deleteFolderDesc": "Dosarul „{name}” va fi eliminat. Proiectele din el rămân — trec la fără dosar.",
+    "deleteFolderConfirm": "Șterge dosarul",
+    "moveToFolder": "Mută în dosar",
+    "noFolder": "Fără dosar",
+    "unfiledProjects": "Proiecte",
+    "searchProjects": "Caută proiecte",
+    "filterByName": "Filtră după nume…"
   },
   "carousel": {
     "seoTitle": "Post Insta — PoetryHub",

@@ -1,17 +1,29 @@
-// POST /api/user/drafts — create a draft (Write → Save)
+// PATCH /api/user/drafts/:id/folder — move a draft into / out of a write folder
+import { z } from 'zod'
 import { prisma } from '~/server/utils/prisma'
 import { requireUser } from '~/server/utils/auth'
-import { draftBodySchema, normalizeSavedWords } from '~/server/utils/draftBody'
+
+const schema = z.object({
+  folderId: z.string().cuid().nullable(),
+})
 
 export default defineEventHandler(async (event) => {
   const tokenUser = await requireUser(event)
+  const id = getRouterParam(event, 'id')
+  if (!id?.trim()) throw createError({ statusCode: 400, statusMessage: 'Missing id' })
+
   const body = await readBody(event)
-  const parsed = draftBodySchema.safeParse(body)
+  const parsed = schema.safeParse(body)
   if (!parsed.success) {
     throw createError({ statusCode: 400, statusMessage: 'Validation error' })
   }
 
-  const savedWords = normalizeSavedWords(parsed.data.savedWords)
+  const existing = await prisma.userPoemDraft.findFirst({
+    where: { id, userId: tokenUser.id },
+    select: { id: true },
+  })
+  if (!existing) throw createError({ statusCode: 404, statusMessage: 'Draft not found' })
+
   let folderId: string | null = null
   if (parsed.data.folderId) {
     const folder = await prisma.userWriteFolder.findFirst({
@@ -22,18 +34,10 @@ export default defineEventHandler(async (event) => {
     folderId = folder.id
   }
 
-  const d = await prisma.userPoemDraft.create({
-    data: {
-      userId: tokenUser.id,
-      folderId,
-      title: parsed.data.title,
-      authorName: parsed.data.authorName,
-      language: parsed.data.language,
-      content: parsed.data.content,
-      savedWords,
-    },
-    select: { id: true, folderId: true },
+  await prisma.userPoemDraft.update({
+    where: { id },
+    data: { folderId },
   })
 
-  return d
+  return { ok: true, folderId }
 })

@@ -2,6 +2,13 @@ import { defineStore } from 'pinia'
 
 /** Remembers only which project/draft was active — not full project payloads. */
 const ACTIVE_KEY = 'poetryhub-write-active-v1'
+const FOLDER_COLLAPSE_KEY = 'poetryhub-write-folder-collapse-v1'
+const PROJECT_ORDER_KEY = 'poetryhub-write-project-order-v1'
+
+export interface WriteFolder {
+  id: string
+  name: string
+}
 
 export interface WriteProject {
   id: string
@@ -11,11 +18,14 @@ export interface WriteProject {
   savedWords: string[]
   /** Linked `UserPoemDraft` id when saved to the account; null = session-only. */
   draftId: string | null
+  /** Optional write folder id. */
+  folderId: string | null
 }
 
 export type RemoteDraftSummary = {
   id: string
   title: string
+  folderId?: string | null
   updatedAt?: string
 }
 
@@ -37,7 +47,7 @@ function newId(): string {
   return `p-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
 }
 
-function blankSessionProject(name: string): WriteProject {
+function blankSessionProject(name: string, folderId: string | null = null): WriteProject {
   const base = name.trim() || 'Proiect'
   return {
     id: newId(),
@@ -46,6 +56,7 @@ function blankSessionProject(name: string): WriteProject {
     lyrics: '',
     savedWords: [],
     draftId: null,
+    folderId,
   }
 }
 
@@ -92,9 +103,64 @@ function clearActivePreferenceStorage() {
   }
 }
 
+function readCollapsedFolders(): Set<string> {
+  if (!import.meta.client) return new Set()
+  try {
+    const raw = localStorage.getItem(FOLDER_COLLAPSE_KEY)
+    if (!raw) return new Set()
+    const parsed = JSON.parse(raw) as unknown
+    if (!Array.isArray(parsed)) return new Set()
+    return new Set(parsed.filter((x): x is string => typeof x === 'string'))
+  } catch {
+    return new Set()
+  }
+}
+
+function writeCollapsedFolders(ids: Set<string>) {
+  if (!import.meta.client) return
+  try {
+    localStorage.setItem(FOLDER_COLLAPSE_KEY, JSON.stringify([...ids]))
+  } catch {
+    /* ignore */
+  }
+}
+
+function projectOrderStorageKey(userId?: string | null): string {
+  return userId ? `${PROJECT_ORDER_KEY}:${userId}` : PROJECT_ORDER_KEY
+}
+
+function readProjectOrder(userId?: string | null): string[] {
+  if (!import.meta.client) return []
+  try {
+    const raw = localStorage.getItem(projectOrderStorageKey(userId))
+    if (!raw) return []
+    const parsed = JSON.parse(raw) as unknown
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter((x): x is string => typeof x === 'string' && x.length > 0)
+  } catch {
+    return []
+  }
+}
+
+function writeProjectOrder(order: string[], userId?: string | null) {
+  if (!import.meta.client) return
+  try {
+    localStorage.setItem(projectOrderStorageKey(userId), JSON.stringify(order))
+  } catch {
+    /* ignore */
+  }
+}
+
+function projectToken(p: Pick<WriteProject, 'id' | 'draftId'>): string {
+  return p.draftId || p.id
+}
+
 export const useWriteProjectsStore = defineStore('writeProjects', () => {
   /** Listed projects: only user-created or remotely saved drafts. */
   const projects = ref<WriteProject[]>([])
+  const folders = ref<WriteFolder[]>([])
+  const collapsedFolderIds = ref<Set<string>>(readCollapsedFolders())
+  const projectOrder = ref<string[]>([])
   const currentProjectId = ref<string | null>(null)
   const remoteSyncing = ref(false)
   /** Editor buffer when no listed project is selected. Never shown in the dropdown. */
@@ -125,6 +191,90 @@ export const useWriteProjectsStore = defineStore('writeProjects', () => {
     || lastActiveName.value
     || null,
   )
+
+  function authUserId(): string | null {
+    try {
+      return useAuth().user.value?.id ?? null
+    } catch {
+      return null
+    }
+  }
+
+  function loadProjectOrder() {
+    projectOrder.value = readProjectOrder(authUserId())
+  }
+
+  function persistProjectOrder() {
+    writeProjectOrder(projectOrder.value, authUserId())
+  }
+
+  function applyProjectOrder(list: WriteProject[]): WriteProject[] {
+    if (!list.length) return list
+    const order = projectOrder.value
+    if (!order.length) return list
+    const rank = new Map(order.map((id, i) => [id, i]))
+    return [...list].sort((a, b) => {
+      const ta = projectToken(a)
+      const tb = projectToken(b)
+      const ra = rank.has(ta) ? rank.get(ta)! : Number.MAX_SAFE_INTEGER
+      const rb = rank.has(tb) ? rank.get(tb)! : Number.MAX_SAFE_INTEGER
+      if (ra !== rb) return ra - rb
+      return 0
+    })
+  }
+
+  function syncOrderWithProjects() {
+    const tokens = projects.value.map(projectToken)
+    if (!tokens.length) {
+      projectOrder.value = []
+      persistProjectOrder()
+      return
+    }
+    const seen = new Set<string>()
+    const next: string[] = []
+    for (const t of projectOrder.value) {
+      if (!tokens.includes(t) || seen.has(t)) continue
+      seen.add(t)
+      next.push(t)
+    }
+    for (const t of tokens) {
+      if (seen.has(t)) continue
+      seen.add(t)
+      next.push(t)
+    }
+    projectOrder.value = next
+    persistProjectOrder()
+  }
+
+  /** Place `draggedId` before/after `targetId` in the project list order. */
+  function reorderProject(
+    draggedId: string,
+    targetId: string,
+    place: 'before' | 'after',
+  ) {
+    if (draggedId === targetId) return
+    const dragged = projects.value.find((p) => p.id === draggedId)
+    const target = projects.value.find((p) => p.id === targetId)
+    if (!dragged || !target) return
+
+    syncOrderWithProjects()
+    const dragToken = projectToken(dragged)
+    const targetToken = projectToken(target)
+    const order = projectOrder.value.filter((t) => t !== dragToken)
+    const ti = order.indexOf(targetToken)
+    if (ti < 0) order.push(dragToken)
+    else order.splice(place === 'before' ? ti : ti + 1, 0, dragToken)
+    projectOrder.value = order
+    persistProjectOrder()
+    projects.value = applyProjectOrder(projects.value)
+  }
+
+  function rememberProjectAtFront(p: WriteProject) {
+    const token = projectToken(p)
+    projectOrder.value = [token, ...projectOrder.value.filter((t) => t !== token)]
+    persistProjectOrder()
+    projects.value = applyProjectOrder(projects.value)
+  }
 
   function clearScratch() {
     scratch.title = ''
@@ -188,6 +338,8 @@ export const useWriteProjectsStore = defineStore('writeProjects', () => {
       /* ignore */
     }
     hydrateActivePreferenceFromStorage()
+    collapsedFolderIds.value = readCollapsedFolders()
+    loadProjectOrder()
     stopActiveWatch?.()
     stopActiveWatch = watch(
       currentProjectId,
@@ -216,6 +368,7 @@ export const useWriteProjectsStore = defineStore('writeProjects', () => {
     clearScratch()
     projects.value.unshift(p)
     currentProjectId.value = p.id
+    rememberProjectAtFront(p)
     rememberActiveProject()
     return p
   }
@@ -232,6 +385,18 @@ export const useWriteProjectsStore = defineStore('writeProjects', () => {
     return true
   }
 
+  async function syncFolders(): Promise<void> {
+    if (!import.meta.client) return
+    try {
+      const res = await $fetch<{ data: WriteFolder[] }>('/api/user/write-folders', {
+        credentials: 'include',
+      })
+      folders.value = Array.isArray(res.data) ? res.data : []
+    } catch {
+      /* not logged in / network */
+    }
+  }
+
   /**
    * Merge account drafts into the dropdown so every saved draft appears.
    * Keeps unsaved session projects the user explicitly created; never invents a default.
@@ -241,6 +406,7 @@ export const useWriteProjectsStore = defineStore('writeProjects', () => {
     await init()
     remoteSyncing.value = true
     try {
+      await syncFolders()
       const res = await $fetch<{ data: RemoteDraftSummary[] }>('/api/user/drafts', {
         credentials: 'include',
         params: { page: 1, limit: 50 },
@@ -252,16 +418,20 @@ export const useWriteProjectsStore = defineStore('writeProjects', () => {
           .map((p) => [p.draftId as string, p] as const),
       )
       const unsavedLocals = projects.value.filter((p) => !p.draftId)
+      const folderIds = new Set(folders.value.map((f) => f.id))
 
       const fromRemote: WriteProject[] = remote.map((d) => {
         const existing = byDraftId.get(d.id)
         const title = (d.title || '').trim() || 'Proiect'
+        const folderId =
+          typeof d.folderId === 'string' && folderIds.has(d.folderId) ? d.folderId : null
         if (existing) {
           return {
             ...existing,
             name: title,
             title: existing.title?.trim() ? existing.title : title,
             draftId: d.id,
+            folderId,
           }
         }
         return {
@@ -271,11 +441,14 @@ export const useWriteProjectsStore = defineStore('writeProjects', () => {
           title,
           lyrics: '',
           savedWords: [],
+          folderId,
         }
       })
 
-      // Prefer remote list order (updatedAt desc from API); keep real unsaved locals on top.
-      projects.value = [...unsavedLocals, ...fromRemote]
+      // Keep unsaved locals, then remotes; user drag-order is reapplied below.
+      loadProjectOrder()
+      projects.value = applyProjectOrder([...unsavedLocals, ...fromRemote])
+      syncOrderWithProjects()
 
       if (!restoreActivePreference(preferredToken)) {
         if (projects.value.length === 0) {
@@ -301,9 +474,11 @@ export const useWriteProjectsStore = defineStore('writeProjects', () => {
     return { ok: true }
   }
 
-  function createProject(name: string) {
+  function createProject(name: string, folderId: string | null = null) {
     const label = name.trim() || 'Proiect'
-    const p = blankSessionProject(label)
+    const resolvedFolder =
+      folderId && folders.value.some((f) => f.id === folderId) ? folderId : null
+    const p = blankSessionProject(label, resolvedFolder)
     // Adopt scratch when creating from an unlisted editor session.
     if (!currentProject.value) {
       p.lyrics = scratch.lyrics
@@ -317,7 +492,106 @@ export const useWriteProjectsStore = defineStore('writeProjects', () => {
     }
     projects.value.unshift(p)
     currentProjectId.value = p.id
+    rememberProjectAtFront(p)
     rememberActiveProject()
+  }
+
+  async function createFolder(name: string): Promise<WriteFolder | null> {
+    const label = name.trim()
+    if (!label) return null
+    try {
+      const created = await $fetch<WriteFolder>('/api/user/write-folders', {
+        method: 'POST',
+        credentials: 'include',
+        body: { name: label },
+      })
+      folders.value = [...folders.value, created].sort((a, b) =>
+        a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
+      )
+      return created
+    } catch {
+      return null
+    }
+  }
+
+  async function renameFolder(id: string, name: string): Promise<void> {
+    const label = name.trim()
+    if (!label) return
+    const folder = folders.value.find((f) => f.id === id)
+    if (!folder) return
+    const prev = folder.name
+    folder.name = label
+    folders.value = [...folders.value].sort((a, b) =>
+      a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
+    )
+    try {
+      await $fetch(`/api/user/write-folders/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        body: { name: label },
+      })
+    } catch {
+      folder.name = prev
+      folders.value = [...folders.value].sort((a, b) =>
+        a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
+      )
+    }
+  }
+
+  async function deleteFolder(id: string): Promise<void> {
+    const idx = folders.value.findIndex((f) => f.id === id)
+    if (idx < 0) return
+    const removed = folders.value[idx]!
+    folders.value.splice(idx, 1)
+    for (const p of projects.value) {
+      if (p.folderId === id) p.folderId = null
+    }
+    collapsedFolderIds.value.delete(id)
+    writeCollapsedFolders(collapsedFolderIds.value)
+    try {
+      await $fetch(`/api/user/write-folders/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      })
+    } catch {
+      folders.value.splice(idx, 0, removed)
+      folders.value = [...folders.value].sort((a, b) =>
+        a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
+      )
+    }
+  }
+
+  async function setProjectFolder(projectId: string, folderId: string | null) {
+    const p = projects.value.find((x) => x.id === projectId)
+    if (!p) return
+    const next =
+      folderId && folders.value.some((f) => f.id === folderId) ? folderId : null
+    const prev = p.folderId
+    p.folderId = next
+    if (!p.draftId) return
+    try {
+      // Minimal update: reuse PUT body is heavy — dedicated field via PUT with current
+      // content would require a fetch. Send folderId-only through a light PATCH on draft.
+      await $fetch(`/api/user/drafts/${encodeURIComponent(p.draftId)}/folder`, {
+        method: 'PATCH',
+        credentials: 'include',
+        body: { folderId: next },
+      })
+    } catch {
+      p.folderId = prev
+    }
+  }
+
+  function toggleFolderCollapsed(id: string) {
+    const next = new Set(collapsedFolderIds.value)
+    if (next.has(id)) next.delete(id)
+    else next.add(id)
+    collapsedFolderIds.value = next
+    writeCollapsedFolders(next)
+  }
+
+  function isFolderCollapsed(id: string): boolean {
+    return collapsedFolderIds.value.has(id)
   }
 
   function selectProject(id: string) {
@@ -330,7 +604,10 @@ export const useWriteProjectsStore = defineStore('writeProjects', () => {
   function deleteProject(id: string) {
     const idx = projects.value.findIndex((x) => x.id === id)
     if (idx === -1) return
+    const removed = projects.value[idx]!
     projects.value.splice(idx, 1)
+    projectOrder.value = projectOrder.value.filter((t) => t !== projectToken(removed))
+    persistProjectOrder()
     if (projects.value.length === 0) {
       currentProjectId.value = null
       clearScratch()
@@ -351,12 +628,21 @@ export const useWriteProjectsStore = defineStore('writeProjects', () => {
 
   function linkCurrentDraft(draftId: string) {
     const p = ensureListedProject()
+    const prevToken = projectToken(p)
     p.draftId = draftId
     // Prefer draft id as stable project id once synced.
     if (p.id !== draftId) {
       const oldId = p.id
       p.id = draftId
       if (currentProjectId.value === oldId) currentProjectId.value = draftId
+    }
+    const nextToken = projectToken(p)
+    if (prevToken !== nextToken) {
+      projectOrder.value = projectOrder.value.map((t) => (t === prevToken ? nextToken : t))
+      if (!projectOrder.value.includes(nextToken)) {
+        projectOrder.value = [nextToken, ...projectOrder.value]
+      }
+      persistProjectOrder()
     }
     p.name = (p.title || '').trim() || p.name || 'Proiect'
     rememberActiveProject()
@@ -449,6 +735,7 @@ export const useWriteProjectsStore = defineStore('writeProjects', () => {
 
   return {
     projects,
+    folders,
     currentProjectId,
     currentProject,
     remoteSyncing,
@@ -460,9 +747,17 @@ export const useWriteProjectsStore = defineStore('writeProjects', () => {
     displayProjectName,
     init,
     syncRemoteDrafts,
+    syncFolders,
     restoreActivePreference,
     ensureListedProject,
     createProject,
+    createFolder,
+    renameFolder,
+    deleteFolder,
+    setProjectFolder,
+    reorderProject,
+    toggleFolderCollapsed,
+    isFolderCollapsed,
     selectProject,
     deleteProject,
     renameProject,

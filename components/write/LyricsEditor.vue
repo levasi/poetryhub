@@ -236,12 +236,6 @@ watch(columns, (n) => {
     /* ignore */
   }
   commitBlocks()
-  nextTick(fitAll)
-})
-
-watch(layoutColumns, () => {
-  if (!columnsReady) return
-  nextTick(fitAll)
 })
 
 const dropLineStyle = computed(() => {
@@ -272,7 +266,6 @@ const dragPreview = computed(() => {
 
 function setTaRef(id: string, el: unknown) {
   taRefs.value[id] = el instanceof HTMLTextAreaElement ? el : null
-  if (el instanceof HTMLTextAreaElement) nextTick(() => fitTextarea(id))
 }
 
 function setCardRef(id: string, el: unknown) {
@@ -283,23 +276,11 @@ function setColRef(col: number, el: unknown) {
   colEls.value[col] = el instanceof HTMLElement ? el : null
 }
 
-function fitTextarea(id: string) {
-  const el = taRefs.value[id]
-  if (!el) return
-  el.style.height = '0px'
-  el.style.height = `${Math.max(el.scrollHeight, 72)}px`
-}
-
-function fitAll() {
-  for (const b of blocks.value) fitTextarea(b.id)
-}
-
 function commitBlocks() {
   syncingFromBlocks = true
   lyricsText.value = joinBlocks(blocks.value)
   nextTick(() => {
     syncingFromBlocks = false
-    fitAll()
   })
 }
 
@@ -310,7 +291,6 @@ watch(
     if (joinBlocks(blocks.value) === v) return
     blocks.value = splitLyrics(v, columns.value)
     activeBlockId.value = blocks.value[0]?.id ?? ''
-    nextTick(fitAll)
   },
 )
 
@@ -319,7 +299,6 @@ function onBlockInput(id: string, value: string) {
   if (!b) return
   b.text = value
   commitBlocks()
-  nextTick(() => fitTextarea(id))
 }
 
 function insertBlock(nb: VerseBlock, afterId?: string) {
@@ -332,7 +311,6 @@ function insertBlock(nb: VerseBlock, afterId?: string) {
       activeBlockId.value = nb.id
       commitBlocks()
       nextTick(() => {
-        fitTextarea(nb.id)
         taRefs.value[nb.id]?.focus()
       })
       return
@@ -342,7 +320,6 @@ function insertBlock(nb: VerseBlock, afterId?: string) {
   activeBlockId.value = nb.id
   commitBlocks()
   nextTick(() => {
-    fitTextarea(nb.id)
     taRefs.value[nb.id]?.focus()
   })
 }
@@ -369,7 +346,6 @@ function addBlockAtColumnStart(colIndex: number) {
       activeBlockId.value = nb.id
       commitBlocks()
       nextTick(() => {
-        fitTextarea(nb.id)
         taRefs.value[nb.id]?.focus()
       })
       return
@@ -387,7 +363,6 @@ function removeBlock(id: string) {
     activeBlockId.value = blocks.value[0]!.id
     commitBlocks()
     nextTick(() => {
-      fitTextarea(blocks.value[0]!.id)
       taRefs.value[blocks.value[0]!.id]?.focus()
     })
     return
@@ -402,10 +377,7 @@ function removeBlock(id: string) {
   if (draggingId.value === id) draggingId.value = null
   commitBlocks()
   nextTick(() => {
-    if (focusId) {
-      fitTextarea(focusId)
-      taRefs.value[focusId]?.focus()
-    }
+    if (focusId) taRefs.value[focusId]?.focus()
   })
 }
 
@@ -450,7 +422,6 @@ function moveBlock(id: string, dir: -1 | 1) {
   stack.splice(toRow, 0, item)
   blocks.value = flattenColumns(stacks)
   commitBlocks()
-  nextTick(fitAll)
 }
 
 function computeDropHit(clientX: number, clientY: number): DropHit {
@@ -583,7 +554,6 @@ function finishDrag(commit: boolean) {
 
   blocks.value = flattenColumns(stacks)
   commitBlocks()
-  nextTick(fitAll)
 }
 
 function onPointerUp() {
@@ -626,7 +596,6 @@ onMounted(() => {
   columns.value = n
   clampAllColumns(n)
   columnsReady = true
-  nextTick(fitAll)
 })
 
 onBeforeUnmount(() => {

@@ -12,6 +12,8 @@ export const draftBodySchema = z.object({
   language: z.string().default('ro'),
   content: z.string().max(500_000).trim(),
   savedWords: draftSavedWordsSchema,
+  /** Optional write-folder id; null clears membership. Omitted = leave unchanged on update. */
+  folderId: z.string().cuid().nullable().optional(),
 })
 
 export function normalizeSavedWords(value: unknown): string[] {

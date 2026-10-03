@@ -24,6 +24,7 @@ export default defineEventHandler(async (event) => {
         title: true,
         authorName: true,
         language: true,
+        folderId: true,
         updatedAt: true,
         createdAt: true,
       },

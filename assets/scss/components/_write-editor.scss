@@ -149,8 +149,10 @@
 
 .write-editor__textarea {
   display: block;
+  height: auto;
   min-width: 0;
   flex: 1 1 0%;
+  field-sizing: content;
   cursor: text;
   overflow: hidden;
   border-radius: $ph-radius-sm;

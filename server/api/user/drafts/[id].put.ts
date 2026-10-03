@@ -21,16 +21,37 @@ export default defineEventHandler(async (event) => {
   if (!existing) throw createError({ statusCode: 404, statusMessage: 'Draft not found' })
 
   const savedWords = normalizeSavedWords(parsed.data.savedWords)
+  const data: {
+    title: string
+    authorName: string
+    language: string
+    content: string
+    savedWords: string[]
+    folderId?: string | null
+  } = {
+    title: parsed.data.title,
+    authorName: parsed.data.authorName,
+    language: parsed.data.language,
+    content: parsed.data.content,
+    savedWords,
+  }
+
+  if (parsed.data.folderId !== undefined) {
+    if (parsed.data.folderId === null) {
+      data.folderId = null
+    } else {
+      const folder = await prisma.userWriteFolder.findFirst({
+        where: { id: parsed.data.folderId, userId: tokenUser.id },
+        select: { id: true },
+      })
+      if (!folder) throw createError({ statusCode: 400, statusMessage: 'Invalid folder' })
+      data.folderId = folder.id
+    }
+  }
 
   await prisma.userPoemDraft.update({
     where: { id },
-    data: {
-      title: parsed.data.title,
-      authorName: parsed.data.authorName,
-      language: parsed.data.language,
-      content: parsed.data.content,
-      savedWords,
-    },
+    data,
   })
 
   return { ok: true }

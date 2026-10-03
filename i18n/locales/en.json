@@ -83,7 +83,21 @@
     "moveVerseUp": "Move stanza up",
     "moveVerseDown": "Move stanza down",
     "verseColumnsAria": "Number of columns",
-    "verseBlockLabel": "Stanza {n}"
+    "verseBlockLabel": "Stanza {n}",
+    "newProject": "New project",
+    "newFolder": "New folder",
+    "folderName": "Folder name",
+    "folderNamePlaceholder": "e.g. Spring drafts",
+    "addFolder": "Add folder",
+    "deleteFolder": "Delete folder",
+    "deleteFolderTitle": "Delete folder?",
+    "deleteFolderDesc": "Folder “{name}” will be removed. Projects inside stay — they become unfiled.",
+    "deleteFolderConfirm": "Delete folder",
+    "moveToFolder": "Move to folder",
+    "noFolder": "No folder",
+    "unfiledProjects": "Projects",
+    "searchProjects": "Search projects",
+    "filterByName": "Filter by name…"
   },
   "carousel": {
     "seoTitle": "Insta post — PoetryHub",
