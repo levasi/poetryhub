@@ -410,28 +410,50 @@ const saveLoading = ref(false)
 const saveMsg = ref<{ ok: boolean; text: string } | null>(null)
 const saveToastVisible = ref(false)
 let saveToastTimer: ReturnType<typeof setTimeout> | null = null
-/** Apple Notes–style: quiet save after a short idle. */
+/** Quiet autosave while editing — off by default; stored per user account. */
 const AUTOSAVE_MS = 1200
 const AUTOSAVE_PREF_KEY = 'poetryhub-write-autosave'
-const autosaveEnabled = ref(true)
+const autosaveEnabled = ref(false)
 let autosaveTimer: ReturnType<typeof setTimeout> | null = null
 let saveInFlight: Promise<void> | null = null
 
+function autosaveStorageKey(userId?: string | null): string {
+  return userId ? `${AUTOSAVE_PREF_KEY}:${userId}` : AUTOSAVE_PREF_KEY
+}
+
 function readAutosavePref(): boolean {
-  if (!import.meta.client) return true
+  if (!import.meta.client) return false
+  if (user.value && typeof user.value.writeAutosave === 'boolean') {
+    return user.value.writeAutosave
+  }
   try {
-    const raw = localStorage.getItem(AUTOSAVE_PREF_KEY)
-    if (raw === null) return true
+    const raw = localStorage.getItem(autosaveStorageKey(user.value?.id))
+    if (raw === null) return false
     return raw === '1'
   } catch {
-    return true
+    return false
   }
 }
 
-function persistAutosavePref(on: boolean) {
+function persistAutosavePrefLocal(on: boolean) {
   if (!import.meta.client) return
   try {
-    localStorage.setItem(AUTOSAVE_PREF_KEY, on ? '1' : '0')
+    localStorage.setItem(autosaveStorageKey(user.value?.id), on ? '1' : '0')
+  } catch {
+    /* ignore */
+  }
+}
+
+async function persistAutosavePrefRemote(on: boolean) {
+  if (!isLoggedIn.value) return
+  try {
+    await $fetch('/api/user/me/preferences', {
+      method: 'PATCH',
+      body: { writeAutosave: on },
+    })
+    if (user.value) {
+      user.value = { ...user.value, writeAutosave: on }
+    }
   } catch {
     /* ignore */
   }
@@ -439,13 +461,23 @@ function persistAutosavePref(on: boolean) {
 
 function setAutosaveEnabled(on: boolean) {
   autosaveEnabled.value = on
-  persistAutosavePref(on)
+  persistAutosavePrefLocal(on)
+  void persistAutosavePrefRemote(on)
   if (!on) {
     clearAutosaveTimer()
     return
   }
   if (hasUnsavedChanges.value) scheduleAutosave()
 }
+
+watch(
+  () => [user.value?.id, user.value?.writeAutosave] as const,
+  () => {
+    autosaveEnabled.value = readAutosavePref()
+    if (!autosaveEnabled.value) clearAutosaveTimer()
+  },
+  { immediate: true },
+)
 
 /** Snapshot of last loaded/saved editor state — save is enabled only when current differs. */
 function editorSnapshotKey(title: string, content: string, words: readonly string[]): string {
@@ -631,8 +663,9 @@ async function submitPublish() {
 async function saveDraftInternal(): Promise<void> {
   const content = lyrics.text.trim()
 
+  // Editor title is source of truth (publishForm can lag behind quiet autosave).
   const title =
-    (publishForm.title || lyrics.title || projects.currentProject?.name || '').trim()
+    (lyrics.title || publishForm.title || projects.currentProject?.name || '').trim()
     || t('write.untitledDraft')
   const authorName =
     (publishForm.authorName || user.value?.name || user.value?.email?.split('@')[0] || '').trim()

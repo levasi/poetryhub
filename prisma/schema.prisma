@@ -140,6 +140,8 @@ model User {
   poemLetterSpacing Float @default(0.02)
   /// Site reading theme key (see COLOR_SCHEMES in utils/colorScheme.ts)
   colorScheme    String   @default("paper")
+  /// Write page: quiet autosave while editing (default off)
+  writeAutosave  Boolean  @default(false)
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 

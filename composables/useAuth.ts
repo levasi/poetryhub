@@ -17,6 +17,8 @@ export interface AuthUser {
   poemLineHeight?: number
   poemLetterSpacing?: number
   colorScheme?: string
+  /** Write page quiet autosave preference (DB: User.writeAutosave) */
+  writeAutosave?: boolean
   /** False for Google-only accounts until they set a password */
   hasPassword?: boolean
 }

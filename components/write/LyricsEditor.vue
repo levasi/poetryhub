@@ -153,6 +153,10 @@ function loadColumns(): ColumnCount {
 
 /** Always start at 1 so SSR HTML matches the first client render; restore prefs after mount. */
 const columns = ref<ColumnCount>(1)
+/** Mobile always uses a single-column layout; desktop uses the saved preference. */
+const isMobileLayout = ref(false)
+const layoutColumns = computed<ColumnCount>(() => (isMobileLayout.value ? 1 : columns.value))
+
 const blocks = ref<VerseBlock[]>(splitLyrics(lyricsText.value, 1))
 const activeBlockId = ref(blocks.value[0]?.id ?? '')
 const taRefs = ref<Record<string, HTMLTextAreaElement | null>>({})
@@ -176,10 +180,15 @@ const dropHit = ref<DropHit | null>(null)
 let syncingFromBlocks = false
 let columnsReady = false
 let dragActive = false
+let mobileMq: MediaQueryList | null = null
+
+function syncMobileLayout() {
+  isMobileLayout.value = mobileMq?.matches ?? false
+}
 
 /** Cards grouped by column — empty columns stay visible as drop targets. */
 const columnStacks = computed(() => {
-  const n = columns.value
+  const n = layoutColumns.value
   const stacks: VerseBlock[][] = Array.from({ length: n }, () => [])
   for (const b of blocks.value) {
     stacks[clampCol(b.column, n)]!.push(b)
@@ -227,6 +236,11 @@ watch(columns, (n) => {
     /* ignore */
   }
   commitBlocks()
+  nextTick(fitAll)
+})
+
+watch(layoutColumns, () => {
+  if (!columnsReady) return
   nextTick(fitAll)
 })
 
@@ -395,8 +409,52 @@ function removeBlock(id: string) {
   })
 }
 
+/** Position of a block within its column stack (for mobile up/down reorder). */
+function stackPosition(id: string): { col: number; row: number; len: number } | null {
+  const stacks = columnStacks.value
+  for (let c = 0; c < stacks.length; c++) {
+    const stack = stacks[c]!
+    const row = stack.findIndex((b) => b.id === id)
+    if (row >= 0) return { col: c, row, len: stack.length }
+  }
+  return null
+}
+
+function canMoveBlock(id: string, dir: -1 | 1): boolean {
+  const pos = stackPosition(id)
+  if (!pos) return false
+  const next = pos.row + dir
+  return next >= 0 && next < pos.len
+}
+
+/** Swap a stanza one step up/down within its column (mobile reorder). */
+function moveBlock(id: string, dir: -1 | 1) {
+  if (!canMoveBlock(id, dir)) return
+  const stacks = columnStacks.value.map((s) => s.slice())
+  let fromCol = -1
+  let fromRow = -1
+  for (let c = 0; c < stacks.length; c++) {
+    const idx = stacks[c]!.findIndex((b) => b.id === id)
+    if (idx >= 0) {
+      fromCol = c
+      fromRow = idx
+      break
+    }
+  }
+  if (fromCol < 0 || fromRow < 0) return
+  const stack = stacks[fromCol]!
+  const toRow = fromRow + dir
+  if (toRow < 0 || toRow >= stack.length) return
+  const [item] = stack.splice(fromRow, 1)
+  if (!item) return
+  stack.splice(toRow, 0, item)
+  blocks.value = flattenColumns(stacks)
+  commitBlocks()
+  nextTick(fitAll)
+}
+
 function computeDropHit(clientX: number, clientY: number): DropHit {
-  const nCols = columns.value
+  const nCols = layoutColumns.value
   const list = listRef.value?.getBoundingClientRect()
 
   // Which column is under the pointer?
@@ -538,6 +596,8 @@ function onPointerCancel() {
 
 function onDragHandlePointerDown(blockId: string, e: PointerEvent) {
   if (e.button !== 0) return
+  // Mobile uses up/down buttons instead of drag.
+  if (import.meta.client && window.matchMedia('(max-width: 639px)').matches) return
   // Allow dragging a single card into another (empty) column when multi-col.
   if (blocks.value.length < 1) return
   if (blocks.value.length < 2 && columns.value === 1) return
@@ -557,6 +617,11 @@ function onDragHandlePointerDown(blockId: string, e: PointerEvent) {
 }
 
 onMounted(() => {
+  if (import.meta.client) {
+    mobileMq = window.matchMedia('(max-width: 639px)')
+    syncMobileLayout()
+    mobileMq.addEventListener('change', syncMobileLayout)
+  }
   const n = loadColumns()
   columns.value = n
   clampAllColumns(n)
@@ -567,6 +632,10 @@ onMounted(() => {
 onBeforeUnmount(() => {
   finishDrag(false)
   clearSavedWordListeners()
+  if (mobileMq) {
+    mobileMq.removeEventListener('change', syncMobileLayout)
+    mobileMq = null
+  }
 })
 </script>
 
@@ -620,6 +689,28 @@ onBeforeUnmount(() => {
                       :aria-label="t('write.removeVerseBlock')" @click="removeBlock(block.id)">
                       <Icon icon="heroicons:trash" class="write-editor__remove-icon" aria-hidden="true" />
                     </button>
+                    <div class="write-editor__reorder">
+                      <button
+                        type="button"
+                        class="write-editor__reorder-btn"
+                        :disabled="!canMoveBlock(block.id, -1)"
+                        :title="t('write.moveVerseUp')"
+                        :aria-label="t('write.moveVerseUp')"
+                        @click="moveBlock(block.id, -1)"
+                      >
+                        <Icon icon="heroicons:chevron-up" class="write-editor__reorder-icon" aria-hidden="true" />
+                      </button>
+                      <button
+                        type="button"
+                        class="write-editor__reorder-btn"
+                        :disabled="!canMoveBlock(block.id, 1)"
+                        :title="t('write.moveVerseDown')"
+                        :aria-label="t('write.moveVerseDown')"
+                        @click="moveBlock(block.id, 1)"
+                      >
+                        <Icon icon="heroicons:chevron-down" class="write-editor__reorder-icon" aria-hidden="true" />
+                      </button>
+                    </div>
                     <div class="write-editor__drag-handle" role="button" tabindex="0"
                       :aria-label="t('write.dragVerseBlock')" :title="t('write.dragVerseBlock')"
                       @pointerdown="onDragHandlePointerDown(block.id, $event)">

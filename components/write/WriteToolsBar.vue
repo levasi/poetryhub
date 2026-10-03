@@ -10,7 +10,7 @@ const props = withDefaults(
     /** Flush pending autosave before leaving the current project. */
     flushBeforeProjectChange?: () => Promise<void>
   }>(),
-  { saveLoading: false, canSave: false, autosaveEnabled: true },
+  { saveLoading: false, canSave: false, autosaveEnabled: false },
 )
 
 const emit = defineEmits<{

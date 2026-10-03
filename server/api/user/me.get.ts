@@ -20,5 +20,6 @@ export default defineEventHandler(async (event) => {
     poemLineHeight: row.poemLineHeight,
     poemLetterSpacing: row.poemLetterSpacing,
     colorScheme: row.colorScheme,
+    writeAutosave: row.writeAutosave,
   }
 })

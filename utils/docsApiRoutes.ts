@@ -79,7 +79,7 @@ export const apiRouteGroups: ApiRouteGroup[] = [
       { method: 'GET', path: '/api/user/me', summary: 'Profil utilizator', auth: 'user' },
       { method: 'PATCH', path: '/api/user/me/profile', summary: 'Actualizare profil', auth: 'user' },
       { method: 'PATCH', path: '/api/user/me/password', summary: 'Schimbare parolă', auth: 'user' },
-      { method: 'PATCH', path: '/api/user/me/preferences', summary: 'Preferințe cititor (font, temă)', auth: 'user' },
+      { method: 'PATCH', path: '/api/user/me/preferences', summary: 'Preferințe (font, temă, autosave write)', auth: 'user' },
       { method: 'PATCH', path: '/api/user/me/poet', summary: 'Activează profil poet', auth: 'user' },
       { method: 'DELETE', path: '/api/user/me', summary: 'Ștergere cont', auth: 'user' },
       { method: 'GET', path: '/api/user/favorites', summary: 'Favorite utilizator', auth: 'user' },

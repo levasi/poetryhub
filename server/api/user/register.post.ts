@@ -62,6 +62,7 @@ export default defineEventHandler(async (event) => {
       poemLineHeight: user.poemLineHeight,
       poemLetterSpacing: user.poemLetterSpacing,
       colorScheme: user.colorScheme,
+      writeAutosave: user.writeAutosave,
     },
   }
 })

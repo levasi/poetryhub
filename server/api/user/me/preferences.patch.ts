@@ -27,6 +27,7 @@ const schema = z.object({
   poemLineHeight: z.number().min(1).max(2.5).optional(),
   poemLetterSpacing: z.number().min(0).max(0.3).optional(),
   colorScheme: z.enum(COLOR_SCHEMES).optional(),
+  writeAutosave: z.boolean().optional(),
 })
 
 export default defineEventHandler(async (event) => {
@@ -46,6 +47,7 @@ export default defineEventHandler(async (event) => {
       poemLineHeight: u.poemLineHeight,
       poemLetterSpacing: u.poemLetterSpacing,
       colorScheme: u.colorScheme,
+      writeAutosave: u.writeAutosave,
     }
   }
 
@@ -58,6 +60,7 @@ export default defineEventHandler(async (event) => {
       poemLineHeight: true,
       poemLetterSpacing: true,
       colorScheme: true,
+      writeAutosave: true,
     },
   })
 })
