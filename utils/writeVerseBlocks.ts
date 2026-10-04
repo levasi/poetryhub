@@ -28,10 +28,6 @@ export function parseWriteLayout(raw: string): WriteVerseLayout {
   }
 }
 
-export function readWriteColumnCount(raw: string): WriteColumnCount | null {
-  return parseWriteLayout(raw).columnCount
-}
-
 export function parseWriteVerseBlockText(raw: string): WriteVerseBlockData {
   let column = 0
   let body = raw.replace(/^\uFEFF/, '')

@@ -162,7 +162,6 @@ export const useWriteProjectsStore = defineStore('writeProjects', () => {
   const collapsedFolderIds = ref<Set<string>>(readCollapsedFolders())
   const projectOrder = ref<string[]>([])
   const currentProjectId = ref<string | null>(null)
-  const remoteSyncing = ref(false)
   /** Editor buffer when no listed project is selected. Never shown in the dropdown. */
   const scratch = reactive<ScratchBuffer>(emptyScratch())
   /**
@@ -404,7 +403,6 @@ export const useWriteProjectsStore = defineStore('writeProjects', () => {
   async function syncRemoteDrafts(preferredToken?: string | null): Promise<void> {
     if (!import.meta.client) return
     await init()
-    remoteSyncing.value = true
     try {
       await syncFolders()
       const res = await $fetch<{ data: RemoteDraftSummary[] }>('/api/user/drafts', {
@@ -465,13 +463,7 @@ export const useWriteProjectsStore = defineStore('writeProjects', () => {
       }
     } catch {
       /* not logged in / network — keep in-memory list */
-    } finally {
-      remoteSyncing.value = false
     }
-  }
-
-  async function saveNow(): Promise<{ ok: boolean }> {
-    return { ok: true }
   }
 
   function createProject(name: string, folderId: string | null = null) {
@@ -511,30 +503,6 @@ export const useWriteProjectsStore = defineStore('writeProjects', () => {
       return created
     } catch {
       return null
-    }
-  }
-
-  async function renameFolder(id: string, name: string): Promise<void> {
-    const label = name.trim()
-    if (!label) return
-    const folder = folders.value.find((f) => f.id === id)
-    if (!folder) return
-    const prev = folder.name
-    folder.name = label
-    folders.value = [...folders.value].sort((a, b) =>
-      a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
-    )
-    try {
-      await $fetch(`/api/user/write-folders/${encodeURIComponent(id)}`, {
-        method: 'PATCH',
-        credentials: 'include',
-        body: { name: label },
-      })
-    } catch {
-      folder.name = prev
-      folders.value = [...folders.value].sort((a, b) =>
-        a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
-      )
     }
   }
 
@@ -619,11 +587,6 @@ export const useWriteProjectsStore = defineStore('writeProjects', () => {
       clearScratch()
     }
     rememberActiveProject()
-  }
-
-  function renameProject(id: string, name: string) {
-    const p = projects.value.find((x) => x.id === id)
-    if (p) p.name = name.trim() || p.name
   }
 
   function linkCurrentDraft(draftId: string) {
@@ -738,21 +701,16 @@ export const useWriteProjectsStore = defineStore('writeProjects', () => {
     folders,
     currentProjectId,
     currentProject,
-    remoteSyncing,
     activeSavedWords,
     editorTitle,
     editorLyrics,
     lastActiveToken,
-    lastActiveName,
     displayProjectName,
     init,
     syncRemoteDrafts,
-    syncFolders,
-    restoreActivePreference,
     ensureListedProject,
     createProject,
     createFolder,
-    renameFolder,
     deleteFolder,
     setProjectFolder,
     reorderProject,
@@ -760,7 +718,6 @@ export const useWriteProjectsStore = defineStore('writeProjects', () => {
     isFolderCollapsed,
     selectProject,
     deleteProject,
-    renameProject,
     linkCurrentDraft,
     setTitle,
     setLyrics,
@@ -770,7 +727,5 @@ export const useWriteProjectsStore = defineStore('writeProjects', () => {
     removeSavedWord,
     setSavedWords,
     isWordSaved,
-    saveNow,
-    clearActivePreference,
   }
 })

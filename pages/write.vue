@@ -137,10 +137,6 @@ function insertDiacritic(char: string) {
   })
 }
 
-function nonEmptySearchTerms(): string[] {
-  return searchQueries.value.map((r) => r.text.trim()).filter(Boolean)
-}
-
 /** Terms with at least 2 letters — avoids noisy single-letter lookups. */
 function searchableTerms(): string[] {
   return pickSearchableTerms(searchQueries.value)

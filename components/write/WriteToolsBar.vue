@@ -833,7 +833,7 @@ onUnmounted(() => {
         >
           <button
             type="button"
-            class="ds-btn-secondary write-tools__btn write-tools__btn--save"
+            class="ds-btn-secondary write-tools__btn"
             :class="{
               'write-tools__btn--save-idle': showSaveIdleTip || (props.autosaveEnabled && !props.saveLoading),
               'write-tools__btn--save-autosave': props.autosaveEnabled,

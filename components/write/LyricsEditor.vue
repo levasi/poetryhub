@@ -4,7 +4,6 @@ import { useWriteLyricsStore } from '~/stores/writeLyrics'
 import { useWriteProjectsStore } from '~/stores/writeProjects'
 import {
   joinWriteVerseBlocks,
-  readWriteColumnCount,
   splitWriteVerseBlocks,
   type WriteColumnCount,
 } from '~/utils/writeVerseBlocks'
@@ -158,7 +157,7 @@ const columns = ref<ColumnCount>(1)
 const isMobileLayout = ref(false)
 const layoutColumns = computed<ColumnCount>(() => (isMobileLayout.value ? 1 : columns.value))
 
-const blocks = ref<VerseBlock[]>(splitLyrics(lyricsText.value, 1))
+const blocks = ref<VerseBlock[]>(splitLyrics(lyricsText.value))
 const activeBlockId = ref(blocks.value[0]?.id ?? '')
 const taRefs = ref<Record<string, HTMLTextAreaElement | null>>({})
 const listRef = ref<HTMLElement | null>(null)
@@ -201,32 +200,6 @@ function blockPreview(text: string): string {
   const line = text.replace(/\s+/g, ' ').trim()
   if (!line) return '…'
   return line.length > 72 ? `${line.slice(0, 72)}…` : line
-}
-
-function flattenColumns(
-  stacks: VerseBlock[][],
-  movedId?: string | null,
-  movedColumn?: number,
-): VerseBlock[] {
-  const next: VerseBlock[] = []
-  stacks.forEach((stack) => {
-    for (const b of stack) {
-      next.push({
-        ...b,
-        // Preserve stored columns when the UI has fewer columns (overflow is only visual).
-        column:
-          movedId && b.id === movedId && movedColumn != null
-            ? movedColumn
-            : b.column,
-      })
-    }
-  })
-  return next
-}
-
-function clampAllColumns(nCols: number) {
-  // Intentionally no-op for persistence: stored columns survive layout changes.
-  void nCols
 }
 
 watch(columns, (n) => {
@@ -290,7 +263,7 @@ watch(
   (v) => {
     if (syncingFromBlocks) return
     if (joinBlocks(blocks.value) === v) return
-    blocks.value = splitLyrics(v, columns.value)
+    blocks.value = splitLyrics(v)
     activeBlockId.value = blocks.value[0]?.id ?? ''
   },
 )
@@ -452,7 +425,7 @@ function moveBlock(id: string, dir: -1 | 1) {
   const [item] = stack.splice(fromRow, 1)
   if (!item) return
   stack.splice(toRow, 0, item)
-  blocks.value = flattenColumns(stacks)
+  blocks.value = stacks.flat()
   commitBlocks()
 }
 
@@ -584,7 +557,7 @@ function finishDrag(commit: boolean) {
   const samePlace = fromCol === hit.column && fromRow === toRow
   if (samePlace) return
 
-  blocks.value = flattenColumns(stacks)
+  blocks.value = stacks.flat()
   commitBlocks()
 }
 
@@ -625,9 +598,7 @@ onMounted(() => {
     syncMobileLayout()
     mobileMq.addEventListener('change', syncMobileLayout)
   }
-  const n = loadColumns()
-  columns.value = n
-  clampAllColumns(n)
+  columns.value = loadColumns()
   columnsReady = true
 })
 
