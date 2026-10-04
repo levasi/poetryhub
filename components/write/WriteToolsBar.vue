@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'
 import { storeToRefs } from 'pinia'
+import {
+  READER_FONT_I18N_KEYS,
+  READER_FONT_OPTIONS_ORDER,
+  READER_FONT_STACKS,
+} from '~/composables/useReaderPreferences'
 import type { WriteFolder, WriteProject } from '~/stores/writeProjects'
 
 const props = withDefaults(
@@ -21,6 +26,22 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const {
+  fontKey,
+  fontSizePx,
+  lineHeight,
+  fontFamilyCss,
+  decSize,
+  incSize,
+  decLine,
+  incLine,
+  sizeAtMin,
+  sizeAtMax,
+  lineAtMin,
+  lineAtMax,
+} = useWriteCardFont()
+const fontMenuOpen = ref(false)
+const fontMenuRef = ref<HTMLElement | null>(null)
 const icons = {
   folder: 'heroicons:folder',
   folderOpen: 'heroicons:folder-open',
@@ -191,9 +212,15 @@ async function executeDeleteFolder() {
   closeDeleteFolderModal()
 }
 
+function toggleFontMenu() {
+  fontMenuOpen.value = !fontMenuOpen.value
+  if (fontMenuOpen.value) dropdownOpen.value = false
+}
+
 function toggleDropdown() {
   dropdownOpen.value = !dropdownOpen.value
   if (dropdownOpen.value) {
+    fontMenuOpen.value = false
     projectSearch.value = ''
     moveMenuProjectId.value = null
   } else {
@@ -393,10 +420,13 @@ watch(dropdownOpen, (open) => {
 })
 
 function onDocPointerDown(e: PointerEvent) {
-  if (!dropdownOpen.value || !rootRef.value) return
-  if (!rootRef.value.contains(e.target as Node)) {
+  const target = e.target as Node
+  if (dropdownOpen.value && rootRef.value && !rootRef.value.contains(target)) {
     dropdownOpen.value = false
     moveMenuProjectId.value = null
+  }
+  if (fontMenuOpen.value && fontMenuRef.value && !fontMenuRef.value.contains(target)) {
+    fontMenuOpen.value = false
   }
 }
 
@@ -419,6 +449,11 @@ function onGlobalKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape' && newProjectModalOpen.value) {
     e.preventDefault()
     closeNewProjectModal()
+    return
+  }
+  if (e.key === 'Escape' && fontMenuOpen.value) {
+    e.preventDefault()
+    fontMenuOpen.value = false
   }
 }
 
@@ -700,6 +735,93 @@ onUnmounted(() => {
       </div>
 
       <div class="write-tools__actions">
+        <div ref="fontMenuRef" class="write-tools__card-font">
+          <button
+            type="button"
+            class="write-tools__autosave-bulb"
+            :class="{ 'write-tools__autosave-bulb--on': fontMenuOpen }"
+            :aria-expanded="fontMenuOpen"
+            aria-haspopup="dialog"
+            aria-controls="write-card-font-menu"
+            :aria-label="t('write.cardFontAria')"
+            @click="toggleFontMenu"
+          >
+            <Icon icon="heroicons:cog-6-tooth" class="write-tools__autosave-bulb-icon" aria-hidden="true" />
+          </button>
+          <div
+            v-show="fontMenuOpen"
+            id="write-card-font-menu"
+            class="write-tools__card-font-menu"
+            role="dialog"
+            :aria-label="t('write.cardFontSettings')"
+          >
+            <p class="write-tools__card-font-label">{{ t('viewer.font') }}</p>
+            <select
+              v-model="fontKey"
+              class="write-tools__card-font-select"
+              :style="{ fontFamily: fontFamilyCss }"
+              :aria-label="t('viewer.font')"
+            >
+              <option
+                v-for="f in READER_FONT_OPTIONS_ORDER"
+                :key="f"
+                :value="f"
+                :style="{ fontFamily: READER_FONT_STACKS[f] }"
+              >
+                {{ t(READER_FONT_I18N_KEYS[f]) }}
+              </option>
+            </select>
+            <div class="write-tools__card-font-row">
+              <p class="write-tools__card-font-label">{{ t('viewer.fontSize') }}</p>
+              <div class="write-tools__card-font-stepper">
+                <button
+                  type="button"
+                  class="write-tools__card-font-step"
+                  :disabled="sizeAtMin"
+                  :aria-label="`${t('viewer.fontSize')} -`"
+                  @click="decSize"
+                >
+                  <Icon icon="heroicons:minus" class="write-tools__icon write-tools__icon--sm" aria-hidden="true" />
+                </button>
+                <span class="write-tools__card-font-value">{{ fontSizePx }}</span>
+                <button
+                  type="button"
+                  class="write-tools__card-font-step"
+                  :disabled="sizeAtMax"
+                  :aria-label="`${t('viewer.fontSize')} +`"
+                  @click="incSize"
+                >
+                  <Icon icon="heroicons:plus" class="write-tools__icon write-tools__icon--sm" aria-hidden="true" />
+                </button>
+              </div>
+            </div>
+            <div class="write-tools__card-font-row">
+              <p class="write-tools__card-font-label">{{ t('viewer.lineHeight') }}</p>
+              <div class="write-tools__card-font-stepper">
+                <button
+                  type="button"
+                  class="write-tools__card-font-step"
+                  :disabled="lineAtMin"
+                  :aria-label="`${t('viewer.lineHeight')} -`"
+                  @click="decLine"
+                >
+                  <Icon icon="heroicons:minus" class="write-tools__icon write-tools__icon--sm" aria-hidden="true" />
+                </button>
+                <span class="write-tools__card-font-value">{{ lineHeight.toFixed(2) }}</span>
+                <button
+                  type="button"
+                  class="write-tools__card-font-step"
+                  :disabled="lineAtMax"
+                  :aria-label="`${t('viewer.lineHeight')} +`"
+                  @click="incLine"
+                >
+                  <Icon icon="heroicons:plus" class="write-tools__icon write-tools__icon--sm" aria-hidden="true" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div
           class="write-tools__save-wrap"
           :class="{

@@ -68,6 +68,9 @@ export default defineEventHandler(async (event) => {
       poemLetterSpacing: user.poemLetterSpacing,
       colorScheme: user.colorScheme,
       writeAutosave: user.writeAutosave,
+      writeCardFontFamily: user.writeCardFontFamily,
+      writeCardFontSize: user.writeCardFontSize,
+      writeCardLineHeight: user.writeCardLineHeight,
     },
   }
 })

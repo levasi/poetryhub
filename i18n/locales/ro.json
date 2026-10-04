@@ -60,7 +60,7 @@
     "poetSwitching": "Se activează…",
     "poetSwitchCancel": "Nu acum",
     "done": "Gata",
-    "publishBtn": "Publică poezia",
+    "publishBtn": "Publică",
     "publishTitle": "Publică poezia ta",
     "publishDesc": "Poezia ta va fi adăugată în colecția PoetryHub și vizibilă tuturor cititorilor.",
     "fieldTitle": "Titlul poeziei",
@@ -100,7 +100,9 @@
     "noFolder": "Fără dosar",
     "unfiledProjects": "Proiecte",
     "searchProjects": "Caută proiecte",
-    "filterByName": "Filtră după nume…"
+    "filterByName": "Filtră după nume…",
+    "cardFontSettings": "Text carduri",
+    "cardFontAria": "Setări de font pentru cardurile poeziei"
   },
   "carousel": {
     "seoTitle": "Post Insta — PoetryHub",

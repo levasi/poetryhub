@@ -19,6 +19,10 @@ export interface AuthUser {
   colorScheme?: string
   /** Write page quiet autosave preference (DB: User.writeAutosave) */
   writeAutosave?: boolean
+  /** Write page verse-card typeface (DB: User.writeCardFontFamily) */
+  writeCardFontFamily?: string
+  writeCardFontSize?: number
+  writeCardLineHeight?: number
   /** False for Google-only accounts until they set a password */
   hasPassword?: boolean
 }

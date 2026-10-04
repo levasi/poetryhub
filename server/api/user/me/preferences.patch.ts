@@ -28,6 +28,27 @@ const schema = z.object({
   poemLetterSpacing: z.number().min(0).max(0.3).optional(),
   colorScheme: z.enum(COLOR_SCHEMES).optional(),
   writeAutosave: z.boolean().optional(),
+  writeCardFontFamily: z
+    .enum([
+      'typewriter',
+      'playfair',
+      'georgia',
+      'inter',
+      'lora',
+      'literata',
+      'merriweather',
+      'source-serif',
+      'crimson',
+      'noto-serif',
+      'eb-garamond',
+      'verdana',
+      'roboto',
+      'helvetica',
+      'bookerly',
+    ])
+    .optional(),
+  writeCardFontSize: z.number().int().min(14).max(28).optional(),
+  writeCardLineHeight: z.number().min(1.2).max(2.2).optional(),
 })
 
 export default defineEventHandler(async (event) => {
@@ -48,6 +69,9 @@ export default defineEventHandler(async (event) => {
       poemLetterSpacing: u.poemLetterSpacing,
       colorScheme: u.colorScheme,
       writeAutosave: u.writeAutosave,
+      writeCardFontFamily: u.writeCardFontFamily,
+      writeCardFontSize: u.writeCardFontSize,
+      writeCardLineHeight: u.writeCardLineHeight,
     }
   }
 
@@ -61,6 +85,9 @@ export default defineEventHandler(async (event) => {
       poemLetterSpacing: true,
       colorScheme: true,
       writeAutosave: true,
+      writeCardFontFamily: true,
+      writeCardFontSize: true,
+      writeCardLineHeight: true,
     },
   })
 })

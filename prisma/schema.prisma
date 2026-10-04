@@ -142,6 +142,12 @@ model User {
   colorScheme    String   @default("paper")
   /// Write page: quiet autosave while editing (default off)
   writeAutosave  Boolean  @default(false)
+  /// Write page verse-card font key (see READER_FONT_STACKS)
+  writeCardFontFamily String @default("playfair")
+  /// Verse-card font size in px (14–28)
+  writeCardFontSize   Int    @default(16)
+  /// Verse-card line height multiplier (1.2–2.2)
+  writeCardLineHeight Float  @default(1.65)
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 

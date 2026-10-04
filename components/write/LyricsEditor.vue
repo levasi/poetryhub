@@ -10,6 +10,7 @@ import {
 } from '~/utils/writeVerseBlocks'
 
 const { t } = useI18n()
+const { cardStyle } = useWriteCardFont()
 const projects = useWriteProjectsStore()
 const lyrics = useWriteLyricsStore()
 const { title, text: lyricsText } = storeToRefs(lyrics)
@@ -645,7 +646,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="write-editor">
+  <div class="write-editor" :style="cardStyle">
     <div class="write-editor__panel">
       <label for="lyrics-title" class="write-editor__label">
         Titlu

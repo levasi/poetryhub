@@ -15,7 +15,7 @@ test.describe('smoke', () => {
 
   test('write page shows workspace toolbar actions', async ({ page }) => {
     await page.goto('/write')
-    await expect(page.getByRole('button', { name: /Publică poezia|Publish poem/i })).toBeVisible()
+    await expect(page.getByRole('button', { name: /Publică|Publish/i })).toBeVisible()
     await expect(page.getByRole('button', { name: /^Salvează$|^Save$/i })).toBeVisible()
   })
 

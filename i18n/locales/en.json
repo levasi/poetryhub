@@ -60,7 +60,7 @@
     "poetSwitching": "Enabling…",
     "poetSwitchCancel": "Not now",
     "done": "Done",
-    "publishBtn": "Publish poem",
+    "publishBtn": "Publish",
     "publishTitle": "Publish your poem",
     "publishDesc": "Your poem will be added to the PoetryHub collection and visible to all readers.",
     "fieldTitle": "Poem title",
@@ -100,7 +100,9 @@
     "noFolder": "No folder",
     "unfiledProjects": "Projects",
     "searchProjects": "Search projects",
-    "filterByName": "Filter by name…"
+    "filterByName": "Filter by name…",
+    "cardFontSettings": "Card text",
+    "cardFontAria": "Font settings for poem cards"
   },
   "carousel": {
     "seoTitle": "Insta post — PoetryHub",

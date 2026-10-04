@@ -621,6 +621,8 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
+  width: 100%;
+  justify-content: space-between;
 
   @media (min-width: 640px) {
     gap: 0.75rem;
@@ -737,6 +739,93 @@
 .write-tools__autosave-bulb-icon {
   width: 1.125rem;
   height: 1.125rem;
+}
+
+.write-tools__card-font {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.write-tools__card-font-menu {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  z-index: 50;
+  width: min(16rem, calc(100vw - 2rem));
+  border-radius: $ph-radius-sm;
+  border: 1px solid ph-rgb(edge-subtle);
+  background-color: ph-rgb(surface-raised);
+  padding: 0.75rem;
+  box-shadow: var(--shadow-ds-popover);
+}
+
+.write-tools__card-font-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: ph-rgb(content-muted);
+}
+
+.write-tools__card-font-select {
+  margin-top: 0.375rem;
+  width: 100%;
+  border-radius: $ph-radius-sm;
+  border: 1px solid ph-rgb(edge-subtle);
+  background-color: ph-rgb(surface);
+  padding: 0.5rem 0.625rem;
+  font-size: 0.875rem;
+  color: ph-rgb(content);
+  outline: none;
+
+  &:focus-visible {
+    border-color: ph-rgb(brand);
+    box-shadow: 0 0 0 2px rgb(var(--color-brand) / 0.25);
+  }
+}
+
+.write-tools__card-font-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.write-tools__card-font-stepper {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.write-tools__card-font-step {
+  display: inline-flex;
+  width: 1.75rem;
+  height: 1.75rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: $ph-radius-sm;
+  border: 1px solid ph-rgb(edge-subtle);
+  background-color: ph-rgb(surface);
+  color: ph-rgb(content-secondary);
+
+  &:hover:not(:disabled) {
+    border-color: ph-rgb(edge);
+    background-color: ph-rgb(surface-subtle);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+.write-tools__card-font-value {
+  min-width: 2.75rem;
+  text-align: center;
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  color: ph-rgb(content);
 }
 
 .write-tools__autosave-tip {

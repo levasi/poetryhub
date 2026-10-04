@@ -40,7 +40,7 @@ type Story = StoryObj<typeof meta>
 
 export const Primary: Story = {
   render: () => ({
-    template: '<button type="button" class="ds-btn-primary">Publică poezia</button>',
+    template: '<button type="button" class="ds-btn-primary">Publică</button>',
   }),
 }
 
@@ -111,7 +111,7 @@ export const PrimaryWithIcon: Story = {
     template: `
       <button type="button" class="ds-btn-primary gap-2 shadow-ds-card">
         ${publishIcon}
-        Publică poezia
+        Publică
       </button>
     `,
   }),
