@@ -512,7 +512,6 @@ onUnmounted(() => {
                         aria-hidden="true"
                       />
                       <span class="write-tools__folder-name">{{ section.folder.name }}</span>
-                      <span class="write-tools__folder-count">{{ section.projects.length }}</span>
                     </button>
                     <div class="write-tools__folder-actions">
                       <button
@@ -793,7 +792,7 @@ onUnmounted(() => {
             Anulează
           </button>
           <button type="button" class="write-tools__modal-danger" @click="executeDelete">
-            Șterge proiectul
+            Șterge
           </button>
         </div>
       </div>

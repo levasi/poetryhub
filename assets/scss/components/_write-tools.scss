@@ -170,11 +170,10 @@
 
 .write-tools__new-btn {
   display: flex;
-  width: 100%;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  border-radius: $ph-radius-xl;
+  border-radius: $ph-radius-sm;
   background-color: ph-rgb(brand);
   padding: 0.625rem 0.75rem;
   font-size: 0.875rem;
@@ -204,7 +203,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  border-radius: $ph-radius-xl;
+  border-radius: $ph-radius-sm;
   border: 1px solid ph-rgb(edge-subtle);
   background-color: ph-rgb(surface);
   padding: 0.5rem 0.75rem;
@@ -269,7 +268,7 @@
 
 .write-tools__search-input {
   width: 100%;
-  border-radius: $ph-radius-xl;
+  border-radius: $ph-radius-sm;
   border: 1px solid ph-rgb(edge-subtle);
   background-color: rgb(var(--color-surface-subtle) / 0.8);
   padding: 0.5rem 0.75rem 0.5rem 2.25rem;
@@ -380,25 +379,11 @@
   font-weight: 600;
 }
 
-.write-tools__folder-count {
-  flex-shrink: 0;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  color: ph-rgb(content-muted);
-}
-
 .write-tools__folder-actions {
   display: flex;
   flex-shrink: 0;
   align-items: center;
   gap: 0.125rem;
-  opacity: 0;
-  transition: opacity 0.15s ease;
-
-  .write-tools__folder:hover &,
-  .write-tools__folder:focus-within & {
-    opacity: 1;
-  }
 }
 
 .write-tools__folder-add {
@@ -924,7 +909,6 @@
 .write-tools__modal-actions {
   margin-top: 1.25rem;
   display: flex;
-  flex-direction: column-reverse;
   gap: 0.5rem;
 
   @media (min-width: 640px) {

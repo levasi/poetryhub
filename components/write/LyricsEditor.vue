@@ -354,6 +354,37 @@ function addBlockAtColumnStart(colIndex: number) {
   insertBlock(nb)
 }
 
+const deleteBlockId = ref<string | null>(null)
+const deleteBlockCancelRef = ref<HTMLButtonElement | null>(null)
+
+function requestRemoveBlock(id: string) {
+  if (!blocks.value.some((b) => b.id === id)) return
+  deleteBlockId.value = id
+  nextTick(() => deleteBlockCancelRef.value?.focus())
+}
+
+function closeDeleteBlockModal() {
+  deleteBlockId.value = null
+}
+
+function confirmRemoveBlock() {
+  const id = deleteBlockId.value
+  if (!id) return
+  closeDeleteBlockModal()
+  removeBlock(id)
+}
+
+function onDeleteBlockKeydown(e: KeyboardEvent) {
+  if (e.key !== 'Escape' || !deleteBlockId.value) return
+  e.preventDefault()
+  closeDeleteBlockModal()
+}
+
+watch(deleteBlockId, (id) => {
+  if (!import.meta.client) return
+  document.body.style.overflow = id ? 'hidden' : ''
+})
+
 function removeBlock(id: string) {
   const idx = blocks.value.findIndex((b) => b.id === id)
   if (idx < 0) return
@@ -588,6 +619,7 @@ function onDragHandlePointerDown(blockId: string, e: PointerEvent) {
 
 onMounted(() => {
   if (import.meta.client) {
+    document.addEventListener('keydown', onDeleteBlockKeydown)
     mobileMq = window.matchMedia('(max-width: 639px)')
     syncMobileLayout()
     mobileMq.addEventListener('change', syncMobileLayout)
@@ -601,6 +633,10 @@ onMounted(() => {
 onBeforeUnmount(() => {
   finishDrag(false)
   clearSavedWordListeners()
+  if (import.meta.client) {
+    document.removeEventListener('keydown', onDeleteBlockKeydown)
+    if (deleteBlockId.value) document.body.style.overflow = ''
+  }
   if (mobileMq) {
     mobileMq.removeEventListener('change', syncMobileLayout)
     mobileMq = null
@@ -655,7 +691,7 @@ onBeforeUnmount(() => {
                     @input="onBlockInput(block.id, ($event.target as HTMLTextAreaElement).value)" />
                   <div class="write-editor__card-aside">
                     <button type="button" class="write-editor__remove-block" :title="t('write.removeVerseBlock')"
-                      :aria-label="t('write.removeVerseBlock')" @click="removeBlock(block.id)">
+                      :aria-label="t('write.removeVerseBlock')" @click="requestRemoveBlock(block.id)">
                       <Icon icon="heroicons:trash" class="write-editor__remove-icon" aria-hidden="true" />
                     </button>
                     <div class="write-editor__reorder">
@@ -764,4 +800,38 @@ onBeforeUnmount(() => {
       </Teleport>
     </div>
   </div>
+
+  <Teleport to="body">
+    <div v-if="deleteBlockId" class="write-tools__modal write-tools__modal--alert">
+      <div class="write-tools__modal-backdrop" aria-hidden="true" @click="closeDeleteBlockModal" />
+      <div
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="delete-verse-title"
+        aria-describedby="delete-verse-desc"
+        class="write-tools__modal-panel"
+        @click.stop
+      >
+        <h2 id="delete-verse-title" class="write-tools__modal-title">
+          {{ t('write.deleteVerseTitle') }}
+        </h2>
+        <p id="delete-verse-desc" class="write-tools__modal-desc">
+          {{ t('write.deleteVerseDesc') }}
+        </p>
+        <div class="write-tools__modal-actions">
+          <button
+            ref="deleteBlockCancelRef"
+            type="button"
+            class="write-tools__modal-cancel"
+            @click="closeDeleteBlockModal"
+          >
+            {{ t('write.cancel') }}
+          </button>
+          <button type="button" class="write-tools__modal-danger" @click="confirmRemoveBlock">
+            {{ t('write.deleteVerseConfirm') }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </Teleport>
 </template>
