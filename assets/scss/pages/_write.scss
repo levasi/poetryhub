@@ -107,17 +107,18 @@
   justify-content: center;
   background-color: ph-rgb(surface-subtle);
   color: ph-rgb(content-muted);
-  transform: translateX(100%);
+  transform: translateX(0);
   transition: transform 0.2s ease-out, background-color 0.15s ease, color 0.15s ease;
 
   @media (min-width: 640px) {
     width: 2rem;
-  }
+    transform: translateX(100%);
 
-  .write-search__field:hover &,
-  .write-search__field:focus-within &,
-  &:focus-visible {
-    transform: translateX(0);
+    .write-search__field:hover &,
+    .write-search__field:focus-within &,
+    &:focus-visible {
+      transform: translateX(0);
+    }
   }
 
   &:hover {
