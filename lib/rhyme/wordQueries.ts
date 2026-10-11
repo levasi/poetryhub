@@ -3,7 +3,16 @@ import type { WordRecord } from './types'
 import { foldDiacritics, normalizeWord, normForSearch } from './normalize'
 import { splitSyllables } from './syllableParser'
 
-export type SearchMode = 'fuzzy' | 'starts' | 'ends' | 'contains' | 'anagram' | 'exact' | 'synonyms' | 'antonyms'
+export type SearchMode =
+  | 'fuzzy'
+  | 'starts'
+  | 'ends'
+  | 'contains'
+  | 'anagram'
+  | 'exact'
+  | 'synonyms'
+  | 'antonyms'
+  | 'rhyme'
 
 export interface WordSearchOptions {
   /**

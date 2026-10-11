@@ -85,7 +85,7 @@ export const IconAndText: Story = {
     docs: {
       description: {
         story:
-          'Icon before label — `gap-2` on `.ds-btn-*`, pattern from `pages/write.vue` save/publish actions.',
+          'Icon before label — `gap-2` on `.ds-btn-*`, pattern from write page save/publish actions.',
       },
     },
   },

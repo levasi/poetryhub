@@ -71,7 +71,7 @@ poetryhub/
 | `/login` | `pages/login.vue` | User login |
 | `/signup` | `pages/signup.vue` | User registration |
 | `/carousel-generator` | `pages/carousel-generator.vue` | Instagram carousel builder |
-| `/write` | `pages/write.vue` | Romanian dictionary + rhyme tool |
+| `/write`, `/write/:slug` | `pages/write/[[slug]].vue` | Romanian dictionary + rhyme tool; project by slug |
 | `/admin` | `pages/admin/index.vue` | Admin dashboard |
 | `/admin/poems` | `pages/admin/poems/index.vue` | Poems CRUD |
 | `/admin/poems/new` | `pages/admin/poems/new.vue` | Create poem |

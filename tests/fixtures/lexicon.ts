@@ -80,4 +80,17 @@ export const fixtureLexicon: WordRecord[] = [
     synonyms: ['micuț'],
     antonyms: ['mare', 'vast'],
   },
+  {
+    id: '7',
+    word: 'tare',
+    baseForm: 'tare',
+    type: 'adjective',
+    syllables: 'ta|re',
+    syllableCount: 2,
+    endingKey: 'tare',
+    endingLast: 're',
+    definition: 'puternic',
+    synonyms: [],
+    antonyms: ['slab'],
+  },
 ]

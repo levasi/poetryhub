@@ -35,6 +35,14 @@ describe('wordCorpus search', () => {
     expect(hits.map((h) => h.word)).toContain('mic')
   })
 
+  it('rhyme mode returns ranked rhyme matches', () => {
+    const hits = searchLexiconMerged('rhyme', ['mare'])
+    const words = hits.map((h) => h.word)
+    expect(words).toContain('tare')
+    expect(words).not.toContain('mare')
+    expect(words).not.toContain('iubire')
+  })
+
   it('paginates merged results', () => {
     const page1 = searchLexiconPaged('starts', ['m'], 0, 1)
     const page2 = searchLexiconPaged('starts', ['m'], 1, 1)

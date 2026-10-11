@@ -7,9 +7,11 @@ import {
 } from '~/server/utils/slug'
 
 describe('slugify', () => {
-  it('creates URL-safe slugs', () => {
-    expect(slugify('Eminescu — Luceafărul')).toBe('eminescu-luceafrul')
+  it('creates URL-safe slugs and folds Romanian diacritics', () => {
+    expect(slugify('Eminescu — Luceafărul')).toBe('eminescu-luceafarul')
+    expect(slugify('Extinctorul pe boxe')).toBe('extinctorul-pe-boxe')
     expect(slugify('  Hello World  ')).toBe('hello-world')
+    expect(slugify('șotron și țară')).toBe('sotron-si-tara')
   })
 
   it('trims leading and trailing hyphens', () => {

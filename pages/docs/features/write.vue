@@ -13,7 +13,7 @@ useHead({ title: 'Write — Documentație PoetryHub' })
 
     <h2>Pagină</h2>
     <ul>
-      <li><code>/write</code> — editor + panou instrumente (<code>WriteToolsBar</code>)</li>
+      <li><code>/write</code> / <code>/write/&lt;slug&gt;</code> — editor + panou instrumente (<code>WriteToolsBar</code>)</li>
     </ul>
 
     <h2>Funcționalități</h2>

@@ -18,6 +18,8 @@ export interface WriteProject {
   savedWords: string[]
   /** Linked `UserPoemDraft` id when saved to the account; null = session-only. */
   draftId: string | null
+  /** Per-user URL slug for `/write/<slug>` when saved. */
+  slug: string | null
   /** Optional write folder id. */
   folderId: string | null
 }
@@ -25,6 +27,7 @@ export interface WriteProject {
 export type RemoteDraftSummary = {
   id: string
   title: string
+  slug?: string | null
   folderId?: string | null
   updatedAt?: string
 }
@@ -56,6 +59,7 @@ function blankSessionProject(name: string, folderId: string | null = null): Writ
     lyrics: '',
     savedWords: [],
     draftId: null,
+    slug: null,
     folderId,
   }
 }
@@ -423,12 +427,14 @@ export const useWriteProjectsStore = defineStore('writeProjects', () => {
         const title = (d.title || '').trim() || 'Proiect'
         const folderId =
           typeof d.folderId === 'string' && folderIds.has(d.folderId) ? d.folderId : null
+        const slug = typeof d.slug === 'string' && d.slug.trim() ? d.slug.trim() : null
         if (existing) {
           return {
             ...existing,
             name: title,
             title: existing.title?.trim() ? existing.title : title,
             draftId: d.id,
+            slug,
             folderId,
           }
         }
@@ -439,6 +445,7 @@ export const useWriteProjectsStore = defineStore('writeProjects', () => {
           title,
           lyrics: '',
           savedWords: [],
+          slug,
           folderId,
         }
       })
@@ -589,10 +596,11 @@ export const useWriteProjectsStore = defineStore('writeProjects', () => {
     rememberActiveProject()
   }
 
-  function linkCurrentDraft(draftId: string) {
+  function linkCurrentDraft(draftId: string, slug?: string | null) {
     const p = ensureListedProject()
     const prevToken = projectToken(p)
     p.draftId = draftId
+    if (typeof slug === 'string' && slug.trim()) p.slug = slug.trim()
     // Prefer draft id as stable project id once synced.
     if (p.id !== draftId) {
       const oldId = p.id
@@ -609,6 +617,18 @@ export const useWriteProjectsStore = defineStore('writeProjects', () => {
     }
     p.name = (p.title || '').trim() || p.name || 'Proiect'
     rememberActiveProject()
+  }
+
+  function setCurrentSlug(slug: string | null) {
+    const p = currentProject.value
+    if (!p) return
+    p.slug = slug && slug.trim() ? slug.trim() : null
+  }
+
+  function findProjectBySlug(slug: string | null | undefined): WriteProject | null {
+    const s = (slug || '').trim()
+    if (!s) return null
+    return projects.value.find((p) => p.slug === s) ?? null
   }
 
   function setLyrics(text: string) {
@@ -719,6 +739,8 @@ export const useWriteProjectsStore = defineStore('writeProjects', () => {
     selectProject,
     deleteProject,
     linkCurrentDraft,
+    setCurrentSlug,
+    findProjectBySlug,
     setTitle,
     setLyrics,
     appendToLyrics,

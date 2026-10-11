@@ -32,6 +32,7 @@
     "db:prune-non-ro": "tsx scripts/delete-non-romanian-poems.ts",
     "db:ro-diacritics": "tsx scripts/add-ro-diacritics.ts",
     "db:studio": "prisma studio",
+    "db:backfill-draft-slugs": "tsx scripts/backfill-draft-slugs.ts",
     "write:lexicon": "tsx scripts/import-write-lexicon.ts",
     "write:dom-definitions": "tsx scripts/apply-dom-definitions.ts",
     "write:dex": "tsx scripts/import-dex-definitions.ts",

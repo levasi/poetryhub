@@ -36,6 +36,7 @@ const modes: { id: SearchMode; label: string; hint: string }[] = [
   { id: 'starts', label: 'Începe cu', hint: 'Prefix' },
   { id: 'ends', label: 'Se termină cu', hint: 'Sufix' },
   { id: 'contains', label: 'Conține', hint: 'Subșir în cuvânt' },
+  { id: 'rhyme', label: 'Rimează', hint: 'Cuvinte care rimează' },
   { id: 'anagram', label: 'Anagramă', hint: 'Aceleași litere' },
   { id: 'exact', label: 'Exact', hint: 'Formă exactă' },
   { id: 'synonyms', label: 'Sinonime', hint: 'Sinonime pentru cuvânt' },
@@ -54,6 +55,7 @@ const SEARCH_MODES = new Set<SearchMode>([
   'starts',
   'ends',
   'contains',
+  'rhyme',
   'anagram',
   'exact',
   'synonyms',
@@ -222,6 +224,8 @@ const placeholder = computed(() => {
       return 'Ex: re, ție, ture…'
     case 'contains':
       return 'Ex: ban, oar…'
+    case 'rhyme':
+      return 'Cuvântul pentru care cauți rime (ex: mare…)'
     case 'anagram':
       return 'Literele unui cuvânt (ex: listen → silent)'
     case 'exact':
@@ -691,11 +695,18 @@ async function saveDraftInternal(): Promise<void> {
   const existingId = draftId.value
   if (existingId) {
     try {
-      await $fetch(`/api/user/drafts/${encodeURIComponent(existingId)}`, {
-        method: 'PUT',
-        credentials: 'include',
-        body: payload,
-      })
+      const updated = await $fetch<{ ok: boolean; slug: string }>(
+        `/api/user/drafts/${encodeURIComponent(existingId)}`,
+        {
+          method: 'PUT',
+          credentials: 'include',
+          body: payload,
+        },
+      )
+      if (updated.slug) {
+        projects.linkCurrentDraft(existingId, updated.slug)
+        syncProjectPath(updated.slug)
+      }
       return
     } catch (err: unknown) {
       // Stale draft id (deleted elsewhere) — create a fresh one.
@@ -703,12 +714,13 @@ async function saveDraftInternal(): Promise<void> {
     }
   }
 
-  const created = await $fetch<{ id: string }>('/api/user/drafts', {
+  const created = await $fetch<{ id: string; slug: string }>('/api/user/drafts', {
     method: 'POST',
     credentials: 'include',
     body: payload,
   })
-  projects.linkCurrentDraft(created.id)
+  projects.linkCurrentDraft(created.id, created.slug)
+  syncProjectPath(created.slug)
 }
 
 // ── First-save poet switch modal ────────────────────────────────────────────
@@ -798,59 +810,83 @@ async function submitSave(opts?: { quiet?: boolean }) {
   await saveInFlight
 }
 
+type DraftPayload = {
+  id: string
+  title: string
+  slug?: string
+  authorName: string
+  language: string
+  content: string
+  savedWords?: string[]
+}
+
+function applyDraftPayload(d: DraftPayload) {
+  const match = projects.projects.find((p) => p.draftId === d.id || p.id === d.id)
+  if (!match) {
+    projects.ensureListedProject(d.title || t('write.untitledDraft'))
+    projects.linkCurrentDraft(d.id, d.slug ?? null)
+  } else {
+    projects.selectProject(match.id)
+    projects.linkCurrentDraft(d.id, d.slug ?? null)
+  }
+  lyrics.title = d.title
+  lyrics.text = d.content
+  projects.setSavedWords(Array.isArray(d.savedWords) ? d.savedWords : [])
+  publishForm.title = d.title
+  publishForm.authorName = d.authorName
+  publishForm.language = d.language || 'ro'
+  captureSaveBaseline()
+}
+
 async function loadDraftById(id: string) {
   try {
-    const d = await $fetch<{
-      id: string
-      title: string
-      authorName: string
-      language: string
-      content: string
-      savedWords?: string[]
-    }>(
+    const d = await $fetch<DraftPayload>(
       `/api/user/drafts/${encodeURIComponent(id)}`,
       { credentials: 'include' },
     )
-    const match = projects.projects.find((p) => p.draftId === d.id || p.id === d.id)
-    if (!match) {
-      // Draft opened via URL before sync listed it — ensure it appears as a real project.
-      projects.ensureListedProject(d.title || t('write.untitledDraft'))
-      projects.linkCurrentDraft(d.id)
-    } else {
-      projects.selectProject(match.id)
-      projects.linkCurrentDraft(d.id)
-    }
-    lyrics.title = d.title
-    lyrics.text = d.content
-    projects.setSavedWords(Array.isArray(d.savedWords) ? d.savedWords : [])
-    publishForm.title = d.title
-    publishForm.authorName = d.authorName
-    publishForm.language = d.language || 'ro'
-    captureSaveBaseline()
+    applyDraftPayload(d)
   } catch {
     /* ignore */
   }
 }
 
-async function loadDraftFromRoute() {
-  const q = route.query.draft
-  const id = typeof q === 'string' ? q.trim() : Array.isArray(q) ? String(q[0] ?? '').trim() : ''
-  if (!id) return
-  await loadDraftById(id)
+async function loadDraftBySlug(slug: string) {
+  try {
+    const d = await $fetch<DraftPayload>(
+      `/api/user/drafts/by-slug/${encodeURIComponent(slug)}`,
+      { credentials: 'include' },
+    )
+    applyDraftPayload(d)
+  } catch {
+    /* ignore */
+  }
 }
 
-function syncDraftQuery(draft: string | null) {
+function routeSlugParam(): string {
+  const raw = route.params.slug
+  if (typeof raw === 'string') return raw.trim()
+  if (Array.isArray(raw) && raw[0]) return String(raw[0]).trim()
+  return ''
+}
+
+function legacyDraftQuery(): string {
+  const q = route.query.draft
+  if (typeof q === 'string') return q.trim()
+  if (Array.isArray(q) && q[0]) return String(q[0]).trim()
+  return ''
+}
+
+/** Keep the address bar on `/write/<slug>` (or `/write` when unsaved). */
+function syncProjectPath(slug: string | null) {
   if (!import.meta.client) return
-  const current = typeof route.query.draft === 'string' ? route.query.draft : ''
-  if (draft) {
-    if (current === draft) return
-    void router.replace({ query: { ...route.query, draft } })
-    return
-  }
-  if (!current) return
-  const next = { ...route.query }
-  delete next.draft
-  void router.replace({ query: next })
+  const targetPath = slug ? `/write/${encodeURIComponent(slug)}` : '/write'
+  const currentSlug = routeSlugParam()
+  const hasLegacy = Boolean(legacyDraftQuery())
+  const pathOk = slug ? currentSlug === slug : !currentSlug
+  if (pathOk && !hasLegacy) return
+  const nextQuery = { ...route.query }
+  delete nextQuery.draft
+  void router.replace({ path: targetPath, query: nextQuery })
 }
 
 let suppressProjectWatch = false
@@ -864,14 +900,14 @@ watch(
     const p = projects.currentProject
     if (!p?.draftId) {
       publishForm.title = p?.title ?? ''
-      syncDraftQuery(null)
+      syncProjectPath(null)
       captureSaveBaseline()
       return
     }
     suppressProjectWatch = true
     try {
       await loadDraftById(p.draftId)
-      syncDraftQuery(p.draftId)
+      syncProjectPath(projects.currentProject?.slug ?? null)
     } finally {
       suppressProjectWatch = false
     }
@@ -900,26 +936,31 @@ onMounted(async () => {
   suppressProjectWatch = true
   try {
     await projects.init()
-    const routeDraft =
-      typeof route.query.draft === 'string'
-        ? route.query.draft.trim()
-        : Array.isArray(route.query.draft)
-          ? String(route.query.draft[0] ?? '').trim()
-          : ''
-    // Always try sync — restores the remembered active project from account drafts.
-    await projects.syncRemoteDrafts(routeDraft || null)
+    const slugFromPath = routeSlugParam()
+    const legacyDraft = legacyDraftQuery()
 
-    if (routeDraft) {
-      await loadDraftFromRoute()
+    // Prefer restoring by draft id when opening a legacy link; otherwise sync normally.
+    await projects.syncRemoteDrafts(legacyDraft || null)
+
+    if (slugFromPath) {
+      const listed = projects.findProjectBySlug(slugFromPath)
+      if (listed?.draftId) {
+        await loadDraftById(listed.draftId)
+      } else {
+        await loadDraftBySlug(slugFromPath)
+      }
+      syncProjectPath(projects.currentProject?.slug ?? slugFromPath)
+    } else if (legacyDraft) {
+      await loadDraftById(legacyDraft)
+      syncProjectPath(projects.currentProject?.slug ?? null)
     } else if (projects.currentProject?.draftId) {
       await loadDraftById(projects.currentProject.draftId)
-      syncDraftQuery(projects.currentProject.draftId)
+      syncProjectPath(projects.currentProject.slug ?? null)
     } else if (projects.lastActiveToken) {
-      // Preference survived but list restore missed it — open that draft directly.
       await loadDraftById(projects.lastActiveToken)
-      if (projects.currentProject?.draftId) {
-        syncDraftQuery(projects.currentProject.draftId)
-      }
+      syncProjectPath(projects.currentProject?.slug ?? null)
+    } else {
+      syncProjectPath(null)
     }
   } finally {
     suppressProjectWatch = false

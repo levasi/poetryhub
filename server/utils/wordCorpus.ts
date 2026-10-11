@@ -1,5 +1,7 @@
 import Fuse from 'fuse.js'
+import { getRhymes } from '../../lib/rhyme/rhymeEngine'
 import type { WordRecord } from '../../lib/rhyme/types'
+import { RHYME_RESULT_LIMIT } from '../../lib/rhyme/types'
 import { normForSearch } from '../../lib/rhyme/normalize'
 import { queryCorpus, sortWordRecordsByLength, type SearchMode, type WordSearchOptions } from '../../lib/rhyme/wordQueries'
 import { prisma } from './prisma'
@@ -135,6 +137,30 @@ export function searchLexiconMerged(
   options?: WordSearchOptions,
 ): WordRecord[] {
   if (!corpus?.length || !terms.length) return []
+
+  if (mode === 'rhyme') {
+    const byId = new Map<string, { word: WordRecord; score: number }>()
+    for (const q of terms) {
+      const matches = getRhymes(q, corpus, {
+        rhymeType: 'both',
+        minSyllables: 1,
+        maxSyllables: 20,
+        wordType: 'any',
+        maxLength: 40,
+        limit: RHYME_RESULT_LIMIT,
+      })
+      for (const m of matches) {
+        const prev = byId.get(m.id)
+        if (!prev || m.score > prev.score) {
+          const { score, rhymeKind: _rhymeKind, ...word } = m
+          byId.set(m.id, { word, score })
+        }
+      }
+    }
+    return [...byId.values()]
+      .sort((a, b) => b.score - a.score || a.word.word.localeCompare(b.word.word, 'ro'))
+      .map((entry) => entry.word)
+  }
 
   if (mode === 'synonyms' || mode === 'antonyms') {
     const strict = options?.strictDiacritics === true

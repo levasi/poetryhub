@@ -91,6 +91,7 @@ export const apiRouteGroups: ApiRouteGroup[] = [
       { method: 'GET', path: '/api/user/drafts', summary: 'Draft-uri Write', auth: 'user' },
       { method: 'POST', path: '/api/user/drafts', summary: 'Salvează draft', auth: 'user' },
       { method: 'GET', path: '/api/user/drafts/:id', summary: 'Citește draft', auth: 'user' },
+      { method: 'GET', path: '/api/user/drafts/by-slug/:slug', summary: 'Citește draft după slug', auth: 'user' },
       { method: 'PUT', path: '/api/user/drafts/:id', summary: 'Actualizează draft', auth: 'user' },
       { method: 'PATCH', path: '/api/user/drafts/:id/folder', summary: 'Mută draft în dosar', auth: 'user' },
       { method: 'DELETE', path: '/api/user/drafts/:id', summary: 'Șterge draft', auth: 'user' },

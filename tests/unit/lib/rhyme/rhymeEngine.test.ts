@@ -14,6 +14,7 @@ describe('getRhymes', () => {
       limit: 20,
     })
     const words = matches.map((m) => m.word)
+    expect(words).toContain('tare')
     expect(words).not.toContain('mare')
     expect(words).not.toContain('iubire')
   })

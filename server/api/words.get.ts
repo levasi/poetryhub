@@ -5,7 +5,17 @@ import {
   type WordSearchOptions,
 } from '../utils/wordCorpus'
 
-const MODES: SearchMode[] = ['fuzzy', 'starts', 'ends', 'contains', 'anagram', 'exact', 'synonyms', 'antonyms']
+const MODES: SearchMode[] = [
+  'fuzzy',
+  'starts',
+  'ends',
+  'contains',
+  'anagram',
+  'exact',
+  'synonyms',
+  'antonyms',
+  'rhyme',
+]
 
 function parseQueryTerms(raw: unknown): string[] {
   const parts = Array.isArray(raw) ? raw : raw != null ? [raw] : []

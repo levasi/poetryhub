@@ -96,6 +96,18 @@ describe('/api/words handler', () => {
     expect(res.results[0]).toMatchObject({ word: 'mare', synonyms: ['vast', 'imens'] })
   })
 
+  it('accepts rhyme mode', async () => {
+    searchLexiconPaged.mockReturnValue({ results: [], total: 0, hasMore: false })
+    await callWordsApi({ q: 'mare', mode: 'rhyme' })
+    expect(searchLexiconPaged).toHaveBeenCalledWith(
+      'rhyme',
+      ['mare'],
+      0,
+      500,
+      { strictDiacritics: false },
+    )
+  })
+
   it('falls back to fuzzy for unknown mode', async () => {
     searchLexiconPaged.mockReturnValue({ results: [], total: 0, hasMore: false })
     await callWordsApi({ q: 'test', mode: 'invalid-mode' })

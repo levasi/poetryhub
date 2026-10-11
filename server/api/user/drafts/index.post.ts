@@ -2,6 +2,7 @@
 import { prisma } from '~/server/utils/prisma'
 import { requireUser } from '~/server/utils/auth'
 import { draftBodySchema, normalizeSavedWords } from '~/server/utils/draftBody'
+import { ensureUniqueDraftSlug } from '~/server/utils/slug'
 
 export default defineEventHandler(async (event) => {
   const tokenUser = await requireUser(event)
@@ -22,17 +23,20 @@ export default defineEventHandler(async (event) => {
     folderId = folder.id
   }
 
+  const slug = await ensureUniqueDraftSlug(tokenUser.id, parsed.data.title)
+
   const d = await prisma.userPoemDraft.create({
     data: {
       userId: tokenUser.id,
       folderId,
       title: parsed.data.title,
+      slug,
       authorName: parsed.data.authorName,
       language: parsed.data.language,
       content: parsed.data.content,
       savedWords,
     },
-    select: { id: true, folderId: true },
+    select: { id: true, slug: true, folderId: true },
   })
 
   return d

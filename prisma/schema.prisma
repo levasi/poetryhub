@@ -194,6 +194,8 @@ model UserPoemDraft {
   userId     String
   folderId   String?
   title      String
+  // Per-user URL slug for /write/<slug> (from title).
+  slug       String
   authorName String
   language   String   @default("ro")
   content    String   @db.Text
@@ -205,7 +207,9 @@ model UserPoemDraft {
   user   User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   folder UserWriteFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
 
+  @@unique([userId, slug])
   @@index([userId])
+  @@index([userId, slug])
   @@index([folderId])
   @@index([updatedAt])
 }
